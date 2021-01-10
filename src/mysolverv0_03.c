@@ -419,8 +419,8 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	// для нестационарного температурного моделирования 10.11.2018
 	bool btimedep, doublereal timestep_seq_current_step,
 	doublereal* &toldtimestep, doublereal* &tnewtimestep, integer &maxelm_global_ret,
-	doublereal poweron_multiplier_sequence, integer irealesation_selector,
-	doublereal* &t_for_Mechanical)
+	doublereal poweron_multiplier_sequence, doublereal poweron_multiplier_sequence0,
+	integer irealesation_selector,	doublereal* &t_for_Mechanical)
 {
      // tnewtimestep - результат вычисления нестационарного моделирования.
 
@@ -603,9 +603,9 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			exit(1);
 		}
 	
-	integer** nvtx_global = new integer*[8];
+	int** nvtx_global = new int*[8];
 	for (integer i = 0; i < 8; i++) {
-		nvtx_global[i] = new integer[ncell_shadow_gl];
+		nvtx_global[i] = new int[ncell_shadow_gl];
 	}
 		
 	// copy first
@@ -1093,123 +1093,123 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 					integer iPlane = -1;
 
-					if (t.neighbors_for_the_internal_node[E_SIDE][ie1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[E_SIDE][0][ie1] >= t.maxelm) {
 						iPlane = YZ_PLANE;
-						integer inumber = t.neighbors_for_the_internal_node[E_SIDE][ie1].iNODE1 - t.maxelm;
+						integer inumber = t.neighbors_for_the_internal_node[E_SIDE][0][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 					}
-					else if (t.neighbors_for_the_internal_node[W_SIDE][ie1].iNODE1 >= t.maxelm) {
+					else if (t.neighbors_for_the_internal_node[W_SIDE][0][ie1] >= t.maxelm) {
 						iPlane = YZ_PLANE;
-						integer inumber = t.neighbors_for_the_internal_node[W_SIDE][ie1].iNODE1 - t.maxelm;
+						integer inumber = t.neighbors_for_the_internal_node[W_SIDE][0][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 					}
-					else if (t.neighbors_for_the_internal_node[N_SIDE][ie1].iNODE1 >= t.maxelm) {
+					else if (t.neighbors_for_the_internal_node[N_SIDE][0][ie1] >= t.maxelm) {
 						iPlane = XZ_PLANE;
-						integer inumber = t.neighbors_for_the_internal_node[N_SIDE][ie1].iNODE1 - t.maxelm;
+						integer inumber = t.neighbors_for_the_internal_node[N_SIDE][0][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 					}
-					else if (t.neighbors_for_the_internal_node[S_SIDE][ie1].iNODE1 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[S_SIDE][ie1].iNODE1 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[S_SIDE][0][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[S_SIDE][0][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[T_SIDE][ie1].iNODE1 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[T_SIDE][ie1].iNODE1 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[T_SIDE][0][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[T_SIDE][0][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XY_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[B_SIDE][ie1].iNODE1 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[B_SIDE][ie1].iNODE1 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[B_SIDE][0][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[B_SIDE][0][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XY_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[E_SIDE][ie1].iNODE2 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[E_SIDE][ie1].iNODE2 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[E_SIDE][1][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[E_SIDE][1][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = YZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[W_SIDE][ie1].iNODE2 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[W_SIDE][ie1].iNODE2 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[W_SIDE][1][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[W_SIDE][1][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = YZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[N_SIDE][ie1].iNODE2 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[N_SIDE][ie1].iNODE2 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[N_SIDE][1][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[N_SIDE][1][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[S_SIDE][ie1].iNODE2 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[S_SIDE][ie1].iNODE2 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[S_SIDE][1][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[S_SIDE][1][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[T_SIDE][ie1].iNODE2 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[T_SIDE][ie1].iNODE2 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[T_SIDE][1][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[T_SIDE][1][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XY_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[B_SIDE][ie1].iNODE2 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[B_SIDE][ie1].iNODE2 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[B_SIDE][1][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[B_SIDE][1][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XY_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[E_SIDE][ie1].iNODE3 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[E_SIDE][ie1].iNODE3 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[E_SIDE][2][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[E_SIDE][2][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = YZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[W_SIDE][ie1].iNODE3 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[W_SIDE][ie1].iNODE3 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[W_SIDE][2][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[W_SIDE][2][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = YZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[N_SIDE][ie1].iNODE3 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[N_SIDE][ie1].iNODE3 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[N_SIDE][2][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[N_SIDE][2][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[S_SIDE][ie1].iNODE3 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[S_SIDE][ie1].iNODE3 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[S_SIDE][2][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[S_SIDE][2][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[T_SIDE][ie1].iNODE3 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[T_SIDE][ie1].iNODE3 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[T_SIDE][2][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[T_SIDE][2][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XY_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[B_SIDE][ie1].iNODE3 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[B_SIDE][ie1].iNODE3 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[B_SIDE][2][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[B_SIDE][2][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XY_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[E_SIDE][ie1].iNODE4 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[E_SIDE][ie1].iNODE4 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[E_SIDE][3][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[E_SIDE][3][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = YZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[W_SIDE][ie1].iNODE4 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[W_SIDE][ie1].iNODE4 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[W_SIDE][3][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[W_SIDE][3][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = YZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[N_SIDE][ie1].iNODE4 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[N_SIDE][ie1].iNODE4 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[N_SIDE][3][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[N_SIDE][3][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[S_SIDE][ie1].iNODE4 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[S_SIDE][ie1].iNODE4 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[S_SIDE][3][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[S_SIDE][3][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XZ_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[T_SIDE][ie1].iNODE4 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[T_SIDE][ie1].iNODE4 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[T_SIDE][3][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[T_SIDE][3][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XY_PLANE;
 					}
-					else if (t.neighbors_for_the_internal_node[B_SIDE][ie1].iNODE4 >= t.maxelm) {
-						integer inumber = t.neighbors_for_the_internal_node[B_SIDE][ie1].iNODE4 - t.maxelm;
+					else if (t.neighbors_for_the_internal_node[B_SIDE][3][ie1] >= t.maxelm) {
+						integer inumber = t.neighbors_for_the_internal_node[B_SIDE][3][ie1] - t.maxelm;
 						emissivity_default_non_linear[j_1] = t.border_neighbor[inumber].emissivity;
 						iPlane = XY_PLANE;
 					}
@@ -1258,123 +1258,123 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 							integer iPlane = -1;
 
-							if (my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][j].iNODE1 >= my_union[iu_74].t.maxelm) {
+							if (my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][0][j] >= my_union[iu_74].t.maxelm) {
 								iPlane = YZ_PLANE;
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][j].iNODE1 - my_union[iu_74].t.maxelm;
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][0][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][j].iNODE1 >= my_union[iu_74].t.maxelm) {
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][0][j] >= my_union[iu_74].t.maxelm) {
 								iPlane = YZ_PLANE;
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][j].iNODE1 - my_union[iu_74].t.maxelm;
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][0][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][j].iNODE1 >= my_union[iu_74].t.maxelm) {
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][0][j] >= my_union[iu_74].t.maxelm) {
 								iPlane = XZ_PLANE;
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][j].iNODE1 - my_union[iu_74].t.maxelm;
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][0][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][j].iNODE1 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][j].iNODE1 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][0][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][0][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][j].iNODE1 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][j].iNODE1 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][0][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][0][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XY_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][j].iNODE1 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][j].iNODE1 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][0][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][0][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XY_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][j].iNODE2 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][j].iNODE2 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][1][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][1][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = YZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][j].iNODE2 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][j].iNODE2 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][1][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][1][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = YZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][j].iNODE2 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][j].iNODE2 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][1][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][1][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][j].iNODE2 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][j].iNODE2 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][1][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][1][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][j].iNODE2 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][j].iNODE2 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][1][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][1][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XY_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][j].iNODE2 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][j].iNODE2 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][1][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][1][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XY_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][j].iNODE3 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][j].iNODE3 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][2][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][2][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = YZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][j].iNODE3 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][j].iNODE3 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][2][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][2][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = YZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][j].iNODE3 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][j].iNODE3 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][2][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][2][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][j].iNODE3 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][j].iNODE3 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][2][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][2][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][j].iNODE3 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][j].iNODE3 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][2][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][2][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XY_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][j].iNODE3 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][j].iNODE3 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][2][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][2][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XY_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][j].iNODE4 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][j].iNODE4 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][3][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[E_SIDE][3][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = YZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][j].iNODE4 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][j].iNODE4 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][3][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[W_SIDE][3][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = YZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][j].iNODE4 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][j].iNODE4 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][3][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[N_SIDE][3][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][j].iNODE4 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][j].iNODE4 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][3][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[S_SIDE][3][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XZ_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][j].iNODE4 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][j].iNODE4 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][3][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[T_SIDE][3][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XY_PLANE;
 							}
-							else if (my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][j].iNODE4 >= my_union[iu_74].t.maxelm) {
-								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][j].iNODE4 - my_union[iu_74].t.maxelm;
+							else if (my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][3][j] >= my_union[iu_74].t.maxelm) {
+								integer inumber = my_union[iu_74].t.neighbors_for_the_internal_node[B_SIDE][3][j] - my_union[iu_74].t.maxelm;
 								emissivity_default_non_linear[j_1] = my_union[iu_74].t.border_neighbor[inumber].emissivity;
 								iPlane = XY_PLANE;
 							}
@@ -2324,12 +2324,29 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 			volume3D(i_1, nvtx_global, pa_global, dx, dy, dz);
 
+			
+
 			if (fabs(t.Sc[i_1]) > 1.0e-30) {
 				for (integer j = 0; j <= 7; j++) {
 					if (!constr[nvtx_global[j][i_1] - 1]) {
 						if (i_1 < t.maxelm) {
-							rthdsd[nvtx_global[j][i_1] - 1] +=
-								0.125*dx*dy*dz*t.Sc[i_1] * poweron_multiplier_sequence;
+
+							integer ib = t.whot_is_block[i_1];
+
+							if (b[ib].ipower_time_depend == POWER_TIME_DEPEND::CONST_POWER) {
+								rthdsd[nvtx_global[j][i_1] - 1] +=
+									0.125*dx*dy*dz*t.Sc[i_1] * 1.0;
+							}
+							else if (b[ib].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+								rthdsd[nvtx_global[j][i_1] - 1] +=
+									0.125*dx*dy*dz*t.Sc[i_1] * poweron_multiplier_sequence0;
+							}
+							else {
+								rthdsd[nvtx_global[j][i_1] - 1] +=
+									0.125*dx*dy*dz*t.Sc[i_1] * poweron_multiplier_sequence;
+							}
+
+
 							Pdiss_actual += 0.125*dx*dy*dz*t.Sc[i_1];
 							//if (t.Sc[i_1] > 1.0e-30) {
 								//printf("1 %e \n", 0.125 * dx * dy * dz * t.Sc[i_1] * poweron_multiplier_sequence);
@@ -2356,8 +2373,25 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				for (integer j = 0; j <= 7; j++) {
 					if (!constr[hash_table_pa[iu_74][my_union[iu_74].t.nvtx[j][i_1] - 1]]) {
 						if (i_1 < my_union[iu_74].t.maxelm) {
-							rthdsd[hash_table_pa[iu_74][my_union[iu_74].t.nvtx[j][i_1] - 1]] +=
-								0.125*dx*dy*dz*my_union[iu_74].t.Sc[i_1] * poweron_multiplier_sequence;
+
+							integer ib = my_union[iu_74].t.whot_is_block[i_1];
+
+							if (b[ib].ipower_time_depend == POWER_TIME_DEPEND::CONST_POWER) {
+
+								rthdsd[hash_table_pa[iu_74][my_union[iu_74].t.nvtx[j][i_1] - 1]] +=
+									0.125*dx*dy*dz*my_union[iu_74].t.Sc[i_1] * 1.0;
+							}
+							else if (b[ib].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+
+								rthdsd[hash_table_pa[iu_74][my_union[iu_74].t.nvtx[j][i_1] - 1]] +=
+									0.125*dx*dy*dz*my_union[iu_74].t.Sc[i_1] * poweron_multiplier_sequence0;
+							}
+							else {
+								rthdsd[hash_table_pa[iu_74][my_union[iu_74].t.nvtx[j][i_1] - 1]] +=
+									0.125*dx*dy*dz*my_union[iu_74].t.Sc[i_1] * poweron_multiplier_sequence;
+							}
+
+
 							Pdiss_actual += 0.125*dx*dy*dz*my_union[iu_74].t.Sc[i_1];
 							//if (my_union[iu_74].t.Sc[i_1] > 1.0e-30) {
 								//printf("2 %e \n", 0.125 * dx * dy * dz * my_union[iu_74].t.Sc[i_1] * poweron_multiplier_sequence);
@@ -2435,7 +2469,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
 		//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::CAMG_RUMBA_v0_14_SECOND_T_SOLVER) {
-			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m,b,lb,w,lw, boundary, TEMP);
+			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m,b,lb,w,lw, boundary, TEMP, t.whot_is_block);
 		}
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER) {
 			// if (NONE_only_amg1r5==stabilization_amg1r5_algorithm) -> amg1r5 Руге и Штубена.
@@ -2666,7 +2700,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				p.z = p.z + min_z;
 
 				for (integer j = 0; j <= 7; j++) {
-					TOCHKA p1;
+					TOCHKA_FLOAT p1;
 					p1.x = t.pa[t.nvtx[j][i] - 1].x;
 					p1.y = t.pa[t.nvtx[j][i] - 1].y;
 					p1.z = t.pa[t.nvtx[j][i] - 1].z;
@@ -2675,15 +2709,15 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					p1.z = p1.z + min_z;
 
 					pointerlist[i][j] = p1;
-					if (fabs(p1.x) < 1.0e-40) {
+					if (fabs(p1.x) < -1.0e-36) {
 						printf("problem x=%e\n", p1.x);
 						getchar();
 					}
-					if (fabs(p1.y) < 1.0e-40) {
+					if (fabs(p1.y) < -1.0e-36) {
 						printf("problem y=%e\n", p1.y);
 						getchar();
 					}
-					if (fabs(p1.z) < 1.0e-40) {
+					if (fabs(p1.z) < -1.0e-36) {
 						printf("problem z=%e\n", p1.z);
 						getchar();
 					}
@@ -2992,64 +3026,64 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				integer nstop = t.maxelm;// ncell_shadow_gl
 				if (t.neighbors_for_the_internal_node != nullptr) {
 					for (integer i_72 = 0; i_72 < nstop; i_72++) {
-						if ((t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1 > -1) && (t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1 < nstop)) {
+						if ((t.neighbors_for_the_internal_node[W_SIDE][0][i_72] > -1) && (t.neighbors_for_the_internal_node[W_SIDE][0][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[1][i_72] - 1];
 							hxplus = fabs(pp.x - pb.x);
 							// почему то возникает сбой. Инструкция обратилась не по адресу TODO 20.05.2018
-							hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1] - 1].x);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1]);
-							Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][0][i_72]] - 1].x);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[W_SIDE][0][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[W_SIDE][0][i_72]]);
+							Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[W_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[W_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[W_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2 > -1) && (t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[W_SIDE][1][i_72] > -1) && (t.neighbors_for_the_internal_node[W_SIDE][1][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[1][i_72] - 1];
 							hxplus = fabs(pp.x - pb.x);
 							// почему то возникает сбой. Инструкция обратилась не по адресу TODO 20.05.2018
-							hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2] - 1].x);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2]);
-							Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][1][i_72]] - 1].x);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[W_SIDE][1][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[W_SIDE][1][i_72]]);
+							Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[W_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[W_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[W_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3 > -1) && (t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[W_SIDE][2][i_72] > -1) && (t.neighbors_for_the_internal_node[W_SIDE][2][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[1][i_72] - 1];
 							hxplus = fabs(pp.x - pb.x);
 							// почему то возникает сбой. Инструкция обратилась не по адресу TODO 20.05.2018
-							hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3] - 1].x);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3]);
-							Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][2][i_72]] - 1].x);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[W_SIDE][2][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[W_SIDE][2][i_72]]);
+							Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[W_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[W_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[W_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4 > -1) && (t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[W_SIDE][3][i_72] > -1) && (t.neighbors_for_the_internal_node[W_SIDE][3][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[1][i_72] - 1];
 							hxplus = fabs(pp.x - pb.x);
 							// почему то возникает сбой. Инструкция обратилась не по адресу TODO 20.05.2018
-							hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4] - 1].x);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4]);
-							Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[W_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][3][i_72]] - 1].x);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[W_SIDE][3][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[W_SIDE][3][i_72]]);
+							Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[W_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[W_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[W_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[W_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
 						else {
@@ -3060,60 +3094,60 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							Txgl[nvtx_global[4][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[5][i_72] - 1] - temp_potent[nvtx_global[4][i_72] - 1]) / hx;
 							Txgl[nvtx_global[6][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[6][i_72] - 1]) / hx;
 						}
-						if ((t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1 > -1) && (t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1 < nstop)) {
+						if ((t.neighbors_for_the_internal_node[E_SIDE][0][i_72] > -1) && (t.neighbors_for_the_internal_node[E_SIDE][0][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[1][i_72] - 1];
 							hxminus = fabs(pp.x - pb.x);
-							hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1] - 1].x);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1]);
-							Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][0][i_72]] - 1].x);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[E_SIDE][0][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[E_SIDE][0][i_72]]);
+							Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[E_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[E_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[E_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2 > -1) && (t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[E_SIDE][1][i_72] > -1) && (t.neighbors_for_the_internal_node[E_SIDE][1][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[1][i_72] - 1];
 							hxminus = fabs(pp.x - pb.x);
-							hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2] - 1].x);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2]);
-							Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][1][i_72]] - 1].x);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[E_SIDE][1][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[E_SIDE][1][i_72]]);
+							Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[E_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[E_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[E_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3 > -1) && (t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[E_SIDE][2][i_72] > -1) && (t.neighbors_for_the_internal_node[E_SIDE][2][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[1][i_72] - 1];
 							hxminus = fabs(pp.x - pb.x);
-							hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3] - 1].x);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3]);
-							Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][2][i_72]] - 1].x);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[E_SIDE][2][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[E_SIDE][2][i_72]]);
+							Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[E_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[E_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[E_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4 > -1) && (t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[E_SIDE][3][i_72] > -1) && (t.neighbors_for_the_internal_node[E_SIDE][3][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[1][i_72] - 1];
 							hxminus = fabs(pp.x - pb.x);
-							hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4] - 1].x);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4]);
-							Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[E_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][3][i_72]] - 1].x);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[E_SIDE][3][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[E_SIDE][3][i_72]]);
+							Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[E_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[E_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[E_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[E_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
 						else {
@@ -3125,60 +3159,60 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							Txgl[nvtx_global[7][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[6][i_72] - 1]) / hx;
 						}
 
-						if ((t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1 > -1) && (t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1 < nstop)) {
+						if ((t.neighbors_for_the_internal_node[S_SIDE][0][i_72] > -1) && (t.neighbors_for_the_internal_node[S_SIDE][0][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[2][i_72] - 1];
 							hxplus = fabs(pp.y - pb.y);
-							hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1] - 1].y);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1]);
-							Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][0][i_72]] - 1].y);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[S_SIDE][0][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[S_SIDE][0][i_72]]);
+							Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[S_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[S_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[S_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2 > -1) && (t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[S_SIDE][1][i_72] > -1) && (t.neighbors_for_the_internal_node[S_SIDE][1][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[2][i_72] - 1];
 							hxplus = fabs(pp.y - pb.y);
-							hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2] - 1].y);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2]);
-							Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][1][i_72]] - 1].y);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[S_SIDE][1][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[S_SIDE][1][i_72]]);
+							Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[S_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[S_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[S_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3 > -1) && (t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[S_SIDE][2][i_72] > -1) && (t.neighbors_for_the_internal_node[S_SIDE][2][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[2][i_72] - 1];
 							hxplus = fabs(pp.y - pb.y);
-							hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3] - 1].y);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3]);
-							Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][2][i_72]] - 1].y);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[S_SIDE][2][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[S_SIDE][2][i_72]]);
+							Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[S_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[S_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[S_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4 > -1) && (t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[S_SIDE][3][i_72] > -1) && (t.neighbors_for_the_internal_node[S_SIDE][3][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[2][i_72] - 1];
 							hxplus = fabs(pp.y - pb.y);
-							hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4] - 1].y);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4]);
-							Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[S_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][3][i_72]] - 1].y);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[S_SIDE][3][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[S_SIDE][3][i_72]]);
+							Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[S_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[S_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[S_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[S_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
 						else {
@@ -3190,60 +3224,60 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							Tygl[nvtx_global[5][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[5][i_72] - 1]) / hy;
 						}
 
-						if ((t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1 > -1) && (t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1 < nstop)) {
+						if ((t.neighbors_for_the_internal_node[N_SIDE][0][i_72] > -1) && (t.neighbors_for_the_internal_node[N_SIDE][0][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[2][i_72] - 1];
 							hxminus = fabs(pp.y - pb.y);
-							hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1] - 1].y);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1]);
-							Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][0][i_72]] - 1].y);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[N_SIDE][0][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[N_SIDE][0][i_72]]);
+							Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[N_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[N_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[N_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2 > -1) && (t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[N_SIDE][1][i_72] > -1) && (t.neighbors_for_the_internal_node[N_SIDE][1][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[2][i_72] - 1];
 							hxminus = fabs(pp.y - pb.y);
-							hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2] - 1].y);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2]);
-							Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][1][i_72]] - 1].y);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[N_SIDE][1][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[N_SIDE][1][i_72]]);
+							Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[N_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[N_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[N_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3 > -1) && (t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[N_SIDE][2][i_72] > -1) && (t.neighbors_for_the_internal_node[N_SIDE][2][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[2][i_72] - 1];
 							hxminus = fabs(pp.y - pb.y);
-							hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3] - 1].y);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3]);
-							Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][2][i_72]] - 1].y);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[N_SIDE][2][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[N_SIDE][2][i_72]]);
+							Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[N_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[N_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[N_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4 > -1) && (t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[N_SIDE][3][i_72] > -1) && (t.neighbors_for_the_internal_node[N_SIDE][3][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[2][i_72] - 1];
 							hxminus = fabs(pp.y - pb.y);
-							hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4] - 1].y);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4]);
-							Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[N_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][3][i_72]] - 1].y);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[N_SIDE][3][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[N_SIDE][3][i_72]]);
+							Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[N_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[N_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[N_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[N_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
 						else {
@@ -3255,60 +3289,60 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							Tygl[nvtx_global[7][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[5][i_72] - 1]) / hy;
 						}
 
-						if ((t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1 > -1) && (t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1 < nstop)) {
+						if ((t.neighbors_for_the_internal_node[B_SIDE][0][i_72] > -1) && (t.neighbors_for_the_internal_node[B_SIDE][0][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[4][i_72] - 1];
 							hxplus = fabs(pp.z - pb.z);
-							hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1] - 1].z);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1]);
-							Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][0][i_72]] - 1].z);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[B_SIDE][0][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[B_SIDE][0][i_72]]);
+							Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[B_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[B_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[B_SIDE][0][i_72]] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2 > -1) && (t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[B_SIDE][1][i_72] > -1) && (t.neighbors_for_the_internal_node[B_SIDE][1][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[4][i_72] - 1];
 							hxplus = fabs(pp.z - pb.z);
-							hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2] - 1].z);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2]);
-							Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][1][i_72]] - 1].z);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[B_SIDE][1][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[B_SIDE][1][i_72]]);
+							Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[B_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[B_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[B_SIDE][1][i_72]] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3 > -1) && (t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[B_SIDE][2][i_72] > -1) && (t.neighbors_for_the_internal_node[B_SIDE][2][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[4][i_72] - 1];
 							hxplus = fabs(pp.z - pb.z);
-							hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3] - 1].z);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3]);
-							Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][2][i_72]] - 1].z);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[B_SIDE][2][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[B_SIDE][2][i_72]]);
+							Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[B_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[B_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[B_SIDE][2][i_72]] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4 > -1) && (t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[B_SIDE][3][i_72] > -1) && (t.neighbors_for_the_internal_node[B_SIDE][3][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[4][i_72] - 1];
 							hxplus = fabs(pp.z - pb.z);
-							hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4] - 1].z);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4]);
-							Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[B_SIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][3][i_72]] - 1].z);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[B_SIDE][3][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[B_SIDE][3][i_72]]);
+							Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.neighbors_for_the_internal_node[B_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.neighbors_for_the_internal_node[B_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.neighbors_for_the_internal_node[B_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.neighbors_for_the_internal_node[B_SIDE][3][i_72]] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
 						else {
@@ -3319,60 +3353,60 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							Tzgl[nvtx_global[2][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[6][i_72] - 1] - temp_potent[nvtx_global[2][i_72] - 1]) / hz;
 							Tzgl[nvtx_global[3][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[3][i_72] - 1]) / hz;
 						}
-						if ((t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1 > -1) && (t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1 < nstop)) {
+						if ((t.neighbors_for_the_internal_node[T_SIDE][0][i_72] > -1) && (t.neighbors_for_the_internal_node[T_SIDE][0][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[4][i_72] - 1];
 							hxminus = fabs(pp.z - pb.z);
-							hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1] - 1].z);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1]);
-							Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][0][i_72]] - 1].z);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[T_SIDE][0][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[T_SIDE][0][i_72]]);
+							Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[T_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[T_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[T_SIDE][0][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2 > -1) && (t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[T_SIDE][1][i_72] > -1) && (t.neighbors_for_the_internal_node[T_SIDE][1][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[4][i_72] - 1];
 							hxminus = fabs(pp.z - pb.z);
-							hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2] - 1].z);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2]);
-							Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][1][i_72]] - 1].z);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[T_SIDE][1][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[T_SIDE][1][i_72]]);
+							Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[T_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[T_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[T_SIDE][1][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3 > -1) && (t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[T_SIDE][2][i_72] > -1) && (t.neighbors_for_the_internal_node[T_SIDE][2][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[4][i_72] - 1];
 							hxminus = fabs(pp.z - pb.z);
-							hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3] - 1].z);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3]);
-							Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][2][i_72]] - 1].z);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[T_SIDE][2][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[T_SIDE][2][i_72]]);
+							Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[T_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[T_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[T_SIDE][2][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
-						else if ((t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4 > -1) && (t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4 < nstop)) {
+						else if ((t.neighbors_for_the_internal_node[T_SIDE][3][i_72] > -1) && (t.neighbors_for_the_internal_node[T_SIDE][3][i_72] < nstop)) {
 							TOCHKA pp, pb;
 							doublereal hxminus, hxplus;
 							pp = pa_global[nvtx_global[0][i_72] - 1];
 							pb = pa_global[nvtx_global[4][i_72] - 1];
 							hxminus = fabs(pp.z - pb.z);
-							hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4] - 1].z);
-							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4]);
-							Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
-							Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[T_SIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+							hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][3][i_72]] - 1].z);
+							doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.neighbors_for_the_internal_node[T_SIDE][3][i_72]] / (lam_export[i_72] + lam_export[t.neighbors_for_the_internal_node[T_SIDE][3][i_72]]);
+							Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.neighbors_for_the_internal_node[T_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.neighbors_for_the_internal_node[T_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.neighbors_for_the_internal_node[T_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
+							Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.neighbors_for_the_internal_node[T_SIDE][3][i_72]] - 1], hxminus, hxplus); // второй порядок точности.
 
 						}
 						else {
@@ -3613,15 +3647,15 @@ void Stress2Thermal_vector_translate(TEMPER &t,
 				p1.z = p1.z + min_z;
 
 				pointerlist[i][j] = p1;
-				if (fabs(p1.x) < 1.0e-40) {
+				if (fabs(p1.x) < -1.0e-36) {
 					printf("problem x=%e\n", p1.x);
 					system("PAUSE");
 				}
-				if (fabs(p1.y) < 1.0e-40) {
+				if (fabs(p1.y) < -1.0e-36) {
 					printf("problem y=%e\n", p1.y);
 					system("PAUSE");
 				}
-				if (fabs(p1.z) < 1.0e-40) {
+				if (fabs(p1.z) < -1.0e-36) {
 					printf("problem z=%e\n", p1.z);
 					system("PAUSE");
 				}
@@ -3908,15 +3942,15 @@ void Stress2Thermal_vector_translate(TEMPER &t,
 				p1.z = p1.z + min_z;
 
 				pointerlist[i][j] = p1;
-				if (fabs(p1.x) < 1.0e-40) {
+				if (fabs(p1.x) < -1.0e-36) {
 					printf("problem x=%e\n", p1.x);
 					system("PAUSE");
 				}
-				if (fabs(p1.y) < 1.0e-40) {
+				if (fabs(p1.y) < -1.0e-36) {
 					printf("problem y=%e\n", p1.y);
 					system("PAUSE");
 				}
-				if (fabs(p1.z) < 1.0e-40) {
+				if (fabs(p1.z) < -1.0e-36) {
 					printf("problem z=%e\n", p1.z);
 					system("PAUSE");
 				}
@@ -4031,8 +4065,8 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw,
 	BLOCK* &b, integer &lb, integer &lu,
 	bool btimedep, doublereal timestep_sizenow,
 	doublereal* &uoldtimestep, doublereal* &uolddoubletimestep,
-	doublereal poweron_multiplyer_sequence, TPROP* &matlist,
-	doublereal* &t_for_Mechanical) {
+	doublereal poweron_multiplyer_sequence,
+	TPROP* &matlist, doublereal* &t_for_Mechanical) {
 
 	// btimedep==true - нестационарное моделирование,
 	// btimedep==false - стационарная задача механики.
@@ -6175,7 +6209,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw,
 	//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
 	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::CAMG_RUMBA_v0_14_SECOND_T_SOLVER) {
 		bool* boundary = nullptr;
-		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m,b,lb,w,lw, boundary, TOTALDEFORMATION);
+		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m,b,lb,w,lw, boundary, TOTALDEFORMATION, t.whot_is_block);
 	}
 	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER)  {
 		bool* boundary = nullptr;
@@ -6748,7 +6782,7 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 	doublereal** tau,
 	doublereal** &sumanb,
 	bool bmyhighorder, bool bdeltapfinish,
-	doublereal poweron_multiplier_sequence,
+	doublereal poweron_multiplier_sequence, doublereal poweron_multiplier_sequence0,
 	QuickMemVorst& m, doublereal* &rthdsd,
 	doublereal &rfluentresval, 
 	integer lu, UNION* &my_union,
@@ -8725,6 +8759,16 @@ integer icell_loc = 0;
 						  // Точность значения температуры очень сильно зависит от качества расчетной сетки.
 					  }
 				  }
+				  //if (bSIMPLErun_now_for_temperature)
+				  if (bmyconvective7248)
+				  {
+					  // Совместное решение гидродинамики и теплопередачи.
+					  //t.alpha = 0.99999;// именно пять девяток. Переполнений нет. Сходимость.
+					  //t.alpha = 0.7;
+				  }
+
+				  ///std::cout << "t.alpha=" << t.alpha << std::endl;
+				  //getchar();
 
 				  if (sourse2Dproblem != nullptr) {
 					  delete[] sourse2Dproblem;
@@ -8766,43 +8810,82 @@ integer icell_loc = 0;
                    // уравнения теплопроводности
 #pragma omp parallel for
 				   for (integer  i=0; i<t.maxbound; i++) {
+
+					   doublereal poweron_multiplier_sequence_loc = 1.0;
+
+					   if (b[t.whot_is_block[t.border_neighbor[i].iI]].ipower_time_depend == POWER_TIME_DEPEND::CONST_POWER) {
+
+						   poweron_multiplier_sequence_loc = 1.0;
+					   }
+					   else  if (b[t.whot_is_block[t.border_neighbor[i].iI]].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+
+						   poweron_multiplier_sequence_loc = poweron_multiplier_sequence0;
+					   }
+					   else {
+
+						   poweron_multiplier_sequence_loc = poweron_multiplier_sequence;
+					   }
+
 					   // Условия Дирихле:
 					   my_elmatr_quad_T3D_bound(i, t.maxbound,
-						                        t.maxelm,
-												t.border_neighbor,
-												ls, lw, w, s, 
-												t.slau_bon, 
-												true, dbeta,
-												t.nvtx, t.pa, 
-												t.prop,
-												t.prop_b, 
-												t.potent,
-												told_iter,
-												t.ptr,
-												fglobal,
-												poweron_multiplier_sequence);
+						   t.maxelm,
+						   t.border_neighbor,
+						   ls, lw, w, s,
+						   t.slau_bon,
+						   true, dbeta,
+						   t.nvtx, t.pa,
+						   t.prop,
+						   t.prop_b,
+						   t.potent,
+						   told_iter,
+						   t.ptr,
+						   fglobal,
+						   poweron_multiplier_sequence_loc);
 				   }
 
 				 
 #pragma omp parallel for
                    for (integer  i=0; i<t.maxbound; i++) {
 					   // Условия Неймана однородные и неоднородные:
+
+					   doublereal poweron_multiplier_sequence_loc = 1.0;
+
+
+					   if (b[t.whot_is_block[t.border_neighbor[i].iI]].ipower_time_depend == POWER_TIME_DEPEND::CONST_POWER) {
+
+						   poweron_multiplier_sequence_loc = poweron_multiplier_sequence0;
+					   }
+					   else  if (b[t.whot_is_block[t.border_neighbor[i].iI]].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+
+						   poweron_multiplier_sequence_loc = poweron_multiplier_sequence0;
+					   }
+					   else {
+						   poweron_multiplier_sequence_loc = poweron_multiplier_sequence;
+					   }
+
 					   my_elmatr_quad_T3D_bound(i, t.maxbound,
-						                        t.maxelm,
-												t.border_neighbor,
-												ls, lw, w, s,
-												t.slau_bon,
-												false, dbeta,
-												t.nvtx, t.pa,
-												t.prop, 
-												t.prop_b,
-												t.potent,
-												told_iter,
-												t.ptr,
-												fglobal,
-												poweron_multiplier_sequence);
+						   t.maxelm,
+						   t.border_neighbor,
+						   ls, lw, w, s,
+						   t.slau_bon,
+						   false, dbeta,
+						   t.nvtx, t.pa,
+						   t.prop,
+						   t.prop_b,
+						   t.potent,
+						   told_iter,
+						   t.ptr,
+						   fglobal,
+						   poweron_multiplier_sequence_loc);
+
 				   }
 				 
+				   for (integer i = 0; i < t.maxbound; i++) {
+					   if (fabs(t.slau_bon[i].b - 30) < 1.0e-30) {
+						  // std::cout << "b=" << t.slau_bon[i].b << " aw=" << t.slau_bon[i].aw << " ai=" << t.slau_bon[i].ai << std::endl;
+						  // getchar();
+					   }
+				   }
 
 				   imyscheme = UDS;
 				   if (bVERYStable) {
@@ -8825,34 +8908,50 @@ integer icell_loc = 0;
 #pragma omp parallel for
 			       for (integer  i=0; i<t.maxelm; i++) {
 					   if (toldtimestep==nullptr) {
+
+						   doublereal poweron_multiplier_sequence_loc = 1.0;
+
+						   if (b[t.whot_is_block[i]].ipower_time_depend == POWER_TIME_DEPEND::CONST_POWER) {
+
+							   poweron_multiplier_sequence_loc = 1.0;
+						   }
+						   else  if (b[t.whot_is_block[i]].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+
+							   poweron_multiplier_sequence_loc = poweron_multiplier_sequence0;
+						   }
+						   else {
+							   poweron_multiplier_sequence_loc = poweron_multiplier_sequence;
+						   }
+
 						   my_elmatr_quad_T3D(i, t.slau,
-						                  t.slau_bon,
-										  btimedep, // стационарный или нестационарный
-										  tauparam, // размер шага по времени.
-							              imyscheme, // UDS BULG EXP2 QUICK UNEVENQUICK UNEVEN_WACEB
-										  t.nvtx,
-										  t.potent, 
-										  t.pa, t.prop,
-										  t.prop_b,
-										  t.neighbors_for_the_internal_node, 
-										  t.alpha, 
-										  dbeta, 
-										  bconvective,
-										  t.Sc[i], 
-                                          t.ipower_time_depend[i],
-										  t.maxelm,
-										  flow_interior,
-										  t.ptr,
-										  t.border_neighbor,
-										  ls,fglobal,
-										  t.binternalsource,
-										  nullptr, // поле температур с предыдущего временного слоя
-										  b,lb,
-										  matlist,
-										  inumiter, s, 
-                                          poweron_multiplier_sequence,
-										  t.ilevel_alice,
-							              t.whot_is_block);
+							   t.slau_bon,
+							   btimedep, // стационарный или нестационарный
+							   tauparam, // размер шага по времени.
+							   imyscheme, // UDS BULG EXP2 QUICK UNEVENQUICK UNEVEN_WACEB
+							   t.nvtx,
+							   t.potent,
+							   t.pa, t.prop,
+							   t.prop_b,
+							   t.neighbors_for_the_internal_node,
+							   t.alpha,
+							   dbeta,
+							   bconvective,
+							   t.Sc[i],
+							   t.ipower_time_depend[i],
+							   t.maxelm,
+							   flow_interior,
+							   t.ptr,
+							   t.border_neighbor,
+							   ls, fglobal,
+							   t.binternalsource,
+							   nullptr, // поле температур с предыдущего временного слоя
+							   b, lb,
+							   matlist,
+							   inumiter, s,
+							   poweron_multiplier_sequence_loc,
+							   t.ilevel_alice,
+							   t.whot_is_block,
+							   t.maxbound);
 				
 					   }
 					   else
@@ -8861,34 +8960,48 @@ integer icell_loc = 0;
 							   //printf("%d %d\n", t.ipower_time_depend[i], b[t.whot_is_block[i]].ipower_time_depend);
 							   //getchar();
 						   //}
-					   my_elmatr_quad_T3D(i, t.slau,
-						                  t.slau_bon,
-										  btimedep, // стационарный или нестационарный
-										  tauparam, // размер шага по времени.
-						                  imyscheme, // UDS BULG EXP2 QUICK UNEVENQUICK UNEVEN_WACEB
-										  t.nvtx,
-										  t.potent, 
-										  t.pa, t.prop,
-										  t.prop_b,
-										  t.neighbors_for_the_internal_node, 
-										  t.alpha, 
-										  dbeta, 
-										  bconvective,
-										  t.Sc[i], 
-                                          t.ipower_time_depend[i],
-										  t.maxelm,
-										  flow_interior,
-										  t.ptr,
-										  t.border_neighbor,
-										  ls,fglobal,
-										  t.binternalsource,
-										  toldtimestep, // поле температур с предыдущего временного слоя
-										  b,lb,
-										  matlist,
-										  inumiter, s, 
-										  poweron_multiplier_sequence,
-										  t.ilevel_alice,
-						                  t.whot_is_block);
+
+						   doublereal poweron_multiplier_sequence_loc = 1.0;
+
+						   if (b[t.whot_is_block[i]].ipower_time_depend == POWER_TIME_DEPEND::CONST_POWER) {
+							   poweron_multiplier_sequence_loc = 1.0;
+						   }
+						   else if (b[t.whot_is_block[i]].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+							   poweron_multiplier_sequence_loc = poweron_multiplier_sequence0;
+						   }
+						   else {
+							   poweron_multiplier_sequence_loc = poweron_multiplier_sequence;							  
+						   }
+
+						   my_elmatr_quad_T3D(i, t.slau,
+							   t.slau_bon,
+							   btimedep, // стационарный или нестационарный
+							   tauparam, // размер шага по времени.
+							   imyscheme, // UDS BULG EXP2 QUICK UNEVENQUICK UNEVEN_WACEB
+							   t.nvtx,
+							   t.potent,
+							   t.pa, t.prop,
+							   t.prop_b,
+							   t.neighbors_for_the_internal_node,
+							   t.alpha,
+							   dbeta,
+							   bconvective,
+							   t.Sc[i],
+							   t.ipower_time_depend[i],
+							   t.maxelm,
+							   flow_interior,
+							   t.ptr,
+							   t.border_neighbor,
+							   ls, fglobal,
+							   t.binternalsource,
+							   toldtimestep, // поле температур с предыдущего временного слоя
+							   b, lb,
+							   matlist,
+							   inumiter, s,
+							   poweron_multiplier_sequence_loc,
+							   t.ilevel_alice,
+							   t.whot_is_block,
+							   t.maxbound);
 					   }
 				   }
                    
@@ -8974,8 +9087,8 @@ integer icell_loc = 0;
 							   f.slau_bon,
 							   //doublereal** diag_coef,
 							   //integer iVar,
-							   //bool btimedep,
-							   //doublereal tauparam,
+							   btimedep,
+							   tauparam,
 							   f.ptr,
 							   f.nvtx,
 							   f.potent,
@@ -8991,6 +9104,7 @@ integer icell_loc = 0;
 							   //doublereal dgz,
 							   //doublereal dbeta, 
 							   imyscheme,
+							   f.turbulent_parameters_old_time_step[TURBULENT_NUSHA_OLD_TIME_STEP],
 							   //bool bBussineskApproach,
 							   //doublereal temp_ref,
 							   //bool bfirst_start,
@@ -9004,7 +9118,10 @@ integer icell_loc = 0;
 							   //doublereal &sumanb,
 							   t.ilevel_alice,
 							   f.rdistWall,
-							   f.SInvariantStrainRateTensor
+							   f.SInvariantStrainRateTensor,
+							   f.center_coord,
+							   f.volume, 
+							   f.maxbound
 						   );
 					   }
 
@@ -9059,9 +9176,19 @@ integer icell_loc = 0;
 					   // SST Ментера такая же как и для аппроксимации компонент 
 					   // вектора скорости.
 
-					   // Выбор делается из графического интерфейса пользователя !
-					   imyscheme = iFLOWScheme; // 31 07 2015
-
+					   if (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_STEADY) {
+						   if (inumiter < 5) {
+							   imyscheme = UDS;
+						   }
+						   else {
+							   // Выбор делается из графического интерфейса пользователя !
+							   imyscheme = iFLOWScheme; // 31 07 2015
+						   }
+					   }
+					   else {
+						   // Выбор делается из графического интерфейса пользователя !
+						   imyscheme = iFLOWScheme; // 31 07 2015
+					   }
 
 					   
 
@@ -9079,8 +9206,8 @@ integer icell_loc = 0;
 							   f.slau_bon,
 							   //doublereal** diag_coef,
 							   //integer iVar,
-							   //bool btimedep,
-							   //doublereal tauparam,
+							   btimedep,
+							   tauparam,
 							   f.ptr,
 							   f.nvtx,
 							   f.potent,
@@ -9096,6 +9223,7 @@ integer icell_loc = 0;
 							   //doublereal dgz,
 							   //doublereal dbeta, 
 							   imyscheme,
+							   f.turbulent_parameters_old_time_step[TURBULENT_KINETIK_ENERGY_MENTER_SST_OLD_TIME_STEP],
 							   //bool bBussineskApproach,
 							   //doublereal temp_ref,
 							   //bool bfirst_start,
@@ -9110,7 +9238,10 @@ integer icell_loc = 0;
 							   t.ilevel_alice,
 							   f.rdistWall,
 							   f.SInvariantStrainRateTensor,
-							   brthdsd_ON
+							   brthdsd_ON,
+							   f.center_coord,
+							   f.volume,
+							   f.maxbound
 						   );
 					   }
 
@@ -9175,8 +9306,19 @@ integer icell_loc = 0;
 					   // SST Ментера такая же как и для аппроксимации компонент 
 					   // вектора скорости.
 
-					   // Выбор делается из графического интерфейса пользователя !
-					   imyscheme = iFLOWScheme; // 31 07 2015
+					   if (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_STEADY) {
+						   if (inumiter < 5) {
+							   imyscheme = UDS;
+						   }
+						   else {
+							   // Выбор делается из графического интерфейса пользователя !
+							   imyscheme = iFLOWScheme; // 31 07 2015
+						   }
+					   }
+					   else {
+						   // Выбор делается из графического интерфейса пользователя !
+						   imyscheme = iFLOWScheme; // 31 07 2015
+					   }
 
 					   
 
@@ -9192,8 +9334,8 @@ integer icell_loc = 0;
 							   f.slau_bon,
 							   //doublereal** diag_coef,
 							   //integer iVar,
-							   //bool btimedep,
-							   //doublereal tauparam,
+							   btimedep,
+							   tauparam,
 							   f.ptr,
 							   f.nvtx,
 							   f.potent,
@@ -9209,6 +9351,7 @@ integer icell_loc = 0;
 							   //doublereal dgz,
 							   //doublereal dbeta, 
 							   imyscheme,
+							   f.turbulent_parameters_old_time_step[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_OLD_TIME_STEP],
 							   //bool bBussineskApproach,
 							   //doublereal temp_ref,
 							   //bool bfirst_start,
@@ -9223,7 +9366,10 @@ integer icell_loc = 0;
 							   t.ilevel_alice,
 							   f.rdistWall,
 							   f.SInvariantStrainRateTensor,
-							   brthdsd_ON1
+							   brthdsd_ON1,
+							   f.center_coord,
+							   f.volume,
+							   f.maxbound
 						   );
 					   }
 
@@ -9309,7 +9455,10 @@ integer icell_loc = 0;
 									//doublereal &sumanb,
 									t.ilevel_alice,
 									f.rdistWall,
-									f.SInvariantStrainRateTensor
+									f.SInvariantStrainRateTensor,
+									f.center_coord,
+									f.volume,
+									f.maxbound
 								);
 							}
 
@@ -9387,7 +9536,10 @@ integer icell_loc = 0;
 								//doublereal &sumanb,
 								t.ilevel_alice,
 								f.rdistWall,
-								f.SInvariantStrainRateTensor
+								f.SInvariantStrainRateTensor,
+								f.center_coord,
+								f.volume,
+								f.maxbound
 							);
 						}
 
@@ -9395,7 +9547,9 @@ integer icell_loc = 0;
 						break;
 
 
-		default: if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
+		default: if ((iVar == VELOCITY_X_COMPONENT) ||
+			(iVar == VELOCITY_Y_COMPONENT) ||
+			(iVar == VELOCITY_Z_COMPONENT)) {
 
 			// симметризация СЛАУ
 			// Теперь симметризация матрицы производится внутри
@@ -9571,7 +9725,7 @@ integer icell_loc = 0;
 
 					 
 
-					  #ifdef _OPENMP
+#ifdef _OPENMP
 
 					  if (bparallelizm_old) {
 						  printf("error bparallelizm_old\n");
@@ -9742,6 +9896,20 @@ integer icell_loc = 0;
 					  // Выбор делается из графического интерфейса пользователя !
 					  imyscheme=iFLOWScheme; // 31 07 2015
 
+					  if (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_STEADY) {
+						  if (f.iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
+							  if (inumiter < 5) {
+								  // Начальные распределения физических величин очень далеки от значений имеющих
+								  // физический смысл. Поэтому для решения задачи с моделью SST и High Resolution Scheme для
+								  // аппроксимации конвекции нужно сделать пять итераций стабильной схемой так чтобы рассчитываемые величины
+								  // приняли физичные начальные распределения, которые будут существенно уточнены в ходе дальнейшего
+								  // итерирования с уже включенной High Resolution Scheme.
+
+								  imyscheme = UDS;
+							  }
+						  }
+					  }
+
 #ifdef _OPENMP
 
 					  if (bparallelizm_old) {
@@ -9802,7 +9970,10 @@ integer icell_loc = 0;
 									  f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 									  bVERYStable,
 									  sumanb[iVar][i],
-									  t.ilevel_alice);
+									  t.ilevel_alice,
+									  f.center_coord,
+									  f.volume,
+									  f.maxbound);
 							  }
 							  else
 							  {
@@ -9835,7 +10006,10 @@ integer icell_loc = 0;
 									  b, lb, matlist,
 									  f.mf, bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 									  sumanb[iVar][i],
-									  t.ilevel_alice);
+									  t.ilevel_alice,
+									  f.center_coord,
+									  f.volume,
+									  f.maxbound);
 							  }
 						  }
 					  
@@ -9921,7 +10095,10 @@ integer icell_loc = 0;
 											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
 											 sumanb[iVar][iPloc],
-							                 t.ilevel_alice);
+							                 t.ilevel_alice,
+							                 f.center_coord,
+							                 f.volume,
+							                 f.maxbound);
 						  }
 						  else
 						  {
@@ -9953,7 +10130,10 @@ integer icell_loc = 0;
 											 b,lb, matlist,
 											 f.mf,bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 sumanb[iVar][iPloc],
-							                 t.ilevel_alice);
+							                 t.ilevel_alice,
+							                 f.center_coord,
+							                 f.volume,
+							                 f.maxbound);
 						  }
 				      }
 						}
@@ -10002,7 +10182,10 @@ integer icell_loc = 0;
 											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
 											 sumanb[iVar][iPloc],
-							                 t.ilevel_alice);
+							                 t.ilevel_alice,
+							                 f.center_coord,
+							                 f.volume,
+							                 f.maxbound);
 						  }
 						  else
 						  {
@@ -10034,7 +10217,10 @@ integer icell_loc = 0;
 											 b,lb, matlist,
 											 f.mf,bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 sumanb[iVar][iPloc],
-							                 t.ilevel_alice);
+							                 t.ilevel_alice,
+							                 f.center_coord,
+							                 f.volume,
+							                 f.maxbound);
 						  }
 				      }
 						}
@@ -10085,7 +10271,10 @@ TOCHKA p;
 											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
 											 sumanb[iVar][iPloc],
-							                 t.ilevel_alice);
+							                 t.ilevel_alice,
+							                 f.center_coord,
+							                 f.volume,
+							                 f.maxbound);
 						  }
 						  else
 						  {
@@ -10117,7 +10306,10 @@ TOCHKA p;
 											 b,lb, matlist,
 											 f.mf,bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 sumanb[iVar][iPloc],
-							                 t.ilevel_alice);
+							                 t.ilevel_alice,
+							                 f.center_coord,
+							                 f.volume,
+							                 f.maxbound);
 						  }
 				      }
 						}
@@ -10158,10 +10350,12 @@ TOCHKA p;
 						  // Сборка строк матрицы для внутренних КО.
 #pragma omp parallel for
 						  for (integer i = 0; i<f.maxelm; i++) {
-							  TOCHKA p;
-							  center_cord3D(i, f.nvtx, f.pa, p, 100);
+							  //TOCHKA p;
+							  //center_cord3D(i, f.nvtx, f.pa, p, 100);
 							  integer ib; // номер искомого блока
-							  in_model_flow(p, ib, b, lb);
+							  //in_model_flow(p, ib, b, lb);
+
+							  ib = t.whot_is_block[f.ptr[i]];
 
 							  bool bBussineskApproach = false;
 							  bBussineskApproach = matlist[b[ib].imatid].bBussineskApproach;
@@ -10196,7 +10390,10 @@ TOCHKA p;
 									  f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 									  bVERYStable,
 									  sumanb[iVar][i],
-									  t.ilevel_alice);
+									  t.ilevel_alice,
+									  f.center_coord,
+									  f.volume,
+									  f.maxbound);
 							  }
 							  else
 							  {
@@ -10228,7 +10425,10 @@ TOCHKA p;
 									  b, lb, matlist,
 									  f.mf, bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 									  sumanb[iVar][i],
-									  t.ilevel_alice);
+									  t.ilevel_alice,
+									  f.center_coord,
+									  f.volume,
+									  f.maxbound);
 							  }
 						  }
 					  
@@ -10267,10 +10467,9 @@ TOCHKA p;
 
                       // Сборка строк матрицы для внутренних КО.
 				      for (integer i=0; i<f.maxelm; i++) { 
-						  TOCHKA p;
-						  center_cord3D(i,f.nvtx,f.pa,p,100);
+						  
 						  integer ib; // номер искомого блока
-						  in_model_flow(p,ib,b,lb);
+						  ib = t.whot_is_block[f.ptr[i]];
 						  
 						  bool bBussineskApproach=false;
 						  bBussineskApproach=matlist[b[ib].imatid].bBussineskApproach;
@@ -10457,43 +10656,49 @@ TOCHKA p;
 	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar==NUSHA) || (iVar==PAM)||
 		(iVar == TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS)||(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-		for (integer i_1 = 0; i_1 < f.maxelm; i_1++) {
-			integer iVar_in = iVar;
-			if (iVar == NUSHA) iVar_in = NUSHA_SL;
-			if (iVar == TURBULENT_KINETIK_ENERGY) iVar_in = TURBULENT_KINETIK_ENERGY_SL;
-			if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) iVar_in = TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL;
-			if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) iVar_in = TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL;
-			if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) iVar_in = TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL;
-			if (f.slau[iVar_in][i_1].b != f.slau[iVar_in][i_1].b) {
-				switch (iVar) {
-				case VELOCITY_X_COMPONENT: printf("VX problem\n");
-					break;
-				case VELOCITY_Y_COMPONENT: printf("VY problem\n");
-					break;
-				case VELOCITY_Z_COMPONENT: printf("VZ problem\n");
-					break;
-				case PAM: printf("PAM problem\n");
-					break;
-				case NUSHA: printf("NUSHA problem\n");
-					break;
-				case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY problem\n");
-					break;
-				case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA problem\n");
-					break;
-				case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_Standart K-EPSILON problem\n");
-					break;
-				case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_Standart K-EPSILON problem\n");
-					break;
-				case TEMP: printf("TEMP problem\n");
-					break;
-				}
-				printf("POST ASSEMBLE CONTROL b part.\n");
-				printf("NAN or INF in premeshin.txt file. Power in control volume= %lld is undefined...\n", i_1);
-				printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
-				system("PAUSE");
-				exit(1);
-			}
-		}
+		
+			{
+		
+				integer iVar_in = iVar;
+				if (iVar == NUSHA) iVar_in = NUSHA_SL;
+				if (iVar == TURBULENT_KINETIK_ENERGY) iVar_in = TURBULENT_KINETIK_ENERGY_SL;
+				if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) iVar_in = TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL;
+				if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) iVar_in = TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL;
+				if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) iVar_in = TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL;
+
+		    for (integer i_1 = 0; i_1 < f.maxelm; i_1++) {
+			
+			     if (f.slau[iVar_in][i_1].b != f.slau[iVar_in][i_1].b) {
+			     	switch (iVar) {
+				      case VELOCITY_X_COMPONENT: printf("VX problem\n");
+				    	break;
+				      case VELOCITY_Y_COMPONENT: printf("VY problem\n");
+				    	break;
+				      case VELOCITY_Z_COMPONENT: printf("VZ problem\n");
+					    break;
+				      case PAM: printf("PAM problem\n");
+				    	break;
+				      case NUSHA: printf("NUSHA problem\n");
+					    break;
+				      case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY problem\n");
+					    break;
+				      case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA problem\n");
+				     	break;
+			          case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_Standart K-EPSILON problem\n");
+				    	break;
+				      case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_Standart K-EPSILON problem\n");
+					    break;
+			          case TEMP: printf("TEMP problem\n");
+					    break;
+				    }
+				    printf("POST ASSEMBLE CONTROL b part.\n");
+			    	printf("NAN or INF in premeshin.txt file. Power in control volume= %lld is undefined...\n", i_1);
+			    	printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
+			    	system("PAUSE");
+			    	exit(1);
+			     }
+	    	}
+	    }
 	}
 
 	/*doublereal *rthdsd=nullptr; // правая часть системы уравнений
@@ -10814,12 +11019,10 @@ TOCHKA p;
 		   }
 	   }
 
-       // Для граничных узлов расчётной сетки:
-#pragma omp parallel for
-	   for (integer i=0; i<f.maxbound; i++) {
+	   {
 
-           // К граничным условиям Дирихле релаксации применять ненужно ? Это спорный вопрос.
-           // Пока пробный запуск будет сделан в случае когда к граничным условиям Дирихле применяется нижняя релаксация.
+		   // К граничным условиям Дирихле релаксации применять ненужно ? Это спорный вопрос.
+		   // Пока пробный запуск будет сделан в случае когда к граничным условиям Дирихле применяется нижняя релаксация.
 		   integer iVar_in = iVar;
 		   if (iVar == NUSHA) iVar_in = NUSHA_SL;
 		   if (iVar == TURBULENT_KINETIK_ENERGY) iVar_in = TURBULENT_KINETIK_ENERGY_SL;
@@ -10827,128 +11030,132 @@ TOCHKA p;
 		   if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) iVar_in = TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL;
 		   if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) iVar_in = TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL;
 
-		   if (f.slau_bon[iVar_in][i].iI>-1) {
-			   // Если условие Неймана то нижняя релаксация:
+		   // Для граничных узлов расчётной сетки:
+#pragma omp parallel for
+		   for (integer i = 0; i < f.maxbound; i++) {			  
 
-			   /*
-		       switch (iVar) {
-			   case VX: if (!bBiCGStabSaad) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw/f.alpha[iVar], f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
-						 if (!bBiCGStabSaad) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw/f.alpha[iVar]);  }
-				         rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b+(1-f.alpha[iVar])*f.slau_bon[iVar][i].aw*f.potent[VXCOR][f.slau_bon[iVar][i].iW]/f.alpha[iVar];
-				         break;
-			   case VY: if (!bBiCGStabSaad) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw/f.alpha[iVar], f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true);}
-						 if (!bBiCGStabSaad) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw/f.alpha[iVar]);}
-                         rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b+(1-f.alpha[iVar])*f.slau_bon[iVar][i].aw*f.potent[VYCOR][f.slau_bon[iVar][i].iW]/f.alpha[iVar];
-				         break;
-			   case VZ: if (!bBiCGStabSaad) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw/f.alpha[iVar], f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true);}
-						 if (!bBiCGStabSaad) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw/f.alpha[iVar]);}
-                         rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b+(1-f.alpha[iVar])*f.slau_bon[iVar][i].aw*f.potent[VZCOR][f.slau_bon[iVar][i].iW]/f.alpha[iVar];
-				         break;
-			       case PAM: // PRESSURE: 
-					   if (!bBiCGStabSaad) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true);}
-					   if (!bBiCGStabSaad) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
-			             rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
-				         break;
-		       } // switch
-			   */
+			   if (f.slau_bon[iVar_in][i].iI > -1) {
+				   // Если условие Неймана то нижняя релаксация:
 
-			   //*
-			   // Граничные значения не должны подвергаться нижней релаксации.
-			   // Был проведён вычислительныйэксперимент и было выяснено, что невязки опускаются ниже в случае
-			   // если в граничном условии отсутствует нижняя релаксация. Функция equation3DtoCRS исправлена согласованным образом !.
-			   // Но вообще в принципе особо страшного не было и в первом варианте !.
-			   switch (iVar) {
-			   case VELOCITY_X_COMPONENT: if ((!bBiCGStabSaad)/* || (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
-						if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
-				         rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
-				         break;
-			   case VELOCITY_Y_COMPONENT: if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
-						if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
-                         rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
-				         break;
-			   case VELOCITY_Z_COMPONENT: if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
-						if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
-                         rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
-				         break;
-			   case NUSHA: // Модифицированная кинематическая турбулентная вязкость.
-				        rthdsd[f.slau_bon[NUSHA_SL][i].iW] = f.slau_bon[NUSHA_SL][i].b;
-				        break;
-			   case TURBULENT_KINETIK_ENERGY: // Кинетическая энергия турбулентных пульсаций.
-				   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].b;
-				   break;
-			   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: // Удельная скорость диссипации кинетической энергии турбулентных пульсаций.
-				   rthdsd[f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].iW] = f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].b;
-				   break;
-			   case TURBULENT_KINETIK_ENERGY_STD_K_EPS: // Кинетическая энергия турбулентных пульсаций..
-				   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].b;
-				   break;
-			   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: // Скорость диссипации кинетической энергии турбулентных пульсаций.
-				   rthdsd[f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].b;
-				   break;
-			   case PAM: // PRESSURE: 
+				   /*
+				   switch (iVar) {
+				   case VX: if (!bBiCGStabSaad) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw/f.alpha[iVar], f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
+							 if (!bBiCGStabSaad) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw/f.alpha[iVar]);  }
+							 rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b+(1-f.alpha[iVar])*f.slau_bon[iVar][i].aw*f.potent[VXCOR][f.slau_bon[iVar][i].iW]/f.alpha[iVar];
+							 break;
+				   case VY: if (!bBiCGStabSaad) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw/f.alpha[iVar], f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true);}
+							 if (!bBiCGStabSaad) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw/f.alpha[iVar]);}
+							 rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b+(1-f.alpha[iVar])*f.slau_bon[iVar][i].aw*f.potent[VYCOR][f.slau_bon[iVar][i].iW]/f.alpha[iVar];
+							 break;
+				   case VZ: if (!bBiCGStabSaad) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw/f.alpha[iVar], f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true);}
+							 if (!bBiCGStabSaad) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw/f.alpha[iVar]);}
+							 rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b+(1-f.alpha[iVar])*f.slau_bon[iVar][i].aw*f.potent[VZCOR][f.slau_bon[iVar][i].iW]/f.alpha[iVar];
+							 break;
+					   case PAM: // PRESSURE:
+						   if (!bBiCGStabSaad) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true);}
+						   if (!bBiCGStabSaad) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
+							 rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
+							 break;
+				   } // switch
+				   */
+
+				   //*
+				   // Граничные значения не должны подвергаться нижней релаксации.
+				   // Был проведён вычислительныйэксперимент и было выяснено, что невязки опускаются ниже в случае
+				   // если в граничном условии отсутствует нижняя релаксация. Функция equation3DtoCRS исправлена согласованным образом !.
+				   // Но вообще в принципе особо страшного не было и в первом варианте !.
+				   switch (iVar) {
+				   case VELOCITY_X_COMPONENT: if ((!bBiCGStabSaad)/* || (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
+											if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
+											rthdsd[f.slau_bon[iVar][i].iW] = f.slau_bon[iVar][i].b;
+											break;
+				   case VELOCITY_Y_COMPONENT: if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
+											if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
+											rthdsd[f.slau_bon[iVar][i].iW] = f.slau_bon[iVar][i].b;
+											break;
+				   case VELOCITY_Z_COMPONENT: if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
+											if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
+											rthdsd[f.slau_bon[iVar][i].iW] = f.slau_bon[iVar][i].b;
+											break;
+				   case NUSHA: // Модифицированная кинематическая турбулентная вязкость.
+					   rthdsd[f.slau_bon[NUSHA_SL][i].iW] = f.slau_bon[NUSHA_SL][i].b;
+					   break;
+				   case TURBULENT_KINETIK_ENERGY: // Кинетическая энергия турбулентных пульсаций.
+					   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].b;
+					   break;
+				   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: // Удельная скорость диссипации кинетической энергии турбулентных пульсаций.
+					   rthdsd[f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].iW] = f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].b;
+					   break;
+				   case TURBULENT_KINETIK_ENERGY_STD_K_EPS: // Кинетическая энергия турбулентных пульсаций..
+					   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].b;
+					   break;
+				   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: // Скорость диссипации кинетической энергии турбулентных пульсаций.
+					   rthdsd[f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].b;
+					   break;
+				   case PAM: // PRESSURE: 
 					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
 					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
-			             rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
-				         break;
-		       } // switch
-			   //*/
-		   }
-		   else {
-			   // Если стоит условие Дирихле:
+					   rthdsd[f.slau_bon[iVar][i].iW] = f.slau_bon[iVar][i].b;
+					   break;
+				   } // switch
+				   //*/
+			   }
+			   else {
+				   // Если стоит условие Дирихле:
 
-               switch (iVar) {
-			   case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT:case VELOCITY_Z_COMPONENT:
-				   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
-						if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
-				         rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
+				   switch (iVar) {
+				   case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT:case VELOCITY_Z_COMPONENT:
+					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
+					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
+					   rthdsd[f.slau_bon[iVar][i].iW] = f.slau_bon[iVar][i].b;
 #if doubleintprecision == 1
-						 //printf("%lld, eto ob=%lld \n",i, f.slau_bon[iVar][i].iW); getchar(); // debug
+					   //printf("%lld, eto ob=%lld \n",i, f.slau_bon[iVar][i].iW); getchar(); // debug
 #else
-						 //printf("%d, eto ob=%d \n",i, f.slau_bon[iVar][i].iW); getchar(); // debug
+					   //printf("%d, eto ob=%d \n",i, f.slau_bon[iVar][i].iW); getchar(); // debug
 #endif
-						 
-                         /* // Граничные узлы не подвергаются нижней релаксации 
+
+						 /* // Граничные узлы не подвергаются нижней релаксации
 						 if (f.slau_bon[iVar][i].iW==13671) {
 							 printf("in=%e, nominal=%e\n",f.potent[VXCOR][13671],f.potent[VXCOR][f.slau_bon[iVar][i].iW]);
-	                         getchar();
+							 getchar();
 						 }*/
-				   break;			                              
-			   case NUSHA: // Модифицированная кинематическая турбулентная вязкость.
-				   rthdsd[f.slau_bon[NUSHA_SL][i].iW] = f.slau_bon[NUSHA_SL][i].b;
-				   break;
-			   case TURBULENT_KINETIK_ENERGY: // Кинетическая энергия турбулентных пульсаций.
-				   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].b;
-				   break;
-			   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: // Удельная скорость диссипации кинетической энергии турбулентных пульсаций.
-				   rthdsd[f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].iW] = f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].b;
-				   break;
-			   case TURBULENT_KINETIK_ENERGY_STD_K_EPS: // Кинетическая энергия турбулентных пульсаций.
-				   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].b;
-				   break;
-			   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: // Скорость диссипации кинетической энергии турбулентных пульсаций.
-				   rthdsd[f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].b;
-				   break;
-			     case PAM: // PRESSURE: 
-					 if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
-					 if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
-			             rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
-				         break;
-		       } // switch
+					   break;
+				   case NUSHA: // Модифицированная кинематическая турбулентная вязкость.
+					   rthdsd[f.slau_bon[NUSHA_SL][i].iW] = f.slau_bon[NUSHA_SL][i].b;
+					   break;
+				   case TURBULENT_KINETIK_ENERGY: // Кинетическая энергия турбулентных пульсаций.
+					   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].b;
+					   break;
+				   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: // Удельная скорость диссипации кинетической энергии турбулентных пульсаций.
+					   rthdsd[f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].iW] = f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].b;
+					   break;
+				   case TURBULENT_KINETIK_ENERGY_STD_K_EPS: // Кинетическая энергия турбулентных пульсаций.
+					   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].b;
+					   break;
+				   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: // Скорость диссипации кинетической энергии турбулентных пульсаций.
+					   rthdsd[f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].b;
+					   break;
+				   case PAM: // PRESSURE: 
+					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
+					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
+					   rthdsd[f.slau_bon[iVar][i].iW] = f.slau_bon[iVar][i].b;
+					   break;
+				   } // switch
 
-		   }
-
-		   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) {
-               const doublereal nonzeroEPS=1e-37; // для отделения вещественного нуля
-
-			   if ((f.slau_bon[iVar_in][i].iI>-1) && (fabs(f.slau_bon[iVar_in][i].ai) > nonzeroEPS)) {
-				   addelmsimplesparse(sparseM, -f.slau_bon[iVar_in][i].ai, f.slau_bon[iVar_in][i].iW, f.slau_bon[iVar_in][i].iI, true);
-                   setValueIMatrix(&sparseS, f.slau_bon[iVar_in][i].iW, f.slau_bon[iVar_in][i].iI, -f.slau_bon[iVar_in][i].ai);
-				   // if (iVar==PAM) printf("neiman...\n"); // debug
 			   }
-		   }
 
-	   } // for
+			   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) {
+				   const doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
 
+				   if ((f.slau_bon[iVar_in][i].iI > -1) && (fabs(f.slau_bon[iVar_in][i].ai) > nonzeroEPS)) {
+					   addelmsimplesparse(sparseM, -f.slau_bon[iVar_in][i].ai, f.slau_bon[iVar_in][i].iW, f.slau_bon[iVar_in][i].iI, true);
+					   setValueIMatrix(&sparseS, f.slau_bon[iVar_in][i].iW, f.slau_bon[iVar_in][i].iI, -f.slau_bon[iVar_in][i].ai);
+					   // if (iVar==PAM) printf("neiman...\n"); // debug
+				   }
+			   }
+
+		   } // for
+	   }
 	   
 	   if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar==NUSHA) || (iVar==PAM)||
 		   (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
@@ -11210,7 +11417,15 @@ TOCHKA p;
 					//addelmsimplesparse(sparseM, t.slau_bon[i].aw/t.alpha, t.slau_bon[i].iW, t.slau_bon[i].iW, true);
 					//setValueIMatrix(&sparseS, t.slau_bon[i].iW, t.slau_bon[i].iW, t.slau_bon[i].aw/t.alpha);
 				}
-		         rthdsd[t.slau_bon[i].iW]=t.slau_bon[i].b;				
+		         rthdsd[t.slau_bon[i].iW]=t.slau_bon[i].b;
+				 //if (fabs(t.slau_bon[i].b - 60) < 1.0e-30) {
+					 //std::cout << t.slau_bon[i].iW << " 60C\n";
+					// system("PAUSE");
+				 //}
+				// if (fabs(t.slau_bon[i].b - 30) < 1.0) {
+					// printf("i=%d %e iW=%d iI=%d %e %e",i, t.slau_bon[i].b, t.slau_bon[i].iW, t.slau_bon[i].iI, t.slau_bon[i].ai, t.slau_bon[i].aw);
+					 //system("PAUSE");
+				 //}
 			    //rthdsd[t.slau_bon[i].iW] = t.slau_bon[i].b + (1 - t.alpha)*t.slau_bon[i].aw*t.potent[t.slau_bon[i].iW] / t.alpha;
 
 				 if (!bBiCGStabSaad) {
@@ -11240,7 +11455,7 @@ TOCHKA p;
 				}
 			}
 
-			radiosity_patch_for_vacuum_Prism_Object_(rthdsd, b, lb, t.maxelm);
+			radiosity_patch_for_vacuum_Prism_Object_(rthdsd, b, lb, t.maxelm, t.whot_is_block);
 
             //printM_and_CSIR(sparseM, t.maxelm + t.maxbound);
 			
@@ -11341,7 +11556,12 @@ TOCHKA p;
          //for (integer i=0; i<230000; i++) { // debug
 		// Убрал инициализацию нулём 9 августа 2016 года.
 		// Обязательно нужна инициализация нулем и никакой нижней релаксации быть недолжно.
-		 for (integer i=0; i<(f.maxelm+f.maxbound); i++) f.potent[PAM][i]=0.0;
+		const integer isize = (f.maxelm + f.maxbound);
+
+#pragma omp parallel for
+		for (integer i = 0; i < isize; i++) {
+			f.potent[PAM][i] = 0.0;
+		}
 		 integer maxiter=2600; //2000 120
 		 doublereal *val=nullptr;
          integer *col_ind=nullptr, *row_ptr=nullptr;
@@ -11509,7 +11729,7 @@ TOCHKA p;
 				              delete val; delete col_ind; delete row_ptr;
 						      simplesparsefree(sparseM,(f.maxelm+f.maxbound));
 						  }
-						 Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0,PAM, m, f.bLR1free,b,lb,f.ifrontregulationgl,f.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter,color,dist_max,w,lw);
+						 Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0,PAM, m, f.bLR1free,b,lb,f.ifrontregulationgl,f.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter,color,dist_max,w,lw,t.whot_is_block);
 				 break;
 			 }
 			
@@ -11585,7 +11805,7 @@ TOCHKA p;
 						       delete val; delete col_ind; delete row_ptr;
 						       simplesparsefree(sparseM, (f.maxelm + f.maxbound));
 					        }
-					        Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0, PAM, m, f.bLR1free, b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter, color, dist_max, w, lw);
+					        Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0, PAM, m, f.bLR1free, b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 				        }
 						break;
 			 
@@ -12127,38 +12347,38 @@ TOCHKA p;
 								f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], f.maxelm, f.maxbound,
 								rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], maxiter,
 								f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], iVar, m, false, b, lb,
-								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw);
+								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 						}
 						else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
 							Bi_CGStab(&sparseS, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
 								f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
 								f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS],
 								maxiter, f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], 
-								iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw);
+								iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 						}
 						else
 						if (iVar == TURBULENT_KINETIK_ENERGY) {
 							Bi_CGStab(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], 
 								f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound, rthdsd,
 								f.potent[TURBULENT_KINETIK_ENERGY], maxiter, f.alpha[TURBULENT_KINETIK_ENERGY_SL],
-								iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw);
+								iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 						}
 						else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
 							Bi_CGStab(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], 
 								f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound, rthdsd,
 								f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], maxiter, 
 								f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], iVar, m, false, b, lb, 
-								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw);
+								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 						}
 						else if (iVar==NUSHA) {
 							Bi_CGStab(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, 
 								rthdsd, f.potent[NUSHA], maxiter, f.alpha[NUSHA_SL], iVar, m, false, b, lb, 
-								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw);
+								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 						}
 						else {
 							Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, 
 								rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false, b, lb, 
-								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw);
+								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 						}
 					}
 				      break;
@@ -12371,7 +12591,7 @@ TOCHKA p;
 									
 
 									dterminatedTResudual=1e-6;
-				                   Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false, b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter, color, dist_max, w, lw);
+				                   Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false, b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 								  // doublereal tmax = 0.0;
 								  // for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
 								   //printf("apost solver: maximum temperature in default interior is %1.4e\n", tmax);
@@ -12462,7 +12682,7 @@ TOCHKA p;
 					   //printf("solve tmax=%e\n", tmax); getchar();
 
 					    dterminatedTResudual=1e-6;
-				        Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false,b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter, color, dist_max, w, lw);
+				        Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false,b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter, color, dist_max, w, lw, t.whot_is_block);
 				   }
 				   //*/
 				}
@@ -13538,7 +13758,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	doublereal dbeta, integer flow_interior, bool bconvective,
 	doublereal* toldtimestep, doublereal tauparam, doublereal tauparamold, bool btimedep,
 	TPROP* matlist, integer inumiter, bool bprintmessage,
-	TEMP_DEP_POWER* gtdps, integer ltdp, doublereal  poweron_multiplier_sequence,
+	TEMP_DEP_POWER* gtdps, integer ltdp,
+	doublereal  poweron_multiplier_sequence, doublereal  poweron_multiplier_sequence0,
 	QuickMemVorst& m, doublereal** speedoldtimestep, doublereal** mfoldtimestep,
 	integer lu, UNION* &my_union, integer* &color, integer dist_max) {
 
@@ -13637,6 +13858,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			if (fabs(pdiss) > 1.0e-30) {
 				m_power = d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL / pdiss;
 				printf("Correction power: m_power=%e\n", m_power);
+				printf("Apriority power %e calculate real power %e\n", d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL, pdiss);
 				// m_power - множитель на который нужно домнодить ненулевую внутрипрограммную
 				// тепловую мощность, чтобы в точности получить заданную пользователем мощность.
 				pdiss = 0.0;
@@ -13709,6 +13931,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				// Проблемы при построении модели. Возможна сильная разномасштабность геометрии.
 				//printf("Apriory Pdiss=%e\n", d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL);
 				std::cout << "Apriory Pdiss=" << d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL << std::endl;
+				std::cout << "Real power dissipation = " << pdiss << std::endl;
 				printf("FATAL ERROR!!! Your model is incorrect. Power leak.\n");
 				printf("Please send you message on kirill7785@mail.ru\n");
 				system("pause");
@@ -13809,14 +14032,20 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					<< "] is negative power = " << (t.Sc[i47] * dx*dy*dz) << std::endl;
 				system("PAUSE");
 			}
-			pdiss += t.Sc[i47] * dx*dy*dz;
+			if (b[ib].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+				pdiss += t.Sc[i47] * dx*dy*dz * poweron_multiplier_sequence0;
+			}
+			else {
+				pdiss += t.Sc[i47] * dx*dy*dz * poweron_multiplier_sequence;
+			}
 		}
+
 		power_diss_message_06_10_2018 = pdiss;
 		printf("no Stefan - Bolcman boundary condition...\n");
 	}
 	//system("pause");
 	
-	power_diss_message_06_10_2018*=poweron_multiplier_sequence;  // Включено или выключено.
+	
 
 	// К этому значению источникового члена мы будем релаксировать.
 #pragma omp parallel for 
@@ -14165,7 +14394,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 							0.0, 0.0, 0.0, // ускорение свободного падения
 							matlist, // параметры материалов
 							inumiter, bprintmessage, RCh, false,
-							nullptr, rsumanbstuff, false, false, poweron_multiplier_sequence,
+							nullptr, rsumanbstuff, false, false, 
+							poweron_multiplier_sequence, poweron_multiplier_sequence0,
 							m, rthdsdt, resfluent_temp,
 							lu, my_union, color, dist_max); // номер глобальной итерации
 
@@ -14539,7 +14769,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				0.0, 0.0, 0.0, // ускорение свободного падения
 				matlist, // параметры материалов
 				inumiter, bprintmessage, RCh, false,
-				nullptr, rsumanbstuff, false, false, poweron_multiplier_sequence,
+				nullptr, rsumanbstuff, false, false, 
+				poweron_multiplier_sequence, poweron_multiplier_sequence0,
 				m, rthdsdt, resfluent_temp, lu, my_union, color, dist_max); // номер глобальной итерации
 
 
@@ -14717,7 +14948,7 @@ doublereal smagorinsky_length2(doublereal Cs, doublereal dx, doublereal dy, doub
 // интерполяция турбулентной динамической вязкости на границу Расчётной области.
 void my_boundary_musgs_LES(integer inumber, integer maxelm, 
 							  BOUND* border_neighbor, integer ls, integer lw,
-							  WALL* w, TOCHKA* pa, integer** nvtx, doublereal* &potent
+							  WALL* w, TOCHKA* pa, int** nvtx, doublereal* &potent
 							  ) 
 {
 
@@ -15365,8 +15596,6 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 {
 
 
-	
-
 	// Массовый расход на выходной границе удовлетворяющий уравнению неразрывности.
 	mass_balance(f, lw, ls, w); // Это очень важно. См. Гаврилов Андрей.
 	// отключил 6.05.2017
@@ -15440,8 +15669,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// Это нужно прежде всего для корректности задания граничных условий.
 		for (integer iP=0; iP<f.maxelm; iP++) {
             integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-			iE = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-			iW = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+			iE = f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = f.neighbors_for_the_internal_node[T_SIDE][0][iP];
+			iW = f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 			if (iE > -1) {
 				if (iE >= f.maxelm) {
 					f.potent[MUT][iE] = f.potent[MUT][iP];
@@ -15474,8 +15703,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			}
 
 			integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-			iE2 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-			iW2 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+			iE2 = f.neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = f.neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = f.neighbors_for_the_internal_node[T_SIDE][1][iP];
+			iW2 = f.neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = f.neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = f.neighbors_for_the_internal_node[B_SIDE][1][iP];
 			if (iE2 > -1) {
 				if (iE2 >= f.maxelm) {
 					f.potent[MUT][iE2] = f.potent[MUT][iP];
@@ -15508,8 +15737,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			}
 
 			integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-			iE3 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-			iW3 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+			iE3 = f.neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = f.neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = f.neighbors_for_the_internal_node[T_SIDE][2][iP];
+			iW3 = f.neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = f.neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = f.neighbors_for_the_internal_node[B_SIDE][2][iP];
 			if (iE3 > -1) {
 				if (iE3 >= f.maxelm) {
 					f.potent[MUT][iE3] = f.potent[MUT][iP];
@@ -15542,8 +15771,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			}
 
 			integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-			iE4 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-			iW4 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+			iE4 = f.neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = f.neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = f.neighbors_for_the_internal_node[T_SIDE][3][iP];
+			iW4 = f.neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = f.neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = f.neighbors_for_the_internal_node[B_SIDE][3][iP];
 			if (iE4 > -1) {
 				if (iE4 >= f.maxelm) {
 					f.potent[MUT][iE4] = f.potent[MUT][iP];
@@ -15762,6 +15991,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 	}
 	*/
+	/*
 	if (0&&(inumiter>=66)) {
 		// debug
 		integer i=0;
@@ -15780,7 +16010,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		}
 	}
 	
-
+	*/
 	
 
 	// экспорт результата вычисления в программу tecplot360:
@@ -15859,7 +16089,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
-			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, 1.0, m,
 			rthdsd, rfluentres.res_vx, lu, my_union, color, dist_max_fluid);
 
 		// именно здесь верно. 04.05.2017
@@ -15944,7 +16174,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
-			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, 1.0, m,
 			rthdsd, rfluentres.res_vy, lu, my_union, color, dist_max_fluid);
 		
 
@@ -15999,7 +16229,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
-			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, 1.0, m,
 			rthdsd, rfluentres.res_vz, lu, my_union, color, dist_max_fluid);
 		
 
@@ -16187,12 +16417,17 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		avg_tau_VZ += tau[VELOCITY_Z_COMPONENT][i] / f.maxelm;
 
 	}
-	printf("\ntau statistics:\n");
-	printf("	VX		VY		VZ\n");
-	printf("min: %e %e %e\n", min_tau_VX, min_tau_VY, min_tau_VZ);
-	printf("max: %e %e %e\n", max_tau_VX, max_tau_VY, max_tau_VZ);
-	printf("avg: %e %e %e\n\n", avg_tau_VX, avg_tau_VY, avg_tau_VZ);
-	if (1&&(inumiter < 20)) {
+	if (bprintmessage) {
+		printf("\ntau statistics:\n");
+		printf("	VX		VY		VZ\n");
+		printf("min: %e %e %e\n", min_tau_VX, min_tau_VY, min_tau_VZ);
+		printf("max: %e %e %e\n", max_tau_VX, max_tau_VY, max_tau_VZ);
+		printf("avg: %e %e %e\n\n", avg_tau_VX, avg_tau_VY, avg_tau_VZ);
+	}
+	//if (1&&(inumiter < 20))// Делаем всегда. Гипотеза что усреднение псевдовремени tau помогает стабилизировать решение.
+	{ // Если то делаем то не делаем то это приводит к скачку невязок.
+
+		// Приводит к скачку невязок. Вывод либо делаем всегда либо не делаем вовсе.
 		doublereal m = 1.0; // (1.0 / my_amg_manager.theta_Stress);///debug //1.0
 
 #pragma omp parallel for
@@ -16201,6 +16436,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			doublereal avg_tau_VX_loc = avg_tau_VX;
 			if (!b_on_adaptive_local_refinement_mesh) {
 				avg_tau_VX_loc = 0.0;
+				// Средняя - одна шестая.
 				avg_tau_VX_loc += 0.1666 * (tau[VELOCITY_X_COMPONENT][f.slau[VELOCITY_X_COMPONENT][i].iE] +
 					tau[VELOCITY_X_COMPONENT][f.slau[VELOCITY_X_COMPONENT][i].iW] + tau[VELOCITY_X_COMPONENT][f.slau[VELOCITY_X_COMPONENT][i].iN] +
 					tau[VELOCITY_X_COMPONENT][f.slau[VELOCITY_X_COMPONENT][i].iS] + tau[VELOCITY_X_COMPONENT][f.slau[VELOCITY_X_COMPONENT][i].iT] +
@@ -16371,7 +16607,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		  dgx,dgy,dgz,matlist, inum_iter_loc,
 		  bprintmessage, RCh,false,
 		  tau, sumanb /*rsumanbstuff*/,bhighorder_pressure,
-		  bdeltafinish, 1.0, m, rthdsd, rfluentResPAM,
+		  bdeltafinish, 1.0, 1.0,  m, rthdsd, rfluentResPAM,
 		lu, my_union, color, dist_max_fluid);
 
 	
@@ -16605,7 +16841,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								integer iPloc = f.ifrontregulationgl[iscan_par];
 								if (iPloc < f.maxelm) {
 									// градиенты поправки давления для внутренних КО.
-									green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+									green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 								}
 
 							}
@@ -16617,7 +16853,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								integer iPloc = f.ifrontregulationgl[iscan_par];
 								if (iPloc < f.maxelm) {
 									// градиенты поправки давления для внутренних КО.
-									green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+									green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 								}
 							}
 						} // section
@@ -16629,7 +16865,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					integer iPloc = f.ifrontregulationgl[iscan_par];
 					if (iPloc < f.maxelm) {
 						// градиенты поправки давления для внутренних КО.
-						green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+						green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 					}
 				}
 
@@ -16652,7 +16888,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								integer iPloc = f.ifrontregulationgl[iscan_par];
 								if (iPloc < f.maxelm) {
 									// градиенты поправки давления для внутренних КО.
-									green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+									green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 								}
 
 							}
@@ -16665,7 +16901,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								integer iPloc = f.ifrontregulationgl[iscan_par];
 								if (iPloc < f.maxelm) {
 									// градиенты поправки давления для внутренних КО.
-									green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+									green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 								}
 							}
 						} // section
@@ -16677,7 +16913,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					integer iPloc = f.ifrontregulationgl[iscan_par];
 					if (iPloc < f.maxelm) {
 						// градиенты поправки давления для внутренних КО.
-						green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+						green_gaussPAM(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 					}
 				}
 
@@ -16692,12 +16928,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 #pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты поправки давления для внутренних КО.
-			green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+			green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 		}
 #pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты скоростей для граничных КО.
-			green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+			green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 		}
 	}
 #else
@@ -16912,7 +17148,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								integer iPloc = f.ifrontregulationgl[iscan_par];
 								if (iPloc < f.maxelm) {
 									// градиенты поправки давления для внутренних КО.
-									green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+									green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 								}
 
 							}
@@ -16924,7 +17160,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								integer iPloc = f.ifrontregulationgl[iscan_par];
 								if (iPloc < f.maxelm) {
 									// градиенты поправки давления для внутренних КО.
-									green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+									green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 								}
 							}
 						} // section
@@ -16936,7 +17172,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					integer iPloc = f.ifrontregulationgl[iscan_par];
 					if (iPloc < f.maxelm) {
 						// градиенты поправки давления для внутренних КО.
-						green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+						green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 					}
 				}
 
@@ -16959,7 +17195,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								integer iPloc = f.ifrontregulationgl[iscan_par];
 								if (iPloc < f.maxelm) {
 									// градиенты поправки давления для внутренних КО.
-									green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+									green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 								}
 
 							}
@@ -16972,7 +17208,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								integer iPloc = f.ifrontregulationgl[iscan_par];
 								if (iPloc < f.maxelm) {
 									// градиенты поправки давления для внутренних КО.
-									green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+									green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 								}
 							}
 						} // section
@@ -16984,7 +17220,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					integer iPloc = f.ifrontregulationgl[iscan_par];
 					if (iPloc < f.maxelm) {
 						// градиенты поправки давления для внутренних КО.
-						green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+						green_gaussPRESS(iPloc, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 					}
 				}
 
@@ -16999,12 +17235,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 #pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты давления для внутренних КО.
-			green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+			green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 		}
 #pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты давления для граничных КО.
-			green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
+			green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr, f.volume);
 		}
 	}
 #else
@@ -17014,11 +17250,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// Градиенты давления понадобятся при вычислении поправки Рхи-Чоу.
 	for (integer i=0; i<f.maxelm; i++) {
 		// градиенты давления для внутренних КО.
-	    green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false,f.border_neighbor,ls,lw,w,f.bLR1free,t.ilevel_alice,f.ptr);
+	    green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false,f.border_neighbor,ls,lw,w,f.bLR1free,t.ilevel_alice,f.ptr, f.volume);
 	}
 	for (integer i=0; i<f.maxelm; i++) {
 		// градиенты давления для граничных КО.
-	    green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true,f.border_neighbor,ls,lw,w,f.bLR1free,t.ilevel_alice,f.ptr);
+	    green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true,f.border_neighbor,ls,lw,w,f.bLR1free,t.ilevel_alice,f.ptr, f.volume);
     }
 	
 
@@ -17554,9 +17790,26 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				speedoldtimestep, mfoldtimestep,
 				dtimestep, btimedep, dgx, dgy, dgz,
 				matlist, inumiter, bprintmessage,
-				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, 1.0, m,
 				rthdsd, rfluentres.res_nusha, lu, my_union, color, dist_max_fluid);
 			
+			// Первое решение СЛАУ расходится, поэтому важно избавиться (отфильтровать)
+			// нефизичные числовые значения.
+#pragma omp parallel for
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				if (f.potent[NUSHA][i] < 0.0) {
+					// Нефизичные значения.
+					//std::cout << "nu[" << i << "] = " << f.potent[NUSHA][i] << std::endl;
+					f.potent[NUSHA][i] = 1.0e-12;
+					//getchar();
+				}
+				if (f.potent[NUSHA][i] > 1.0) {
+					// Нефизичные значения.
+					//std::cout << "nu[" << i << "] = " << f.potent[NUSHA][i] << std::endl;
+					f.potent[NUSHA][i] = 1.0;
+					//getchar();
+				}
+			}
 
 			doublereal fHORF = 0.25; // for steady state problem.
 			if (btimedep) { // unsteady problems.
@@ -17580,7 +17833,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				green_gauss_SpallartAllmares(i,
 					f.potent, f.nvtx, f.pa,
 					f.neighbors_for_the_internal_node, f.maxelm, false,
-					f.border_neighbor, t.ilevel_alice);
+					f.border_neighbor, t.ilevel_alice, f.volume);
 			}
 
 #pragma omp parallel for
@@ -17588,7 +17841,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				green_gauss_SpallartAllmares(i,
 					f.potent, f.nvtx, f.pa,
 					f.neighbors_for_the_internal_node, f.maxelm, true,
-					f.border_neighbor, t.ilevel_alice);
+					f.border_neighbor, t.ilevel_alice, f.volume);
 			}
 
 			// Вычисление турбулентной вязкости.
@@ -17643,9 +17896,28 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				speedoldtimestep, mfoldtimestep,
 				dtimestep, btimedep, dgx, dgy, dgz,
 				matlist, inumiter, bprintmessage,
-				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, 1.0, m,
 				rthdsd, rfluentres.res_turb_kinetik_energy, lu, my_union, color, dist_max_fluid);
 			
+
+#pragma omp parallel for
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				if (f.potent[TURBULENT_KINETIK_ENERGY][i] < K_limiter_min) {
+
+					//std::cout << "ke[" << i << "]= " << f.potent[TURBULENT_KINETIK_ENERGY][i] << std::endl;
+					//getchar();
+
+					f.potent[TURBULENT_KINETIK_ENERGY][i] = K_limiter_min;
+				}
+				if (f.potent[TURBULENT_KINETIK_ENERGY][i] > 10.0) {
+
+					//std::cout << "ke=[" << i << "] " << f.potent[TURBULENT_KINETIK_ENERGY][i] << std::endl;
+					//getchar();
+
+					f.potent[TURBULENT_KINETIK_ENERGY][i] = 10.0;
+				}
+			}
+
 
 			doublereal fHORF = 0.25; // for steady state problem.
 			if (btimedep) { // unsteady problems.
@@ -17701,7 +17973,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				speedoldtimestep, mfoldtimestep,
 				dtimestep, btimedep, dgx, dgy, dgz,
 				matlist, inumiter, bprintmessage,
-				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, 1.0, m,
 				rthdsd, rfluentres.res_turb_omega, lu, my_union, color, dist_max_fluid);
 			
 
@@ -17828,8 +18100,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// Это нужно прежде всего для корректности задания граничных условий.
 			for (integer iP = 0; iP < f.maxelm; iP++) {
 				integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-				iE = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-				iW = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+				iE = f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = f.neighbors_for_the_internal_node[T_SIDE][0][iP];
+				iW = f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 				if (iE > -1) {
 					if (iE >= f.maxelm) {
 						f.potent[MUT][iE] = f.potent[MUT][iP];
@@ -17861,9 +18133,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					}
 				}
 
-				integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-				iE2 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-				iW2 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+				integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+				if (b_on_adaptive_local_refinement_mesh) {
+					iE2 = f.neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = f.neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = f.neighbors_for_the_internal_node[T_SIDE][1][iP];
+					iW2 = f.neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = f.neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = f.neighbors_for_the_internal_node[B_SIDE][1][iP];
+				}
 				if (iE2 > -1) {
 					if (iE2 >= f.maxelm) {
 						f.potent[MUT][iE2] = f.potent[MUT][iP];
@@ -17895,9 +18169,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					}
 				}
 
-				integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-				iE3 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-				iW3 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+				integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+				if (b_on_adaptive_local_refinement_mesh) {
+					iE3 = f.neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = f.neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = f.neighbors_for_the_internal_node[T_SIDE][2][iP];
+					iW3 = f.neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = f.neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = f.neighbors_for_the_internal_node[B_SIDE][2][iP];
+				}
 				if (iE3 > -1) {
 					if (iE3 >= f.maxelm) {
 						f.potent[MUT][iE3] = f.potent[MUT][iP];
@@ -17929,9 +18205,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					}
 				}
 
-				integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-				iE4 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-				iW4 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+				integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
+				if (b_on_adaptive_local_refinement_mesh) {
+					iE4 = f.neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = f.neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = f.neighbors_for_the_internal_node[T_SIDE][3][iP];
+					iW4 = f.neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = f.neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = f.neighbors_for_the_internal_node[B_SIDE][3][iP];
+				}
 				if (iE4 > -1) {
 					if (iE4 >= f.maxelm) {
 						f.potent[MUT][iE4] = f.potent[MUT][iP];
@@ -17987,7 +18265,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				speedoldtimestep, mfoldtimestep,
 				dtimestep, btimedep, dgx, dgy, dgz,
 				matlist, inumiter, bprintmessage,
-				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, 1.0, m,
 				rthdsd, rfluentres.res_turb_kinetik_energy_std_ke, lu, my_union, color, dist_max_fluid);
 			
 
@@ -18049,7 +18327,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				speedoldtimestep, mfoldtimestep,
 				dtimestep, btimedep, dgx, dgy, dgz,
 				matlist, inumiter, bprintmessage,
-				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, 1.0, m,
 				rthdsd, rfluentres.res_turb_epsilon, lu, my_union, color, dist_max_fluid);
 			
 
@@ -18172,8 +18450,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			// Это нужно прежде всего для корректности задания граничных условий.
 			for (integer iP = 0; iP < f.maxelm; iP++) {
 				integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-				iE = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-				iW = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+				iE = f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = f.neighbors_for_the_internal_node[T_SIDE][0][iP];
+				iW = f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 				if (iE > -1) {
 					if (iE >= f.maxelm) {
 						f.potent[MUT][iE] = f.potent[MUT][iP];
@@ -18206,8 +18484,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				}
 
 				integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-				iE2 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-				iW2 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+				iE2 = f.neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = f.neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = f.neighbors_for_the_internal_node[T_SIDE][1][iP];
+				iW2 = f.neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = f.neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = f.neighbors_for_the_internal_node[B_SIDE][1][iP];
 				if (iE2 > -1) {
 					if (iE2 >= f.maxelm) {
 						f.potent[MUT][iE2] = f.potent[MUT][iP];
@@ -18240,8 +18518,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				}
 
 				integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-				iE3 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-				iW3 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+				iE3 = f.neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = f.neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = f.neighbors_for_the_internal_node[T_SIDE][2][iP];
+				iW3 = f.neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = f.neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = f.neighbors_for_the_internal_node[B_SIDE][2][iP];
 				if (iE3 > -1) {
 					if (iE3 >= f.maxelm) {
 						f.potent[MUT][iE3] = f.potent[MUT][iP];
@@ -18274,8 +18552,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				}
 
 				integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-				iE4 = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-				iW4 = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+				iE4 = f.neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = f.neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = f.neighbors_for_the_internal_node[T_SIDE][3][iP];
+				iW4 = f.neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = f.neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = f.neighbors_for_the_internal_node[B_SIDE][3][iP];
 				if (iE4 > -1) {
 					if (iE4 >= f.maxelm) {
 						f.potent[MUT][iE4] = f.potent[MUT][iP];
@@ -18419,6 +18697,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			doublereal** rsumanbstuff=nullptr;
 			bool  bconvective=true;
 			doublereal power_on=1.0;
+			doublereal power_on0 = 1.0;
 
 			// Чтобы что-то показать значение невязки должно вычисляться до решения СЛАУ,
 			// т.к. невязка после решения СЛАУ удоалетворяет уравнению тождественно.
@@ -18461,8 +18740,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				   dgx, dgy, dgz, // ускорение свободного падения (natural convection id)
 				   matlist, // параметры материалов
 				   inumiter,bprintmessage,RCh,false,
-				   nullptr,rsumanbstuff,false,false, power_on, m,
-				   rthdsdt, rfluentrestemp, lu, my_union, color_solid, dist_max_solid); // номер глобальной итерации
+				   nullptr,rsumanbstuff,false,false,
+				   power_on, power_on0, m,
+				   rthdsdt, rfluentrestemp, 
+				   lu, my_union, 
+				   color_solid, dist_max_solid); // номер глобальной итерации
 			//delete[] color_solid;
 
 			// Проверка на NAN после решения.
@@ -18496,6 +18778,10 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				}
 			}
 			//fHORF=my_amg_manager.F_to_F_Stress;
+		}
+		if (iTEMPScheme >= QUICK) {
+			// High resolution scheme for cfd
+			fHORF = 0.1; // 0.01
 		}
 		if (btimedep) { // unsteady problems.
 			fHORF = 0.75; // ANSYS Fluent Theory Guide.

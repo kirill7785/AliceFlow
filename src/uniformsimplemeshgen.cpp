@@ -8,11 +8,6 @@
 #define _UNIFORMSIMPLEMESHGEN_CPP_ 1
 
 
-
-//#include "my_material_properties.c"
-
-
-
 void my_solid_properties(doublereal TiP, doublereal &rho, doublereal &cp, doublereal &lam, integer ilibident);
 
 // минимальное количество клеток по 
@@ -79,7 +74,8 @@ void SetLength(doublereal* &ra, integer isizeold, integer isize)
 
 // добавляет несуществующую границу к массиву
 // Теперь с учётом координатного направления 13.08.2019
-void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir, 
+//template <class ITYPE>
+void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir,
 	BLOCK* &b, integer &lb, WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 	// rb - модифицируемый массив границ,
 	// in - номер последней границы в массиве, нумерация начинается с нуля.
@@ -117,6 +113,8 @@ void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir,
 		rb[in]=g; // запись добавляемой границы в конец динамического массива.
 	}
 } // addboundary
+
+
 
 // добавляет несуществующую границу к массиву
 // Теперь с учётом координатного направления 13.08.2019
@@ -1013,6 +1011,1011 @@ bool comparison_lam(TPROP* matlist, BLOCK* b, integer ib1, integer ib2, doublere
 } // comparison_lam
 
 
+void additional_line(doublereal ratio_quality, int inx, int iny, int inz,
+	bool &bcont, integer *& i_1, integer *& j_1, integer *& k_1, integer ic9, integer &icorrect_stat,
+	doublereal *&xpos, doublereal *&ypos, doublereal *&zpos) {
+
+	for (integer ic7 = 0; ic7<ic9; ic7++)
+	{
+
+		//doublereal dx = 1, dy = 1, dz = 1;
+		doublereal dx = xpos[i_1[ic7] + 1] - xpos[i_1[ic7]];
+		doublereal dy = ypos[j_1[ic7] + 1] - ypos[j_1[ic7]];
+		doublereal dz = zpos[k_1[ic7] + 1] - zpos[k_1[ic7]];
+
+
+		if ((dx >= dy) && (dy >= dz)) {
+			if (dx / dz > ratio_quality) {
+
+				bool badd = true;
+				for (integer i97 = 0; i97 <= inx; i97++) if (fabs(xpos[i97] - (xpos[i_1[ic7]] + 0.5*dx)) < 1.0e-36) badd = false;
+
+				if (badd) {
+					bcont = true;
+					SetLength(xpos, inx + 1, inx + 2);
+					//for (integer l = inx; l >= i_1[ic7] + 1; l--) xpos[l + 1] = xpos[l];
+					//xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
+					//xpos[i_1[ic7] + 1] = xpos[i_1[ic7]] + 0.5*dx;
+					// добавляем в конец
+					xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
+					inx = inx + 1;
+					//BubbleEnhSort<doublereal>(xpos, 0, inx);
+					//Sort_method<doublereal>(xpos, inx);
+					icorrect_stat++;
+
+					continue;
+				}
+			}
+		}
+		else if ((dx >= dz) && (dz >= dy)) {
+			if (dx / dy > ratio_quality) {
+
+
+				bool badd = true;
+				for (integer i97 = 0; i97 <= inx; i97++) if (fabs(xpos[i97] - (xpos[i_1[ic7]] + 0.5*dx)) < 1.0e-36) badd = false;
+
+				if (badd) {
+
+					bcont = true;
+					SetLength(xpos, inx + 1, inx + 2);
+					//for (integer l = inx; l >= i_1[ic7] + 1; l--) xpos[l + 1] = xpos[l];
+					//xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
+					//xpos[i_1[ic7] + 1] = xpos[i_1[ic7]] + 0.5*dx;
+					// добавляем в конец
+					xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
+					inx = inx + 1;
+					//BubbleEnhSort<doublereal>(xpos,0, inx);
+					//Sort_method<doublereal>(xpos, inx);
+					icorrect_stat++;
+
+					continue;
+				}
+			}
+		}
+		if ((dy >= dx) && (dx >= dz)) {
+			if (dy / dz > ratio_quality) {
+
+
+				bool badd = true;
+				for (integer i97 = 0; i97 <= iny; i97++) if (fabs(ypos[i97] - (ypos[j_1[ic7]] + 0.5*dy)) < 1.0e-36) badd = false;
+
+				if (badd) {
+
+					bcont = true;
+					SetLength(ypos, iny + 1, iny + 2);
+					//for (integer l = iny; l >= j_1[ic7] + 1; l--) ypos[l + 1] = ypos[l];
+					//ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
+					//ypos[j_1[ic7] + 1] = ypos[j_1[ic7]] + 0.5*dy;
+					// добавляем в конец
+					ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
+					iny = iny + 1;
+					//BubbleEnhSort<doublereal>(ypos,0, iny);
+					//Sort_method<doublereal>(ypos, iny);
+					icorrect_stat++;
+
+					continue;
+				}
+			}
+		}
+		else if ((dy >= dz) && (dz >= dx)) {
+			if (dy / dx > ratio_quality) {
+
+				bool badd = true;
+				for (integer i97 = 0; i97 <= iny; i97++) if (fabs(ypos[i97] - (ypos[j_1[ic7]] + 0.5*dy)) < 1.0e-36) badd = false;
+
+				if (badd) {
+
+					bcont = true;
+					SetLength(ypos, iny + 1, iny + 2);
+					//for (integer l = iny; l >= j_1[ic7] + 1; l--) ypos[l + 1] = ypos[l];
+					//ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
+					//ypos[j_1[ic7] + 1] = ypos[j_1[ic7]] + 0.5*dy;
+					// добавляем в конец
+					ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
+					iny = iny + 1;
+					//BubbleEnhSort<doublereal>(ypos, 0, iny);
+					//Sort_method<doublereal>(ypos, iny);
+					icorrect_stat++;
+
+					continue;
+				}
+			}
+		}
+		if ((dz >= dy) && (dy >= dx)) {
+			if (dz / dx > ratio_quality) {
+
+				bool badd = true;
+				for (integer i97 = 0; i97 <= inz; i97++) if (fabs(zpos[i97] - (zpos[k_1[ic7]] + 0.5*dz)) < 1.0e-36) badd = false;
+
+				if (badd) {
+
+					bcont = true;
+					SetLength(zpos, inz + 1, inz + 2);
+					//for (integer l = inz; l >= k_1[ic7] + 1; l--) zpos[l + 1] = zpos[l];
+					//zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
+					//zpos[k_1[ic7] + 1] = zpos[k_1[ic7]] + 0.5*dz;
+					// добавляем в конец
+					zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
+					inz = inz + 1;
+					//BubbleEnhSort<doublereal>(zpos, 0, inz);
+					//Sort_method<doublereal>(zpos, inz);
+					icorrect_stat++;
+
+					continue;
+				}
+			}
+		}
+		else if ((dz >= dx) && (dx >= dy)) {
+			if (dz / dy > ratio_quality) {
+
+				bool badd = true;
+				for (integer i97 = 0; i97 <= inz; i97++) if (fabs(zpos[i97] - (zpos[k_1[ic7]] + 0.5*dz)) < 1.0e-36) badd = false;
+
+				if (badd) {
+
+					bcont = true;
+					SetLength(zpos, inz + 1, inz + 2);
+					//for (integer l = inz; l >= k_1[ic7] + 1; l--) zpos[l + 1] = zpos[l];
+					//zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
+					//zpos[k_1[ic7] + 1] = zpos[k_1[ic7]] + 0.5*dz;
+					// добавляем в конец
+					zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
+					inz = inz + 1;
+					//BubbleEnhSort<doublereal>(zpos, 0, inz);
+					//Sort_method<doublereal>(zpos, inz);
+					icorrect_stat++;
+
+					continue;
+				}
+			}
+		}
+
+
+	}
+
+}
+
+void marker_for_additional_line(integer &ic9_shadow,
+	integer &ic9, int inx, int iny, int inz,
+	doublereal *&xpos, doublereal *&ypos, doublereal *&zpos,
+	doublereal ratio_quality, const integer iSIZE_DIRECTIONAL,
+	bool *& i_b, bool *& j_b, bool *& k_b,
+	integer *& i_1, integer *& j_1, integer *& k_1,
+	doublereal &ratio_start_check) {
+
+START_LABEL_FOR_ADAPT:
+
+	int irandom = rand() % 3;
+	ic9_shadow = ic9;
+
+	if (irandom == 0) {
+		for (int i_1l = 0; i_1l < inx; i_1l++) {
+			for (int j_1l = 0; j_1l < iny; j_1l++) {
+				for (int k_1l = 0; k_1l < inz; k_1l++) {
+					// сокращает время построения сетки.
+
+					TOCHKA p;
+					p.x = 0.5*(xpos[i_1l + 1] + xpos[i_1l]);
+					p.y = 0.5*(ypos[j_1l + 1] + ypos[j_1l]);
+					p.z = 0.5*(zpos[k_1l + 1] + zpos[k_1l]);
+
+					doublereal dx = xpos[i_1l + 1] - xpos[i_1l];
+					doublereal dy = ypos[j_1l + 1] - ypos[j_1l];
+					doublereal dz = zpos[k_1l + 1] - zpos[k_1l];
+					// Порядок узлов тоже важен. Модуль не нужен.
+#if doubleintprecision == 1
+					//if (dx < shorter_length_for_simplificationX(p.x)) {
+					if (dx < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dX \n");
+						//printf("x[%lld]=%e x[%lld]=%e x[%lld]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
+						std::cout << "x[" << i_1l - 1 << "]=" << xpos[i_1l - 1] << " x[" << i_1l << "]=" << xpos[i_1l] << " x[" << i_1l + 1 << "]=" << xpos[i_1l + 1] << std::endl;
+						system("pause");
+					}
+					//if (dy < shorter_length_for_simplificationY(p.y)) {
+					if (dy < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dY \n");
+						//printf("y[%lld]=%e y[%lld]=%e y[%lld]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
+						std::cout << "y[" << j_1l - 1 << "]=" << ypos[j_1l - 1] << " y[" << j_1l << "]=" << ypos[j_1l] << " y[" << j_1l + 1 << "]=" << ypos[j_1l + 1] << std::endl;
+						system("pause");
+					}
+					//if (dz < shorter_length_for_simplificationZ(p.z)) {
+					if (dz < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dZ \n");
+						//printf("z[%lld]=%e z[%lld]=%e z[%lld]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
+						std::cout << "z[" << k_1l - 1 << "]=" << zpos[k_1l - 1] << " z[" << k_1l << "]=" << zpos[k_1l] << " z[" << k_1l + 1 << "]=" << zpos[k_1l + 1] << std::endl;
+						system("pause");
+					}
+#else
+					//if (dx < shorter_length_for_simplificationX(p.x)) {
+					if (dx < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dX \n");
+						printf("x[%d]=%e x[%d]=%e x[%d]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
+						system("pause");
+					}
+					//if (dy < shorter_length_for_simplificationY(p.y)) {
+					if (dy < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dY \n");
+						printf("y[%d]=%e y[%d]=%e y[%d]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
+						system("pause");
+					}
+					//if (dz < shorter_length_for_simplificationZ(p.z)) {
+					if (dz < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dZ \n");
+						printf("z[%d]=%e z[%d]=%e z[%d]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
+						system("pause");
+					}
+#endif
+
+					if ((dx >= dy) && (dy >= dz)) {
+						if (dx / dz > ratio_quality) {
+							if (i_b[i_1l] == false) {
+								if (fabs(dz) > 1.0e-36) {
+									ratio_start_check = dx / dz;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									i_b[i_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dx >= dz) && (dz >= dy)) {
+						if (dx / dy > ratio_quality) {
+							if (i_b[i_1l] == false) {
+								if (fabs(dy) > 1.0e-36) {
+									ratio_start_check = dx / dy;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									i_b[i_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dy >= dx) && (dx >= dz)) {
+						if (dy / dz > ratio_quality) {
+							if (j_b[j_1l] == false) {
+								if (fabs(dz) > 1.0e-36) {
+									ratio_start_check = dy / dz;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									j_b[j_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dy >= dz) && (dz >= dx)) {
+						if (dy / dx > ratio_quality) {
+							if (j_b[j_1l] == false) {
+								if (fabs(dx) > 1.0e-36) {
+									ratio_start_check = dy / dx;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									j_b[j_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dz >= dx) && (dx >= dy)) {
+						if (dz / dy > ratio_quality) {
+							if (k_b[k_1l] == false) {
+								if (fabs(dy) > 1.0e-36) {
+									ratio_start_check = dz / dy;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									k_b[k_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dz >= dy) && (dy >= dx)) {
+						if (dz / dx > ratio_quality) {
+							if (k_b[k_1l] == false) {
+								if (fabs(dx) > 1.0e-36) {
+									ratio_start_check = dz / dx;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									k_b[k_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if (ic9 > 93) {
+						// STOP process.
+						i_1l = inx;
+						j_1l = iny;
+						k_1l = inz;
+					}
+
+				}
+			}
+		}
+	}
+	else if (irandom == 1) {
+		for (int j_1l = 0; j_1l < iny; j_1l++) {
+			for (int k_1l = 0; k_1l < inz; k_1l++) {
+				for (int i_1l = 0; i_1l < inx; i_1l++) {
+					// сокращает время построения сетки.
+
+					TOCHKA p;
+					p.x = 0.5*(xpos[i_1l + 1] + xpos[i_1l]);
+					p.y = 0.5*(ypos[j_1l + 1] + ypos[j_1l]);
+					p.z = 0.5*(zpos[k_1l + 1] + zpos[k_1l]);
+
+					doublereal dx = xpos[i_1l + 1] - xpos[i_1l];
+					doublereal dy = ypos[j_1l + 1] - ypos[j_1l];
+					doublereal dz = zpos[k_1l + 1] - zpos[k_1l];
+					// Порядок узлов тоже важен. Модуль не нужен.
+#if doubleintprecision == 1
+					//if (dx < shorter_length_for_simplificationX(p.x)) {
+					if (dx < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dX \n");
+						//printf("x[%lld]=%e x[%lld]=%e x[%lld]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
+						std::cout << "x[" << i_1l - 1 << "]=" << xpos[i_1l - 1] << " x[" << i_1l << "]=" << xpos[i_1l] << " x[" << i_1l + 1 << "]=" << xpos[i_1l + 1] << std::endl;
+						system("pause");
+					}
+					//if (dy < shorter_length_for_simplificationY(p.y)) {
+					if (dy < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dY \n");
+						//printf("y[%lld]=%e y[%lld]=%e y[%lld]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
+						std::cout << "y[" << j_1l - 1 << "]=" << ypos[j_1l - 1] << " y[" << j_1l << "]=" << ypos[j_1l] << " y[" << j_1l + 1 << "]=" << ypos[j_1l + 1] << std::endl;
+						system("pause");
+					}
+					//if (dz < shorter_length_for_simplificationZ(p.z)) {
+					if (dz < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dZ \n");
+						//printf("z[%lld]=%e z[%lld]=%e z[%lld]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
+						std::cout << "z[" << k_1l - 1 << "]=" << zpos[k_1l - 1] << " z[" << k_1l << "]=" << zpos[k_1l] << " z[" << k_1l + 1 << "]=" << zpos[k_1l + 1] << std::endl;
+						system("pause");
+					}
+#else
+					//if (dx < shorter_length_for_simplificationX(p.x)) {
+					if (dx < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dX \n");
+						printf("x[%d]=%e x[%d]=%e x[%d]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
+						system("pause");
+					}
+					//if (dy < shorter_length_for_simplificationY(p.y)) {
+					if (dy < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dY \n");
+						printf("y[%d]=%e y[%d]=%e y[%d]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
+						system("pause");
+					}
+					//if (dz < shorter_length_for_simplificationZ(p.z)) {
+					if (dz < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dZ \n");
+						printf("z[%d]=%e z[%d]=%e z[%d]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
+						system("pause");
+					}
+#endif
+
+					if ((dx >= dy) && (dy >= dz)) {
+						if (dx / dz > ratio_quality) {
+							if (i_b[i_1l] == false) {
+								if (fabs(dz) > 1.0e-36) {
+									ratio_start_check = dx / dz;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									i_b[i_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dx >= dz) && (dz >= dy)) {
+						if (dx / dy > ratio_quality) {
+							if (i_b[i_1l] == false) {
+								if (fabs(dy) > 1.0e-36) {
+									ratio_start_check = dx / dy;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									i_b[i_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dy >= dx) && (dx >= dz)) {
+						if (dy / dz > ratio_quality) {
+							if (j_b[j_1l] == false) {
+								if (fabs(dz) > 1.0e-36) {
+									ratio_start_check = dy / dz;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									j_b[j_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dy >= dz) && (dz >= dx)) {
+						if (dy / dx > ratio_quality) {
+							if (j_b[j_1l] == false) {
+								if (fabs(dx) > 1.0e-36) {
+									ratio_start_check = dy / dx;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									j_b[j_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dz >= dx) && (dx >= dy)) {
+						if (dz / dy > ratio_quality) {
+							if (k_b[k_1l] == false) {
+								if (fabs(dy) > 1.0e-36) {
+									ratio_start_check = dz / dy;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									k_b[k_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dz >= dy) && (dy >= dx)) {
+						if (dz / dx > ratio_quality) {
+							if (k_b[k_1l] == false) {
+								if (fabs(dx) > 1.0e-36) {
+									ratio_start_check = dz / dx;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									k_b[k_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if (ic9 > 93) {
+						// STOP process.
+						i_1l = inx;
+						j_1l = iny;
+						k_1l = inz;
+					}
+
+				}
+			}
+		}
+	}
+	else {
+		for (int k_1l = 0; k_1l < inz; k_1l++) {
+			for (int i_1l = 0; i_1l < inx; i_1l++) {
+				for (int j_1l = 0; j_1l < iny; j_1l++) {
+					// сокращает время построения сетки.
+
+					TOCHKA p;
+					p.x = 0.5*(xpos[i_1l + 1] + xpos[i_1l]);
+					p.y = 0.5*(ypos[j_1l + 1] + ypos[j_1l]);
+					p.z = 0.5*(zpos[k_1l + 1] + zpos[k_1l]);
+
+					doublereal dx = xpos[i_1l + 1] - xpos[i_1l];
+					doublereal dy = ypos[j_1l + 1] - ypos[j_1l];
+					doublereal dz = zpos[k_1l + 1] - zpos[k_1l];
+					// Порядок узлов тоже важен. Модуль не нужен.
+#if doubleintprecision == 1
+					//if (dx < shorter_length_for_simplificationX(p.x)) {
+					if (dx < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dX \n");
+						//printf("x[%lld]=%e x[%lld]=%e x[%lld]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
+						std::cout << "x[" << i_1l - 1 << "]=" << xpos[i_1l - 1] << " x[" << i_1l << "]=" << xpos[i_1l] << " x[" << i_1l + 1 << "]=" << xpos[i_1l + 1] << std::endl;
+						system("pause");
+					}
+					//if (dy < shorter_length_for_simplificationY(p.y)) {
+					if (dy < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dY \n");
+						//printf("y[%lld]=%e y[%lld]=%e y[%lld]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
+						std::cout << "y[" << j_1l - 1 << "]=" << ypos[j_1l - 1] << " y[" << j_1l << "]=" << ypos[j_1l] << " y[" << j_1l + 1 << "]=" << ypos[j_1l + 1] << std::endl;
+						system("pause");
+					}
+					//if (dz < shorter_length_for_simplificationZ(p.z)) {
+					if (dz < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dZ \n");
+						//printf("z[%lld]=%e z[%lld]=%e z[%lld]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
+						std::cout << "z[" << k_1l - 1 << "]=" << zpos[k_1l - 1] << " z[" << k_1l << "]=" << zpos[k_1l] << " z[" << k_1l + 1 << "]=" << zpos[k_1l + 1] << std::endl;
+						system("pause");
+					}
+#else
+					//if (dx < shorter_length_for_simplificationX(p.x)) {
+					if (dx < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dX \n");
+						printf("x[%d]=%e x[%d]=%e x[%d]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
+						system("pause");
+					}
+					//if (dy < shorter_length_for_simplificationY(p.y)) {
+					if (dy < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dY \n");
+						printf("y[%d]=%e y[%d]=%e y[%d]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
+						system("pause");
+					}
+					//if (dz < shorter_length_for_simplificationZ(p.z)) {
+					if (dz < 1.0e-36) {
+						printf("Error: Slipanie geometrii...dZ \n");
+						printf("z[%d]=%e z[%d]=%e z[%d]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
+						system("pause");
+					}
+#endif
+
+					if ((dx >= dy) && (dy >= dz)) {
+						if (dx / dz > ratio_quality) {
+							if (i_b[i_1l] == false) {
+								if (fabs(dz) > 1.0e-36) {
+									ratio_start_check = dx / dz;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									i_b[i_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dx >= dz) && (dz >= dy)) {
+						if (dx / dy > ratio_quality) {
+							if (i_b[i_1l] == false) {
+								if (fabs(dy) > 1.0e-36) {
+									ratio_start_check = dx / dy;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									i_b[i_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dy >= dx) && (dx >= dz)) {
+						if (dy / dz > ratio_quality) {
+							if (j_b[j_1l] == false) {
+								if (fabs(dz) > 1.0e-36) {
+									ratio_start_check = dy / dz;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									j_b[j_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dy >= dz) && (dz >= dx)) {
+						if (dy / dx > ratio_quality) {
+							if (j_b[j_1l] == false) {
+								if (fabs(dx) > 1.0e-36) {
+									ratio_start_check = dy / dx;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									j_b[j_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dz >= dx) && (dx >= dy)) {
+						if (dz / dy > ratio_quality) {
+							if (k_b[k_1l] == false) {
+								if (fabs(dy) > 1.0e-36) {
+									ratio_start_check = dz / dy;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									k_b[k_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if ((dz >= dy) && (dy >= dx)) {
+						if (dz / dx > ratio_quality) {
+							if (k_b[k_1l] == false) {
+								if (fabs(dx) > 1.0e-36) {
+									ratio_start_check = dz / dx;
+									i_1[ic9] = i_1l;
+									j_1[ic9] = j_1l;
+									k_1[ic9] = k_1l;
+									k_b[k_1l] = true;
+									ic9++;
+
+									if (ic9 - ic9_shadow > iSIZE_DIRECTIONAL) {
+										goto START_LABEL_FOR_ADAPT;
+									}
+
+								}
+								else {
+#if doubleintprecision == 1
+									//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+#else
+									//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+									std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
+
+#endif
+									system("pause");
+								}
+							}
+						}
+					}
+					if (ic9 > 93) {
+						// STOP process.
+						i_1l = inx;
+						j_1l = iny;
+						k_1l = inz;
+					}
+
+				}
+			}
+		}
+	}
+
+} // marker_for_additional_line
+
+void cycle_additional_line(integer &iteration_number, integer &ic4,
+	bool &bcont, doublereal &ratio_start_check,
+	int inx, int iny, int inz,
+	doublereal *& xpos, doublereal *& ypos, doublereal *& zpos,
+	const doublereal ratio_quality, integer &icorrect_stat) {
+
+START_LAB:
+
+#if doubleintprecision == 1
+	//printf("%lld ",0);
+#else
+	//printf("%d ",0);
+#endif
+
+	ic4++;
+	ratio_start_check = 0.0;
+	bcont = false;
+
+	integer *i_1 = nullptr, *j_1 = nullptr, *k_1 = nullptr;
+	i_1 = new integer[100];
+	j_1 = new integer[100];
+	k_1 = new integer[100];
+
+	bool *i_b = nullptr, *j_b = nullptr, *k_b = nullptr;
+	i_b = new bool[inx];
+	j_b = new bool[iny];
+	k_b = new bool[inz];
+
+	for (integer i_1l = 0; i_1l < inx; i_1l++) i_b[i_1l] = false;
+	for (integer j_1l = 0; j_1l < iny; j_1l++) j_b[j_1l] = false;
+	for (integer k_1l = 0; k_1l < inz; k_1l++) k_b[k_1l] = false;
+
+
+	srand(time(NULL));
+
+	const integer iSIZE_DIRECTIONAL = 10;
+	integer ic9 = 0;
+	integer ic9_shadow = ic9;
+
+
+	marker_for_additional_line(ic9_shadow,
+		ic9, inx, iny, inz, xpos, ypos, zpos,
+		ratio_quality, iSIZE_DIRECTIONAL,
+		i_b, j_b, k_b, i_1, j_1, k_1,
+		ratio_start_check);
+
+
+	delete[] i_b;
+	delete[] j_b;
+	delete[] k_b;
+
+#if doubleintprecision == 1
+	//printf("ic9=%lld %e ", ic9, ratio_start_check);
+	std::cout << iteration_number << "  ic9=" << ic9 << " ratio_check=" << ratio_start_check << std::endl;
+#else
+	//printf("ic9=%d %e ", ic9, ratio_start_check);
+	std::cout << iteration_number << "  ic9=" << ic9 << " ratio_check=" << ratio_start_check << std::endl;
+#endif
+
+
+	additional_line(ratio_quality, inx, iny, inz, bcont, i_1, j_1, k_1, ic9, icorrect_stat, xpos, ypos, zpos);
+
+	delete[] i_1;
+	delete[] j_1;
+	delete[] k_1;
+
+	//BubbleEnhSort<doublereal>(xpos, 0, inx);
+	//BubbleEnhSort<doublereal>(ypos, 0, iny);
+	//BubbleEnhSort<doublereal>(zpos, 0, inz);
+	Sort_method<doublereal>(xpos, inx);
+	Sort_method<doublereal>(ypos, iny);
+	Sort_method<doublereal>(zpos, inz);
+	if (bcont) {
+
+		iteration_number++;
+
+		// Защита от бесконечного цикла на полигональных моделях.
+		if (iteration_number < 40) {
+			goto START_LAB;
+		}
+	}
+}
+
+
   // 11.02.2017
 void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 
@@ -1200,433 +2203,12 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 
 		//while (bcont) {
 
-	START_LAB:
+		integer iteration_number = 0;
 
-#if doubleintprecision == 1
-		//printf("%lld ",0);
-#else
-		//printf("%d ",0);
-#endif
-			
-			ic4++;
-			ratio_start_check = 0.0;
-			bcont = false;
-
-			//integer i_1 = 0, j_1 = 0, k_1 = 0;
-			integer ic9 = 0;
-			integer i_1[100], j_1[100], k_1[100];
-			bool *i_b=nullptr, *j_b=nullptr, *k_b=nullptr;
-			i_b = new bool[inx];
-			j_b = new bool[iny];
-			k_b = new bool[inz];
-
-			for (integer i_1l = 0; i_1l < inx; i_1l++) i_b[i_1l] = false;
-			for (integer j_1l = 0; j_1l < iny; j_1l++) j_b[j_1l] = false;
-			for (integer k_1l = 0; k_1l < inz; k_1l++) k_b[k_1l] = false;
-
-			
-
-
-			for (integer i_1l = 0; i_1l < inx; i_1l++) {
-				for (integer j_1l = 0; j_1l < iny; j_1l++) {
-					for (integer k_1l = 0; k_1l < inz; k_1l++) {
-						// сокращает время построения сетки.
-
-						TOCHKA p;
-						p.x = 0.5*(xpos[i_1l + 1] + xpos[i_1l]);
-						p.y = 0.5*(ypos[j_1l + 1] + ypos[j_1l]);
-						p.z = 0.5*(zpos[k_1l + 1] + zpos[k_1l]);
-
-						doublereal dx = xpos[i_1l + 1] - xpos[i_1l];
-						doublereal dy = ypos[j_1l + 1] - ypos[j_1l];
-						doublereal dz = zpos[k_1l + 1] - zpos[k_1l];
-						// Порядок узлов тоже важен. Модуль не нужен.
-#if doubleintprecision == 1
-					//if (dx < shorter_length_for_simplificationX(p.x)) {
-						if (dx < 1.0e-40) {
-						    printf("Error: Slipanie geometrii...dX \n");
-							//printf("x[%lld]=%e x[%lld]=%e x[%lld]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
-							std::cout << "x[" << i_1l - 1 << "]=" << xpos[i_1l - 1] << " x[" << i_1l << "]=" << xpos[i_1l] << " x[" << i_1l + 1 << "]=" << xpos[i_1l + 1] << std::endl;
-							system("pause");
-					}
-					//if (dy < shorter_length_for_simplificationY(p.y)) {
-						if (dy < 1.0e-40) {
-						    printf("Error: Slipanie geometrii...dY \n");
-							//printf("y[%lld]=%e y[%lld]=%e y[%lld]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
-							std::cout << "y[" << j_1l - 1 << "]=" << ypos[j_1l - 1] << " y[" << j_1l << "]=" << ypos[j_1l] << " y[" << j_1l + 1 << "]=" << ypos[j_1l + 1] << std::endl;
-							system("pause");
-					}
-					//if (dz < shorter_length_for_simplificationZ(p.z)) {
-						if (dz < 1.0e-40) {
-						printf("Error: Slipanie geometrii...dZ \n");
-							//printf("z[%lld]=%e z[%lld]=%e z[%lld]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
-							std::cout << "z[" << k_1l - 1 << "]=" << zpos[k_1l - 1] << " z[" << k_1l << "]=" << zpos[k_1l] << " z[" << k_1l + 1 << "]=" << zpos[k_1l + 1] << std::endl;
-							system("pause");
-					}
-#else
-						//if (dx < shorter_length_for_simplificationX(p.x)) {
-						if (dx < 1.0e-40) {
-							printf("Error: Slipanie geometrii...dX \n");
-							printf("x[%d]=%e x[%d]=%e x[%d]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
-							system("pause");
-					}
-						//if (dy < shorter_length_for_simplificationY(p.y)) {
-						if (dy < 1.0e-40) {
-							printf("Error: Slipanie geometrii...dY \n");
-							printf("y[%d]=%e y[%d]=%e y[%d]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
-							system("pause");
-						}
-						//if (dz < shorter_length_for_simplificationZ(p.z)) {
-						if (dz < 1.0e-40) {
-							printf("Error: Slipanie geometrii...dZ \n");
-							printf("z[%d]=%e z[%d]=%e z[%d]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
-							system("pause");
-						}
-#endif
-						
-						if ((dx >= dy) && (dy >= dz)) {
-							if (dx / dz > ratio_quality) {
-								if (i_b[i_1l] == false) {
-									if (fabs(dz) > 1.0e-40) {
-										ratio_start_check = dx / dz;
-										i_1[ic9] = i_1l;
-										j_1[ic9] = j_1l;
-										k_1[ic9] = k_1l;
-										i_b[i_1l] = true;
-										ic9++;
-									}
-									else {
-#if doubleintprecision == 1
-										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-#else
-										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-#endif
-										system("pause");
-									}
-								}
-							}
-						}
-						if ((dx >= dz) && (dz >= dy)) {
-							if (dx / dy > ratio_quality) {
-								if (i_b[i_1l] == false) {
-									if (fabs(dy) > 1.0e-40) {
-										ratio_start_check = dx / dy;
-										i_1[ic9] = i_1l;
-										j_1[ic9] = j_1l;
-										k_1[ic9] = k_1l;
-										i_b[i_1l] = true;
-										ic9++;
-									}
-									else {
-#if doubleintprecision == 1
-										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-#else
-										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-#endif
-										system("pause");
-									}
-								}
-							}
-						}
-						if ((dy >= dx) && (dx >= dz)) {
-							if (dy / dz > ratio_quality) {
-								if (j_b[j_1l] == false) {
-									if (fabs(dz) > 1.0e-40) {
-										ratio_start_check = dy / dz;
-										i_1[ic9] = i_1l;
-										j_1[ic9] = j_1l;
-										k_1[ic9] = k_1l;
-										j_b[j_1l] = true;
-										ic9++;
-									}
-									else {
-#if doubleintprecision == 1
-										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-#else
-										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-#endif
-										system("pause");
-									}
-								}
-							}
-						}
-						if ((dy >= dz) && (dz >= dx)) {
-							if (dy / dx > ratio_quality) {
-								if (j_b[j_1l] == false) {
-									if (fabs(dx) > 1.0e-40) {
-										ratio_start_check = dy / dx;
-										i_1[ic9] = i_1l;
-										j_1[ic9] = j_1l;
-										k_1[ic9] = k_1l;
-										j_b[j_1l] = true;
-										ic9++;
-									}
-									else {
-#if doubleintprecision == 1
-										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-
-#else
-										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-
-#endif
-										system("pause");
-									}
-								}
-							}
-						}
-						if ((dz >= dx) && (dx >= dy)) {
-							if (dz / dy > ratio_quality) {
-								if (k_b[k_1l] == false) {
-									if (fabs(dy) > 1.0e-40) {
-										ratio_start_check = dz / dy;
-										i_1[ic9] = i_1l;
-										j_1[ic9] = j_1l;
-										k_1[ic9] = k_1l;
-										k_b[k_1l] = true;
-										ic9++;
-									}
-									else {
-#if doubleintprecision == 1
-										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-
-#else
-										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-
-#endif
-										system("pause");
-									}
-								}
-							}
-						}
-						if ((dz >= dy) && (dy >= dx)) {
-							if (dz / dx > ratio_quality) {
-								if (k_b[k_1l] == false) {
-									if (fabs(dx) > 1.0e-40) {
-										ratio_start_check = dz / dx;
-										i_1[ic9] = i_1l;
-										j_1[ic9] = j_1l;
-										k_1[ic9] = k_1l;
-										k_b[k_1l] = true;
-										ic9++;
-									}
-									else {
-#if doubleintprecision == 1
-										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-
-#else
-										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
-										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
-
-
-#endif
-										system("pause");
-									}
-								}
-							}
-						}
-						if (ic9 > 93) {
-							// STOP process.
-							i_1l = inx;
-							j_1l = iny;
-							k_1l = inz;
-						}
-
-					}
-				}
-			}
-
-			delete[] i_b;
-			delete[] j_b;
-			delete[] k_b;
-
-#if doubleintprecision == 1
-			//printf("ic9=%lld %e ", ic9, ratio_start_check);
-			std::cout << "ic9=" << ic9 << " ratio_check=" << ratio_start_check << std::endl;
-#else
-			//printf("ic9=%d %e ", ic9, ratio_start_check);
-			std::cout << "ic9=" << ic9 << " ratio_check=" << ratio_start_check << std::endl;
-#endif
-			
-
-			for (integer ic7=0; ic7<ic9; ic7++)
-			{
-			
-				//doublereal dx = 1, dy = 1, dz = 1;
-				doublereal dx = xpos[i_1[ic7] + 1] - xpos[i_1[ic7]];
-				doublereal dy = ypos[j_1[ic7] + 1] - ypos[j_1[ic7]];
-				doublereal dz = zpos[k_1[ic7] + 1] - zpos[k_1[ic7]];
-				if ((dx >= dy) && (dy >= dz)) {
-					if (dx / dz > ratio_quality) {
-
-						bool badd = true;
-						for (integer i97 = 0; i97 <= inx; i97++) if (fabs(xpos[i97] - (xpos[i_1[ic7]] + 0.5*dx)) < 1.0e-40) badd = false;
-
-						if (badd) {
-							bcont = true;
-							SetLength(xpos, inx + 1, inx + 2);
-							//for (integer l = inx; l >= i_1[ic7] + 1; l--) xpos[l + 1] = xpos[l];
-							//xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
-							//xpos[i_1[ic7] + 1] = xpos[i_1[ic7]] + 0.5*dx;
-							// добавляем в конец
-							xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
-							inx = inx + 1;
-							//BubbleEnhSort<doublereal>(xpos, 0, inx);
-							//Sort_method<doublereal>(xpos, inx);
-							icorrect_stat++;
-							//goto START_LAB;
-							goto END_LAB8;
-						}
-					}
-				}
-				else if ((dx >= dz) && (dz >= dy)) {
-					if (dx / dy > ratio_quality) {
-
-
-						bool badd = true;
-						for (integer i97 = 0; i97 <= inx; i97++) if (fabs(xpos[i97] - (xpos[i_1[ic7]] + 0.5*dx)) < 1.0e-40) badd = false;
-
-						if (badd) {
-
-							bcont = true;
-							SetLength(xpos, inx + 1, inx + 2);
-							//for (integer l = inx; l >= i_1[ic7] + 1; l--) xpos[l + 1] = xpos[l];
-							//xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
-							//xpos[i_1[ic7] + 1] = xpos[i_1[ic7]] + 0.5*dx;
-							// добавляем в конец
-							xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
-							inx = inx + 1;
-							//BubbleEnhSort<doublereal>(xpos,0, inx);
-							//Sort_method<doublereal>(xpos, inx);
-							icorrect_stat++;
-							//goto START_LAB;
-							goto END_LAB8;
-						}
-					}
-				}
-				if ((dy >= dx) && (dx >= dz)) {
-					if (dy / dz > ratio_quality) {
-
-
-						bool badd = true;
-						for (integer i97 = 0; i97 <= iny; i97++) if (fabs(ypos[i97] - (ypos[j_1[ic7]] + 0.5*dy)) < 1.0e-40) badd = false;
-
-						if (badd) {
-
-							bcont = true;
-							SetLength(ypos, iny + 1, iny + 2);
-							//for (integer l = iny; l >= j_1[ic7] + 1; l--) ypos[l + 1] = ypos[l];
-							//ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
-							//ypos[j_1[ic7] + 1] = ypos[j_1[ic7]] + 0.5*dy;
-							// добавляем в конец
-							ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
-							iny = iny + 1;
-							//BubbleEnhSort<doublereal>(ypos,0, iny);
-							//Sort_method<doublereal>(ypos, iny);
-							icorrect_stat++;
-							//goto START_LAB;
-							goto END_LAB8;
-						}
-					}
-				}
-				else if ((dy >= dz) && (dz >= dx)) {
-					if (dy / dx > ratio_quality) {
-
-						bool badd = true;
-						for (integer i97 = 0; i97 <= iny; i97++) if (fabs(ypos[i97] - (ypos[j_1[ic7]] + 0.5*dy)) < 1.0e-40) badd = false;
-
-						if (badd) {
-
-							bcont = true;
-							SetLength(ypos, iny + 1, iny + 2);
-							//for (integer l = iny; l >= j_1[ic7] + 1; l--) ypos[l + 1] = ypos[l];
-							//ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
-							//ypos[j_1[ic7] + 1] = ypos[j_1[ic7]] + 0.5*dy;
-							// добавляем в конец
-							ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
-							iny = iny + 1;
-							//BubbleEnhSort<doublereal>(ypos, 0, iny);
-							//Sort_method<doublereal>(ypos, iny);
-							icorrect_stat++;
-							//goto START_LAB;
-							goto END_LAB8;
-						}
-					}
-				}
-				if ((dz >= dy) && (dy >= dx)) {
-					if (dz / dx > ratio_quality) {
-
-						bool badd = true;
-						for (integer i97 = 0; i97 <= inz; i97++) if (fabs(zpos[i97] - (zpos[k_1[ic7]] + 0.5*dz)) < 1.0e-40) badd = false;
-
-						if (badd) {
-
-							bcont = true;
-							SetLength(zpos, inz + 1, inz + 2);
-							//for (integer l = inz; l >= k_1[ic7] + 1; l--) zpos[l + 1] = zpos[l];
-							//zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
-							//zpos[k_1[ic7] + 1] = zpos[k_1[ic7]] + 0.5*dz;
-							// добавляем в конец
-							zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
-							inz = inz + 1;
-							//BubbleEnhSort<doublereal>(zpos, 0, inz);
-							//Sort_method<doublereal>(zpos, inz);
-							icorrect_stat++;
-							//goto START_LAB;
-							goto END_LAB8;
-						}
-					}
-				}
-				else if ((dz >= dx) && (dx >= dy)) {
-					if (dz / dy > ratio_quality) {
-
-						bool badd = true;
-						for (integer i97 = 0; i97 <= inz; i97++) if (fabs(zpos[i97] - (zpos[k_1[ic7]] + 0.5*dz)) < 1.0e-40) badd = false;
-
-						if (badd) {
-
-							bcont = true;
-							SetLength(zpos, inz + 1, inz + 2);
-							//for (integer l = inz; l >= k_1[ic7] + 1; l--) zpos[l + 1] = zpos[l];
-							//zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
-							//zpos[k_1[ic7] + 1] = zpos[k_1[ic7]] + 0.5*dz;
-							// добавляем в конец
-							zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
-							inz = inz + 1;
-							//BubbleEnhSort<doublereal>(zpos, 0, inz);
-							//Sort_method<doublereal>(zpos, inz);
-							icorrect_stat++;
-							//goto START_LAB;
-							goto END_LAB8;
-						}
-					}
-				}
-				
-			END_LAB8:
-				// Если убрать это пустое действие то возникнет ошибка компилятора С2059.
-				ic7++;
-				ic7--;
-
-			}
-			//BubbleEnhSort<doublereal>(xpos, 0, inx);
-			//BubbleEnhSort<doublereal>(ypos, 0, iny);
-			//BubbleEnhSort<doublereal>(zpos, 0, inz);
-			Sort_method<doublereal>(xpos,inx);
-			Sort_method<doublereal>(ypos,iny);
-			Sort_method<doublereal>(zpos,inz);
-			if (bcont  ) {
-				goto START_LAB;
-			}
+		cycle_additional_line(iteration_number, ic4,
+			bcont, ratio_start_check, inx, iny, inz, xpos, ypos, zpos,
+			ratio_quality, icorrect_stat);
+	
 		//}
 	}
 	else  {
@@ -1653,9 +2235,9 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 			// максиммально вытянутая ячейка.
 			integer i_maximally_elongated_cell_1, j_maximally_elongated_cell_1, k_maximally_elongated_cell_1;
 
-			for (integer i_1l = 0; i_1l < inx; i_1l++) {
-				for (integer j_1l = 0; j_1l < iny; j_1l++) {
-					for (integer k_1l = 0; k_1l < inz; k_1l++) {
+			for (int i_1l = 0; i_1l < inx; i_1l++) {
+				for (int j_1l = 0; j_1l < iny; j_1l++) {
+					for (int k_1l = 0; k_1l < inz; k_1l++) {
 						// сокращает время построения сетки.
 
 						//doublereal dx = 1, dy = 1, dz = 1;
@@ -1733,7 +2315,7 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 						//BubbleEnhSort<doublereal>(xpos,0, inx);
 						//Sort_method<doublereal>(xpos,inx);
 						icorrect_stat++;
-						goto START_LAB;
+						goto START_LAB2;
 					}
 				}
 				if ((dx >= dz) && (dz >= dy)) {
@@ -2042,13 +2624,22 @@ bool in_model_fluid_gap_1(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					// цикл по всем блокам
 	for (i = 0; i<lb; i++) {
 
-		if (b[i].g.itypegeom == 0) {
+		if (b[i].g.itypegeom == PRISM) {
 			// Prism
 			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
 				k = i;
 			}
 		}
-		else if (b[i].g.itypegeom == 2) {
+		else if (b[i].g.itypegeom == CAD_STL) {
+			// CAD_STL
+			// 15.11.2020
+
+			integer k_loc = -1;
+			if (b[i].g.in_CAD_STL_check(p,k_loc,i)) {
+				k = i;
+			}
+		}
+		else if (b[i].g.itypegeom == POLYGON) {
 			// Мы проверяем принадлежность полигону только в случае если точка p находидся
 			// строго внутри прямоугольной призмы окаймляющей полигон.
 			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
@@ -2063,7 +2654,7 @@ bool in_model_fluid_gap_1(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 			// Cylinder
 			switch (b[i].g.iPlane) {
 			case XY_PLANE:
-				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
 					if ((p.z > b[i].g.zC) && (p.z < b[i].g.zC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
 							k = i;
@@ -2081,7 +2672,7 @@ bool in_model_fluid_gap_1(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 				}
 				break;
 			case XZ_PLANE:
-				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
 					if ((p.y > b[i].g.yC) && (p.y < b[i].g.yC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
 							k = i;
@@ -2099,7 +2690,7 @@ bool in_model_fluid_gap_1(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 				}
 				break;
 			case YZ_PLANE:
-				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
 					if ((p.x > b[i].g.xC) && (p.x < b[i].g.xC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
 							k = i;
@@ -2146,7 +2737,7 @@ bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 	// цикл по всем блокам
 	for (i = lb - 1; i >= 0; i--) {
 
-		if (b[i].g.itypegeom == 0) {
+		if (b[i].g.itypegeom == PRISM) {
 			// Prism
 			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
 				k = i;
@@ -2154,7 +2745,18 @@ bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 				goto OUTOF_IN_MODEL_FLOW_1;
 			}
 		}
-		if (b[i].g.itypegeom == 2) {
+		if (b[i].g.itypegeom == CAD_STL) {
+			// CAD_STL
+			// 15.11.2020
+
+			integer k_loc = -1;
+			if (b[i].g.in_CAD_STL_check(p, k_loc, i)) {
+				k = i;
+				// Только нашли и сразу закончили проверку.
+				goto OUTOF_IN_MODEL_FLOW_1;
+			}
+		}
+		if (b[i].g.itypegeom == POLYGON) {
 
 			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
 
@@ -2170,11 +2772,11 @@ bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 
 		}
 
-		if (b[i].g.itypegeom == 1) {
+		if (b[i].g.itypegeom == CYLINDER) {
 			// Cylinder
 			switch (b[i].g.iPlane) {
 			case XY_PLANE:
-				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
 					if ((p.z > b[i].g.zC) && (p.z < b[i].g.zC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
 							k = i;
@@ -2196,7 +2798,7 @@ bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 				}
 				break;
 			case XZ_PLANE:
-				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
 					if ((p.y > b[i].g.yC) && (p.y < b[i].g.yC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
 							k = i;
@@ -2218,7 +2820,7 @@ bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 				}
 				break;
 			case YZ_PLANE:
-				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
 					if ((p.x > b[i].g.xC) && (p.x < b[i].g.xC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
 							k = i;
@@ -2389,7 +2991,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 
 	for (i = 1; i < lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			if (b[i].g.itypegeom != POLYGON) {
+			if ((b[i].g.itypegeom != POLYGON)&&(b[i].g.itypegeom != CAD_STL)) {
 
 				if (bcylinder_meshing && (b[i].g.itypegeom == CYLINDER) && (bactive_cyl[i])) {
 					// Cylinder
@@ -2418,7 +3020,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 
 	for (i = 1; i < lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			if (b[i].g.itypegeom != POLYGON) {
+			if ((b[i].g.itypegeom != POLYGON) && (b[i].g.itypegeom != CAD_STL)) {
 
 				if (bcylinder_meshing && (b[i].g.itypegeom == CYLINDER) && (bactive_cyl[i])) {
 					// Cylinder
@@ -2445,7 +3047,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 
 	for (i = 1; i < lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			if (b[i].g.itypegeom != POLYGON) {
+			if ((b[i].g.itypegeom != POLYGON) && (b[i].g.itypegeom != CAD_STL)) {
 
 
 				if (bcylinder_meshing && (b[i].g.itypegeom == CYLINDER && (bactive_cyl[i]))) {
@@ -2592,11 +3194,12 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 
 }// calc_minimum_fluid_gap3
 
-  // Вычисляет minimum fluid gap. 
-  // ЧАСТЬ 1.
-  // 12.03.2017
+// Вычисляет minimum fluid gap. 
+// ЧАСТЬ 1.
+// 12.03.2017
 // 16.08.2017 Polygon
 // 25.04.2018 Асемблесы.
+// 15.11.2020 CAD_STL
 void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	integer &inumboundaryy, doublereal* &ryboundary,
 	integer &inumboundaryz, doublereal* &rzboundary,
@@ -2626,10 +3229,10 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		rxboundary[inumboundaryx] = my_union[iunion_id_p1 - 1].xE; // конец области
 	}
 
-										   // блоки
+	// блоки
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			if (b[i].g.itypegeom != 2) {
+			if ((b[i].g.itypegeom != POLYGON) && (b[i].g.itypegeom != CAD_STL)) {
 				doublereal x_1 = b[i].g.xS;
 				if ((x_1>=b[0].g.xS) && (x_1<=b[0].g.xE)) {
 					addboundary(rxboundary, inumboundaryx, x_1,YZ_PLANE, b, lb, w, lw, s, ls);
@@ -2669,12 +3272,12 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 						doublereal x_1 = b[i].g.xS - fabs(b[i].g.xE - b[i].g.xS) + dm * 3.0 * fabs(b[i].g.xE - b[i].g.xS);
 						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1,YZ_PLANE, b, lb, w, lw, s, ls);
+							addboundary(rxboundary, inumboundaryx, x_1, YZ_PLANE, b, lb, w, lw, s, ls);
 						}
 					}
 				}
 			}
-			else {
+			else if (b[i].g.itypegeom == POLYGON) {
 				//Polygon
 				doublereal x_1;
 				switch (b[i].g.iPlane_obj2) {
@@ -2705,6 +3308,30 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					}
 					break;
 				}
+			}
+			else {
+				// CAD STL
+
+				gCAD_STL* tmp = b[i].g.root_CAD_STL;
+
+				while (tmp != nullptr) {
+
+					doublereal x_1=tmp->pa.x;
+
+					addboundary(rxboundary, inumboundaryx, x_1, YZ_PLANE, b, lb, w, lw, s, ls);
+
+					x_1 = tmp->pb.x;
+
+					addboundary(rxboundary, inumboundaryx, x_1, YZ_PLANE, b, lb, w, lw, s, ls);
+
+					x_1 = tmp->pc.x;
+
+					addboundary(rxboundary, inumboundaryx, x_1, YZ_PLANE, b, lb, w, lw, s, ls);
+
+					tmp = tmp->next;
+
+				}
+
 			}
 		}
 	}
@@ -2786,7 +3413,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	// блоки
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			if (b[i].g.itypegeom != 2) {
+			if ((b[i].g.itypegeom != POLYGON)&&(b[i].g.itypegeom != CAD_STL)) {
 				doublereal y_1 = b[i].g.yS;
 				if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
 					addboundary(ryboundary, inumboundaryy, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
@@ -2830,7 +3457,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					}
 				}
 			}
-			else {
+			else if (b[i].g.itypegeom == POLYGON) {
 				//Polygon
 				doublereal y_1;
 				switch (b[i].g.iPlane_obj2) {
@@ -2838,28 +3465,51 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
 						y_1 = b[i].g.yi[i_65];
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
+							addboundary(ryboundary, inumboundaryy, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
 						}
 					}
 					break;
 				case XZ_PLANE:
 					y_1 = b[i].g.yi[0];
 					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-						addboundary(ryboundary, inumboundaryy, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
+						addboundary(ryboundary, inumboundaryy, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
 					}
 					y_1 = b[i].g.yi[0] + b[i].g.hi[0];
 					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-						addboundary(ryboundary, inumboundaryy, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
+						addboundary(ryboundary, inumboundaryy, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
 					}
 					break;
 				case YZ_PLANE:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
 						y_1 = b[i].g.yi[i_65];
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
+							addboundary(ryboundary, inumboundaryy, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
 						}
 					}
 					break;
+				}
+			}
+			else {
+				// CAD STL
+
+				gCAD_STL* tmp = b[i].g.root_CAD_STL;
+
+				while (tmp != nullptr) {
+
+					doublereal y_1 = tmp->pa.y;
+
+					addboundary(ryboundary, inumboundaryy, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
+
+					y_1 = tmp->pb.y;
+
+					addboundary(ryboundary, inumboundaryy, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
+
+					y_1 = tmp->pc.y;
+
+					addboundary(ryboundary, inumboundaryy, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
+
+					tmp = tmp->next;
+
 				}
 			}
 		}
@@ -2942,7 +3592,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	// блоки
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			if (b[i].g.itypegeom != 2) {
+			if ((b[i].g.itypegeom != POLYGON) && (b[i].g.itypegeom != CAD_STL)) {
 				doublereal z_1 = b[i].g.zS;
 				if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
 					addboundary(rzboundary, inumboundaryz,z_1,XY_PLANE, b, lb, w, lw, s, ls);
@@ -2988,7 +3638,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					}
 				}
 			}
-			else {
+			else if (b[i].g.itypegeom == POLYGON) {
 				//Polygon
 				doublereal z_1;
 				switch (b[i].g.iPlane_obj2) {
@@ -3018,6 +3668,29 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 						}
 					}
 					break;
+				}
+			}
+			else {
+				// CAD STL
+
+				gCAD_STL* tmp = b[i].g.root_CAD_STL;
+
+				while (tmp != nullptr) {
+
+					doublereal z_1 = tmp->pa.z;
+
+					addboundary(rzboundary, inumboundaryz, z_1, XY_PLANE, b, lb, w, lw, s, ls);
+
+					z_1 = tmp->pb.z;
+
+					addboundary(rzboundary, inumboundaryz, z_1, XY_PLANE, b, lb, w, lw, s, ls);
+
+					z_1 = tmp->pc.z;
+
+					addboundary(rzboundary, inumboundaryz, z_1, XY_PLANE, b, lb, w, lw, s, ls);
+
+					tmp = tmp->next;
+
 				}
 			}
 		}
@@ -3097,7 +3770,7 @@ void calc_minimum_fluid_gap2_1(integer &inumboundaryx, doublereal* &rxboundary,
 	// minimum fluid gap in Ox direction
 
 	bool bincomming = false; // true начался жидкостный блок.
-	doublereal startpos = -1.0e40;
+	doublereal startpos = -1.0e36;
 	for (integer i7 = 0; i7 < inumboundaryy; i7++) {
 		for (integer i8 = 0; i8 < inumboundaryz; i8++) {
 			doublereal yc = 0.5*(ryboundary[i7] + ryboundary[i7 + 1]);
@@ -3127,7 +3800,7 @@ void calc_minimum_fluid_gap2_1(integer &inumboundaryx, doublereal* &rxboundary,
 	// minimum fluid gap in Oy direction
 
 	bincomming = false; // true начался жидкостный блок.
-	startpos = -1.0e40;
+	startpos = -1.0e36;
 	for (integer i7 = 0; i7 < inumboundaryx; i7++) {
 		for (integer i8 = 0; i8 < inumboundaryz; i8++) {
 			doublereal xc = 0.5*(rxboundary[i7] + rxboundary[i7 + 1]);
@@ -3156,7 +3829,7 @@ void calc_minimum_fluid_gap2_1(integer &inumboundaryx, doublereal* &rxboundary,
 	// minimum fluid gap in Oz direction
 
 	bincomming = false; // true начался жидкостный блок.
-	startpos = -1.0e40;
+	startpos = -1.0e36;
 	for (integer i7 = 0; i7 < inumboundaryx; i7++) {
 		for (integer i8 = 0; i8 < inumboundaryy; i8++) {
 			doublereal xc = 0.5*(rxboundary[i7] + rxboundary[i7 + 1]);
@@ -3250,7 +3923,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	for (integer i = 0; i < lb; i++) {
 		doublereal x4 = b[i].g.xS;
 		doublereal distmax;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (integer j = 0; j <= inumboundaryx; j++) {
 			if (fabs(rxboundary[j] - x4) < distmax) {
 				block_indexes[i].iL = j;
@@ -3258,7 +3931,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 			}
 		}
 		x4 = b[i].g.xE;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (integer j = 0; j <= inumboundaryx; j++) {
 			if (fabs(rxboundary[j] - x4) < distmax) {
 				block_indexes[i].iR = j;
@@ -3266,7 +3939,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 			}
 		}
 		x4 = b[i].g.yS;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (integer j = 0; j <= inumboundaryy; j++) {
 			if (fabs(ryboundary[j] - x4) < distmax) {
 				block_indexes[i].jL = j;
@@ -3274,7 +3947,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 			}
 		}
 		x4 = b[i].g.yE;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (integer j = 0; j <= inumboundaryy; j++) {
 			if (fabs(ryboundary[j] - x4) < distmax) {
 				block_indexes[i].jR = j;
@@ -3282,7 +3955,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 			}
 		}
 		x4 = b[i].g.zS;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (integer j = 0; j <= inumboundaryz; j++) {
 			if (fabs(rzboundary[j] - x4) < distmax) {
 				block_indexes[i].kL = j;
@@ -3290,7 +3963,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 			}
 		}
 		x4 = b[i].g.zE;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (integer j = 0; j <= inumboundaryz; j++) {
 			if (fabs(rzboundary[j] - x4) < distmax) {
 				block_indexes[i].kR = j;
@@ -3512,7 +4185,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	// minimum fluid gap in Ox direction
 
 	bool bincomming = false; // true начался жидкостный блок.
-	doublereal startpos = -1.0e40;
+	doublereal startpos = -1.0e36;
 	for (integer i8 = 0; i8 < inumboundaryz; i8++) {
 		integer i8_ = inumboundaryx * inumboundaryy * i8;
 	     for (integer i7 = 0; i7 < inumboundaryy; i7++) {
@@ -3548,7 +4221,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	// minimum fluid gap in Oy direction
 
 	bincomming = false; // true начался жидкостный блок.
-	startpos = -1.0e40;
+	startpos = -1.0e36;
 	for (integer i8 = 0; i8 < inumboundaryz; i8++) {
 		integer i8_ = inumboundaryx * inumboundaryy * i8;
 		for (integer i7 = 0; i7 < inumboundaryx; i7++) {		
@@ -3584,7 +4257,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	// minimum fluid gap in Oz direction
 
 	bincomming = false; // true начался жидкостный блок.
-	startpos = -1.0e40;
+	startpos = -1.0e36;
 	integer imultxz = inumboundaryx * inumboundaryz;
 	for (integer i8 = 0; i8 < inumboundaryy; i8++) {
 		integer i8_ = imultxz*i8;
@@ -3721,7 +4394,7 @@ RESTARTX_SNAPTO:
 			if (s[i].iPlane == YZ_PLANE) {
 				for (integer i1 = 0; i1 <= inumboundaryx; i1++) {
 					s[i].g.xS = s[i].g.xE;
-					if (fabs(s[i].g.xS - rxboundary[i1]) < 1.0e-40) {
+					if (fabs(s[i].g.xS - rxboundary[i1]) < 1.0e-36) {
 						source_indexpopadaniqnagranYZ[i] = true;
 					}
 				}
@@ -3792,7 +4465,7 @@ RESTARTX_SNAPTO:
 
 		for (i = 0; i < lb; i++) {
 			if (b[i].iunion_id == iunion_id_p1) {
-				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+				if (bcylinder_meshing && (b[i].g.itypegeom == CYLINDER)) {
 					// Cylinder
 
 					switch (b[i].g.iPlane) {
@@ -3803,7 +4476,53 @@ RESTARTX_SNAPTO:
 						break;
 					}
 				}
-				else if (fabs(b[i].g.xE - b[i].g.xS) < rmindist) {
+				else if (b[i].g.itypegeom == POLYGON) {
+					doublereal dist = 1.0e30;
+					integer i_7;
+					switch (b[i].g.iPlane_obj2) {
+					case XY_PLANE:
+						for (i_7 = 0; i_7 < b[i].g.nsizei - 1; i_7++) {
+							dist = sqrt((b[i].g.xi[i_7 + 1] - b[i].g.xi[i_7]) * (b[i].g.xi[i_7 + 1] - b[i].g.xi[i_7]) + (b[i].g.yi[i_7 + 1] - b[i].g.yi[i_7]) * (b[i].g.yi[i_7 + 1] - b[i].g.yi[i_7]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						{
+							dist = sqrt((b[i].g.xi[b[i].g.nsizei - 1] - b[i].g.xi[0]) * (b[i].g.xi[b[i].g.nsizei - 1] - b[i].g.xi[0]) + (b[i].g.yi[b[i].g.nsizei - 1] - b[i].g.yi[0]) * (b[i].g.yi[b[i].g.nsizei - 1] - b[i].g.yi[0]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						break;
+					case XZ_PLANE:
+						for (i_7 = 0; i_7 < b[i].g.nsizei - 1; i_7++) {
+							dist = sqrt((b[i].g.xi[i_7 + 1] - b[i].g.xi[i_7]) * (b[i].g.xi[i_7 + 1] - b[i].g.xi[i_7]) + (b[i].g.zi[i_7 + 1] - b[i].g.zi[i_7]) * (b[i].g.zi[i_7 + 1] - b[i].g.zi[i_7]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						{
+							dist = sqrt((b[i].g.xi[b[i].g.nsizei - 1] - b[i].g.xi[0]) * (b[i].g.xi[b[i].g.nsizei - 1] - b[i].g.xi[0]) + (b[i].g.zi[b[i].g.nsizei - 1] - b[i].g.zi[0]) * (b[i].g.zi[b[i].g.nsizei - 1] - b[i].g.zi[0]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						break;
+					case YZ_PLANE:
+						if (fabs(b[i].g.hi[0]) < rmindist) {
+							rmindist = fabs(b[i].g.hi[0]);
+						}
+						break;
+					}
+				}
+				else if (b[i].g.itypegeom == CAD_STL) {
+
+					doublereal dist47 = b[i].g.min_size_edge();
+					if (dist47 < rmindist) {
+						rmindist = dist47;
+					}
+				}
+				else if ((b[i].g.itypegeom == PRISM) && (fabs(b[i].g.xE - b[i].g.xS) < rmindist)) {
 					rmindist = fabs(b[i].g.xE - b[i].g.xS);
 				}
 			}
@@ -3993,7 +4712,7 @@ RESTARTY_SNAPTO:
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
 				addboundary(ryboundary, inumboundaryy, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
 			}
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+			if (bcylinder_meshing && (b[i].g.itypegeom == CYLINDER)) {
 				// Cylinder
 				switch (b[i].g.iPlane) {
 				case XY_PLANE: case YZ_PLANE:
@@ -4020,7 +4739,7 @@ RESTARTY_SNAPTO:
 			if (s[i].iPlane == XZ_PLANE) {
 				for (integer i1 = 0; i1 <= inumboundaryy; i1++) {
 					s[i].g.yS = s[i].g.yE;
-					if (fabs(s[i].g.yS - ryboundary[i1]) < 1.0e-40) {
+					if (fabs(s[i].g.yS - ryboundary[i1]) < 1.0e-36) {
 						source_indexpopadaniqnagranXZ[i] = true;
 					}
 				}
@@ -4080,7 +4799,7 @@ RESTARTY_SNAPTO:
 
 		for (i = 0; i < lb; i++) {
 			if (b[i].iunion_id == iunion_id_p1) {
-				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+				if (bcylinder_meshing && (b[i].g.itypegeom == CYLINDER)) {
 					// Cylinder
 					switch (b[i].g.iPlane) {
 					case XY_PLANE: case YZ_PLANE:
@@ -4090,7 +4809,53 @@ RESTARTY_SNAPTO:
 						break;
 					}
 				}
-				else if (fabs(b[i].g.yE - b[i].g.yS) < rmindist) {
+				else if (b[i].g.itypegeom == POLYGON) {
+					doublereal dist = 1.0e30;
+					integer i_7;
+					switch (b[i].g.iPlane_obj2) {
+					case XY_PLANE:
+						for (i_7 = 0; i_7 < b[i].g.nsizei - 1; i_7++) {
+							dist = sqrt((b[i].g.xi[i_7 + 1] - b[i].g.xi[i_7]) * (b[i].g.xi[i_7 + 1] - b[i].g.xi[i_7]) + (b[i].g.yi[i_7 + 1] - b[i].g.yi[i_7]) * (b[i].g.yi[i_7 + 1] - b[i].g.yi[i_7]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						{
+							dist = sqrt((b[i].g.xi[b[i].g.nsizei - 1] - b[i].g.xi[0]) * (b[i].g.xi[b[i].g.nsizei - 1] - b[i].g.xi[0]) + (b[i].g.yi[b[i].g.nsizei - 1] - b[i].g.yi[0]) * (b[i].g.yi[b[i].g.nsizei - 1] - b[i].g.yi[0]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						break;
+					case YZ_PLANE:
+						for (i_7 = 0; i_7 < b[i].g.nsizei - 1; i_7++) {
+							dist = sqrt((b[i].g.yi[i_7 + 1] - b[i].g.yi[i_7]) * (b[i].g.yi[i_7 + 1] - b[i].g.yi[i_7]) + (b[i].g.zi[i_7 + 1] - b[i].g.zi[i_7]) * (b[i].g.zi[i_7 + 1] - b[i].g.zi[i_7]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						{
+							dist = sqrt((b[i].g.yi[b[i].g.nsizei - 1] - b[i].g.yi[0]) * (b[i].g.yi[b[i].g.nsizei - 1] - b[i].g.yi[0]) + (b[i].g.zi[b[i].g.nsizei - 1] - b[i].g.zi[0]) * (b[i].g.zi[b[i].g.nsizei - 1] - b[i].g.zi[0]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						break;
+					case XZ_PLANE:
+						if (fabs(b[i].g.hi[0]) < rmindist) {
+							rmindist = fabs(b[i].g.hi[0]);
+						}
+						break;
+					}
+				}
+				else if (b[i].g.itypegeom == CAD_STL) {
+
+					doublereal dist47 = b[i].g.min_size_edge();
+					if (dist47 < rmindist) {
+						rmindist = dist47;
+					}
+				}
+				else if ((b[i].g.itypegeom == PRISM) && (fabs(b[i].g.yE - b[i].g.yS) < rmindist)) {
 					rmindist = fabs(b[i].g.yE - b[i].g.yS);
 				}
 			}
@@ -4275,7 +5040,7 @@ RESTARTZ_SNAPTO:
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
 				addboundary(rzboundary, inumboundaryz, z_1,XY_PLANE, b, lb, w, lw, s, ls);
 			}
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+			if (bcylinder_meshing && (b[i].g.itypegeom == CYLINDER)) {
 				// Cylinder
 				switch (b[i].g.iPlane) {
 				case XZ_PLANE: case YZ_PLANE:
@@ -4302,7 +5067,7 @@ RESTARTZ_SNAPTO:
 			if (s[i].iPlane == XY_PLANE) {
 				for (integer i1 = 0; i1 <= inumboundaryz; i1++) {
 					s[i].g.zS = s[i].g.zE;
-					if (fabs(s[i].g.zS - rzboundary[i1]) < 1.0e-40) {
+					if (fabs(s[i].g.zS - rzboundary[i1]) < 1.0e-36) {
 						source_indexpopadaniqnagranXY[i] = true;
 					}
 				}
@@ -4363,7 +5128,7 @@ RESTARTZ_SNAPTO:
 
 		for (i = 0; i < lb; i++) {
 			if (b[i].iunion_id == iunion_id_p1) {
-				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+				if (bcylinder_meshing && (b[i].g.itypegeom == CYLINDER)) {
 					// Cylinder
 					switch (b[i].g.iPlane) {
 					case XZ_PLANE: case YZ_PLANE:
@@ -4373,7 +5138,53 @@ RESTARTZ_SNAPTO:
 						break;
 					}
 				}
-				else if (fabs(b[i].g.zE - b[i].g.zS) < rmindist) {
+				else if (b[i].g.itypegeom == POLYGON) {
+					doublereal dist = 1.0e30;
+					integer i_7;
+					switch (b[i].g.iPlane_obj2) {
+					case XZ_PLANE:
+						for ( i_7 = 0; i_7 < b[i].g.nsizei - 1; i_7++) {
+							dist = sqrt((b[i].g.xi[i_7 + 1] - b[i].g.xi[i_7]) * (b[i].g.xi[i_7 + 1] - b[i].g.xi[i_7]) + (b[i].g.zi[i_7 + 1] - b[i].g.zi[i_7]) * (b[i].g.zi[i_7 + 1] - b[i].g.zi[i_7]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						{
+							dist = sqrt((b[i].g.xi[b[i].g.nsizei - 1] - b[i].g.xi[0]) * (b[i].g.xi[b[i].g.nsizei - 1] - b[i].g.xi[0]) + (b[i].g.zi[b[i].g.nsizei - 1] - b[i].g.zi[0]) * (b[i].g.zi[b[i].g.nsizei - 1] - b[i].g.zi[0]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						break;
+					case YZ_PLANE:
+						for (i_7 = 0; i_7 < b[i].g.nsizei - 1; i_7++) {
+							dist = sqrt((b[i].g.yi[i_7 + 1] - b[i].g.yi[i_7]) * (b[i].g.yi[i_7 + 1] - b[i].g.yi[i_7]) + (b[i].g.zi[i_7 + 1] - b[i].g.zi[i_7]) * (b[i].g.zi[i_7 + 1] - b[i].g.zi[i_7]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						{
+							dist = sqrt((b[i].g.yi[b[i].g.nsizei - 1] - b[i].g.yi[0]) * (b[i].g.yi[b[i].g.nsizei - 1] - b[i].g.yi[0]) + (b[i].g.zi[b[i].g.nsizei - 1] - b[i].g.zi[0]) * (b[i].g.zi[b[i].g.nsizei - 1] - b[i].g.zi[0]));
+							if (dist < rmindist) {
+								rmindist = dist;
+							}
+						}
+						break;
+					case XY_PLANE:
+				        if (fabs(b[i].g.hi[0]) < rmindist) {
+					        rmindist = fabs(b[i].g.hi[0]);
+			         	}
+						break;
+					}
+				}
+				else if (b[i].g.itypegeom == CAD_STL) {
+
+					doublereal dist47 = b[i].g.min_size_edge();
+					if (dist47 < rmindist) {
+						rmindist = dist47;
+					}
+				}
+				else if ((b[i].g.itypegeom == PRISM)&&(fabs(b[i].g.zE - b[i].g.zS) < rmindist)) {
 					rmindist = fabs(b[i].g.zE - b[i].g.zS);
 				}
 			}
@@ -4407,7 +5218,7 @@ RESTARTZ_SNAPTO:
 		}
 
 		if (minimum_fluid_gap_z < rmindist) rmindist = minimum_fluid_gap_z;
-
+		
 		rmindist *= snap_to_multiplyer;
 		doublereal movetopos;
 		doublereal changepos;
@@ -4513,7 +5324,7 @@ RESTARTZ_SNAPTO:
 				goto RESTARTZ_SNAPTO;
 			}
 		}
-
+		
 	}
 
 	brepeat = false;
@@ -4534,7 +5345,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	
 
 	// Значение 0.1 подобрано и его лучше не трогать.
-	doublereal deltavolkov = 0.1; // Неравномерная сетка в кубе по Волкову.
+	doublereal deltavolkov = 0.1; // Неравномерная сетка в кубе по К.Н. Волкову.
 
 	//bool bsnap_TO = bsnap_TO_global; // snap to grid (избавляет от щелей в сложных моделях).
 	//doublereal snap_to_multiplyer = 0.3;
@@ -4562,9 +5373,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	calc_minimum_fluid_gap1(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary,
 		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
-	doublereal minimum_fluid_gap_x = 1.0e40;
-	doublereal minimum_fluid_gap_y = 1.0e40;
-	doublereal minimum_fluid_gap_z = 1.0e40;
+	doublereal minimum_fluid_gap_x = 1.0e36;
+	doublereal minimum_fluid_gap_y = 1.0e36;
+	doublereal minimum_fluid_gap_z = 1.0e36;
 
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
 	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
@@ -5324,7 +6135,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			// Если неуспех ищемцентр КО по -Z и смещаем туда.
 			integer i55_found = -2;
 			for (integer i55 = 0; i55 <= inz_fix; i55++) {
-				if (fabs(zpos[i55] - zg) < 1.0e-40) {
+				if (fabs(zpos[i55] - zg) < 1.0e-36) {
 					i55_found = i55;
 					break;
 				}
@@ -5484,7 +6295,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			// Если неуспех ищемцентр КО по -Z и смещаем туда.
 			integer i55_found = -2;
 			for (integer i55 = 0; i55 <= inx_fix; i55++) {
-				if (fabs(xpos[i55] - xg) < 1.0e-40) {
+				if (fabs(xpos[i55] - xg) < 1.0e-36) {
 					i55_found = i55;
 					break;
 				}
@@ -5641,7 +6452,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			// Если неуспех ищемцентр КО по -Z и смещаем туда.
 			integer i55_found = -2;
 			for (integer i55 = 0; i55 <= iny_fix; i55++) {
-				if (fabs(ypos[i55] - yg) < 1.0e-40) {
+				if (fabs(ypos[i55] - yg) < 1.0e-36) {
 					i55_found = i55;
 					break;
 				}
@@ -5948,9 +6759,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	calc_minimum_fluid_gap1(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary,
 		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
-	doublereal minimum_fluid_gap_x = 1.0e40;
-	doublereal minimum_fluid_gap_y = 1.0e40;
-	doublereal minimum_fluid_gap_z = 1.0e40;
+	doublereal minimum_fluid_gap_x = 1.0e36;
+	doublereal minimum_fluid_gap_y = 1.0e36;
+	doublereal minimum_fluid_gap_z = 1.0e36;
 
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
 	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
@@ -6620,7 +7431,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 			// Если неуспех ищемцентр КО по -Z и смещаем туда.
 			integer i55_found = -2;
 			for (integer i55 = 0; i55 <= inz_fix; i55++) {
-				if (fabs(zpos[i55] - zg) < 1.0e-40) {
+				if (fabs(zpos[i55] - zg) < 1.0e-36) {
 					i55_found = i55;
 					break;
 				}
@@ -6771,7 +7582,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 			// Если неуспех ищемцентр КО по -Z и смещаем туда.
 			integer i55_found = -2;
 			for (integer i55 = 0; i55 <= inx_fix; i55++) {
-				if (fabs(xpos[i55] - xg) < 1.0e-40) {
+				if (fabs(xpos[i55] - xg) < 1.0e-36) {
 					i55_found = i55;
 					break;
 				}
@@ -6924,7 +7735,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 			// Если неуспех ищемцентр КО по -Z и смещаем туда.
 			integer i55_found = -2;
 			for (integer i55 = 0; i55 <= iny_fix; i55++) {
-				if (fabs(ypos[i55] - yg) < 1.0e-40) {
+				if (fabs(ypos[i55] - yg) < 1.0e-36) {
 					i55_found = i55;
 					break;
 				}
@@ -7122,9 +7933,9 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 	//printf("%d %d %d", inumboundaryx, inumboundaryy, inumboundaryz);
 
-	doublereal minimum_fluid_gap_x = 1.0e40;
-	doublereal minimum_fluid_gap_y = 1.0e40;
-	doublereal minimum_fluid_gap_z = 1.0e40;
+	doublereal minimum_fluid_gap_x = 1.0e36;
+	doublereal minimum_fluid_gap_y = 1.0e36;
+	doublereal minimum_fluid_gap_z = 1.0e36;
 
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
 	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
@@ -7215,7 +8026,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	for (i = 0; i < lb; i++) {
 		doublereal x4 = b[i].g.xS;
 		doublereal distmax;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (j = 0; j <= inumboundaryx; j++) {
 			if (fabs(rxboundary[j] - x4) < distmax) {
 				block_indexes[i].iL = j;
@@ -7223,7 +8034,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 			}
 		}
 		x4 = b[i].g.xE;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (j = 0; j <= inumboundaryx; j++) {
 			if (fabs(rxboundary[j] - x4) < distmax) {
 				block_indexes[i].iR = j;
@@ -7231,7 +8042,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 			}
 		}
 		x4 = b[i].g.yS;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (j = 0; j <= inumboundaryy; j++) {
 			if (fabs(ryboundary[j] - x4) < distmax) {
 				block_indexes[i].jL = j;
@@ -7239,7 +8050,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 			}
 		}
 		x4 = b[i].g.yE;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (j = 0; j <= inumboundaryy; j++) {
 			if (fabs(ryboundary[j] - x4) < distmax) {
 				block_indexes[i].jR = j;
@@ -7247,7 +8058,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 			}
 		}
 		x4 = b[i].g.zS;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (j = 0; j <= inumboundaryz; j++) {
 			if (fabs(rzboundary[j] - x4) < distmax) {
 				block_indexes[i].kL = j;
@@ -7255,7 +8066,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 			}
 		}
 		x4 = b[i].g.zE;
-		distmax = 1.0e40;
+		distmax = 1.0e36;
 		for (j = 0; j <= inumboundaryz; j++) {
 			if (fabs(rzboundary[j] - x4) < distmax) {
 				block_indexes[i].kR = j;
@@ -8696,7 +9507,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 				// Если неуспех ищемцентр КО по -Z и смещаем туда.
 				integer i55_found = -2;
 				for (integer i55 = 0; i55 <= inz_fix; i55++) {
-					if (fabs(zpos[i55] - zg) < 1.0e-40) {
+					if (fabs(zpos[i55] - zg) < 1.0e-36) {
 						i55_found = i55;
 						break;
 					}
@@ -8865,7 +9676,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 				// Если неуспех ищемцентр КО по -Z и смещаем туда.
 				integer i55_found = -2;
 				for (integer i55 = 0; i55 <= inx_fix; i55++) {
-					if (fabs(xpos[i55] - xg) < 1.0e-40) {
+					if (fabs(xpos[i55] - xg) < 1.0e-36) {
 						i55_found = i55;
 						break;
 					}

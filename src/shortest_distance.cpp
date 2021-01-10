@@ -29,8 +29,8 @@
 
 // Вычисление градиентов потенциала FI в центрах внутренних КО
 // и на границах с помощью линейной интерполяции.
-void green_gauss_FI(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa,
-	ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
+void green_gauss_FI(integer iP, doublereal** &potent, int** nvtx, TOCHKA* pa,
+	int*** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты скоростей для внутренних КО.
 	// если bbond   то будут вычислены значения в граничных КО, иначе только во внутренних.
@@ -40,7 +40,7 @@ void green_gauss_FI(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP]; iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -151,7 +151,7 @@ void green_gauss_FI(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa
 void my_elmatr_quad_short_dist_bound(integer inumber, integer maxelm, 
 							  bool bDirichlet, BOUND* border_neighbor, integer ls, integer lw,
 							  WALL* w, equation3D_bon* &slb, doublereal dbeta,
-							  TOCHKA* pa, integer** nvtx, doublereal* potent
+							  TOCHKA* pa, int** nvtx, doublereal* potent
 							  ) 
 {
 
@@ -306,7 +306,7 @@ void my_elmatr_quad_short_dist_bound(integer inumber, integer maxelm,
 // Составляет матрицу для уравнения 
 // поправки давления
 void my_elmatr_quad_short_dist(integer iP, equation3D* &sl, equation3D_bon* &slb,  
-	TOCHKA* pa, integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, doublereal dbeta) {
+	TOCHKA* pa, int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm, doublereal dbeta) {
 
    
 	doublereal eps=1e-37; // для отделения вещественного нуля.
@@ -316,8 +316,8 @@ void my_elmatr_quad_short_dist(integer iP, equation3D* &sl, equation3D_bon* &slb
 
     // iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 	sl[iP].iP=iP;
 	sl[iP].iE=iE; sl[iP].iN=iN; 
 	sl[iP].iS=iS; sl[iP].iW=iW;

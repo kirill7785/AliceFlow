@@ -1157,10 +1157,12 @@ doublereal workKN_VOLKOV(doublereal xA, doublereal xB, doublereal xC, doublereal
 	C2=xBC/(1.5*xBC+0.5*xCD);
 	C3=0.5*(xBC+xCD)/(0.5*xBC+1.5*xCD);
 
+	doublereal denominator = 0.0;
+
 	doublereal r=0.0;
 	if (Ff>=0.0) {
 
-		doublereal denominator=(FC-FA); // знаменатель
+		denominator=(FC-FA); // знаменатель
 
 		if (fabs(denominator)<1e-30) {
 			// чистый ноль
@@ -1205,7 +1207,7 @@ doublereal workKN_VOLKOV(doublereal xA, doublereal xB, doublereal xC, doublereal
 	else 
 	{
 
-		doublereal denominator=(FB-FD); // знаменатель
+		denominator=(FB-FD); // знаменатель
 
 		if (fabs(denominator)<1e-30) {
 			// чистый ноль
@@ -1249,6 +1251,16 @@ doublereal workKN_VOLKOV(doublereal xA, doublereal xB, doublereal xC, doublereal
 		}
 	}
 
+	if (r != r) {
+
+		printf("denominator = %e\n", denominator);
+		getchar();
+	}
+	if (r > 5000) {
+
+		std::cout << " r="<< r <<" FA=" << FA << " FB=" << FB << " FC=" << FC << " FD=" << FD << " Ff=" << Ff << " FB -FD=" << FB-FD << " FC -FA=" << FC - FA << std::endl;
+		getchar();
+	}
 	return (r);
 } // workKN_VOLKOV
 

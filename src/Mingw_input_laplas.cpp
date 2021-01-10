@@ -8,11 +8,13 @@
 
 //#include <stdlib.h>
 
+
+
 // В ОС Линукс (Linux) отсутствует функция itoa().
 // Здесь приводится её реализация.
 static char* my_itoa(integer value, char* str, int base)
 {
-	int i, n = 2, tmp;
+	integer i, n = 2, tmp;
 	char buf[65];
 
 
@@ -70,7 +72,11 @@ static char* my_itoa(integer value, char* str, int base)
 			tmp /= base;
 		}
 		buf[n - 1] = '\0';
+#ifdef MINGW_COMPILLER
 		strcpy(str, buf);
+#else
+		strcpy_s(str, (strlen(buf) + 1) * sizeof(char), buf);
+#endif
 		break;
 	default:
 		return NULL;
@@ -168,10 +174,12 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					exit(1);
 				}
 				scale = (doublereal)(fin);
+				scale_all = 1.0f / scale;
 			}
 			else {
 				printf("WARNING!!! mlength not found in file premeshin.txt\n");
 				scale = 1.0e-3; // mm
+				scale_all = 1.0f / scale;
 				printf("scale =%e\n", scale);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -911,6 +919,22 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				printf("WARNING!!! tau_pause not found in file premeshin.txt\n");
 				glTSL.tau_pause = 5040.0; // SquareWave2 parameters.
 				printf("glTSL.tau_pause =%e\n", glTSL.tau_pause);
+				if (bSTOP_Reading) system("pause");
+			}
+
+			if (fmakesource("off_multiplyer", fin)) {
+				// Найдено успешно.
+				if ((fin < 0.0)||(fin > 1.0)) {
+					printf("error input parametr timestep law SquareWave2 off_multiplyer must be [0..1]\n");
+					system("PAUSE");
+					exit(1);
+				}
+				glTSL.off_multiplyer = (doublereal)(fin);
+			}
+			else {
+				printf("WARNING!!!  off_multiplyer not found in file premeshin.txt\n");
+				glTSL.off_multiplyer = 0.0; // SquareWave2 parameters.
+				printf("glTSL.off_multiplyer =%e\n", glTSL.off_multiplyer);
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -4135,6 +4159,14 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 
+				if (b[i].g.itypegeom == CAD_STL) {
+					// CAD_STL
+
+					// Считывание бинарного STL файла.
+					b[i].g.ReadSTL_binary(lb, b[0].g);
+
+				}
+
 				// Ввод предполагается корректным.
 				// emissivity
 				name0[0] = '\0'; strcat(name0, "body");
@@ -6183,6 +6215,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 			fscanf(fp, "%f", &fin);
 			scale = fin;
+			scale_all = 1.0f / scale;
 			fscanf(fp, "%d", &din);
 			lmatmax = din;
 			fscanf(fp, "%d", &din);
@@ -6454,6 +6487,14 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				exit(1);
 			}
 			glTSL.tau_pause = fin;
+
+			fscanf(fp, "%f", &fin);
+			if ((fin < 0.0)||(fin > 1.0)) {
+				printf("error input parametr timestep law SquareWave2 off_multiplyer must be [0..1] \n");
+				system("PAUSE");
+				exit(1);
+			}
+			glTSL.off_multiplyer = fin;
 			fscanf(fp, "%d", &din);
 			glTSL.n_cycle = din;
 			fscanf(fp, "%f", &fin);
@@ -8140,7 +8181,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			if (b[i_1].n_Sc > 0) {
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 				doublereal vol = fabs(b[i_1].g.xE - b[i_1].g.xS) * fabs(b[i_1].g.yE - b[i_1].g.yS) * fabs(b[i_1].g.zE - b[i_1].g.zS);
-				if (vol < 1.0e-40) {
+				if (vol < 1.0e-36) {
 					printf("ERROR: zero volume in PRISM block number %lld\n", i_1);
 					system("PAUSE");
 					exit(1);
@@ -8165,7 +8206,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.Hcyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
-				if (b[i_1].g.R_in_cyl > 1.0e-40) {
+				if (b[i_1].g.R_in_cyl > 1.0e-36) {
 					// Если внутренний радиус существует (задавался пользователем).
 					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_in_cyl;
 					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
@@ -8175,7 +8216,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.Hcyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
-				if (b[i_1].g.R_in_cyl > 1.0e-40) {
+				if (b[i_1].g.R_in_cyl > 1.0e-36) {
 					// Если внутренний радиус существует (задавался пользователем).
 					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
 					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
@@ -8185,7 +8226,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.Hcyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
-				if (b[i_1].g.R_in_cyl > 1.0e-40) {
+				if (b[i_1].g.R_in_cyl > 1.0e-36) {
 					// Если внутренний радиус существует (задавался пользователем).
 					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_in_cyl;
 					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
@@ -8199,7 +8240,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 				doublereal vol = 0.0;
 				vol = b[i_1].g.Hcyl * M_PI * (b[i_1].g.R_out_cyl * b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl * b[i_1].g.R_in_cyl);
-				if (vol < 1.0e-40) {
+				if (vol < 1.0e-36) {
 					printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
 					system("PAUSE");
 					exit(1);

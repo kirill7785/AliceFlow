@@ -11,9 +11,9 @@
 // На пространственно неоднородных областях параметр tau сильно неоднороден это приводит к ухудшению 
 // обусловленности системы и в конечном счёте к расходимости. Здесь предпринята попытка регулизовать параметр tau.
 void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
-	          doublereal** prop, doublereal** prop_b, doublereal* alpha, 
-			  integer** nvtx, TOCHKA* pa, equation3D** sl,
-			  ALICE_PARTITION** neighbors_for_the_internal_node, equation3D_bon** slb,
+	          float** prop, float** prop_b, doublereal* alpha, 
+			  int** nvtx, TOCHKA* pa, equation3D** sl,
+			  int*** neighbors_for_the_internal_node, equation3D_bon** slb,
 			  bool btimedep, doublereal dtime, doublereal CFL1,
 			  integer inumberSIMPLEiteration, bool &bVERY_STABILITY_ON, bool boldscheme) {
 
@@ -51,8 +51,8 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 
         // iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	    iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP];
+	    iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 	
 
 
@@ -219,8 +219,8 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 	// iP - номер центрального контрольного объёма
 	for (integer iP=0; iP<maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	    iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP];
+	    iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 
         if (iE>=maxelm) {
 			// граничный узел
@@ -259,9 +259,9 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 // Реализовано 23 июня 2012 года.
 // Модифицировано для АЛИС сеток 5 декабря 2018.
 void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
-	          doublereal** prop, doublereal** prop_b, doublereal* alpha, 
-			  integer** nvtx, TOCHKA* pa, 
-			  ALICE_PARTITION** neighbors_for_the_internal_node, doublereal** sumanb,
+	          float** prop, float** prop_b, doublereal* alpha, 
+			  int** nvtx, TOCHKA* pa, 
+			  int*** neighbors_for_the_internal_node, doublereal** sumanb,
 			  bool btimedep, doublereal dtime, doublereal CFL1,
 			  integer inumberSIMPLEiteration, 
 			  bool &bVERY_STABILITY_ON, bool boldscheme) {
@@ -304,21 +304,25 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 
         // iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	    iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP];
+	    iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 	
-		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-		iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+		integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+		integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+		integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-		iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+		if (b_on_adaptive_local_refinement_mesh) {
 
-		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-		iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+			iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+			iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
+			iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+			iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+			iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+			iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+
+		}
 	    // если с одной из сторон граница расчётной области 
 	    // то переменная равна true
 	    bool bE=false, bN=false, bT=false, bW=false, bS=false, bB=false;
@@ -728,20 +732,24 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 #pragma omp parallel for
 		for (integer iP = 0; iP < maxelm; iP++) {
 			integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-			iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-			iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+			iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+			iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-			integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-			iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-			iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+			integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+			integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+			integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-			integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-			iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-			iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+			if (b_on_adaptive_local_refinement_mesh) {
 
-			integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-			iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-			iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+				iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+				iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+
+				iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+				iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+				iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+				iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+			}
 
 			if (iE > -1) {
 				if (iE >= maxelm) {
@@ -962,20 +970,20 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 #pragma omp parallel for
 		for (integer iP = 0; iP < maxelm; iP++) {
 			integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-			iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-			iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+			iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+			iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 			integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-			iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-			iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+			iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+			iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
 			integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-			iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-			iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+			iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+			iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
 
 			integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-			iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-			iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+			iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+			iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 
 			// вычисление размеров текущего контрольного объёма:

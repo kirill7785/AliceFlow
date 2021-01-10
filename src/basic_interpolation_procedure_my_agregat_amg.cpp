@@ -7869,16 +7869,23 @@ double theta(integer ilevel)
 		return my_amg_manager.theta;
 	}
 	*/
-	if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) || (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
-	{
-		// PMIS, HMIS
-		return activation_function_for_thrteshold<double>((double)(my_amg_manager.theta), ilevel, false);
+	if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T) || 
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)) {
+
+		return 0.25;
 	}
 	else {
-		//return my_amg_manager.theta;
-		// Рекомендуется применять с truncation interpolation 0.2. Дает выигрышь по времени без 
-		// проигрыша в числе итераций.
-		return activation_function_for_thrteshold<double>((double)(my_amg_manager.theta), ilevel, false);// 01.10.2020
+		if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) || (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+		{
+			// PMIS, HMIS
+			return activation_function_for_thrteshold<double>((double)(my_amg_manager.theta), ilevel, false);
+		}
+		else {
+			//return my_amg_manager.theta;
+			// Рекомендуется применять с truncation interpolation 0.2. Дает выигрышь по времени без 
+			// проигрыша в числе итераций.
+			return activation_function_for_thrteshold<double>((double)(my_amg_manager.theta), ilevel, false);// 01.10.2020
+		}
 	}
 }
 

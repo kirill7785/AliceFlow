@@ -34,9 +34,10 @@ my_agregat_amg.c 57054 строк кода.
 #include "inputlaplas.cpp"
 #include <stdlib.h> // для функции exit(0)
 #include <math.h> // для функции sqrt
+#include <ctime> // Для инициализации функции rand();
 //#include <Windows.h>
 
-
+integer i0r = 0, i1r = 0, i2r = 0;
 
 // Реализация содержится в uniformsimplemeshgen.
 // добавляет несуществующую границу к массиву
@@ -65,12 +66,13 @@ const integer WW_SIDE = 9; // (double west)  двойной сосед с запада
 const integer SS_SIDE = 10; // (double south)  двойной сосед с юга
 const integer BB_SIDE = 11; // (double bottom) двойной сосед снизу
 
-const integer MAX_NEIGHBOUR_COUNT = 2147483646;
+// Максимальное число соседей.
+const char MAX_NEIGHBOUR_COUNT = 250;
 
 // для хеш-таблицы.
 typedef struct THASH_POLE {
 	bool flag;
-	integer inum;
+	int inum;
 
 	THASH_POLE() {
 		flag=false;
@@ -99,12 +101,12 @@ typedef struct Toctree {
 	TOCHKA p7;
 	bool dlist;// true если дробление закончилось.
 	// если maxGneighbour больше 4 то дробление.
-	integer maxWneighbour;
-	integer maxEneighbour;
-	integer maxSneighbour;
-	integer maxNneighbour;
-	integer maxTneighbour;
-	integer maxBneighbour;
+	char maxWneighbour;
+	char maxEneighbour;
+	char maxSneighbour;
+	char maxNneighbour;
+	char maxTneighbour;
+	char maxBneighbour;
 	// Линки на 6 соседей.
 	// Истина если face ячейки имеет четырёх соседей и 
 	// false если face ячейки имеет только одного соседа.
@@ -159,18 +161,18 @@ typedef struct Toctree {
 	Toctree* linkT6;
 	Toctree* linkT7;
 	// Целочисленные координаты октанта.
-	integer minx;
-	integer maxx;
-	integer miny;
-	integer maxy;
-	integer minz;
-	integer maxz;
+	int minx;
+	int maxx;
+	int miny;
+	int maxy;
+	int minz;
+	int maxz;
 	// root info
 	// for update neighbor procedure.
 	integer root; // (0,link0) (1,link1) ...(7,link7)
 	bool brootSituationX, brootSituationY, brootSituationZ;
 	bool brootSituationX_virtual, brootSituationY_virtual, brootSituationZ_virtual;
-	integer ilevel; // номер уровня в octree дереве.
+    char ilevel; // номер уровня в octree дереве.
 	Toctree* parent; // ссылка на родителя.
 	// обновлять ли ссылки сейчас
 	bool b_the_geometric_fragmentation;
@@ -181,6 +183,8 @@ typedef struct Toctree {
 	// Уникальный номер внутреннего КО температурной области и 0 если не принадлежит области.
 	integer inum_TD; // inumber Temperature Domain.
 	integer inum_FD; // inumber Fluid Domain.
+
+	int whot_is_block; // Для ускорения работы программы.
 
 	Toctree() {
 		// 0-7 как вершины в nvtx
@@ -284,23 +288,45 @@ typedef struct Toctree {
 		// Уникальный номер внутреннего КО температурной области и 0 если не принадлежит области.
 		inum_TD=-1; // inumber Temperature Domain.
 		inum_FD=-1; // inumber Fluid Domain.
+
+		whot_is_block = -1; // неопределено.
 	}
 
 } octree;
 
 // Ссылки на каждый узел octree дерева для его полной очистки.
-integer iMAX_Length_vector_octree = 100000000; // 100 млн
-integer icount_Length_vector_octree = 0;
-octree** rootClear_octree = nullptr;
+
+typedef struct Toctree_list {
+
+	octree* pnode;
+	Toctree_list* next;
+
+	Toctree_list() {
+
+		pnode = nullptr;
+		next = nullptr;
+
+	}
+
+} octree_list;
+
+octree_list* rootClear_octree = nullptr;// Текущий элемент.
+octree_list* head_rootClear_octree = nullptr; // голова списка.
 
 typedef struct TSTACK_ALICE {
-	integer minx;
-	integer maxx;
-	integer miny;
-	integer maxy;
-	integer minz;
-	integer maxz;
+
+	// 29.10.2020
+	// В сетке вдоль выбранного координатного направления 
+	// не может быть более 32767 позиций. 32767 ^3 очень большое значение 
+	// для 3D объекта оно заведомо не влезет в память одной машины.
+	int minx;
+	int maxx;
+	int miny;
+	int maxy;
+	int minz;
+	int maxz;
 	octree* link;
+	
 
 	TSTACK_ALICE() {
 		minx = -1;
@@ -309,7 +335,7 @@ typedef struct TSTACK_ALICE {
 		maxy = -2;
 		minz = -1;
 		maxz = -2;
-		link=nullptr;
+		link=nullptr;	
 	}
 
 } STACK_ALICE;
@@ -323,7 +349,8 @@ octree* oc_global = nullptr;
 // ячейки прошел чрез границу раздела двух блоков, т.е. номера блоков в соседних ячейках стали различны.
 // Для детектирования данной особенности нужна хеш-таблица сопоставляющая номер ячейки сетки из (inx+1)*(iny+1)*(inz+1) с номерами блоков.
 // Данный метод абсолютно универсален и подходит для любой формы блоков.
-integer*** hash_for_droblenie_xyz = nullptr;
+// Хранит номер блока достаточно типа int.2байта -32768 .. 32767
+int*** hash_for_droblenie_xyz = nullptr;
 
 #if _CUDA_IS_ACTIVE_ == 0
 // Проект собран как стандартное консольное приложение windows.
@@ -338,12 +365,67 @@ integer min(integer ia, integer ib) {
 
 // Binary Search // Двоичный поиск.
 // Стабильная версия. Быстрее 4.81% против 6.24%.
-integer binary_search_hash_key_alice33v0(integer istart, integer iend, doublereal* &array,
+int binary_search_hash_key_alice33v0_experimental_not_stable(int istart, int iend, doublereal* &array,
 	doublereal epsTol, doublereal dkey) {
 	
-	integer i_vacant=-1;
+	int istart1 = istart;
+	int iend1 = iend;
+
+	int i_vacant=-1;
 	while (istart <= iend) {
-		integer middle = (istart + iend)/2;
+		int middle = (istart + iend)/2;
+
+		doublereal eps_loc = epsTol;
+		// Нелокальный epsilon. 19.11.2020
+		if (middle - 1 == istart1) {
+			eps_loc = 0.98 * (array[istart1 + 1] - array[istart1]);
+		}
+		else if (middle - 1 == iend1) {
+			eps_loc = 0.98 * (array[iend1] - array[iend1 - 1]);
+		}
+		else {
+			//eps_loc = fmin(0.98 * (array[middle - 1] - array[middle - 2]), 0.98 * (array[middle] - array[middle - 1]));
+
+			if (dkey >= array[middle - 1]) {
+				eps_loc = 0.98 * (array[middle] - array[middle - 1]);
+			}
+			else {
+				eps_loc = 0.98 * (array[middle - 1] - array[middle - 2]);
+			}
+
+		}
+
+
+
+		if (fabs(array[middle - 1] - dkey) < eps_loc) {
+			i_vacant = middle - 1;
+			break;
+		}
+		else if (array[middle - 1] < dkey) {
+			istart = middle + 1;
+		}
+		else {
+			iend = middle - 1;
+		}
+	}
+	return (i_vacant);
+
+} // binary_search_hash_key_alice33v0
+
+
+// Binary Search // Двоичный поиск.
+// Стабильная версия. Быстрее 4.81% против 6.24%.
+int binary_search_hash_key_alice33v0(int istart, int iend, doublereal*& array,
+	doublereal epsTol, doublereal dkey) {
+
+	int istart1 = istart;
+	int iend1 = iend;
+
+	int i_vacant = -1;
+	while (istart <= iend) {
+		int middle = (istart + iend) / 2;
+
+
 		if (fabs(array[middle - 1] - dkey) < epsTol) {
 			i_vacant = middle - 1;
 			break;
@@ -356,8 +438,8 @@ integer binary_search_hash_key_alice33v0(integer istart, integer iend, doublerea
 		}
 	}
 	return (i_vacant);
-} // binary_search_hash_key_alice33v0
 
+} // binary_search_hash_key_alice33v0
 
 // Binary Search // Двоичный поиск.
 // Стабильная версия. Быстрее 4.81% против 6.24%.
@@ -426,72 +508,369 @@ integer binary_search_hash_key_alice33v1(integer istart, integer iend, doublerea
 // целочисленный ключ который используется в хеш-таблице для ускорения поиска при экспорте в программу tecplot.
 // Сигнатура вызова:
 // hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, p, epsTolx, epsToly, epsTolz);
-integer hash_key_alice33(integer inx7, integer iny7, integer inz7, doublereal* &xpos7, doublereal* &ypos7, doublereal* &zpos7, TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
+integer hash_key_alice33(int inx7, int iny7, int inz7,
+	doublereal* &xpos7, doublereal* &ypos7, doublereal* &zpos7,
+	TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
 	
 	// Если скорость работы данной функции будет неприемлема, то можно воспользоваться 
 	// двоичным поиском т.к. массивы упорядочены по возрастанию.
 
-	const bool blinear_search = false;
-	doublereal mult = 1.0;
+	//const bool blinear_search = false;
+	//doublereal mult = 1.0;
 
 	// Поиск.
-	integer i_vacant = -1;
-	integer j_vacant = -1;
-	integer k_vacant = -1;
+	int i_vacant = -1;
+	int j_vacant = -1;
+	int k_vacant = -1;
 	
-	if (blinear_search) {
-		for (integer i = 0; i <= inx7; i++) {
+	/*if (blinear_search) {
+
+		// Линейный поиск.
+
+		for (int i = 0; i <= inx7; i++) {
 			if (fabs(p.x - xpos7[i]) < mult*epsTolx) {
 				i_vacant = i;
 				break;
 			}
 		}
-	}
-	else {
-		// Binary Search // Двоичный поиск.
-		
-		integer istart = 1;
-		integer iend = inx7 + 1;
-		i_vacant = binary_search_hash_key_alice33v0(istart, iend, xpos7, epsTolx, p.x);
-	}
-	if (blinear_search) {
-		for (integer j = 0; j <= iny7; j++) {
-			if (fabs(p.y - ypos7[j]) < mult*epsToly) {
+
+		for (int j = 0; j <= iny7; j++) {
+			if (fabs(p.y - ypos7[j]) < mult * epsToly) {
 				j_vacant = j;
 				break;
 			}
 		}
-	}
-	else {
-		integer istart = 1;
-		integer iend = iny7 + 1;
-		j_vacant = binary_search_hash_key_alice33v0(istart, iend, ypos7, epsToly, p.y);
-	}
-	if (blinear_search) {
-		for (integer k = 0; k <= inz7; k++) {
-			if (fabs(p.z - zpos7[k]) < mult*epsTolz) {
+
+		for (int k = 0; k <= inz7; k++) {
+			if (fabs(p.z - zpos7[k]) < mult * epsTolz) {
 				k_vacant = k;
 				break;
 			}
 		}
-	}
-	else {
-		integer istart = 1;
-		integer iend = inz7 + 1;
-		k_vacant = binary_search_hash_key_alice33v0(istart, iend, zpos7, epsTolz, p.z);
-	}
 
+
+	}
+	else {*/
+
+
+		// Binary Search // Двоичный поиск.
+		
+		int istart = 1;
+		int iend = inx7 + 1;
+		i_vacant = binary_search_hash_key_alice33v0(istart, iend, xpos7, epsTolx, p.x);
+
+		istart = 1;
+		iend = iny7 + 1;
+		j_vacant = binary_search_hash_key_alice33v0(istart, iend, ypos7, epsToly, p.y);
+
+		istart = 1;
+		iend = inz7 + 1;
+		k_vacant = binary_search_hash_key_alice33v0(istart, iend, zpos7, epsTolz, p.z);
+		
+	//}
+	
 	if ((i_vacant == -1) || (j_vacant == -1) || (k_vacant == -1)) {
-		printf("x=%e y=%e z=%e\n",p.x,p.y, p.z);
-		printf("inx=%lld iny=%lld inz=%lld\n", inx7, iny7, inz7);
-		printf("i=%lld j=%lld k=%lld\n", i_vacant, j_vacant, k_vacant);
-		printf("error in hash_key_alice33\n");
-		//system("PAUSE");
-		system("PAUSE");
-		exit(1);
+		
+		
+		if (i_vacant == -1) {
+			doublereal eps_memo = epsTolx;
+
+			for (int i = 0; i <= inx7; i++) {
+				doublereal eps_loc = epsTolx;
+				// Нелокальный epsilon. 19.11.2020
+				if (i == 0) {
+					eps_loc = 0.98 * (xpos7[1]-xpos7[0]);
+				}
+				else if (i == inx7) {
+					eps_loc = 0.98 * (xpos7[inx7] - xpos7[inx7-1]);
+				}
+				else {
+					//eps_loc = fmin(0.98 * (xpos7[i] - xpos7[i-1]), 0.98 * (xpos7[i+1] - xpos7[i]));
+
+					if (p.x >= xpos7[i]) {
+						eps_loc = 0.98 * (xpos7[i + 1] - xpos7[i]);
+					}
+					else {
+						eps_loc = 0.98 * (xpos7[i] - xpos7[i - 1]);
+					}
+
+				}
+
+				if (fabs(p.x - xpos7[i]) < eps_loc)
+				{
+					eps_memo = eps_loc;
+
+					if (p.x >= xpos7[i]) {
+						if (i != inx7) {
+							if ((p.x - xpos7[i]) < (xpos7[i + 1] - p.x)) {
+								i_vacant = i;
+								break;
+							}
+							else {
+								i_vacant = i + 1;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the right along the Ox axis\n";
+							if ((p.x - xpos7[inx7-1]) < (xpos7[inx7] - p.x)) {
+								i_vacant = inx7-1;
+							}
+							else {
+								i_vacant = inx7;
+							}
+						}
+					}
+					else {
+						if (i > 0) {
+							if ((p.x - xpos7[i - 1]) < (xpos7[i] - p.x)) {
+								i_vacant = i - 1;
+								break;
+							}
+							else {
+								i_vacant = i;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the left along the Ox axis\n";
+							if ((p.x - xpos7[0]) < (xpos7[1] - p.x)) {
+								i_vacant = 0;
+							}
+							else {
+								i_vacant = 1;
+							}
+						}
+
+					}
+
+					
+				}
+			}
+
+			if (0 && (i_vacant != -1)) {
+				printf("i_vacant=%d epsTolx=%e\n", i_vacant, epsTolx);
+				if (i_vacant > 0) {
+					printf("xpos[i_vacant previos] =%e xpos[i_vacant] = %e epsTolx=%e eps_memo =%e\n", xpos7[i_vacant-1], xpos7[i_vacant], epsTolx, eps_memo);
+				}
+				if (i_vacant < inx7) {
+					printf(" xpos[i_vacant] = %e xpos[i_vacant post] =%e epsTolx=%e eps_memo =%e\n", xpos7[i_vacant], xpos7[i_vacant+1], epsTolx, eps_memo);
+				}
+
+			}
+
+		}
+
+		if (j_vacant == -1) {
+
+			doublereal eps_memo = epsToly;
+
+			for (int i = 0; i <= iny7; i++) {
+				doublereal eps_loc = epsToly;
+				// Нелокальный epsilon. 19.11.2020
+				if (i == 0) {
+					eps_loc = 0.98 * (ypos7[1] - ypos7[0]);
+				}
+				else if (i == iny7) {
+					eps_loc = 0.98 * (ypos7[iny7] - ypos7[iny7 - 1]);
+				}
+				else {
+					//eps_loc = fmin(0.98 * (ypos7[i] - ypos7[i-1]), 0.98 * (ypos7[i+1] - ypos7[i]));
+
+					if (p.y >= ypos7[i]) {
+						eps_loc = 0.98 * (ypos7[i + 1] - ypos7[i]);
+					}
+					else {
+						eps_loc = 0.98 * (ypos7[i] - ypos7[i - 1]);
+					}
+
+				}
+
+				if (fabs(p.y - ypos7[i]) < eps_loc)
+				{
+					eps_memo = eps_loc;
+
+					if (p.y >= ypos7[i]) {
+						if (i != iny7) {
+							if ((p.y - ypos7[i]) < (ypos7[i + 1] - p.y)) {
+								j_vacant = i;
+								break;
+							}
+							else {
+								j_vacant = i + 1;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the right along the Oy axis\n";
+							if ((p.y - ypos7[iny7 - 1]) < (ypos7[iny7] - p.y)) {
+								j_vacant = iny7 - 1;
+							}
+							else {
+								j_vacant = iny7;
+							}
+						}
+					}
+					else {
+						if (i > 0) {
+							if ((p.y - ypos7[i - 1]) < (ypos7[i] - p.y)) {
+								j_vacant = i - 1;
+								break;
+							}
+							else {
+								j_vacant = i;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the left along the Oy axis\n";
+							if ((p.y - ypos7[0]) < (ypos7[1] - p.y)) {
+								j_vacant = 0;
+							}
+							else {
+								j_vacant = 1;
+							}
+						}
+
+					}
+
+					
+				}
+			}
+
+			if (0 && (j_vacant != -1)) {
+				printf("j_vacant=%d epsToly=%e\n", j_vacant, epsToly);
+				if (j_vacant > 0) {
+					printf("ypos[j_vacant previos] =%e ypos[j_vacant] = %e epsToly=%e  eps_memo =%e\n", ypos7[j_vacant - 1], ypos7[j_vacant], epsToly, eps_memo);
+				}
+				if (j_vacant < iny7) {
+					printf(" ypos[j_vacant] = %e ypos[j_vacant post] =%e epsToly=%e  eps_memo =%e\n", ypos7[j_vacant], ypos7[j_vacant + 1], epsToly, eps_memo);
+				}
+
+			}
+
+		}
+
+		if (k_vacant == -1) {
+
+			doublereal eps_memo = epsToly;
+
+			for (int i = 0; i <= inz7; i++) {
+
+				doublereal eps_loc = epsTolz;
+				// Нелокальный epsilon. 19.11.2020
+				if (i == 0) {
+					eps_loc = 0.98 * (zpos7[1] - zpos7[0]);
+				}
+				else if (i == inz7) {
+					eps_loc = 0.98 * (zpos7[inz7] - zpos7[inz7 - 1]);
+				}
+				else {
+					//eps_loc = fmin(0.98 * (zpos7[i] - zpos7[i-1]), 0.98 * (zpos7[i+1] - zpos7[i]));
+
+					if (p.z >= zpos7[i]) {
+						eps_loc = 0.98 * (zpos7[i + 1] - zpos7[i]);
+					}
+					else {
+						eps_loc = 0.98 * (zpos7[i] - zpos7[i - 1]);
+					}
+
+				}
+
+				if (fabs(p.z - zpos7[i]) < eps_loc) {
+					eps_memo = eps_loc;
+
+					if (p.z >= zpos7[i]) {
+						if (i != inz7) {
+							if ((p.z - zpos7[i]) < (zpos7[i + 1] - p.z)) {
+								k_vacant = i;
+								break;
+							}
+							else {
+								k_vacant = i + 1;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the right along the Oz axis\n";
+							if ((p.z - zpos7[inz7 - 1]) < (zpos7[inz7] - p.z)) {
+								k_vacant = inz7 - 1;
+							}
+							else {
+								k_vacant = inz7;
+							}
+						}
+					}
+					else {
+						if (i > 0) {
+							if ((p.z - zpos7[i - 1]) < (zpos7[i] - p.z)) {
+								k_vacant = i - 1;
+								break;
+							}
+							else {
+								k_vacant = i;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the left along the Oz axis\n";
+							if ((p.z - zpos7[0]) < (zpos7[1] - p.z)) {
+								k_vacant = 0;
+							}
+							else {
+								k_vacant = 1;
+							}
+						}
+
+					}
+				}
+			}
+
+			if (0&&(k_vacant != -1)) {
+				printf("k_vacant=%d epsTolz=%e\n", k_vacant, epsTolz);
+				if (k_vacant > 0) {
+					printf("zpos[k_vacant previos] =%e zpos[k_vacant] = %e epsTolz=%e  eps_memo =%e\n", zpos7[k_vacant - 1], zpos7[k_vacant], epsTolz, eps_memo);
+				}
+				if (k_vacant < inz7) {
+					printf(" zpos[k_vacant] = %e zpos[k_vacant post] =%e epsTolz=%e  eps_memo =%e\n", zpos7[k_vacant], zpos7[k_vacant + 1], epsTolz, eps_memo);
+				}
+
+			}
+
+		}
+
+		
+		if ((i_vacant == -1) || (j_vacant == -1) || (k_vacant == -1)) {
+
+
+			printf("x=%e y=%e z=%e\n", p.x, p.y, p.z);
+			printf("inx=%d iny=%d inz=%d\n", inx7, iny7, inz7);
+			printf("i=%d j=%d k=%d\n", i_vacant, j_vacant, k_vacant);
+			printf("epsTolx=%e epsToly=%e epsTolz=%e\n", epsTolx, epsToly, epsTolz);
+			printf("error in hash_key_alice33\n");
+
+			system("PAUSE");
+			exit(1);
+		}
+		else {
+
+			integer i_vacant_long = i_vacant;
+			integer j_vacant_long = j_vacant;
+			integer k_vacant_long = k_vacant;
+			integer inx7_long = inx7;
+			integer iny7_long = iny7;
+
+			return i_vacant_long + (inx7_long + 1) * j_vacant_long + (inx7_long + 1) * (iny7_long + 1) * k_vacant_long;
+		}
 	}
 	else {
-		return i_vacant + (inx7 + 1)*j_vacant + (inx7+ 1)*(iny7 + 1)*k_vacant;
+		integer i_vacant_long = i_vacant;
+		integer j_vacant_long = j_vacant;
+		integer k_vacant_long = k_vacant;
+		integer inx7_long = inx7;
+		integer iny7_long = iny7;
+
+		return i_vacant_long + (inx7_long + 1) * j_vacant_long + (inx7_long + 1) * (iny7_long + 1) * k_vacant_long;
 	}
 
 } // hash_key_alice33
@@ -499,7 +878,9 @@ integer hash_key_alice33(integer inx7, integer iny7, integer inz7, doublereal* &
 // целочисленный ключ который используется в хеш-таблице для ускорения поиска при экспорте в программу tecplot.
 // Сигнатура вызова:
 // hash_key_alice33Q(inx, iny, inz, xpos, ypos, zpos, p, epsTolx, epsToly, epsTolz);
-integer hash_key_alice33Q(integer inx7, integer iny7, integer inz7, doublereal* &xpos7, doublereal* &ypos7, doublereal* &zpos7, TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
+integer hash_key_alice33Q(integer inx7, integer iny7, integer inz7,
+	doublereal* &xpos7, doublereal* &ypos7, doublereal* &zpos7, TOCHKA p,
+	doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
 
 	// Если скорость работы данной функции будет неприемлема, то можно воспользоваться 
 	// двоичным поиском т.к. массивы упорядочены по возрастанию.
@@ -558,13 +939,289 @@ integer hash_key_alice33Q(integer inx7, integer iny7, integer inz7, doublereal* 
 	}
 
 	if ((i_vacant == -1) || (j_vacant == -1) || (k_vacant == -1)) {
-		printf("x=%e y=%e z=%e\n", p.x, p.y, p.z);
-		printf("inx=%lld iny=%lld inz=%lld\n", inx7, iny7, inz7);
-		printf("i=%lld j=%lld k=%lld\n", i_vacant, j_vacant, k_vacant);
-		printf("error in hash_key_alice33Q\n");
-		//system("PAUSE");
-		system("PAUSE");
-		exit(1);
+		
+		
+
+		if (i_vacant == -1) {
+			doublereal eps_memo = epsTolx;
+
+			for (int i = 0; i <= inx7; i++) {
+				doublereal eps_loc = epsTolx;
+				// Нелокальный epsilon. 19.11.2020
+				if (i == 0) {
+					eps_loc = 0.98 * (xpos7[1] - xpos7[0]);
+				}
+				else if (i == inx7) {
+					eps_loc = 0.98 * (xpos7[inx7] - xpos7[inx7 - 1]);
+				}
+				else {
+					//eps_loc = fmin(0.98 * (xpos7[i] - xpos7[i-1]), 0.98 * (xpos7[i+1] - xpos7[i]));
+
+					if (p.x >= xpos7[i]) {
+						eps_loc = 0.98 * (xpos7[i + 1] - xpos7[i]);
+					}
+					else {
+						eps_loc = 0.98 * (xpos7[i] - xpos7[i - 1]);
+					}
+
+				}
+
+				if (fabs(p.x - xpos7[i]) < eps_loc)
+				{
+					eps_memo = eps_loc;
+
+					if (p.x >= xpos7[i]) {
+						if (i != inx7) {
+							if ((p.x - xpos7[i]) < (xpos7[i + 1] - p.x)) {
+								i_vacant = i;
+								break;
+							}
+							else {
+								i_vacant = i + 1;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the right along the Ox axis\n";
+							if ((p.x - xpos7[inx7 - 1]) < (xpos7[inx7] - p.x)) {
+								i_vacant = inx7 - 1;
+							}
+							else {
+								i_vacant = inx7;
+							}
+						}
+					}
+					else {
+						if (i > 0) {
+							if ((p.x - xpos7[i - 1]) < (xpos7[i] - p.x)) {
+								i_vacant = i - 1;
+								break;
+							}
+							else {
+								i_vacant = i;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the left along the Ox axis\n";
+							if ((p.x - xpos7[0]) < (xpos7[1] - p.x)) {
+								i_vacant = 0;
+							}
+							else {
+								i_vacant = 1;
+							}
+						}
+
+					}
+				}
+			}
+
+			if (0&&(i_vacant != -1)) {
+				printf("i_vacant=%lld epsTolx=%e\n", i_vacant, epsTolx);
+				if (i_vacant > 0) {
+					printf("xpos[i_vacant previos] =%e xpos[i_vacant] = %e epsTolx=%e eps_memo =%e\n", xpos7[i_vacant - 1], xpos7[i_vacant], epsTolx, eps_memo);
+				}
+				if (i_vacant < inx7) {
+					printf(" xpos[i_vacant] = %e xpos[i_vacant post] =%e epsTolx=%e eps_memo =%e\n", xpos7[i_vacant], xpos7[i_vacant + 1], epsTolx, eps_memo);
+				}
+
+			}
+
+		}
+
+		if (j_vacant == -1) {
+
+			doublereal eps_memo = epsToly;
+
+			for (int i = 0; i <= iny7; i++) {
+				doublereal eps_loc = epsToly;
+				// Нелокальный epsilon. 19.11.2020
+				if (i == 0) {
+					eps_loc = 0.98 * (ypos7[1] - ypos7[0]);
+				}
+				else if (i == iny7) {
+					eps_loc = 0.98 * (ypos7[iny7] - ypos7[iny7 - 1]);
+				}
+				else {
+					//eps_loc = fmin(0.98 * (ypos7[i] - ypos7[i-1]), 0.98 * (ypos7[i+1] - ypos7[i]));
+
+					if (p.y >= ypos7[i]) {
+						eps_loc = 0.98 * (ypos7[i + 1] - ypos7[i]);
+					}
+					else {
+						eps_loc = 0.98 * (ypos7[i] - ypos7[i - 1]);
+					}
+
+				}
+
+				if (fabs(p.y - ypos7[i]) < eps_loc)
+				{
+					eps_memo = eps_loc;
+					
+					if (p.y >= ypos7[i]) {
+						if (i != iny7) {
+							if ((p.y - ypos7[i]) < (ypos7[i + 1] - p.y)) {
+								j_vacant = i;
+								break;
+							}
+							else {
+								j_vacant = i + 1;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the right along the Oy axis\n";
+							if ((p.y - ypos7[iny7 - 1]) < (ypos7[iny7] - p.y)) {
+								j_vacant = iny7 - 1;
+							}
+							else {
+								j_vacant = iny7;
+							}
+						}
+					}
+					else {
+						if (i > 0) {
+							if ((p.y - ypos7[i - 1]) < (ypos7[i] - p.y)) {
+								j_vacant = i - 1;
+								break;
+							}
+							else {
+								j_vacant = i;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the left along the Oy axis\n";
+							if ((p.y - ypos7[0]) < (ypos7[1] - p.y)) {
+								j_vacant = 0;
+							}
+							else {
+								j_vacant = 1;
+							}
+						}
+
+					}
+
+				}
+			}
+
+			if (0&&(j_vacant != -1)) {
+				printf("j_vacant=%lld epsToly=%e\n", j_vacant, epsToly);
+				if (j_vacant > 0) {
+					printf("ypos[j_vacant previos] =%e ypos[j_vacant] = %e epsToly=%e  eps_memo =%e\n", ypos7[j_vacant - 1], ypos7[j_vacant], epsToly, eps_memo);
+				}
+				if (j_vacant < iny7) {
+					printf(" ypos[j_vacant] = %e ypos[j_vacant post] =%e epsToly=%e  eps_memo =%e\n", ypos7[j_vacant], ypos7[j_vacant + 1], epsToly, eps_memo);
+				}
+
+			}
+
+		}
+
+		if (k_vacant == -1) {
+
+			doublereal eps_memo = epsToly;
+
+			for (int i = 0; i <= inz7; i++) {
+
+				doublereal eps_loc = epsTolz;
+				// Нелокальный epsilon. 19.11.2020
+				if (i == 0) {
+					eps_loc = 0.98 * (zpos7[1] - zpos7[0]);
+				}
+				else if (i == inz7) {
+					eps_loc = 0.98 * (zpos7[inz7] - zpos7[inz7 - 1]);
+				}
+				else {
+					//eps_loc = fmin(0.98 * (zpos7[i] - zpos7[i-1]), 0.98 * (zpos7[i+1] - zpos7[i]));
+
+					if (p.z >= zpos7[i]) {
+						eps_loc = 0.98 * (zpos7[i + 1] - zpos7[i]);
+					}
+					else {
+						eps_loc = 0.98 * (zpos7[i] - zpos7[i - 1]);
+					}
+
+				}
+
+				if (fabs(p.z - zpos7[i]) < eps_loc) {
+					eps_memo = eps_loc;
+
+					if (p.z >= zpos7[i]) {
+						if (i != inz7) {
+							if ((p.z - zpos7[i]) < (zpos7[i + 1] - p.z)) {
+								k_vacant = i;
+								break;
+							}
+							else {
+								k_vacant = i + 1;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the right along the Oz axis\n";
+							if ((p.z - zpos7[inz7 - 1]) < (zpos7[inz7] - p.z)) {
+								k_vacant = inz7 - 1;
+							}
+							else {
+								k_vacant = inz7;
+							}
+						}
+					}
+					else {
+						if (i > 0) {
+							if ((p.z - zpos7[i - 1]) < (zpos7[i] - p.z)) {
+								k_vacant = i - 1;
+								break;
+							}
+							else {
+								k_vacant = i;
+								break;
+							}
+						}
+						else {
+							//std::cout << "The point left the cabinet on the left along the Oz axis\n";
+							if ((p.z - zpos7[0]) < (zpos7[1] - p.z)) {
+								k_vacant = 0;
+							}
+							else {
+								k_vacant = 1;
+							}
+						}
+
+					}
+				}
+			}
+
+			if (0&&(k_vacant != -1)) {
+				printf("k_vacant=%lld epsTolz=%e\n", k_vacant, epsTolz);
+				if (k_vacant > 0) {
+					printf("zpos[k_vacant previos] =%e zpos[k_vacant] = %e epsTolz=%e  eps_memo =%e\n", zpos7[k_vacant - 1], zpos7[k_vacant], epsTolz, eps_memo);
+				}
+				if (k_vacant < inz7) {
+					printf(" zpos[k_vacant] = %e zpos[k_vacant post] =%e epsTolz=%e  eps_memo =%e\n", zpos7[k_vacant], zpos7[k_vacant + 1], epsTolz, eps_memo);
+				}
+
+			}
+
+		}
+
+
+		if ((i_vacant == -1) || (j_vacant == -1) || (k_vacant == -1)) {
+
+			printf("x=%e y=%e z=%e\n", p.x, p.y, p.z);
+			printf("inx=%lld iny=%lld inz=%lld\n", inx7, iny7, inz7);
+			printf("i=%lld j=%lld k=%lld\n", i_vacant, j_vacant, k_vacant);
+			printf("epsTolx=%e epsToly=%e epsTolz=%e\n", epsTolx, epsToly, epsTolz);
+			printf("error in hash_key_alice33Q\n");
+
+			system("PAUSE");
+			exit(1);
+		}
+		else {
+			return i_vacant + (inx7 + 1) * j_vacant + (inx7 + 1) * (iny7 + 1) * k_vacant;
+		}
+
 	}
 	else {
 		return i_vacant + (inx7+1)*j_vacant + (inx7+1)*(iny7+1)*k_vacant;
@@ -827,7 +1484,7 @@ bool is_null1_(Toctree* &oc, integer direct)
 	return b1;
 } // is_null1_
 
-bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c2, integer &c3, integer &c4, integer &c5, integer &c6, integer &c7)
+bool is_null2(Toctree* &oc, integer direct, char &c0, char &c1, char &c2, char &c3, char &c4, char &c5, char &c6, char &c7)
 {
 	// cface - это количество соседей по face грани.
 
@@ -865,7 +1522,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link0 != nullptr) {
 				c0 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link0->link0 != nullptr) {
 					ic0++;
 				}
@@ -887,7 +1544,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link3 != nullptr) {
 				c3 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link3->link0 != nullptr) {
 					ic0++;
 				}
@@ -909,7 +1566,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link4 != nullptr) {
 				c4 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link4->link0 != nullptr) {
 					ic0++;
 				}
@@ -931,7 +1588,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link7 != nullptr) {
 				c7 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link7->link0 != nullptr) {
 					ic0++;
 				}
@@ -966,7 +1623,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link0 != nullptr) {
 				c0 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link0->link0 != nullptr) {
 					ic0++;
 				}
@@ -988,7 +1645,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link1 != nullptr) {
 				c1 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link1->link0 != nullptr) {
 					ic0++;
 				}
@@ -1010,7 +1667,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link4 != nullptr) {
 				c4 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link4->link0 != nullptr) {
 					ic0++;
 				}
@@ -1032,7 +1689,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link5 != nullptr) {
 				c5 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link5->link0 != nullptr) {
 					ic0++;
 				}
@@ -1070,7 +1727,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link0 != nullptr) {
 				c0 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link0->link0 != nullptr) {
 					ic0++;
 				}
@@ -1093,7 +1750,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 			if (oc->link1 != nullptr) {
 				c1 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link1->link0 != nullptr) {
 					ic0++;
 				}
@@ -1115,7 +1772,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link2 != nullptr) {
 				c2 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link2->link0 != nullptr) {
 					ic0++;
 				}
@@ -1137,7 +1794,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 			}
 			if (oc->link3 != nullptr) {
 				c3 = 1;
-				integer ic0 = 0;
+				char ic0 = 0;
 				if (oc->link3->link0 != nullptr) {
 					ic0++;
 				}
@@ -1172,7 +1829,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 	return b1;
 } // is_null2
 
-bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c2, integer &c3, integer &c4, integer &c5, integer &c6, integer &c7)
+bool is_null3(Toctree* &oc, integer direct, char &c0, char &c1, char &c2, char &c3, char &c4, char &c5, char &c6, char &c7)
 {
 	// cface - это количество соседей по face грани.
 
@@ -1219,7 +1876,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link0 != nullptr) {
 					c0 = 1; c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -1244,7 +1901,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link1 != nullptr) {
 					c1 = 1; c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link0 != nullptr) {
 						ic0++;
 					}
@@ -1268,7 +1925,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link2 != nullptr) {
 					c2 = 1; c6 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link2->link0 != nullptr) {
 						ic0++;
 					}
@@ -1292,7 +1949,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link3 != nullptr) {
 					c3 = 1; c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link0 != nullptr) {
 						ic0++;
 					}
@@ -1328,7 +1985,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link1 != nullptr) {
 					c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link1 != nullptr) {
 						ic0++;
 					}
@@ -1350,7 +2007,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link2 != nullptr) {
 					c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link2->link1 != nullptr) {
 						ic0++;
 					}
@@ -1386,7 +2043,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -1408,7 +2065,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link3 != nullptr) {
 					c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link0 != nullptr) {
 						ic0++;
 					}
@@ -1443,7 +2100,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link2 != nullptr) {
 					c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link2->link2 != nullptr) {
 						ic0++;
 					}
@@ -1465,7 +2122,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link3 != nullptr) {
 					c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link2 != nullptr) {
 						ic0++;
 					}
@@ -1499,7 +2156,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -1521,7 +2178,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link1 != nullptr) {
 					c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link0 != nullptr) {
 						ic0++;
 					}
@@ -1571,7 +2228,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1; c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -1595,7 +2252,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link1 != nullptr) {
 					c1 = 1; c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link0 != nullptr) {
 						ic0++;
 					}
@@ -1619,7 +2276,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link4 != nullptr) {
 					c4 = 1; c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link0 != nullptr) {
 						ic0++;
 					}
@@ -1644,7 +2301,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				if (oc->link5 != nullptr) {
 					c5 = 1;
 					c6 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link5->link0 != nullptr) {
 						ic0++;
 					}
@@ -1678,7 +2335,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -1701,7 +2358,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link4 != nullptr) {
 					c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link0 != nullptr) {
 						ic0++;
 					}
@@ -1736,7 +2393,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link1 != nullptr) {
 					c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link1 != nullptr) {
 						ic0++;
 					}
@@ -1760,7 +2417,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link5 != nullptr) {
 					c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link5->link1 != nullptr) {
 						ic0++;
 					}
@@ -1796,7 +2453,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -1819,7 +2476,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link1 != nullptr) {
 					c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link0 != nullptr) {
 						ic0++;
 					}
@@ -1855,7 +2512,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link4 != nullptr) {
 					c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link4 != nullptr) {
 						ic0++;
 					}
@@ -1878,7 +2535,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link5 != nullptr) {
 					c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link5->link4 != nullptr) {
 						ic0++;
 					}
@@ -1918,7 +2575,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link0 != nullptr) {
 					c0 = 1; c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -1942,7 +2599,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link3 != nullptr) {
 					c3 = 1; c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link0 != nullptr) {
 						ic0++;
 					}
@@ -1966,7 +2623,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link4 != nullptr) {
 					c4 = 1; c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link0 != nullptr) {
 						ic0++;
 					}
@@ -1990,7 +2647,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link7 != nullptr) {
 					c7 = 1; c6 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link7->link0 != nullptr) {
 						ic0++;
 					}
@@ -2025,7 +2682,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2049,7 +2706,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link4 != nullptr) {
 					c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link0 != nullptr) {
 						ic0++;
 					}
@@ -2085,7 +2742,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link3 != nullptr) {
 					c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link2 != nullptr) {
 						ic0++;
 					}
@@ -2109,7 +2766,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link7 != nullptr) {
 					c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link7->link2 != nullptr) {
 						ic0++;
 					}
@@ -2145,7 +2802,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2171,7 +2828,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link3 != nullptr) {
 					c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link0 != nullptr) {
 						ic0++;
 					}
@@ -2207,7 +2864,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link4 != nullptr) {
 					c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link4 != nullptr) {
 						ic0++;
 					}
@@ -2233,7 +2890,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link7 != nullptr) {
 					c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link7->link4 != nullptr) {
 						ic0++;
 					}
@@ -2290,7 +2947,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1; c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2314,7 +2971,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link1 != nullptr) {
 					c1 = 1; c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link0 != nullptr) {
 						ic0++;
 					}
@@ -2353,7 +3010,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1; c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2378,7 +3035,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link1 != nullptr) {
 					c1 = 1; c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link0 != nullptr) {
 						ic0++;
 					}
@@ -2430,7 +3087,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				if (oc->link0 != nullptr) {
 					c0 = 1;
 					c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2455,7 +3112,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				if (oc->link3 != nullptr) {
 					c3 = 1;
 					c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link0 != nullptr) {
 						ic0++;
 					}
@@ -2493,7 +3150,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1; c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2519,7 +3176,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link3 != nullptr) {
 					c3 = 1; c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link0 != nullptr) {
 						ic0++;
 					}
@@ -2571,7 +3228,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1; c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2598,7 +3255,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link4 != nullptr) {
 					c4 = 1; c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link0 != nullptr) {
 						ic0++;
 					}
@@ -2635,7 +3292,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1; c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2661,7 +3318,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c2 = 0;
 				if (oc->link4 != nullptr) {
 					c4 = 1; c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link0 != nullptr) {
 						ic0++;
 					}
@@ -2709,7 +3366,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2731,7 +3388,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link3 != nullptr) {
 					c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link0 != nullptr) {
 						ic0++;
 					}
@@ -2753,7 +3410,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link4 != nullptr) {
 					c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link0 != nullptr) {
 						ic0++;
 					}
@@ -2775,7 +3432,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link7 != nullptr) {
 					c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link7->link0 != nullptr) {
 						ic0++;
 					}
@@ -2810,7 +3467,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link1 != nullptr) {
 					c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link1 != nullptr) {
 						ic0++;
 					}
@@ -2832,7 +3489,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link2 != nullptr) {
 					c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link2->link1 != nullptr) {
 						ic0++;
 					}
@@ -2854,7 +3511,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link5 != nullptr) {
 					c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link5->link1 != nullptr) {
 						ic0++;
 					}
@@ -2876,7 +3533,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link6 != nullptr) {
 					c6 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link6->link1 != nullptr) {
 						ic0++;
 					}
@@ -2911,7 +3568,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -2933,7 +3590,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link1 != nullptr) {
 					c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link0 != nullptr) {
 						ic0++;
 					}
@@ -2955,7 +3612,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link4 != nullptr) {
 					c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link0 != nullptr) {
 						ic0++;
 					}
@@ -2977,7 +3634,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link5 != nullptr) {
 					c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link5->link0 != nullptr) {
 						ic0++;
 					}
@@ -3014,7 +3671,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link2 != nullptr) {
 					c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link2->link2 != nullptr) {
 						ic0++;
 					}
@@ -3036,7 +3693,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link3 != nullptr) {
 					c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link2 != nullptr) {
 						ic0++;
 					}
@@ -3058,7 +3715,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link6 != nullptr) {
 					c6 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link6->link2 != nullptr) {
 						ic0++;
 					}
@@ -3080,7 +3737,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link7 != nullptr) {
 					c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link7->link2 != nullptr) {
 						ic0++;
 					}
@@ -3118,7 +3775,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link0 != nullptr) {
 					c0 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link0->link0 != nullptr) {
 						ic0++;
 					}
@@ -3141,7 +3798,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link1 != nullptr) {
 					c1 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link1->link0 != nullptr) {
 						ic0++;
 					}
@@ -3163,7 +3820,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link2 != nullptr) {
 					c2 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link2->link0 != nullptr) {
 						ic0++;
 					}
@@ -3185,7 +3842,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link3 != nullptr) {
 					c3 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link3->link0 != nullptr) {
 						ic0++;
 					}
@@ -3223,7 +3880,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link4 != nullptr) {
 					c4 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link4->link4 != nullptr) {
 						ic0++;
 					}
@@ -3246,7 +3903,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 				if (oc->link5 != nullptr) {
 					c5 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link5->link4 != nullptr) {
 						ic0++;
 					}
@@ -3268,7 +3925,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link6 != nullptr) {
 					c6 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link6->link4 != nullptr) {
 						ic0++;
 					}
@@ -3290,7 +3947,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				if (oc->link7 != nullptr) {
 					c7 = 1;
-					integer ic0 = 0;
+					char ic0 = 0;
 					if (oc->link7->link4 != nullptr) {
 						ic0++;
 					}
@@ -3328,7 +3985,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 
 
-void patch_neighbour_count(integer &ineighbour, octree* &oc_info, integer iside_info) {
+void patch_neighbour_count(char &ineighbour, octree* &oc_info, integer iside_info) {
 
 	switch (ineighbour) {
 	case 0: printf("error!!! patch_neighbour_count increment  ineighbour=0\n");
@@ -3377,7 +4034,7 @@ void patch_neighbour_count(integer &ineighbour, octree* &oc_info, integer iside_
 	}
 } // patch_neighbour_count
 
-void patch_neighbour_count2(integer &ineighbour) {
+void patch_neighbour_count2(char &ineighbour) {
 	// При вырождениии в направлении одной из осей.
 	switch (ineighbour) {
 	case 0: printf("error!!! patch_neighbour_count2 increment  ineighbour=0\n");
@@ -3404,7 +4061,8 @@ void patch_neighbour_count2(integer &ineighbour) {
 
 
 // Алгоритм дробления листа на 8 частей с учётом вырождений.
-void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, 
+void droblenie_internal(octree* &oc, int minx, int maxx, int miny,
+	int maxy, int minz, int maxz, 
 	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &ret, bool dodroblenie,
 	bool bdrobimX, bool bdrobimY, bool bdrobimZ, BLOCK*& b, TOCHKA &GSep) {
 
@@ -3448,9 +4106,9 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 
 	
 	
-	integer avgx = (minx + maxx)/2;
-	integer avgy = (miny + maxy)/2;
-	integer avgz = (minz + maxz)/2;
+	int avgx = (minx + maxx)/2;
+	int avgy = (miny + maxy)/2;
+	int avgz = (minz + maxz)/2;
 	
     if (1) {
 		// 2 september 2017. Revised 27.08.2019
@@ -3474,10 +4132,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 				}
 			}
 		}
-		integer isearch = -1;
-		doublereal dmax28 = 1.0e40;
+		int isearch = -1;
+		doublereal dmax28 = 1.0e36;
 		// поиск наимее удалённого от геометрического центра индекса.
-		for (integer i28 = minx; i28 <= maxx; i28++) {
+		for (int i28 = minx; i28 <= maxx; i28++) {
 			if (fabs(xpos[i28] - xc28) < dmax28) {
 				isearch = i28;
 				dmax28 = fabs(xpos[i28] - xc28);
@@ -3494,9 +4152,9 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 		}
 		isearch = -1;
-		dmax28 = 1.0e40;
+		dmax28 = 1.0e36;
 		// поиск наимее удалённого от геометрического центра индекса.
-		for (integer i28 = miny; i28 <= maxy; i28++) {
+		for (int i28 = miny; i28 <= maxy; i28++) {
 			if (fabs(ypos[i28] - xc28) < dmax28) {
 				isearch = i28;
 				dmax28 = fabs(ypos[i28] - xc28);
@@ -3513,9 +4171,9 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 		}
 		isearch = -1;
-		dmax28 = 1.0e40;
+		dmax28 = 1.0e36;
 		// поиск наимее удалённого от геометрического центра индекса.
-		for (integer i28 = minz; i28 <= maxz; i28++) {
+		for (int i28 = minz; i28 <= maxz; i28++) {
 			if (fabs(zpos[i28] - xc28) < dmax28) {
 				isearch = i28;
 				dmax28 = fabs(zpos[i28] - xc28);
@@ -3687,12 +4345,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		}
 
 		// дробление
-		integer minx0 = minx;
-		integer maxx0 = avgx;
-		integer miny0 = miny;
-		integer maxy0 = avgy;
-		integer minz0 = minz;
-		integer maxz0 = avgz;
+		int minx0 = minx;
+		int maxx0 = avgx;
+		int miny0 = miny;
+		int maxy0 = avgy;
+		int minz0 = minz;
+		int maxz0 = avgz;
 		doublereal rminx0 = xpos[minx];
 		doublereal rmaxx0 = xpos[avgx];
 		doublereal rminy0 = ypos[miny];
@@ -3702,31 +4360,31 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 
 		
 		if (rminx0 < b[0].g.xS) {
-			printf("ERROR Cabinet out rminx0. %e %lld\n", rminx0, minx);
+			printf("ERROR Cabinet out rminx0. %e %d\n", rminx0, minx);
 			system("PAUSE");
 		}
 		if (rminy0 < b[0].g.yS) {
-			printf("ERROR Cabinet out rminy0. %e %lld\n", rminy0, miny);
+			printf("ERROR Cabinet out rminy0. %e %d\n", rminy0, miny);
 			system("PAUSE");
 		}
 		if (rminz0 < b[0].g.zS) {
-			printf("ERROR Cabinet out rminz0. %e %lld\n", rminz0, minz);
+			printf("ERROR Cabinet out rminz0. %e %d\n", rminz0, minz);
 			system("PAUSE");
 		}
 		
 
 		if (rmaxx0 > b[0].g.xE) {
-			printf("ERROR Cabinet out rmaxx0. %e %lld\n", rmaxx0, avgx);
+			printf("ERROR Cabinet out rmaxx0. %e %d\n", rmaxx0, avgx);
 			system("PAUSE");
 		}
 
 		if (rmaxy0 > b[0].g.yE) {
-			printf("ERROR Cabinet out rmaxy0. %e %lld\n", rmaxy0, avgy);
+			printf("ERROR Cabinet out rmaxy0. %e %d\n", rmaxy0, avgy);
 			system("PAUSE");
 		}
 
 		if (rmaxz0 > b[0].g.zE) {
-			printf("ERROR Cabinet out rmaxz0. %e %lld\n", rmaxz0, avgz);
+			printf("ERROR Cabinet out rmaxz0. %e %d\n", rmaxz0, avgz);
 			system("PAUSE");
 		}
 		
@@ -3748,12 +4406,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 			oc->link0 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octree[icount_Length_vector_octree] = oc->link0;
-			icount_Length_vector_octree++;
-			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
-				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
-				system("pause");
-			}
+			rootClear_octree->next = new octree_list;
+			rootClear_octree = rootClear_octree->next;
+			rootClear_octree->next = nullptr;
+			rootClear_octree->pnode= oc->link0;
+			
+			
 
 			oc->link0->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link0->inum_FD = 0;// Не принадлежит расчётной области.
@@ -3889,12 +4547,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		else {
 			oc->link0 = nullptr;
 		}
-		integer minx1 = avgx;
-		integer maxx1 = maxx;
-		integer miny1 = miny;
-		integer maxy1 = avgy;
-		integer minz1 = minz;
-		integer maxz1 = avgz;
+		int minx1 = avgx;
+		int maxx1 = maxx;
+		int miny1 = miny;
+		int maxy1 = avgy;
+		int minz1 = minz;
+		int maxz1 = avgz;
 		doublereal rminx1 = xpos[avgx];
 		doublereal rmaxx1 = xpos[maxx];
 		doublereal rminy1 = ypos[miny];
@@ -3903,31 +4561,31 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		doublereal rmaxz1 = zpos[avgz];
 
 		if (rminx1 < b[0].g.xS) {
-			printf("ERROR Cabinet out rminx1. %e %lld\n", rminx1, avgx);
+			printf("ERROR Cabinet out rminx1. %e %d\n", rminx1, avgx);
 			system("PAUSE");
 		}
 		if (rminy1 < b[0].g.yS) {
-			printf("ERROR Cabinet out rminy1. %e %lld\n", rminy1, miny);
+			printf("ERROR Cabinet out rminy1. %e %d\n", rminy1, miny);
 			system("PAUSE");
 		}
 		if (rminz1 < b[0].g.zS) {
-			printf("ERROR Cabinet out rminz1. %e %lld\n", rminz1, minz);
+			printf("ERROR Cabinet out rminz1. %e %d\n", rminz1, minz);
 			system("PAUSE");
 		}
 
 
 		if (rmaxx1 > b[0].g.xE) {
-			printf("ERROR Cabinet out rmaxx1. %e %lld\n", rmaxx1, maxx);
+			printf("ERROR Cabinet out rmaxx1. %e %d\n", rmaxx1, maxx);
 			system("PAUSE");
 		}
 
 		if (rmaxy1 > b[0].g.yE) {
-			printf("ERROR Cabinet out rmaxy1. %e %lld\n", rmaxy1, avgy);
+			printf("ERROR Cabinet out rmaxy1. %e %d\n", rmaxy1, avgy);
 			system("PAUSE");
 		}
 
 		if (rmaxz1 > b[0].g.zE) {
-			printf("ERROR Cabinet out rmaxz1. %e %lld\n", rmaxz1, avgz);
+			printf("ERROR Cabinet out rmaxz1. %e %d\n", rmaxz1, avgz);
 			system("PAUSE");
 		}
 
@@ -3949,14 +4607,13 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 			oc->link1 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octree[icount_Length_vector_octree] = oc->link1;
-			icount_Length_vector_octree++;
-			if (icount_Length_vector_octree > iMAX_Length_vector_octree - 1) {
-				printf("rootClear_octree stack overflow\n");
-				printf("You mast increesable variable iMAX_Length_vector_octree = 1.4*inx*iny*inz\n");
-				system("pause");
-				exit(1);
-			}
+			rootClear_octree->next = new octree_list;
+			rootClear_octree = rootClear_octree->next;
+			rootClear_octree->next = nullptr;
+			rootClear_octree->pnode = oc->link1;
+
+			
+			
 
 			oc->link1->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link1->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4088,12 +4745,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		else {
 			oc->link1 = nullptr;
 		}
-		integer minx2 = avgx;
-		integer maxx2 = maxx;
-		integer miny2 = avgy;
-		integer maxy2 = maxy;
-		integer minz2 = minz;
-		integer maxz2 = avgz;
+		int minx2 = avgx;
+		int maxx2 = maxx;
+		int miny2 = avgy;
+		int maxy2 = maxy;
+		int minz2 = minz;
+		int maxz2 = avgz;
 		doublereal rminx2 = xpos[avgx];
 		doublereal rmaxx2 = xpos[maxx];
 		doublereal rminy2 = ypos[avgy];
@@ -4102,31 +4759,31 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		doublereal rmaxz2 = zpos[avgz];
 
 		if (rminx2 < b[0].g.xS) {
-			printf("ERROR Cabinet out rminx2. %e %lld\n", rminx2, avgx);
+			printf("ERROR Cabinet out rminx2. %e %d\n", rminx2, avgx);
 			system("PAUSE");
 		}
 		if (rminy2 < b[0].g.yS) {
-			printf("ERROR Cabinet out rminy2. %e %lld\n", rminy2, avgy);
+			printf("ERROR Cabinet out rminy2. %e %d\n", rminy2, avgy);
 			system("PAUSE");
 		}
 		if (rminz2 < b[0].g.zS) {
-			printf("ERROR Cabinet out rminz2. %e %lld\n", rminz2, minz);
+			printf("ERROR Cabinet out rminz2. %e %d\n", rminz2, minz);
 			system("PAUSE");
 		}
 
 
 		if (rmaxx2 > b[0].g.xE) {
-			printf("ERROR Cabinet out rmaxx2. %e %lld\n", rmaxx2, maxx);
+			printf("ERROR Cabinet out rmaxx2. %e %d\n", rmaxx2, maxx);
 			system("PAUSE");
 		}
 
 		if (rmaxy2 > b[0].g.yE) {
-			printf("ERROR Cabinet out rmaxy2. %e %lld\n", rmaxy2, maxy);
+			printf("ERROR Cabinet out rmaxy2. %e %d\n", rmaxy2, maxy);
 			system("PAUSE");
 		}
 
 		if (rmaxz2 > b[0].g.zE) {
-			printf("ERROR Cabinet out rmaxz2. %e %lld\n", rmaxz2, avgz);
+			printf("ERROR Cabinet out rmaxz2. %e %d\n", rmaxz2, avgz);
 			system("PAUSE");
 		}
 
@@ -4148,12 +4805,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 			oc->link2 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octree[icount_Length_vector_octree] = oc->link2;
-			icount_Length_vector_octree++;
-			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
-				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
-				system("pause");
-			}
+			rootClear_octree->next = new octree_list;
+			rootClear_octree = rootClear_octree->next;
+			rootClear_octree->next = nullptr;
+			rootClear_octree->pnode = oc->link2;
 
 			oc->link2->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link2->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4285,12 +4940,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		else {
 			oc->link2 = nullptr;
 		}
-		integer minx3 = minx;
-		integer maxx3 = avgx;
-		integer miny3 = avgy;
-		integer maxy3 = maxy;
-		integer minz3 = minz;
-		integer maxz3 = avgz;
+		int minx3 = minx;
+		int maxx3 = avgx;
+		int miny3 = avgy;
+		int maxy3 = maxy;
+		int minz3 = minz;
+		int maxz3 = avgz;
 		doublereal rminx3 = xpos[minx];
 		doublereal rmaxx3 = xpos[avgx];
 		doublereal rminy3 = ypos[avgy];
@@ -4299,31 +4954,31 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		doublereal rmaxz3 = zpos[avgz];
 
 		if (rminx3 < b[0].g.xS) {
-			printf("ERROR Cabinet out rminx3. %e %lld\n", rminx3, minx);
+			printf("ERROR Cabinet out rminx3. %e %d\n", rminx3, minx);
 			system("PAUSE");
 		}
 		if (rminy3 < b[0].g.yS) {
-			printf("ERROR Cabinet out rminy3. %e %lld\n", rminy3, avgy);
+			printf("ERROR Cabinet out rminy3. %e %d\n", rminy3, avgy);
 			system("PAUSE");
 		}
 		if (rminz3 < b[0].g.zS) {
-			printf("ERROR Cabinet out rminz3. %e %lld\n", rminz3, minz);
+			printf("ERROR Cabinet out rminz3. %e %d\n", rminz3, minz);
 			system("PAUSE");
 		}
 
 
 		if (rmaxx3 > b[0].g.xE) {
-			printf("ERROR Cabinet out rmaxx3. %e %lld\n", rmaxx3, avgx);
+			printf("ERROR Cabinet out rmaxx3. %e %d\n", rmaxx3, avgx);
 			system("PAUSE");
 		}
 
 		if (rmaxy3 > b[0].g.yE) {
-			printf("ERROR Cabinet out rmaxy3. %e %lld\n", rmaxy3, maxy);
+			printf("ERROR Cabinet out rmaxy3. %e %d\n", rmaxy3, maxy);
 			system("PAUSE");
 		}
 
 		if (rmaxz3 > b[0].g.zE) {
-			printf("ERROR Cabinet out rmaxz3. %e %lld\n", rmaxz3, avgz);
+			printf("ERROR Cabinet out rmaxz3. %e %d\n", rmaxz3, avgz);
 			system("PAUSE");
 		}
 
@@ -4345,12 +5000,11 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 			oc->link3 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octree[icount_Length_vector_octree] = oc->link3;
-			icount_Length_vector_octree++;
-			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
-				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
-				system("pause");
-			}
+			rootClear_octree->next = new octree_list;
+			rootClear_octree = rootClear_octree->next;
+			rootClear_octree->next = nullptr;
+			rootClear_octree->pnode = oc->link3;
+
 
 			oc->link3->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link3->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4484,12 +5138,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link3 = nullptr;
 		}
 
-		integer minx4 = minx;
-		integer maxx4 = avgx;
-		integer miny4 = miny;
-		integer maxy4 = avgy;
-		integer minz4 = avgz;
-		integer maxz4 = maxz;
+		int minx4 = minx;
+		int maxx4 = avgx;
+		int miny4 = miny;
+		int maxy4 = avgy;
+		int minz4 = avgz;
+		int maxz4 = maxz;
 		doublereal rminx4 = xpos[minx];
 		doublereal rmaxx4 = xpos[avgx];
 		doublereal rminy4 = ypos[miny];
@@ -4514,12 +5168,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 
 			oc->link4 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octree[icount_Length_vector_octree] = oc->link4;
-			icount_Length_vector_octree++;
-			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
-				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
-				system("pause");
-			}
+			rootClear_octree->next = new octree_list;
+			rootClear_octree = rootClear_octree->next;
+			rootClear_octree->next = nullptr;
+			rootClear_octree->pnode = oc->link4;
 
 			oc->link4->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link4->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4653,12 +5305,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		else {
 			oc->link4 = nullptr;
 		}
-		integer minx5 = avgx;
-		integer maxx5 = maxx;
-		integer miny5 = miny;
-		integer maxy5 = avgy;
-		integer minz5 = avgz;
-		integer maxz5 = maxz;
+		int minx5 = avgx;
+		int maxx5 = maxx;
+		int miny5 = miny;
+		int maxy5 = avgy;
+		int minz5 = avgz;
+		int maxz5 = maxz;
 		doublereal rminx5 = xpos[avgx];
 		doublereal rmaxx5 = xpos[maxx];
 		doublereal rminy5 = ypos[miny];
@@ -4683,12 +5335,11 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 			oc->link5 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octree[icount_Length_vector_octree] = oc->link5;
-			icount_Length_vector_octree++;
-			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
-				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
-				system("pause");
-			}
+			rootClear_octree->next = new octree_list;
+			rootClear_octree = rootClear_octree->next;
+			rootClear_octree->next = nullptr;
+			rootClear_octree->pnode = oc->link5;
+
 
 			oc->link5->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link5->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4820,12 +5471,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		else {
 			oc->link5 = nullptr;
 		}
-		integer minx6 = avgx;
-		integer maxx6 = maxx;
-		integer miny6 = avgy;
-		integer maxy6 = maxy;
-		integer minz6 = avgz;
-		integer maxz6 = maxz;
+		int minx6 = avgx;
+		int maxx6 = maxx;
+		int miny6 = avgy;
+		int maxy6 = maxy;
+		int minz6 = avgz;
+		int maxz6 = maxz;
 		doublereal rminx6 = xpos[avgx];
 		doublereal rmaxx6 = xpos[maxx];
 		doublereal rminy6 = ypos[avgy];
@@ -4850,12 +5501,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 			oc->link6 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octree[icount_Length_vector_octree] = oc->link6;
-			icount_Length_vector_octree++;
-			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
-				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
-				system("pause");
-			}
+			rootClear_octree->next = new octree_list;
+			rootClear_octree = rootClear_octree->next;
+			rootClear_octree->next = nullptr;
+			rootClear_octree->pnode = oc->link6;
 
 			oc->link6->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link6->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4987,12 +5636,12 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		else {
 			oc->link6 = nullptr;
 		}
-		integer minx7 = minx;
-		integer maxx7 = avgx;
-		integer miny7 = avgy;
-		integer maxy7 = maxy;
-		integer minz7 = avgz;
-		integer maxz7 = maxz;
+		int minx7 = minx;
+		int maxx7 = avgx;
+		int miny7 = avgy;
+		int maxy7 = maxy;
+		int minz7 = avgz;
+		int maxz7 = maxz;
 		doublereal rminx7 = xpos[minx];
 		doublereal rmaxx7 = xpos[avgx];
 		doublereal rminy7 = ypos[avgy];
@@ -5016,15 +5665,13 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			}
 			oc->link7 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octree[icount_Length_vector_octree] = oc->link7;
-			icount_Length_vector_octree++;
-			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
-				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
-				system("pause");
-			}
+			rootClear_octree->next = new octree_list;
+			rootClear_octree = rootClear_octree->next;
+			rootClear_octree->next = nullptr;
+			rootClear_octree->pnode = oc->link7;
 
 			oc->link7->inum_TD = 0; // Не принадлежит расчётной области.
-			oc->link7->inum_FD = 0;// Не принадлежит расчётной области.
+			oc->link7->inum_FD = 0; // Не принадлежит расчётной области.
 			// После применения оператора new не требуется делать проверку на null.
 			//if (oc->link7 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
@@ -5559,7 +6206,7 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		// других вариантов быть не может, здесь только 4.
 		// может быть 2, 4, 5, 8
 		// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-		integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+		char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 		is_null2(oc->linkN, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 		if (oc->linkN != nullptr) {
 		if (oc->linkN->link0 != nullptr) {
@@ -5593,7 +6240,7 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		// других вариантов быть не может, здесь только 4.
 		// может быть 2, 4, 5, 8
 		// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-		integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+		char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 		is_null2(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 		if (oc->linkS != nullptr) {
 		if (oc->linkS->link2 != nullptr) {
@@ -5632,7 +6279,7 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		// других вариантов быть не может, здесь только 4.
 		// может быть 2, 4, 5, 8
 		// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-		integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+		char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 		is_null2(oc->linkN, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 		if (oc->linkN != nullptr) {
 		if (oc->linkN->link0 != nullptr) {
@@ -5667,7 +6314,7 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 		// других вариантов быть не может, здесь только 4.
 		// может быть 2, 4, 5, 8
 		// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-		integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+		char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 		is_null2(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 		if (oc->linkS != nullptr) {
 		if (oc->linkS->link2 != nullptr) {
@@ -5758,7 +6405,9 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 //  droblenie_internal_old завершена в 15:35 27.08.2016. надо делать delenie_internal.
 // данный код устарел 30 августа 2016 и больше не поддерживается,
 // поэтому см. реализацию droblenie internal.
-void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &ret) {
+void droblenie_internal_old(octree* &oc, int minx, int maxx, int miny, int maxy,
+	int minz, int maxz, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &ret) {
+
 	bool b0 = true;
 	bool b1 = true;
 	bool b2 = true;
@@ -5776,16 +6425,16 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 	// Вырождение по Y.
 	bool bSituationY = false;
 
-	integer avgx = (minx + maxx)/2;
-	integer avgy = (miny + maxy)/2;
-	integer avgz = (minz + maxz)/2;
+	int avgx = (minx + maxx)/2;
+	int avgy = (miny + maxy)/2;
+	int avgz = (minz + maxz)/2;
 
 	if (1) {
 		doublereal xc28 = 0.5*(xpos[minx] + xpos[maxx]);
-		integer isearch = -1;
-		doublereal dmax28 = 1.0e40;
+		int  isearch = -1;
+		doublereal dmax28 = 1.0e36;
 		// поиск наимее удалённого от геометрического центра индекса.
-		for (integer i28 = minx; i28 <= maxx; i28++) {
+		for (int i28 = minx; i28 <= maxx; i28++) {
 			if (fabs(xpos[i28] - xc28) < dmax28) {
 				isearch = i28;
 				dmax28 = fabs(xpos[i28] - xc28);
@@ -5795,9 +6444,9 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 
 		xc28 = 0.5*(ypos[miny] + ypos[maxy]);
 		isearch = -1;
-		dmax28 = 1.0e40;
+		dmax28 = 1.0e36;
 		// поиск наимее удалённого от геометрического центра индекса.
-		for (integer i28 = miny; i28 <= maxy; i28++) {
+		for (int i28 = miny; i28 <= maxy; i28++) {
 			if (fabs(ypos[i28] - xc28) < dmax28) {
 				isearch = i28;
 				dmax28 = fabs(ypos[i28] - xc28);
@@ -5807,9 +6456,9 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 
 		xc28 = 0.5*(zpos[minz] + zpos[maxz]);
 		isearch = -1;
-		dmax28 = 1.0e40;
+		dmax28 = 1.0e36;
 		// поиск наимее удалённого от геометрического центра индекса.
-		for (integer i28 = minz; i28 <= maxz; i28++) {
+		for (int i28 = minz; i28 <= maxz; i28++) {
 			if (fabs(zpos[i28] - xc28) < dmax28) {
 				isearch = i28;
 				dmax28 = fabs(zpos[i28] - xc28);
@@ -5882,12 +6531,12 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 		}
 
 		// дробление
-		integer minx0 = minx;
-		integer maxx0 = avgx;
-		integer miny0 = miny;
-		integer maxy0 = avgy;
-		integer minz0 = minz;
-		integer maxz0 = avgz;
+		int minx0 = minx;
+		int maxx0 = avgx;
+		int miny0 = miny;
+		int maxy0 = avgy;
+		int minz0 = minz;
+		int maxz0 = avgz;
 		doublereal rminx0 = xpos[minx];
 		doublereal rmaxx0 = xpos[avgx];
 		doublereal rminy0 = ypos[miny];
@@ -6027,7 +6676,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X) || (bonly_dir_Y)) {
 							if (bonly_dir_X) {
@@ -6074,7 +6723,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X) || (bonly_dir_Z)) {
 							if (bonly_dir_X) {
@@ -6120,7 +6769,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Y) || (bonly_dir_Z)) {
 							if (bonly_dir_Y) {
@@ -6162,7 +6811,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxWneighbour = c1 + c2;
 					}
@@ -6180,7 +6829,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxWneighbour = c1 + c5;
 					}
@@ -6206,7 +6855,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link0->maxWneighbour = 4;
@@ -6241,7 +6890,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxSneighbour = c3 + c2;
 					}
@@ -6259,7 +6908,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxSneighbour = c3 + c7;
 					}
@@ -6285,7 +6934,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						if (bonly_dir_Z) {
@@ -6319,7 +6968,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxBneighbour = c4 + c7;
 					}
@@ -6337,7 +6986,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxBneighbour = c4 + c5;
 					}
@@ -6363,7 +7012,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_Y) {
 							oc->link0->maxBneighbour = c4 + c5;
@@ -6405,12 +7054,12 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 		else {
 			oc->link0 = nullptr;
 		}
-		integer minx1 = avgx;
-		integer maxx1 = maxx;
-		integer miny1 = miny;
-		integer maxy1 = avgy;
-		integer minz1 = minz;
-		integer maxz1 = avgz;
+		int  minx1 = avgx;
+		int  maxx1 = maxx;
+		int  miny1 = miny;
+		int  maxy1 = avgy;
+		int  minz1 = minz;
+		int  maxz1 = avgz;
 		doublereal rminx1 = xpos[avgx];
 		doublereal rmaxx1 = xpos[maxx];
 		doublereal rminy1 = ypos[miny];
@@ -6552,7 +7201,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X)) {
 							//if (bonly_dir_X) {
@@ -6595,7 +7244,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X)) {
 							//if (bonly_dir_X) {
@@ -6638,7 +7287,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link1->maxEneighbour = 4;
@@ -6663,7 +7312,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link1->maxSneighbour = c2 + c6;
 					}
@@ -6686,7 +7335,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_X) {
 							oc->link1->maxSneighbour = c2 + c6;
@@ -6717,7 +7366,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link1->maxBneighbour = c5 + c6;
 					}
@@ -6740,7 +7389,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_X) {
 							oc->link1->maxBneighbour = c5 + c6;
@@ -6777,12 +7426,12 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 		else {
 			oc->link1 = nullptr;
 		}
-		integer minx2 = avgx;
-		integer maxx2 = maxx;
-		integer miny2 = avgy;
-		integer maxy2 = maxy;
-		integer minz2 = minz;
-		integer maxz2 = avgz;
+		int minx2 = avgx;
+		int maxx2 = maxx;
+		int miny2 = avgy;
+		int maxy2 = maxy;
+		int minz2 = minz;
+		int maxz2 = avgz;
 		doublereal rminx2 = xpos[avgx];
 		doublereal rmaxx2 = xpos[maxx];
 		doublereal rminy2 = ypos[avgy];
@@ -6919,7 +7568,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link2->maxTneighbour = 4;
@@ -6953,7 +7602,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link2->maxEneighbour = 4;
@@ -6977,7 +7626,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 					// других вариантов быть не может, здесь только 4.
@@ -7002,7 +7651,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link2->maxBneighbour = 4;
@@ -7033,12 +7682,12 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 		else {
 			oc->link2 = nullptr;
 		}
-		integer minx3 = minx;
-		integer maxx3 = avgx;
-		integer miny3 = avgy;
-		integer maxy3 = maxy;
-		integer minz3 = minz;
-		integer maxz3 = avgz;
+		int minx3 = minx;
+		int maxx3 = avgx;
+		int miny3 = avgy;
+		int maxy3 = maxy;
+		int minz3 = minz;
+		int maxz3 = avgz;
 		doublereal rminx3 = xpos[minx];
 		doublereal rmaxx3 = xpos[avgx];
 		doublereal rminy3 = ypos[avgy];
@@ -7181,7 +7830,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Y)) {
 							//if (bonly_dir_Y) {
@@ -7228,7 +7877,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Y)) {
 							//if (bonly_dir_Y) {
@@ -7268,7 +7917,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link3->maxWneighbour = c2 + c6;
 					}
@@ -7291,7 +7940,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link3->maxWneighbour = 4;
@@ -7322,7 +7971,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link3->maxNneighbour = 4;
@@ -7347,7 +7996,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link3->maxBneighbour = c7 + c6;
 					}
@@ -7369,7 +8018,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (bonly_dir_Y) {
 						oc->link3->maxBneighbour = c7 + c6;
@@ -7407,12 +8056,12 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link3 = nullptr;
 		}
 
-		integer minx4 = minx;
-		integer maxx4 = avgx;
-		integer miny4 = miny;
-		integer maxy4 = avgy;
-		integer minz4 = avgz;
-		integer maxz4 = maxz;
+		int minx4 = minx;
+		int maxx4 = avgx;
+		int miny4 = miny;
+		int maxy4 = avgy;
+		int minz4 = avgz;
+		int maxz4 = maxz;
 		doublereal rminx4 = xpos[minx];
 		doublereal rmaxx4 = xpos[avgx];
 		doublereal rminy4 = ypos[miny];
@@ -7554,7 +8203,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Z)) {
 							//if (bonly_dir_Z) {
@@ -7597,7 +8246,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Z)) {
 							//if (bonly_dir_Z) {
@@ -7635,7 +8284,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link4->maxWneighbour = c5 + c6;
 					}
@@ -7658,7 +8307,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link4->maxWneighbour = 4;
@@ -7690,7 +8339,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link4->maxSneighbour = c7 + c6;
 					}
@@ -7713,7 +8362,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link4->maxSneighbour = 4;
@@ -7743,7 +8392,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link4->maxTneighbour = 4;
@@ -7777,12 +8426,12 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 		else {
 			oc->link4 = nullptr;
 		}
-		integer minx5 = avgx;
-		integer maxx5 = maxx;
-		integer miny5 = miny;
-		integer maxy5 = avgy;
-		integer minz5 = avgz;
-		integer maxz5 = maxz;
+		int minx5 = avgx;
+		int maxx5 = maxx;
+		int miny5 = miny;
+		int maxy5 = avgy;
+		int minz5 = avgz;
+		int maxz5 = maxz;
 		doublereal rminx5 = xpos[avgx];
 		doublereal rmaxx5 = xpos[maxx];
 		doublereal rminy5 = ypos[miny];
@@ -7920,7 +8569,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link5->maxNneighbour = 4;
@@ -7951,7 +8600,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link5->maxEneighbour = 4;
@@ -7975,7 +8624,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link5->maxSneighbour = 4;
@@ -7999,7 +8648,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link5->maxTneighbour = 4;
@@ -8030,12 +8679,12 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 		else {
 			oc->link5 = nullptr;
 		}
-		integer minx6 = avgx;
-		integer maxx6 = maxx;
-		integer miny6 = avgy;
-		integer maxy6 = maxy;
-		integer minz6 = avgz;
-		integer maxz6 = maxz;
+		int minx6 = avgx;
+		int maxx6 = maxx;
+		int miny6 = avgy;
+		int maxy6 = maxy;
+		int minz6 = avgz;
+		int maxz6 = maxz;
 		doublereal rminx6 = xpos[avgx];
 		doublereal rmaxx6 = xpos[maxx];
 		doublereal rminy6 = ypos[avgy];
@@ -8176,7 +8825,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link6->maxEneighbour = 4;
@@ -8200,7 +8849,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link6->maxNneighbour = 4;
@@ -8224,7 +8873,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link6->maxTneighbour = 4;
@@ -8255,12 +8904,12 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 		else {
 			oc->link6 = nullptr;
 		}
-		integer minx7 = minx;
-		integer maxx7 = avgx;
-		integer miny7 = avgy;
-		integer maxy7 = maxy;
-		integer minz7 = avgz;
-		integer maxz7 = maxz;
+		int minx7 = minx;
+		int maxx7 = avgx;
+		int miny7 = avgy;
+		int maxy7 = maxy;
+		int minz7 = avgz;
+		int maxz7 = maxz;
 		doublereal rminx7 = xpos[minx];
 		doublereal rmaxx7 = xpos[avgx];
 		doublereal rminy7 = ypos[avgy];
@@ -8400,7 +9049,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link7->maxEneighbour = 4;
@@ -8429,7 +9078,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link7->maxWneighbour = 4;
@@ -8454,7 +9103,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link7->maxNneighbour = 4;
@@ -8478,7 +9127,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link7->maxTneighbour = 4;
@@ -8907,7 +9556,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null2(oc->linkN, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkN != nullptr) {
 						if (oc->linkN->link0 != nullptr) {
@@ -8941,7 +9590,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null2(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkS != nullptr) {
 						if (oc->linkS->link2 != nullptr) {
@@ -8980,7 +9629,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// других вариантов быть не может, здесь только 4.
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+					char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null2(oc->linkN, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkN != nullptr) {
 						if (oc->linkN->link0 != nullptr) {
@@ -9015,7 +9664,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null2(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (oc->linkS != nullptr) {
 							if (oc->linkS->link2 != nullptr) {
@@ -9212,7 +9861,7 @@ bool split_near_the_entrance_or_exit(doublereal* xpos, doublereal* ypos, doubler
 	//division_boundary(GSep2, ib83, ib84, b, xpos[i], ypos[j], zpos[k]);
 
 	for (integer i_35 = 0; i_35 < lw; i_35++) {
-		if ((fabs(w[i_35].Vx) > 1.0e-40) || (fabs(w[i_35].Vy) > 1.0e-40) || (fabs(w[i_35].Vz) > 1.0e-40)
+		if ((fabs(w[i_35].Vx) > 1.0e-36) || (fabs(w[i_35].Vy) > 1.0e-36) || (fabs(w[i_35].Vz) > 1.0e-36)
 			|| (w[i_35].bpressure) || (w[i_35].bopening))
 		{
 			TOCHKA GSep3;
@@ -9266,12 +9915,14 @@ bool split_near_the_entrance_or_exit(doublereal* xpos, doublereal* ypos, doubler
 // а модифицируя лишь эту функцию.
 // 28.02.2017 Цилиндры не работоспособны.
 integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
-	integer inx, integer iny, integer inz, octree* &oc,
-	integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz,
+	int inx, int  iny, int  inz, octree* &oc,
+	int  minx, int  maxx, int  miny, int  maxy, int  minz, int  maxz,
 	BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer ls, 
 	doublereal epsToolx, doublereal epsTooly, doublereal epsToolz, bool bsimpledefine) {
 	
-	
+
+
+
 
 	// Дробим во всех координатных направлениях.
 	bool bdrobimX = true;
@@ -9382,23 +10033,23 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			
 
 			if (bold_stable_version) {
-				integer ib83 = hash_for_droblenie_xyz[minx][miny][minz];
+				int ib83 = hash_for_droblenie_xyz[minx][miny][minz];
 				if (1 && ((ib83 <= -1) || (ib83 >= lb))) {
 					    printf("*** FATAL ERROR!!! ***\n");
                         printf("hash table: hash_for_droblenie_xyz is INCORRUPT.\n");
 						printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
-						printf("minx==%lld miny=%lld minz=%lld\n", minx, miny, minz);
-						printf("maxx==%lld maxy=%lld maxz=%lld\n", maxx, maxy, maxz);
-						printf("inx=%lld iny=%lld inz=%lld\n", inx, iny, inz);
-						printf("lb=%lld ib83==%lld \n", lb, ib83);
+						printf("minx==%d miny=%d minz=%d\n", minx, miny, minz);
+						printf("maxx==%d maxy=%d maxz=%d\n", maxx, maxy, maxz);
+						printf("inx=%d iny=%d inz=%d\n", inx, iny, inz);
+						printf("lb=%lld ib83==%d \n", lb, ib83);
 						system("PAUSE");
 				}
 
 				if (0) {
 					// Очень быстродействующий вариант.
-					for (integer i = minx; i < maxx; i++) {
-						for (integer j = miny; j < maxy; j++) {
-							for (integer k = minz; k < maxz; k++) {
+					for (int  i = minx; i < maxx; i++) {
+						for (int  j = miny; j < maxy; j++) {
+							for (int  k = minz; k < maxz; k++) {
 								if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
 									oc->dlist = false; // будем дробить
 									goto DROBIM_NOW;
@@ -9408,93 +10059,340 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 				}
 				else {
+
 					// Усовершенствованный экономичный вариант 2019 года.
 					// 19.03.2019
-					for (integer i = minx; i < maxx; i++) {
-						for (integer j = miny; j < maxy; j++) {
-							for (integer k = minz; k < maxz; k++) {
-								if (ib83 != hash_for_droblenie_xyz[i][j][k]) 
-								{
-									integer ib84 = hash_for_droblenie_xyz[i][j][k];
-									if (1&&((ib84 <= -1)||(ib84>=lb))) {
-										printf("*** FATAL ERROR!!! ***\n");
-										printf("hash table: hash_for_droblenie_xyz is INCORRUPT.\n");
-										printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
-										printf("i==%lld j=%lld k=%lld\n",i,j,k);
-										printf("minx==%lld miny=%lld minz=%lld\n", minx, miny, minz);
-										printf("maxx==%lld maxy=%lld maxz=%lld\n", maxx, maxy, maxz);
-										printf("inx=%lld iny=%lld inz=%lld\n", inx, iny, inz);
-										printf("lb=%lld ib83==%lld ib84==%lld\n", lb, ib83, ib84);
-										system("PAUSE");
-									}
-									
-									
-									if ((ib84!=-1)&&(((b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::FLUID)) ||
-									    ((b[ib83].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) ||
-									    ((b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID)
-										  && (b[ib83].imatid==b[ib84].imatid)))) {
-										// Ничего не делаем, продолжаем сканирование.
-										// Если два блока типа FLUID то у нас по определению 
-										// корректности постановки задачи не может соприкасаться 
-										// двух разных жидкостей поэтому мельчить сетку на этой 
-										// границе бессмысленно (граница двух одинаковых жидкостей).
-										// Аналогично мельчить сетку на границе двух HOLLOW блоков
-										// тоже бессмысленно. Мы как бы объединяем эти блоки одинаковых
-										// типов и создаём однородной тело сложной пространственной формы.
+					
+					int irandom = rand() % 3; // 0,1 или 2
+					
 
-										// На границе двух SOLID блоков с одинаковым материалом мы тоже 
-										// не создаём дополнительного измельчения сетки. Считаем что SOLID
-										// блоки одинакового материала составляют единый блок сложной 
-										// пространственной формы.
+					if (irandom == 0) {
+						i0r++;
 
-										// Достигается сильная экономия числа ячеек расчётной сетки.
+//#pragma omp parallel for
+						for (int  i = minx; i < maxx; i++) {
+							if (oc->dlist) {
+								for (int j = miny; j < maxy; j++) {
+									for (int k = minz; k < maxz; k++) {
+										if (oc->dlist) {
+											if (ib83 != hash_for_droblenie_xyz[i][j][k])
+											{
+												int ib84 = hash_for_droblenie_xyz[i][j][k];
+												if (1 && ((ib84 <= -1) || (ib84 >= lb))) {
+													printf("*** FATAL ERROR!!! ***\n");
+													printf("hash table: hash_for_droblenie_xyz is INCORRUPT.\n");
+													printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
+													printf("i==%d j=%d k=%d\n", i, j, k);
+													printf("minx==%d miny=%d minz=%d\n", minx, miny, minz);
+													printf("maxx==%d maxy=%d maxz=%d\n", maxx, maxy, maxz);
+													printf("inx=%d iny=%d inz=%d\n", inx, iny, inz);
+													printf("lb=%lld ib83==%d ib84==%d\n", lb, ib83, ib84);
+													system("PAUSE");
+												}
 
-										// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
-										// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
-										// Вывод в том что вблизи входной и выходной границ желательно мельчить
-										// АЛИС сетку чтобы не пропустить эти границы.
 
-										if ((b_thermal_source_refinement)&&(b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID)&&
-											((fabs(b[ib83].arr_Sc[0])>1.0e-30)||(fabs(b[ib84].arr_Sc[0])>1.0e-30))) 
-										{
-											// 11.12.2019
-											// Если два solid блока одинакового материала и хотя бы один из этих блоков
-											// тепловыделяющий то границу блоков нужно разбить улучшенной сеткой.
-											oc->dlist = false; // будем дробить
-											goto DROBIM_NOW;
-										}
-										else 
-										{
-											doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
-											if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w,1.8, cabinet_size)) {
-												oc->dlist = false; // будем дробить
-												goto DROBIM_NOW;
+												if ((ib84 != -1) && (((b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::FLUID)) ||
+													((b[ib83].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) ||
+													((b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID)
+														&& (b[ib83].imatid == b[ib84].imatid)))) {
+													// Ничего не делаем, продолжаем сканирование.
+													// Если два блока типа FLUID то у нас по определению 
+													// корректности постановки задачи не может соприкасаться 
+													// двух разных жидкостей поэтому мельчить сетку на этой 
+													// границе бессмысленно (граница двух одинаковых жидкостей).
+													// Аналогично мельчить сетку на границе двух HOLLOW блоков
+													// тоже бессмысленно. Мы как бы объединяем эти блоки одинаковых
+													// типов и создаём однородной тело сложной пространственной формы.
+
+													// На границе двух SOLID блоков с одинаковым материалом мы тоже 
+													// не создаём дополнительного измельчения сетки. Считаем что SOLID
+													// блоки одинакового материала составляют единый блок сложной 
+													// пространственной формы.
+
+													// Достигается сильная экономия числа ячеек расчётной сетки.
+
+													// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
+													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
+													// Вывод в том что вблизи входной и выходной границ желательно мельчить
+													// АЛИС сетку чтобы не пропустить эти границы.
+
+													if ((b_thermal_source_refinement) && (b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID) &&
+														((fabs(b[ib83].arr_Sc[0]) > 1.0e-30) || (fabs(b[ib84].arr_Sc[0]) > 1.0e-30)))
+													{
+														// 11.12.2019
+														// Если два solid блока одинакового материала и хотя бы один из этих блоков
+														// тепловыделяющий то границу блоков нужно разбить улучшенной сеткой.
+
+//#pragma omp critical 
+														{
+															oc->dlist = false; // будем дробить
+														}
+
+													}
+													else
+													{
+														doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
+														if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w, 1.8, cabinet_size)) {
+
+//#pragma omp critical 
+															{
+																oc->dlist = false; // будем дробить
+															}
+
+														}
+													}
+
+												}
+												else {
+													// Определяем положение границы разделения.
+													//division_boundary(GSep, ib83, ib84, b, xpos[i], ypos[j], zpos[k]);
+//#pragma omp critical 
+													{
+														oc->dlist = false; // будем дробить
+													}
+
+												}
+											}
+											else {
+												// ib83==ib84, Но мы вблизи входной или выходной границы.
+												// Дробим только жидкость и можно большим радиусом.
+												if (b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
+													doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
+													if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w, 48.0, cabinet_size)) {
+
+//#pragma omp critical 
+														{
+															oc->dlist = false; // будем дробить
+														}
+
+													}
+												}
 											}
 										}
-
-									}
-									else {
-										// Определяем положение границы разделения.
-										//division_boundary(GSep, ib83, ib84, b, xpos[i], ypos[j], zpos[k]);
-
-										oc->dlist = false; // будем дробить
-										goto DROBIM_NOW;
 									}
 								}
-							    else {
-									// ib83==ib84, Но мы вблизи входной или выходной границы.
-									// Дробим только жидкость и можно большим радиусом.
-									if (b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
-										doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
-										if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w, 48.0, cabinet_size)) {
-											oc->dlist = false; // будем дробить
-											goto DROBIM_NOW;
+							}
+                        }
+					}
+					else if (irandom == 1) {
+						i1r++;
+
+//#pragma omp parallel for
+						for (int j = miny; j < maxy; j++) {
+							if (oc->dlist) {
+								for (int k = minz; k < maxz; k++) {
+									for (int i = minx; i < maxx; i++) {
+										if (oc->dlist) {
+											if (ib83 != hash_for_droblenie_xyz[i][j][k])
+											{
+												int ib84 = hash_for_droblenie_xyz[i][j][k];
+												if (1 && ((ib84 <= -1) || (ib84 >= lb))) {
+													printf("*** FATAL ERROR!!! ***\n");
+													printf("hash table: hash_for_droblenie_xyz is INCORRUPT.\n");
+													printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
+													printf("i==%d j=%d k=%d\n", i, j, k);
+													printf("minx==%d miny=%d minz=%d\n", minx, miny, minz);
+													printf("maxx==%d maxy=%d maxz=%d\n", maxx, maxy, maxz);
+													printf("inx=%d iny=%d inz=%d\n", inx, iny, inz);
+													printf("lb=%lld ib83==%d ib84==%d\n", lb, ib83, ib84);
+													system("PAUSE");
+												}
+
+
+												if ((ib84 != -1) && (((b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::FLUID)) ||
+													((b[ib83].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) ||
+													((b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID)
+														&& (b[ib83].imatid == b[ib84].imatid)))) {
+													// Ничего не делаем, продолжаем сканирование.
+													// Если два блока типа FLUID то у нас по определению 
+													// корректности постановки задачи не может соприкасаться 
+													// двух разных жидкостей поэтому мельчить сетку на этой 
+													// границе бессмысленно (граница двух одинаковых жидкостей).
+													// Аналогично мельчить сетку на границе двух HOLLOW блоков
+													// тоже бессмысленно. Мы как бы объединяем эти блоки одинаковых
+													// типов и создаём однородной тело сложной пространственной формы.
+
+													// На границе двух SOLID блоков с одинаковым материалом мы тоже 
+													// не создаём дополнительного измельчения сетки. Считаем что SOLID
+													// блоки одинакового материала составляют единый блок сложной 
+													// пространственной формы.
+
+													// Достигается сильная экономия числа ячеек расчётной сетки.
+
+													// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
+													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
+													// Вывод в том что вблизи входной и выходной границ желательно мельчить
+													// АЛИС сетку чтобы не пропустить эти границы.
+
+													if ((b_thermal_source_refinement) && (b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID) &&
+														((fabs(b[ib83].arr_Sc[0]) > 1.0e-30) || (fabs(b[ib84].arr_Sc[0]) > 1.0e-30)))
+													{
+														// 11.12.2019
+														// Если два solid блока одинакового материала и хотя бы один из этих блоков
+														// тепловыделяющий то границу блоков нужно разбить улучшенной сеткой.
+
+//#pragma omp critical 
+														{
+															oc->dlist = false; // будем дробить
+														}
+
+													}
+													else
+													{
+														doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
+														if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w, 1.8, cabinet_size)) {
+
+//#pragma omp critical 
+															{
+																oc->dlist = false; // будем дробить
+															}
+
+														}
+													}
+
+												}
+												else {
+													// Определяем положение границы разделения.
+													//division_boundary(GSep, ib83, ib84, b, xpos[i], ypos[j], zpos[k]);
+//#pragma omp critical 
+													{
+														oc->dlist = false; // будем дробить
+													}
+
+												}
+											}
+											else {
+												// ib83==ib84, Но мы вблизи входной или выходной границы.
+												// Дробим только жидкость и можно большим радиусом.
+												if (b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
+													doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
+													if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w, 48.0, cabinet_size)) {
+
+//#pragma omp critical 
+														{
+															oc->dlist = false; // будем дробить
+														}
+
+													}
+												}
+											}
 										}
 									}
-                                }
-                            }
+								}
+							}
 						}
 					}
+					else {
+						i2r++;
+
+//#pragma omp parallel for
+						for (int k = minz; k < maxz; k++) {
+							if (oc->dlist) {
+								for (int i = minx; i < maxx; i++) {
+									for (int j = miny; j < maxy; j++) {
+										if (oc->dlist) {
+											if (ib83 != hash_for_droblenie_xyz[i][j][k])
+											{
+												int ib84 = hash_for_droblenie_xyz[i][j][k];
+												if (1 && ((ib84 <= -1) || (ib84 >= lb))) {
+													printf("*** FATAL ERROR!!! ***\n");
+													printf("hash table: hash_for_droblenie_xyz is INCORRUPT.\n");
+													printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
+													printf("i==%d j=%d k=%d\n", i, j, k);
+													printf("minx==%d miny=%d minz=%d\n", minx, miny, minz);
+													printf("maxx==%d maxy=%d maxz=%d\n", maxx, maxy, maxz);
+													printf("inx=%d iny=%d inz=%d\n", inx, iny, inz);
+													printf("lb=%lld ib83==%d ib84==%d\n", lb, ib83, ib84);
+													system("PAUSE");
+												}
+
+
+												if ((ib84 != -1) && (((b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::FLUID)) ||
+													((b[ib83].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) ||
+													((b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID)
+														&& (b[ib83].imatid == b[ib84].imatid)))) {
+													// Ничего не делаем, продолжаем сканирование.
+													// Если два блока типа FLUID то у нас по определению 
+													// корректности постановки задачи не может соприкасаться 
+													// двух разных жидкостей поэтому мельчить сетку на этой 
+													// границе бессмысленно (граница двух одинаковых жидкостей).
+													// Аналогично мельчить сетку на границе двух HOLLOW блоков
+													// тоже бессмысленно. Мы как бы объединяем эти блоки одинаковых
+													// типов и создаём однородной тело сложной пространственной формы.
+
+													// На границе двух SOLID блоков с одинаковым материалом мы тоже 
+													// не создаём дополнительного измельчения сетки. Считаем что SOLID
+													// блоки одинакового материала составляют единый блок сложной 
+													// пространственной формы.
+
+													// Достигается сильная экономия числа ячеек расчётной сетки.
+
+													// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
+													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
+													// Вывод в том что вблизи входной и выходной границ желательно мельчить
+													// АЛИС сетку чтобы не пропустить эти границы.
+
+													if ((b_thermal_source_refinement) && (b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID) &&
+														((fabs(b[ib83].arr_Sc[0]) > 1.0e-30) || (fabs(b[ib84].arr_Sc[0]) > 1.0e-30)))
+													{
+														// 11.12.2019
+														// Если два solid блока одинакового материала и хотя бы один из этих блоков
+														// тепловыделяющий то границу блоков нужно разбить улучшенной сеткой.
+
+//#pragma omp critical 
+														{
+															oc->dlist = false; // будем дробить
+														}
+
+													}
+													else
+													{
+														doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
+														if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w, 1.8, cabinet_size)) {
+
+//#pragma omp critical 
+															{
+																oc->dlist = false; // будем дробить
+															}
+
+														}
+													}
+
+												}
+												else {
+													// Определяем положение границы разделения.
+													//division_boundary(GSep, ib83, ib84, b, xpos[i], ypos[j], zpos[k]);
+//#pragma omp critical 
+													{
+														oc->dlist = false; // будем дробить
+													}
+
+												}
+											}
+											else {
+												// ib83==ib84, Но мы вблизи входной или выходной границы.
+												// Дробим только жидкость и можно большим радиусом.
+												if (b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
+													doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
+													if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w, 48.0, cabinet_size)) {
+
+//#pragma omp critical 
+														{
+															oc->dlist = false; // будем дробить
+														}
+
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+
+					
+					
 				}
 
 				// Переменным bdrobim присвоено тоже значение что
@@ -9521,13 +10419,13 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 				// Мы расщепляем информацию о дроблении на три независимых координатных направления для лучшей управляемости процесса дробления,
 				// с целью достижения его более высокой экономичности.
-				integer ib83 = hash_for_droblenie_xyz[minx][miny][minz];
-				for (integer i = minx; i < maxx; i++) {
+				int ib83 = hash_for_droblenie_xyz[minx][miny][minz];
+				for (int  i = minx; i < maxx; i++) {
 					if (!bdrobimZ) {
-						for (integer j = miny; j < maxy; j++) {
+						for (int  j = miny; j < maxy; j++) {
 							if (!bdrobimZ) {
 								ib83 = hash_for_droblenie_xyz[i][j][minz];
-								for (integer k = minz + 1; k < maxz; k++) {
+								for (int  k = minz + 1; k < maxz; k++) {
 									if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
 										oc->dlist = false; // будем дробить
 										bdrobimZ = true; // Надо дробить по направлению оси Oz.
@@ -9542,12 +10440,12 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 
 				ib83 = hash_for_droblenie_xyz[minx][miny][minz];
-				for (integer k = minz; k < maxz; k++) {
+				for (int  k = minz; k < maxz; k++) {
 					if (!bdrobimX) {
-						for (integer j = miny; j < maxy; j++) {
+						for (int  j = miny; j < maxy; j++) {
 							if (!bdrobimX) {
 								ib83 = hash_for_droblenie_xyz[minx][j][k];
-								for (integer i = minx + 1; i < maxx; i++) {
+								for (int  i = minx + 1; i < maxx; i++) {
 									if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
 										oc->dlist = false; // будем дробить
 										bdrobimX = true; // Надо дробить по направлению оси Ox.
@@ -9561,12 +10459,12 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 
 				ib83 = hash_for_droblenie_xyz[minx][miny][minz];
-				for (integer k = minz; k < maxz; k++) {
+				for (int  k = minz; k < maxz; k++) {
 					if (!bdrobimY) {
-						for (integer i = minx; i < maxx; i++) {
+						for (int  i = minx; i < maxx; i++) {
 							if (!bdrobimY) {
 								ib83 = hash_for_droblenie_xyz[i][miny][k];
-								for (integer j = miny+1; j < maxy; j++) {
+								for (int  j = miny+1; j < maxy; j++) {
 									if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
 										oc->dlist = false; // будем дробить
 										bdrobimY = true; // Надо дробить по направлению оси Oy.
@@ -9590,7 +10488,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		else {
 			if (1 && bsimpledefine) {
 				// Универсальный код для всех сканирующих направлений.
-				for (integer i1 = 0; i1 < lb; i1++) {
+				for (int  i1 = 0; i1 < lb; i1++) {
 					if (b[i1].g.itypegeom == 0) {
 						// Prism
 						/*
@@ -9622,9 +10520,9 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 				if (1) {
 					// BT
-					for (integer i = minx; i < maxx; i++) {
-						for (integer j = miny; j < maxy; j++) {
-							for (integer k = minz + 1; k < maxz; k++) {
+					for (int  i = minx; i < maxx; i++) {
+						for (int  j = miny; j < maxy; j++) {
+							for (int  k = minz + 1; k < maxz; k++) {
 								doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
 								doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
 								doublereal zc = zpos[k];
@@ -9698,9 +10596,9 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 
 				// WE
-				for (integer i = minx + 1; i < maxx; i++) {
-					for (integer j = miny; j < maxy; j++) {
-						for (integer k = minz; k < maxz; k++) {
+				for (int  i = minx + 1; i < maxx; i++) {
+					for (int  j = miny; j < maxy; j++) {
+						for (int  k = minz; k < maxz; k++) {
 							doublereal xc = xpos[i];
 							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
 							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
@@ -9772,9 +10670,9 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 				}
 				// SN
-				for (integer i = minx; i < maxx; i++) {
-					for (integer j = miny + 1; j < maxy; j++) {
-						for (integer k = minz; k < maxz; k++) {
+				for (int  i = minx; i < maxx; i++) {
+					for (int  j = miny + 1; j < maxy; j++) {
+						for (int  k = minz; k < maxz; k++) {
 							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
 							doublereal yc = ypos[j];
 							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
@@ -9822,9 +10720,9 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// проверяем есть ли дробление
 		// на блоках.
 		// BT
-		for (integer i = minx; i < maxx; i++) {
-			for (integer j = miny; j < maxy; j++) {
-				for (integer k = minz; k <= maxz; k++) {
+		for (int  i = minx; i < maxx; i++) {
+			for (int  j = miny; j < maxy; j++) {
+				for (int  k = minz; k <= maxz; k++) {
 					doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
 					doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
 					doublereal zc = zpos[k];
@@ -9838,9 +10736,9 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			}
 		}
 		// WE
-		for (integer i = minx; i <= maxx; i++) {
-			for (integer j = miny; j < maxy; j++) {
-				for (integer k = minz; k < maxz; k++) {
+		for (int  i = minx; i <= maxx; i++) {
+			for (int  j = miny; j < maxy; j++) {
+				for (int  k = minz; k < maxz; k++) {
 					doublereal xc = xpos[i];
 					doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
 					doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
@@ -9854,9 +10752,9 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			}
 		}
 		// SN
-		for (integer i = minx; i < maxx; i++) {
-			for (integer j = miny; j <= maxy; j++) {
-				for (integer k = minz; k < maxz; k++) {
+		for (int  i = minx; i < maxx; i++) {
+			for (int  j = miny; j <= maxy; j++) {
+				for (int  k = minz; k < maxz; k++) {
 					doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
 					doublereal yc = ypos[j];
 					doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
@@ -9877,52 +10775,80 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 		// проверяем есть ли дробление
 		// на стенках.
-		// BT
-		for (integer i = minx; i < maxx; i++) {
-			for (integer j = miny; j < maxy; j++) {
-				//for (integer k = minz + 1; k < maxz; k++) {
-				for (integer k = minz; k <= maxz; k++) {
-					doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-					doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-					doublereal zc = zpos[k];
-					for (integer i1 = 0; i1 < lw; i1++) {
-						if ((xc>w[i1].g.xS - epsToolx) && (xc<w[i1].g.xE + epsToolx) && (yc>w[i1].g.yS - epsTooly) && (yc < w[i1].g.yE + epsTooly) && ((fabs(w[i1].g.zS - zc) < epsToolz) || (fabs(w[i1].g.zE - zc) < epsToolz))) {
-							oc->dlist = false; // будем дробить
-							goto DROBIM_NOW;
+		if (oc->dlist) {
+			// BT
+//#pragma omp parallel for
+			for (int i = minx; i < maxx; i++) {
+				for (int j = miny; j < maxy; j++) {
+					//for (integer k = minz + 1; k < maxz; k++) {
+					for (int k = minz; k <= maxz; k++) {
+						if (oc->dlist)
+						{
+							doublereal xc = 0.5 * (xpos[i] + xpos[i + 1]);
+							doublereal yc = 0.5 * (ypos[j] + ypos[j + 1]);
+							doublereal zc = zpos[k];
+							for (integer i1 = 0; i1 < lw; i1++) {
+								if ((xc > w[i1].g.xS - epsToolx) && (xc < w[i1].g.xE + epsToolx) && (yc > w[i1].g.yS - epsTooly) && (yc < w[i1].g.yE + epsTooly) && ((fabs(w[i1].g.zS - zc) < epsToolz) || (fabs(w[i1].g.zE - zc) < epsToolz))) {
+
+//#pragma omp critical 
+									{
+										oc->dlist = false; // будем дробить
+									}
+
+								}
+							}
 						}
 					}
 				}
 			}
 		}
-		// WE
-		//for (integer i = minx + 1; i < maxx; i++) {
-		for (integer i = minx; i <= maxx; i++) {
-			for (integer j = miny; j < maxy; j++) {
-				for (integer k = minz; k < maxz; k++) {
-					doublereal xc = xpos[i];
-					doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-					doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-					for (integer i1 = 0; i1 < lw; i1++) {
-						if ((zc>w[i1].g.zS - epsToolz) && (zc<w[i1].g.zE + epsToolz) && (yc>w[i1].g.yS - epsTooly) && (yc < w[i1].g.yE + epsTooly) && ((fabs(w[i1].g.xS - xc) < epsToolx) || (fabs(w[i1].g.xE - xc) < epsToolx))) {
-							oc->dlist = false; // будем дробить
-							goto DROBIM_NOW;
+		if (oc->dlist) {
+			// WE
+			//for (integer i = minx + 1; i < maxx; i++) {
+//#pragma omp parallel for
+			for (int i = minx; i <= maxx; i++) {
+				for (int j = miny; j < maxy; j++) {
+					for (int k = minz; k < maxz; k++) {
+						if (oc->dlist)
+						{
+							doublereal xc = xpos[i];
+							doublereal yc = 0.5 * (ypos[j] + ypos[j + 1]);
+							doublereal zc = 0.5 * (zpos[k] + zpos[k + 1]);
+							for (integer i1 = 0; i1 < lw; i1++) {
+								if ((zc > w[i1].g.zS - epsToolz) && (zc < w[i1].g.zE + epsToolz) && (yc > w[i1].g.yS - epsTooly) && (yc < w[i1].g.yE + epsTooly) && ((fabs(w[i1].g.xS - xc) < epsToolx) || (fabs(w[i1].g.xE - xc) < epsToolx))) {
+
+//#pragma omp critical 
+									{
+										oc->dlist = false; // будем дробить
+									}
+
+								}
+							}
 						}
 					}
 				}
 			}
 		}
-		// SN
-		for (integer i = minx; i < maxx; i++) {
-			//for (integer j = miny + 1; j < maxy; j++) {
-			for (integer j = miny; j <= maxy; j++) {
-				for (integer k = minz; k < maxz; k++) {
-					doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-					doublereal yc = ypos[j];
-					doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-					for (integer i1 = 0; i1 < lw; i1++) {
-						if ((zc>w[i1].g.zS - epsToolz) && (zc<w[i1].g.zE + epsToolz) && (xc>w[i1].g.xS - epsToolx) && (xc < w[i1].g.xE + epsToolx) && ((fabs(w[i1].g.yS - yc) < epsTooly) || (fabs(w[i1].g.yE - yc) < epsTooly))) {
-							oc->dlist = false; // будем дробить
-							goto DROBIM_NOW;
+		if (oc->dlist) {
+			// SN
+//#pragma omp parallel for
+			for (int i = minx; i < maxx; i++) {
+				//for (int  j = miny + 1; j < maxy; j++) {
+				for (int j = miny; j <= maxy; j++) {
+					for (int k = minz; k < maxz; k++) {
+						if (oc->dlist)
+						{
+							doublereal xc = 0.5 * (xpos[i] + xpos[i + 1]);
+							doublereal yc = ypos[j];
+							doublereal zc = 0.5 * (zpos[k] + zpos[k + 1]);
+							for (integer i1 = 0; i1 < lw; i1++) {
+								if ((zc > w[i1].g.zS - epsToolz) && (zc < w[i1].g.zE + epsToolz) && (xc > w[i1].g.xS - epsToolx) && (xc < w[i1].g.xE + epsToolx) && ((fabs(w[i1].g.yS - yc) < epsTooly) || (fabs(w[i1].g.yE - yc) < epsTooly))) {
+//#pragma omp critical 
+									{
+										oc->dlist = false; // будем дробить
+									}
+								}
+							}
 						}
 					}
 				}
@@ -9947,17 +10873,32 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 				doublereal eps_tolerance = 1.0e-25;
 				// Oz
-				if ((((xpos[maxx] - eps_tolerance > s[i1].g.xS)) && ((xpos[minx] + eps_tolerance < s[i1].g.xE))) && (((ypos[maxy] - eps_tolerance > s[i1].g.yS)) && ((ypos[miny] + eps_tolerance < s[i1].g.yE))) && (((zpos[minz] <= s[i1].g.zS) && (zpos[maxz] >= s[i1].g.zS)) || ((zpos[minz] <= s[i1].g.zE) && (zpos[maxz] >= s[i1].g.zE)))) {
+				if ((((xpos[maxx] - eps_tolerance > s[i1].g.xS)) && 
+					((xpos[minx] + eps_tolerance < s[i1].g.xE))) && 
+					(((ypos[maxy] - eps_tolerance > s[i1].g.yS)) && 
+						((ypos[miny] + eps_tolerance < s[i1].g.yE))) 
+					&& (((zpos[minz] <= s[i1].g.zS) && (zpos[maxz] >= s[i1].g.zS)) ||
+						((zpos[minz] <= s[i1].g.zE) && (zpos[maxz] >= s[i1].g.zE)))) {
 					oc->dlist = false; // будем дробить
 					goto DROBIM_NOW;
 				}
 				// Ox
-				if ((((zpos[maxz] - eps_tolerance > s[i1].g.zS)) && ((zpos[minz] + eps_tolerance < s[i1].g.zE))) && (((ypos[maxy] - eps_tolerance > s[i1].g.yS)) && ((ypos[miny] + eps_tolerance < s[i1].g.yE))) && (((xpos[minx] <= s[i1].g.xS) && (xpos[maxx] >= s[i1].g.xS)) || ((xpos[minx] <= s[i1].g.xE) && (xpos[maxx] >= s[i1].g.xE)))) {
+				if ((((zpos[maxz] - eps_tolerance > s[i1].g.zS)) &&
+					((zpos[minz] + eps_tolerance < s[i1].g.zE))) && 
+					(((ypos[maxy] - eps_tolerance > s[i1].g.yS)) && 
+						((ypos[miny] + eps_tolerance < s[i1].g.yE))) &&
+					(((xpos[minx] <= s[i1].g.xS) && (xpos[maxx] >= s[i1].g.xS)) ||
+						((xpos[minx] <= s[i1].g.xE) && (xpos[maxx] >= s[i1].g.xE)))) {
 					oc->dlist = false; // будем дробить
 					goto DROBIM_NOW;
 				}
 				// Oy
-				if ((((zpos[maxz] - eps_tolerance > s[i1].g.zS)) && ((zpos[minz] + eps_tolerance < s[i1].g.zE))) && (((xpos[maxx] - eps_tolerance > s[i1].g.xS)) && ((xpos[minx] + eps_tolerance < s[i1].g.xE))) && (((ypos[miny] <= s[i1].g.yS) && (ypos[maxy] >= s[i1].g.yS)) || ((ypos[miny] <= s[i1].g.yE) && (ypos[maxy] >= s[i1].g.yE)))) {
+				if ((((zpos[maxz] - eps_tolerance > s[i1].g.zS)) && 
+					((zpos[minz] + eps_tolerance < s[i1].g.zE))) && 
+					(((xpos[maxx] - eps_tolerance > s[i1].g.xS)) && 
+						((xpos[minx] + eps_tolerance < s[i1].g.xE))) &&
+					(((ypos[miny] <= s[i1].g.yS) && (ypos[maxy] >= s[i1].g.yS)) ||
+						((ypos[miny] <= s[i1].g.yE) && (ypos[maxy] >= s[i1].g.yE)))) {
 					oc->dlist = false; // будем дробить
 					goto DROBIM_NOW;
 				}
@@ -9967,21 +10908,36 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			else {
 				doublereal eps_tolerance = 1.0e-25;
 				// Oz
-				if ((((xpos[maxx] - eps_tolerance > s[i1].g.xS)) && ((xpos[minx] + eps_tolerance < s[i1].g.xE))) && (((ypos[maxy] - eps_tolerance > s[i1].g.yS)) && ((ypos[miny] + eps_tolerance < s[i1].g.yE))) && (((zpos[minz] <= s[i1].g.zS) && (zpos[maxz] >= s[i1].g.zS)) || ((zpos[minz] <= s[i1].g.zE) && (zpos[maxz] >= s[i1].g.zE)))) {
+				if ((((xpos[maxx] - eps_tolerance > s[i1].g.xS)) &&
+					((xpos[minx] + eps_tolerance < s[i1].g.xE))) &&
+					(((ypos[maxy] - eps_tolerance > s[i1].g.yS)) &&
+						((ypos[miny] + eps_tolerance < s[i1].g.yE))) &&
+					(((zpos[minz] <= s[i1].g.zS) && (zpos[maxz] >= s[i1].g.zS)) ||
+						((zpos[minz] <= s[i1].g.zE) && (zpos[maxz] >= s[i1].g.zE)))) {
 					oc->dlist = false; // будем дробить
 					bdrobimX = true;
 					break;
 					//goto DROBIM_NOW;
 				}
 				// Ox
-				if ((((zpos[maxz] - eps_tolerance > s[i1].g.zS)) && ((zpos[minz] + eps_tolerance < s[i1].g.zE))) && (((ypos[maxy] - eps_tolerance > s[i1].g.yS)) && ((ypos[miny] + eps_tolerance < s[i1].g.yE))) && (((xpos[minx] <= s[i1].g.xS) && (xpos[maxx] >= s[i1].g.xS)) || ((xpos[minx] <= s[i1].g.xE) && (xpos[maxx] >= s[i1].g.xE)))) {
+				if ((((zpos[maxz] - eps_tolerance > s[i1].g.zS)) &&
+					((zpos[minz] + eps_tolerance < s[i1].g.zE))) &&
+					(((ypos[maxy] - eps_tolerance > s[i1].g.yS)) && 
+						((ypos[miny] + eps_tolerance < s[i1].g.yE))) && 
+					(((xpos[minx] <= s[i1].g.xS) && (xpos[maxx] >= s[i1].g.xS)) || 
+						((xpos[minx] <= s[i1].g.xE) && (xpos[maxx] >= s[i1].g.xE)))) {
 					oc->dlist = false; // будем дробить
 					bdrobimY = true;
 					break;
 					//goto DROBIM_NOW;
 				}
 				// Oy
-				if ((((zpos[maxz] - eps_tolerance > s[i1].g.zS)) && ((zpos[minz] + eps_tolerance < s[i1].g.zE))) && (((xpos[maxx] - eps_tolerance > s[i1].g.xS)) && ((xpos[minx] + eps_tolerance < s[i1].g.xE))) && (((ypos[miny] <= s[i1].g.yS) && (ypos[maxy] >= s[i1].g.yS)) || ((ypos[miny] <= s[i1].g.yE) && (ypos[maxy] >= s[i1].g.yE)))) {
+				if ((((zpos[maxz] - eps_tolerance > s[i1].g.zS)) &&
+					((zpos[minz] + eps_tolerance < s[i1].g.zE))) && 
+					(((xpos[maxx] - eps_tolerance > s[i1].g.xS)) &&
+						((xpos[minx] + eps_tolerance < s[i1].g.xE))) && 
+					(((ypos[miny] <= s[i1].g.yS) && (ypos[maxy] >= s[i1].g.yS)) ||
+						((ypos[miny] <= s[i1].g.yE) && (ypos[maxy] >= s[i1].g.yE)))) {
 					oc->dlist = false; // будем дробить
 					bdrobimZ = true;
 					break;
@@ -10008,52 +10964,81 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			if (ls > 0) {
 				// проверяем есть ли дробление
 				// на источниках тепла.
-				// BT
-				for (integer i = minx; i < maxx; i++) {
-					for (integer j = miny; j < maxy; j++) {
-						//for (integer k = minz + 1; k < maxz; k++) {
-						for (integer k = minz; k <= maxz; k++) {
-							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-							doublereal zc = zpos[k];
-							for (integer i1 = 0; i1 < ls; i1++) {
-								if ((xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.zS - zc) < epsToolz) || (fabs(s[i1].g.zE - zc) < epsToolz))) {
-									oc->dlist = false; // будем дробить
-									goto DROBIM_NOW;
+				if (oc->dlist) {
+					// BT
+//#pragma omp parallel for
+					for (int i = minx; i < maxx; i++) {
+						for (int j = miny; j < maxy; j++) {
+							//for (integer k = minz + 1; k < maxz; k++) {
+							for (int k = minz; k <= maxz; k++) {
+								if (oc->dlist) {
+									doublereal xc = 0.5 * (xpos[i] + xpos[i + 1]);
+									doublereal yc = 0.5 * (ypos[j] + ypos[j + 1]);
+									doublereal zc = zpos[k];
+									for (integer i1 = 0; i1 < ls; i1++) {
+										if ((xc > s[i1].g.xS - epsToolx) &&
+											(xc < s[i1].g.xE + epsToolx) &&
+											(yc > s[i1].g.yS - epsTooly) &&
+											(yc < s[i1].g.yE + epsTooly) &&
+											((fabs(s[i1].g.zS - zc) < epsToolz) || (fabs(s[i1].g.zE - zc) < epsToolz))) {
+
+//#pragma omp critical
+												{
+													oc->dlist = false; // будем дробить
+												}
+										}
+									}
 								}
 							}
 						}
 					}
 				}
-				// WE
-				//for (integer i = minx + 1; i < maxx; i++) {
-				for (integer i = minx; i <= maxx; i++) {
-					for (integer j = miny; j < maxy; j++) {
-						for (integer k = minz; k < maxz; k++) {
-							doublereal xc = xpos[i];
-							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-							for (integer i1 = 0; i1 < ls; i1++) {
-								if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.xS - xc) < epsToolx) || (fabs(s[i1].g.xE - xc) < epsToolx))) {
-									oc->dlist = false; // будем дробить
-									goto DROBIM_NOW;
+				if (oc->dlist) {
+					// WE
+					//for (integer i = minx + 1; i < maxx; i++) {
+//#pragma omp parallel for
+					for (int i = minx; i <= maxx; i++) {
+						for (int j = miny; j < maxy; j++) {
+							for (int k = minz; k < maxz; k++) {
+								if (oc->dlist) {
+									doublereal xc = xpos[i];
+									doublereal yc = 0.5 * (ypos[j] + ypos[j + 1]);
+									doublereal zc = 0.5 * (zpos[k] + zpos[k + 1]);
+									for (integer i1 = 0; i1 < ls; i1++) {
+										if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.xS - xc) < epsToolx) || (fabs(s[i1].g.xE - xc) < epsToolx))) {
+
+//#pragma omp critical
+											{
+												oc->dlist = false; // будем дробить
+											}
+										}
+									}
 								}
 							}
 						}
 					}
 				}
-				// SN
-				for (integer i = minx; i < maxx; i++) {
-					//for (integer j = miny + 1; j < maxy; j++) {
-					for (integer j = miny; j <= maxy; j++) {
-						for (integer k = minz; k < maxz; k++) {
-							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-							doublereal yc = ypos[j];
-							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-							for (integer i1 = 0; i1 < ls; i1++) {
-								if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && ((fabs(s[i1].g.yS - yc) < epsTooly) || (fabs(s[i1].g.yE - yc) < epsTooly))) {
-									oc->dlist = false; // будем дробить
-									goto DROBIM_NOW;
+				if (oc->dlist) {
+					// SN
+//#pragma omp parallel for
+					for (int i = minx; i < maxx; i++) {
+						//for (integer j = miny + 1; j < maxy; j++) {
+						for (int j = miny; j <= maxy; j++) {
+							for (int k = minz; k < maxz; k++) {
+								if (oc->dlist) {
+									doublereal xc = 0.5 * (xpos[i] + xpos[i + 1]);
+									doublereal yc = ypos[j];
+									doublereal zc = 0.5 * (zpos[k] + zpos[k + 1]);
+									for (integer i1 = 0; i1 < ls; i1++) {
+										if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && ((fabs(s[i1].g.yS - yc) < epsTooly) || (fabs(s[i1].g.yE - yc) < epsTooly))) {
+
+//#pragma omp critical
+											{
+												oc->dlist = false; // будем дробить
+											}
+
+										}
+									}
 								}
 							}
 						}
@@ -10066,58 +11051,83 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			if (ls > 0) {
 				// проверяем есть ли дробление
 				// на источниках тепла.
-				// BT
-				for (integer i = minx; i < maxx; i++) {
-					for (integer j = miny; j < maxy; j++) {
-						//for (integer k = minz + 1; k < maxz; k++) {
-						for (integer k = minz; k <= maxz; k++) {
-							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-							doublereal zc = zpos[k];
-							for (integer i1 = 0; i1 < ls; i1++) {
-								if ((xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.zS - zc) < epsToolz) || (fabs(s[i1].g.zE - zc) < epsToolz))) {
-									oc->dlist = false; // будем дробить
-									bdrobimZ = true;
-									//goto DROBIM_NOW;
-									break;
+				if (oc->dlist) {
+					// BT
+//#pragma omp parallel for
+					for (int i = minx; i < maxx; i++) {
+						for (int j = miny; j < maxy; j++) {
+							//for (integer k = minz + 1; k < maxz; k++) {
+							for (int k = minz; k <= maxz; k++) {
+								if (oc->dlist) {
+									doublereal xc = 0.5 * (xpos[i] + xpos[i + 1]);
+									doublereal yc = 0.5 * (ypos[j] + ypos[j + 1]);
+									doublereal zc = zpos[k];
+									for (integer i1 = 0; i1 < ls; i1++) {
+										if ((xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.zS - zc) < epsToolz) || (fabs(s[i1].g.zE - zc) < epsToolz))) {
+
+//#pragma omp critical 
+											{
+												oc->dlist = false; // будем дробить
+												bdrobimZ = true;
+											}
+
+										}
+									}
 								}
 							}
 						}
 					}
 				}
-				// WE
-				//for (integer i = minx + 1; i < maxx; i++) {
-				for (integer i = minx; i <= maxx; i++) {
-					for (integer j = miny; j < maxy; j++) {
-						for (integer k = minz; k < maxz; k++) {
-							doublereal xc = xpos[i];
-							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-							for (integer i1 = 0; i1 < ls; i1++) {
-								if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.xS - xc) < epsToolx) || (fabs(s[i1].g.xE - xc) < epsToolx))) {
-									oc->dlist = false; // будем дробить
-									bdrobimX = true;
-									//goto DROBIM_NOW;
-									break;
+				if (oc->dlist) {
+					// WE
+					//for (integer i = minx + 1; i < maxx; i++) {
+//#pragma omp parallel for
+					for (int i = minx; i <= maxx; i++) {
+						for (int j = miny; j < maxy; j++) {
+							for (int k = minz; k < maxz; k++) {
+								if (oc->dlist) {
+									doublereal xc = xpos[i];
+									doublereal yc = 0.5 * (ypos[j] + ypos[j + 1]);
+									doublereal zc = 0.5 * (zpos[k] + zpos[k + 1]);
+									for (integer i1 = 0; i1 < ls; i1++) {
+										if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.xS - xc) < epsToolx) || (fabs(s[i1].g.xE - xc) < epsToolx))) {
+
+//#pragma omp critical 
+											{
+												oc->dlist = false; // будем дробить
+												bdrobimX = true;
+											}
+
+										}
+									}
 								}
 							}
 						}
 					}
 				}
-				// SN
-				for (integer i = minx; i < maxx; i++) {
-					//for (integer j = miny + 1; j < maxy; j++) {
-					for (integer j = miny; j <= maxy; j++) {
-						for (integer k = minz; k < maxz; k++) {
-							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-							doublereal yc = ypos[j];
-							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-							for (integer i1 = 0; i1 < ls; i1++) {
-								if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && ((fabs(s[i1].g.yS - yc) < epsTooly) || (fabs(s[i1].g.yE - yc) < epsTooly))) {
-									oc->dlist = false; // будем дробить
-									bdrobimY = true;
-									//goto DROBIM_NOW;
-									break;
+
+				if (oc->dlist) {
+					// SN
+//#pragma omp parallel for
+					for (int i = minx; i < maxx; i++) {
+						//for (integer j = miny + 1; j < maxy; j++) {
+						for (int j = miny; j <= maxy; j++) {
+							for (int k = minz; k < maxz; k++) {
+								if (oc->dlist) {
+									doublereal xc = 0.5 * (xpos[i] + xpos[i + 1]);
+									doublereal yc = ypos[j];
+									doublereal zc = 0.5 * (zpos[k] + zpos[k + 1]);
+									for (integer i1 = 0; i1 < ls; i1++) {
+										if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && ((fabs(s[i1].g.yS - yc) < epsTooly) || (fabs(s[i1].g.yE - yc) < epsTooly))) {
+
+//#pragma omp critical 
+											{
+												oc->dlist = false; // будем дробить
+												bdrobimY = true;
+											}
+
+										}
+									}
 								}
 							}
 						}
@@ -10314,6 +11324,9 @@ DROBIM_NOW:
 
 		}
 	}
+
+
+
 	return iret;
 }
 
@@ -10321,7 +11334,7 @@ DROBIM_NOW:
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
 void Emultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
-	integer icsos = 0;
+	char icsos = 0;
 	if (octree1->linkE1 != nullptr) {
 		if (is_null(octree1->linkE1)) {
 			icsos++;
@@ -10330,7 +11343,7 @@ void Emultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkE1, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c3 + c4 + c7;
 		}
@@ -10343,7 +11356,7 @@ void Emultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkE2, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c3 + c4 + c7;
 		}
@@ -10356,7 +11369,7 @@ void Emultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkE5, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c3 + c4 + c7;
 		}
@@ -10369,7 +11382,7 @@ void Emultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkE6, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c3 + c4 + c7;
 		}
@@ -10380,7 +11393,7 @@ void Emultineighbour_patch(octree* &octree1) {
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
 void Wmultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
-	integer icsos = 0;
+	char icsos = 0;
 	if (octree1->linkW0 != nullptr) {
 		if (is_null(octree1->linkW0)) {
 			icsos++;
@@ -10389,7 +11402,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkW0, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c1 + c2 + c5 + c6;
 		}
@@ -10402,7 +11415,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkW3, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c1 + c2 + c5 + c6;
 		}
@@ -10415,7 +11428,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkW4, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c1 + c2 + c5 + c6;
 		}
@@ -10428,7 +11441,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkW7, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c1 + c2 + c5 + c6;
 		}
@@ -10439,7 +11452,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
 void Nmultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
-	integer icsos = 0;
+	char icsos = 0;
 	if (octree1->linkN2 != nullptr) {
 		if (is_null(octree1->linkN2)) {
 			icsos++;
@@ -10448,7 +11461,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkN2, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c4 + c5;
 		}
@@ -10461,7 +11474,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkN3, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c4 + c5;
 		}
@@ -10474,7 +11487,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkN6, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c4 + c5;
 		}
@@ -10487,7 +11500,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkN7, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c4 + c5;
 		}
@@ -10512,7 +11525,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
 void Smultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
-	integer icsos = 0;
+	char icsos = 0;
 	if (octree1->linkS0 != nullptr) {
 		if (is_null(octree1->linkS0)) {
 			icsos++;
@@ -10521,7 +11534,7 @@ void Smultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkS0, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c2 + c3 + c6 + c7;
 		}
@@ -10534,7 +11547,7 @@ void Smultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkS1, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c2 + c3 + c6 + c7;
 		}
@@ -10547,7 +11560,7 @@ void Smultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkS4, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c2 + c3 + c6 + c7;
 		}
@@ -10560,7 +11573,7 @@ void Smultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkS5, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c2 + c3 + c6 + c7;
 		}
@@ -10573,7 +11586,7 @@ void Smultineighbour_patch(octree* &octree1) {
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
 void Bmultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
-	integer icsos = 0;
+	char icsos = 0;
 	if (octree1->linkB0 != nullptr) {
 		if (is_null(octree1->linkB0)) {
 			icsos++;
@@ -10582,7 +11595,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkB0, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c4 + c5 + c6 + c7;
 		}
@@ -10595,7 +11608,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkB1, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c4 + c5 + c6 + c7;
 		}
@@ -10608,7 +11621,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkB2, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c4 + c5 + c6 + c7;
 		}
@@ -10621,7 +11634,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkB3, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c4 + c5 + c6 + c7;
 		}
@@ -10632,7 +11645,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
 void Tmultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
-	integer icsos = 0;
+	char icsos = 0;
 	if (octree1->linkT4 != nullptr) {
 		if (is_null(octree1->linkT4)) {
 			icsos++;
@@ -10641,7 +11654,7 @@ void Tmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkT4, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c2 + c3;
 		}
@@ -10654,7 +11667,7 @@ void Tmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkT5, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c2 + c3;
 		}
@@ -10667,7 +11680,7 @@ void Tmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkT6, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c2 + c3;
 		}
@@ -10680,7 +11693,7 @@ void Tmultineighbour_patch(octree* &octree1) {
 			icsos += 4;
 		}
 		else {
-			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+			char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 			is_null3(octree1->linkT7, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c2 + c3;
 		}
@@ -10747,7 +11760,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X) || (bonly_dir_Y)) {
 									if (bonly_dir_X) {
@@ -10798,7 +11811,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 							//octree1->maxTneighbour = 4;
@@ -10852,7 +11865,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X) || (bonly_dir_Z)) {
 									if (bonly_dir_X) {
@@ -10870,9 +11883,9 @@ void log_cs(octree* &octree1) {
 									// 4_2
 									printf("N root 0 is_null3 _c0\n");
 #if doubleintprecision == 1
-									printf("octree1->ilevel=%lld octree1->linkN->ilevel=%lld c0=%lld\n", octree1->ilevel, octree1->linkN->ilevel, c0);
+									printf("octree1->ilevel=%c octree1->linkN->ilevel=%c c0=%c\n", octree1->ilevel, octree1->linkN->ilevel, c0);
 #else
-									printf("octree1->ilevel=%d octree1->linkN->ilevel=%d c0=%d\n", octree1->ilevel, octree1->linkN->ilevel, c0);
+									printf("octree1->ilevel=%c octree1->linkN->ilevel=%c c0=%c\n", octree1->ilevel, octree1->linkN->ilevel, c0);
 #endif
 										octree1->maxNneighbour = c0;
 								}
@@ -10909,7 +11922,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							printf("N root 0 na odnom urovne is_null3 _c0+c1+c4+c5");
 							// других вариантов быть не может, здесь только 4.
@@ -10964,7 +11977,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Y) || (bonly_dir_Z)) {
 									if (bonly_dir_Y) {
@@ -11008,7 +12021,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 							// других вариантов быть не может, здесь только 4.
@@ -11054,7 +12067,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxWneighbour = c1 + c2;
 						}
@@ -11072,7 +12085,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxWneighbour = c1 + c5;
 						}
@@ -11098,7 +12111,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxWneighbour = 4;
@@ -11129,7 +12142,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
@@ -11169,7 +12182,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxSneighbour = c3 + c2;
 						}
@@ -11187,7 +12200,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxSneighbour = c3 + c7;
 						}
@@ -11213,7 +12226,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							if (bonly_dir_Z) {
@@ -11243,7 +12256,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 
@@ -11282,7 +12295,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxBneighbour = c4 + c7;
 						}
@@ -11300,7 +12313,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxBneighbour = c4 + c5;
 						}
@@ -11326,7 +12339,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_Y) {
 								octree1->maxBneighbour = c4 + c5;
@@ -11356,7 +12369,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -11406,7 +12419,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X)) {
 									//if (bonly_dir_X) {
@@ -11445,7 +12458,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -11493,7 +12506,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X)) {
 									//if (bonly_dir_X) {
@@ -11533,7 +12546,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -11574,7 +12587,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -11613,7 +12626,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -11634,7 +12647,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -11673,7 +12686,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxSneighbour = c2 + c6;
 						}
@@ -11696,7 +12709,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_X) {
 								octree1->maxSneighbour = c2 + c6;
@@ -11723,7 +12736,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -11763,7 +12776,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxBneighbour = c5 + c6;
 						}
@@ -11786,7 +12799,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_X) {
 								octree1->maxBneighbour = c5 + c6;
@@ -11813,7 +12826,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -11861,7 +12874,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								// других вариантов быть не может, здесь только 4.
 								//octree1->maxTneighbour = 4;
@@ -11893,7 +12906,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -11935,7 +12948,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -11974,7 +12987,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -12012,7 +13025,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -12033,7 +13046,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -12070,7 +13083,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -12092,7 +13105,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -12129,7 +13142,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxBneighbour = 4;
@@ -12150,7 +13163,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxBneighbour = 4;
@@ -12200,7 +13213,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Y)) {
 									//if (bonly_dir_Y) {
@@ -12241,7 +13254,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -12283,7 +13296,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -12328,7 +13341,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Y)) {
 									//if (bonly_dir_Y) {
@@ -12369,7 +13382,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -12409,7 +13422,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxWneighbour = c2 + c6;
 						}
@@ -12432,7 +13445,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxWneighbour = 4;
@@ -12459,7 +13472,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
@@ -12496,7 +13509,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -12517,7 +13530,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -12553,7 +13566,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxBneighbour = c7 + c6;
 						}
@@ -12576,7 +13589,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_Y) {
 								octree1->maxBneighbour = c7 + c6;
@@ -12603,7 +13616,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -12652,7 +13665,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Z)) {
 									//if (bonly_dir_Z) {
@@ -12692,7 +13705,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -12750,7 +13763,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Z)) {
 									//if (bonly_dir_Z) {
@@ -12787,7 +13800,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
@@ -12826,7 +13839,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxWneighbour = c5 + c6;
 						}
@@ -12849,7 +13862,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxWneighbour = 4;
@@ -12876,7 +13889,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
@@ -12914,7 +13927,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxSneighbour = c7 + c6;
 						}
@@ -12937,7 +13950,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxSneighbour = 4;
@@ -12964,7 +13977,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxSneighbour = 4;
@@ -13002,7 +14015,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -13023,7 +14036,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -13061,7 +14074,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13102,7 +14115,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13139,7 +14152,7 @@ void log_cs(octree* &octree1) {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+							char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxNneighbour = 4;
@@ -13164,7 +14177,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -13206,7 +14219,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13243,7 +14256,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13263,7 +14276,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13297,7 +14310,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxSneighbour = 4;
@@ -13318,7 +14331,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxSneighbour = 4;
@@ -13354,7 +14367,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -13375,7 +14388,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -13416,7 +14429,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13455,7 +14468,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13494,7 +14507,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13530,7 +14543,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13551,7 +14564,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13587,7 +14600,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -13609,7 +14622,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -13644,7 +14657,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -13665,7 +14678,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -13707,7 +14720,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13746,7 +14759,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13783,7 +14796,7 @@ void log_cs(octree* &octree1) {
 								// других вариантов быть не может, здесь только 4.
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+								char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								// других вариантов быть не может, здесь только 4.
 								//octree1->maxEneighbour = 4;
@@ -13813,7 +14826,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -13850,7 +14863,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
@@ -13871,7 +14884,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
@@ -13907,7 +14920,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -13928,7 +14941,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -13963,7 +14976,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -13984,7 +14997,7 @@ void log_cs(octree* &octree1) {
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+						char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
@@ -14187,7 +15200,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_X) || (bonly_dir_Y)) {
 													if (bonly_dir_X) {
@@ -14231,7 +15244,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											
 												//octree1->maxTneighbour = 4;
@@ -14279,7 +15292,7 @@ void update_max_count_neighbour(octree* &oc) {
 													// других вариантов быть не может, здесь только 4.
 													// может быть 2, 4, 5, 8
 													// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-													integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+													char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 													is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 													if ((bonly_dir_X) || (bonly_dir_Z)) {
 														if (bonly_dir_X) {
@@ -14324,7 +15337,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 												// других вариантов быть не может, здесь только 4.
@@ -14377,7 +15390,7 @@ void update_max_count_neighbour(octree* &oc) {
 													// других вариантов быть не может, здесь только 4.
 													// может быть 2, 4, 5, 8
 													// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-													integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+													char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 													is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 													if ((bonly_dir_Y) || (bonly_dir_Z)) {
 														if (bonly_dir_Y) {
@@ -14421,7 +15434,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												
 													// других вариантов быть не может, здесь только 4.
@@ -14467,7 +15480,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxWneighbour = c1 + c2;
 											}
@@ -14485,7 +15498,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxWneighbour = c1 + c5;
 											}
@@ -14511,7 +15524,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxWneighbour = 4;
@@ -14542,7 +15555,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxWneighbour = 4;
@@ -14582,7 +15595,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxSneighbour = c3 + c2;
 											}
@@ -14600,7 +15613,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxSneighbour = c3 + c7;
 											}
@@ -14626,7 +15639,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												if (bonly_dir_Z) {
@@ -14656,7 +15669,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											
@@ -14695,7 +15708,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxBneighbour = c4 + c7;
 											}
@@ -14713,7 +15726,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxBneighbour = c4 + c5;
 											}
@@ -14739,7 +15752,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if (bonly_dir_Y) {
 													octree1->maxBneighbour = c4 + c5;
@@ -14769,7 +15782,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											
 												// других вариантов быть не может, здесь только 4.
@@ -14819,7 +15832,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_X)) {
 													//if (bonly_dir_X) {
@@ -14858,7 +15871,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
@@ -14906,7 +15919,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_X)) {
 													//if (bonly_dir_X) {
@@ -14946,7 +15959,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 										// других вариантов быть не может, здесь только 4.
@@ -14987,7 +16000,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -15026,7 +16039,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -15047,7 +16060,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -15086,7 +16099,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxSneighbour = c2 + c6;
 										}
@@ -15109,7 +16122,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_X) {
 												octree1->maxSneighbour = c2 + c6;
@@ -15136,7 +16149,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 										// других вариантов быть не может, здесь только 4.
@@ -15176,7 +16189,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxBneighbour = c5 + c6;
 										}
@@ -15199,7 +16212,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_X) {
 												octree1->maxBneighbour = c5 + c6;
@@ -15226,7 +16239,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
@@ -15274,7 +16287,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxTneighbour = 4;
@@ -15306,7 +16319,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -15348,7 +16361,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -15387,7 +16400,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -15425,7 +16438,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -15446,7 +16459,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -15483,7 +16496,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 										// других вариантов быть не может, здесь только 4.
@@ -15505,7 +16518,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 										// других вариантов быть не может, здесь только 4.
@@ -15542,7 +16555,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxBneighbour = 4;
@@ -15563,7 +16576,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxBneighbour = 4;
@@ -15613,7 +16626,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Y)) {
 													//if (bonly_dir_Y) {
@@ -15654,7 +16667,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
@@ -15696,7 +16709,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -15741,7 +16754,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Y)) {
 													//if (bonly_dir_Y) {
@@ -15782,7 +16795,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
@@ -15822,7 +16835,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxWneighbour = c2 + c6;
 										}
@@ -15845,7 +16858,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxWneighbour = 4;
@@ -15872,7 +16885,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxWneighbour = 4;
@@ -15909,7 +16922,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -15930,7 +16943,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -15966,7 +16979,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxBneighbour = c7 + c6;
 										}
@@ -15989,7 +17002,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_Y) {
 												octree1->maxBneighbour = c7 + c6;
@@ -16016,7 +17029,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
@@ -16065,7 +17078,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Z)) {
 													//if (bonly_dir_Z) {
@@ -16105,7 +17118,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
@@ -16163,7 +17176,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Z)) {
 													//if (bonly_dir_Z) {
@@ -16200,7 +17213,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
@@ -16239,7 +17252,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxWneighbour = c5 + c6;
 										}
@@ -16262,7 +17275,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxWneighbour = 4;
@@ -16289,7 +17302,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxWneighbour = 4;
@@ -16327,7 +17340,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxSneighbour = c7 + c6;
 										}
@@ -16350,7 +17363,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxSneighbour = 4;
@@ -16377,7 +17390,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxSneighbour = 4;
@@ -16415,7 +17428,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -16436,7 +17449,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -16474,7 +17487,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16515,7 +17528,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16552,7 +17565,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxNneighbour = 4;
@@ -16577,7 +17590,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+											char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxNneighbour = 4;
@@ -16619,7 +17632,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16656,7 +17669,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16676,7 +17689,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16710,7 +17723,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxSneighbour = 4;
@@ -16731,7 +17744,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxSneighbour = 4;
@@ -16767,7 +17780,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -16788,7 +17801,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -16829,7 +17842,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16868,7 +17881,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16907,7 +17920,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16943,7 +17956,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -16964,7 +17977,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -17000,7 +18013,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -17022,7 +18035,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -17057,7 +18070,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -17078,7 +18091,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -17120,7 +18133,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -17159,7 +18172,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -17196,7 +18209,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// других вариантов быть не может, здесь только 4.
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+												char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxEneighbour = 4;
@@ -17226,7 +18239,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
@@ -17263,7 +18276,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxWneighbour = 4;
@@ -17284,7 +18297,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxWneighbour = 4;
@@ -17320,7 +18333,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -17341,7 +18354,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -17376,7 +18389,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -17397,7 +18410,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// других вариантов быть не может, здесь только 4.
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
-										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
+										char c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
@@ -17530,6 +18543,13 @@ void update_max_count_neighbour(octree* &oc) {
 // восстановить соседственные связи т.к. они  изменились после дробления.
 void update_link_neighbor(octree* &oc) {
 
+
+#ifdef _OPENMP
+	//int i_my_num_core_parallelesation = omp_get_max_threads();
+	//omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
+#endif
+
+
 	bool bold_stable_version = true;
 
 	top_ALICE_STACK = 0;
@@ -17639,2645 +18659,2656 @@ void update_link_neighbor(octree* &oc) {
 
 					// работаем с octree1
 
-					// А другие случаи исключаются при додроблении.
+//#pragma omp sections
+					{
+
+//#pragma omp section
+						{
+
+							// А другие случаи исключаются при додроблении.
 					// одиночная связь, НЕ 4
-					if (octree1->b4E == false) {
-					if (octree1->linkE != nullptr) {
+							if (octree1->b4E == false) {
+								if (octree1->linkE != nullptr) {
 
-						if (octree1->linkE->link0 != nullptr) {
-							if ((octree1->linkE->link1 == nullptr) && (octree1->linkE->link2 == nullptr) && (octree1->linkE->link3 == nullptr) && (octree1->linkE->link4 == nullptr) && (octree1->linkE->link5 == nullptr) && (octree1->linkE->link6 == nullptr) && (octree1->linkE->link7 == nullptr)) {
-								printf("error: octree1->linkE->link0!=nullptr a na samom dele ==nullptr\n");
-								//system("PAUSE");
-								system("PAUSE");
-								exit(1);
-							}
-
-						// octree1 это лист.
-						// Situation внутри Е соседа.
-						bool bSituationX = false;
-						bool bSituationY = false;
-						bool bSituationZ = false;
-						if (bold_stable_version) {
-							if (octree1->linkE->minx + 1 == octree1->linkE->maxx) {
-								bSituationX = true;
-							}
-							if (octree1->linkE->miny + 1 == octree1->linkE->maxy) {
-								bSituationY = true;
-							}
-							if (octree1->linkE->minz + 1 == octree1->linkE->maxz) {
-								bSituationZ = true;
-							}
-							if ((octree1->linkE->link0 != nullptr)) {
-								if (bSituationX != octree1->linkE->link0->brootSituationX) {
-									printf("error ne sovpadenie Situation X.");
-								}
-								if (bSituationY != octree1->linkE->link0->brootSituationY) {
-									printf("error ne sovpadenie Situation Y.");
-								}
-								if (bSituationZ != octree1->linkE->link0->brootSituationZ) {
-									printf("error ne sovpadenie Situation Z.");
-								}
-							}
-						}
-						else {
-							// 4.01.2018 Попробуем так. Чисто на интуиции пока.
-							// Здесь мы сохраняем запрет дробления в заданном координатном направлении.
-							bSituationX = octree1->linkE->link0->brootSituationX;
-							bSituationY = octree1->linkE->link0->brootSituationY;
-							bSituationZ = octree1->linkE->link0->brootSituationZ;
-						}
-						bool bsitX = false;
-						if (((!bSituationX) && (bSituationY) && (bSituationZ))) bsitX = true;
-						
-
-						//if ((!octree1->b_the_geometric_fragmentation)||(octree1->bcrushing_when_balancing)) {
-						if ((octree1->ilevel==octree1->linkE->ilevel)||(bsitX)) {
-							// Не дробленный лист контачит по грани E с дроблённым обектом.
-							// Situaton - это ситуация в Е соседе.
-							if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
-								// вырождение по Х
-								// 0,3,4,7 
-								octree1->b4E = true;
-								octree1->linkE1 = octree1->linkE->link0;
-								octree1->linkE2 = octree1->linkE->link3;
-								octree1->linkE5 = octree1->linkE->link4;
-								octree1->linkE6 = octree1->linkE->link7;
-								octree1->linkE = nullptr;
-							}
-							else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
-								// вырождение по Y
-								// 0,1,4,5 
-								octree1->b4E = true;
-								octree1->linkE1 = octree1->linkE->link0;
-								octree1->linkE2 = nullptr; 
-								octree1->linkE5 = octree1->linkE->link4;
-								octree1->linkE6 = nullptr;
-								octree1->linkE = nullptr;
-							}
-							else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
-								// вырождение по Z
-								// 0,1,2,3
-								octree1->b4E = true;
-								octree1->linkE1 = octree1->linkE->link0;
-								octree1->linkE2 = octree1->linkE->link3;
-								octree1->linkE5 = nullptr; 
-								octree1->linkE6 = nullptr; 
-								octree1->linkE = nullptr;
-							}
-							else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
-								// direction Z
-								// 0,4
-								octree1->b4E = true;
-								octree1->linkE1 = octree1->linkE->link0;
-								octree1->linkE2 = nullptr; 
-								octree1->linkE5 = octree1->linkE->link4;
-								octree1->linkE6 = nullptr; 
-								octree1->linkE = nullptr;
-							}
-							else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
-								// direction X
-								// 0,1
-								//octree1->b4E = true;
-								//octree1->linkE1 = octree1->linkE->link0;
-								octree1->linkE2 = nullptr;
-								octree1->linkE5 = nullptr; 
-								octree1->linkE6 = nullptr;
-								// Оратное редуцирование т.к. связь только одна.
-								octree1->b4E = false;
-								octree1->linkE1 = nullptr; 
-								octree1->linkE = octree1->linkE->link0;
-								//printf("FOUND ERROR!!! E direction X\n");
-								//system("PAUSE");
-							}
-							else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
-								// direction Y
-								// 0,3
-								octree1->b4E = true;
-								octree1->linkE1 = octree1->linkE->link0;
-								octree1->linkE2 = octree1->linkE->link3;
-								octree1->linkE5 = nullptr; 
-								octree1->linkE6 = nullptr; 
-								octree1->linkE = nullptr;
-							}
-							else if (is_null1(octree1->linkE)) {
-								// Разбита на 8 равных частей:
-								// 1,2,5,6
-								octree1->b4E = true;
-								octree1->linkE1 = octree1->linkE->link0;
-								octree1->linkE2 = octree1->linkE->link3;
-								octree1->linkE5 = octree1->linkE->link4;
-								octree1->linkE6 = octree1->linkE->link7;
-								octree1->linkE = nullptr;
-							}
-
-
-						}
-						else {
-							if (octree1->ilevel - octree1->linkE->ilevel != 1) {
-								
-								if (is_null1_new(octree1->linkE)) {
-									if (DEBUG_ALICE_MESH) {
-										printf("linkE  is_null1_new\n");
-									}
-									if (octree1->ilevel - octree1->linkE->ilevel==2) {
-										
-										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
-											// вырождение по Х
-											// 0,3,4,7 
-											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
-											// Разбита на 8 равных частей:
-											// 1,2,5,6
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// нет вырождения.
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5: octree1->linkE = octree1->linkE->link4;
-													break;
-												case 6: octree1->linkE = octree1->linkE->link7;
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Х
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 4:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:octree1->linkE = octree1->linkE->link7;
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Y
-												//1,5
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// вырождение по Z
-												//1,2
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// direction Z
-												// 0,4
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction X
-												//1
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction Y
-												//0,3
-												switch (octree1->parent->root) {
-												case 0:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-
-										}
-										else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
-											// вырождение по Y
-											// 0,1,4,5 
-											// (3->0),(2->1),(7->4), (6->5)
-											// Разбита на 8 равных частей:
-											// 1,2,5,6
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// нет вырождения.
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5: octree1->linkE = octree1->linkE->link4;
-													break;
-												case 6: octree1->linkE = octree1->linkE->link4;
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Х
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 4:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:octree1->linkE = octree1->linkE->link4;
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Y
-												//1,5
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// вырождение по Z
-												//1,2
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// direction Z
-												// 0,4
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction X
-												//1
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction Y
-												//0,3
-												switch (octree1->parent->root) {
-												case 0:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-										}
-										else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
-											// вырождение по Z
-											// 0,1,2,3
-											// (4->0) (5->1) (6->2) (7->3)
-											// Разбита на 8 равных частей:
-											// 1,2,5,6
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// нет вырождения.
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 6: octree1->linkE = octree1->linkE->link3;
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Х
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 4:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:octree1->linkE = octree1->linkE->link3;
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Y
-												//1,5
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// вырождение по Z
-												//1,2
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// direction Z
-												// 0,4
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction X
-												//1
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction Y
-												//0,3
-												switch (octree1->parent->root) {
-												case 0:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-										}
-										else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
-											// direction Z
-											// 0,4
-											// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
-											// Разбита на 8 равных частей:
-											// 1,2,5,6
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// нет вырождения.
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5: octree1->linkE = octree1->linkE->link4;
-													break;
-												case 6: octree1->linkE = octree1->linkE->link4;
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Х
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 4:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:octree1->linkE = octree1->linkE->link4;
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Y
-												//1,5
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// вырождение по Z
-												//1,2
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// direction Z
-												// 0,4
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction X
-												//1
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction Y
-												//0,3
-												switch (octree1->parent->root) {
-												case 0:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-										}
-										else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
-											// direction X
-											// 0,1
-											// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
-											// Разбита на 8 равных частей:
-											// 1,2,5,6
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// нет вырождения.
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 6: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Х
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 4:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:octree1->linkE = octree1->linkE->link0;
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Y
-												//1,5
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// вырождение по Z
-												//1,2
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// direction Z
-												// 0,4
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction X
-												//1
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction Y
-												//0,3
-												switch (octree1->parent->root) {
-												case 0:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-										}
-										else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
-											// direction Y
-											// 0,3
-											// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
-											// Разбита на 8 равных частей:
-											// 1,2,5,6
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// нет вырождения.
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 6: octree1->linkE = octree1->linkE->link3;
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Х
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 4:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:octree1->linkE = octree1->linkE->link3;
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Y
-												//1,5
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// вырождение по Z
-												//1,2
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// direction Z
-												// 0,4
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction X
-												//1
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction Y
-												//0,3
-												switch (octree1->parent->root) {
-												case 0:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-										}
-										else if (is_null1(octree1->linkE)) {
-											// Разбита на 8 равных частей:
-											// 1,2,5,6
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// нет вырождения.
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5: octree1->linkE = octree1->linkE->link4;
-													break;
-												case 6: octree1->linkE = octree1->linkE->link7;
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Х
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 4:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:octree1->linkE = octree1->linkE->link7;
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// вырождение по Y
-												//1,5
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// вырождение по Z
-												//1,2
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												// direction Z
-												// 0,4
-												switch (octree1->parent->root) {
-												case 0: octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:octree1->linkE = octree1->linkE->link4;
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction X
-												//1
-												switch (octree1->parent->root) {
-												case 0:
-													break;
-												case 1:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 2:
-													break;
-												case 3:
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
-												// direction Y
-												//0,3
-												switch (octree1->parent->root) {
-												case 0:octree1->linkE = octree1->linkE->link0;
-													break;
-												case 1:
-													break;
-												case 2:
-													break;
-												case 3:octree1->linkE = octree1->linkE->link3;
-													break;
-												case 4:
-													break;
-												case 5:
-													break;
-												case 6:
-													break;
-												case 7:
-													break;
-												}
-											}
-
-										}
-									}
-									else {
-										printf("Fatal error!!! E distance meshdu urovnqmi > 2\n");
-										if (is_null1_new(octree1->linkE)) {
-												printf("linkE  is_null1_new\n");
-										}
-#if doubleintprecision == 1
-			printf("octree1->ilevel=%lld octree1->linkE->ilevel=%lld\n", octree1->ilevel, octree1->linkE->ilevel);
-#else
-			printf("octree1->ilevel=%d octree1->linkE->ilevel=%d\n", octree1->ilevel, octree1->linkE->ilevel);
-#endif
-										
-										//system("PAUSE");
-										system("PAUSE");
-										//exit(1);
-									}
-
-
-								}
-								else {
-									printf("error: linkE nepravilnje urovni.\n");
-									integer c0 = 0;
-									integer c1 = 0;
-									integer c2 = 0;
-									integer c3 = 0;
-									integer c4 = 0;
-									integer c5 = 0;
-									integer c6 = 0;
-									integer c7 = 0;
-									is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-#if doubleintprecision == 1
-									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
-									printf("%lld ", print_link(octree1->linkE->link0));
 									if (octree1->linkE->link0 != nullptr) {
-										printf("%lld ", print_link(octree1->linkE->link0->link0));
-										printf("%lld ", print_link(octree1->linkE->link0->link1));
-										printf("%lld ", print_link(octree1->linkE->link0->link2));
-										printf("%lld ", print_link(octree1->linkE->link0->link3));
-										printf("%lld ", print_link(octree1->linkE->link0->link4));
-										printf("%lld ", print_link(octree1->linkE->link0->link5));
-										printf("%lld ", print_link(octree1->linkE->link0->link6));
-										printf("%lld ", print_link(octree1->linkE->link0->link7));
-									}
-									printf("%lld ", print_link(octree1->linkE->link1));
-									if (octree1->linkE->link1 != nullptr) {
-										printf("%lld ", print_link(octree1->linkE->link1->link0));
-										printf("%lld ", print_link(octree1->linkE->link1->link1));
-										printf("%lld ", print_link(octree1->linkE->link1->link2));
-										printf("%lld ", print_link(octree1->linkE->link1->link3));
-										printf("%lld ", print_link(octree1->linkE->link1->link4));
-										printf("%lld ", print_link(octree1->linkE->link1->link5));
-										printf("%lld ", print_link(octree1->linkE->link1->link6));
-										printf("%lld ", print_link(octree1->linkE->link1->link7));
-									}
-									printf("%lld ", print_link(octree1->linkE->link2));
-									if (octree1->linkE->link2 != nullptr) {
-										printf("%lld ", print_link(octree1->linkE->link2->link0));
-										printf("%lld ", print_link(octree1->linkE->link2->link1));
-										printf("%lld ", print_link(octree1->linkE->link2->link2));
-										printf("%lld ", print_link(octree1->linkE->link2->link3));
-										printf("%lld ", print_link(octree1->linkE->link2->link4));
-										printf("%lld ", print_link(octree1->linkE->link2->link5));
-										printf("%lld ", print_link(octree1->linkE->link2->link6));
-										printf("%lld ", print_link(octree1->linkE->link2->link7));
-									}
-									printf("%lld ", print_link(octree1->linkE->link3));
-									if (octree1->linkE->link3 != nullptr) {
-										printf("%lld ", print_link(octree1->linkE->link3->link0));
-										printf("%lld ", print_link(octree1->linkE->link3->link1));
-										printf("%lld ", print_link(octree1->linkE->link3->link2));
-										printf("%lld ", print_link(octree1->linkE->link3->link3));
-										printf("%lld ", print_link(octree1->linkE->link3->link4));
-										printf("%lld ", print_link(octree1->linkE->link3->link5));
-										printf("%lld ", print_link(octree1->linkE->link3->link6));
-										printf("%lld ", print_link(octree1->linkE->link3->link7));
-									}
-									printf("%lld ", print_link(octree1->linkE->link4));
-									if (octree1->linkE->link4 != nullptr) {
-										printf("%lld ", print_link(octree1->linkE->link4->link0));
-										printf("%lld ", print_link(octree1->linkE->link4->link1));
-										printf("%lld ", print_link(octree1->linkE->link4->link2));
-										printf("%lld ", print_link(octree1->linkE->link4->link3));
-										printf("%lld ", print_link(octree1->linkE->link4->link4));
-										printf("%lld ", print_link(octree1->linkE->link4->link5));
-										printf("%lld ", print_link(octree1->linkE->link4->link6));
-										printf("%lld ", print_link(octree1->linkE->link4->link7));
-									}
-									printf("%lld ", print_link(octree1->linkE->link5));
-									if (octree1->linkE->link5 != nullptr) {
-										printf("%lld ", print_link(octree1->linkE->link5->link0));
-										printf("%lld ", print_link(octree1->linkE->link5->link1));
-										printf("%lld ", print_link(octree1->linkE->link5->link2));
-										printf("%lld ", print_link(octree1->linkE->link5->link3));
-										printf("%lld ", print_link(octree1->linkE->link5->link4));
-										printf("%lld ", print_link(octree1->linkE->link5->link5));
-										printf("%lld ", print_link(octree1->linkE->link5->link6));
-										printf("%lld ", print_link(octree1->linkE->link5->link7));
-									}
-									printf("%lld ", print_link(octree1->linkE->link6));
-									if (octree1->linkE->link6 != nullptr) {
-										printf("%lld ", print_link(octree1->linkE->link6->link0));
-										printf("%lld ", print_link(octree1->linkE->link6->link1));
-										printf("%lld ", print_link(octree1->linkE->link6->link2));
-										printf("%lld ", print_link(octree1->linkE->link6->link3));
-										printf("%lld ", print_link(octree1->linkE->link6->link4));
-										printf("%lld ", print_link(octree1->linkE->link6->link5));
-										printf("%lld ", print_link(octree1->linkE->link6->link6));
-										printf("%lld ", print_link(octree1->linkE->link6->link7));
-									}
-									printf("%lld ", print_link(octree1->linkE->link7));
-									if (oc->linkE->link7 != nullptr) {
-										printf("%lld ", print_link(octree1->linkE->link7->link0));
-										printf("%lld ", print_link(octree1->linkE->link7->link1));
-										printf("%lld ", print_link(octree1->linkE->link7->link2));
-										printf("%lld ", print_link(octree1->linkE->link7->link3));
-										printf("%lld ", print_link(octree1->linkE->link7->link4));
-										printf("%lld ", print_link(octree1->linkE->link7->link5));
-										printf("%lld ", print_link(octree1->linkE->link7->link6));
-										printf("%lld ", print_link(octree1->linkE->link7->link7));
-									}
+										if ((octree1->linkE->link1 == nullptr) && (octree1->linkE->link2 == nullptr) && (octree1->linkE->link3 == nullptr) && (octree1->linkE->link4 == nullptr) && (octree1->linkE->link5 == nullptr) && (octree1->linkE->link6 == nullptr) && (octree1->linkE->link7 == nullptr)) {
+											printf("error: octree1->linkE->link0!=nullptr a na samom dele ==nullptr\n");
+											//system("PAUSE");
+											system("PAUSE");
+											exit(1);
+										}
+
+										// octree1 это лист.
+										// Situation внутри Е соседа.
+										bool bSituationX = false;
+										bool bSituationY = false;
+										bool bSituationZ = false;
+										if (bold_stable_version) {
+											if (octree1->linkE->minx + 1 == octree1->linkE->maxx) {
+												bSituationX = true;
+											}
+											if (octree1->linkE->miny + 1 == octree1->linkE->maxy) {
+												bSituationY = true;
+											}
+											if (octree1->linkE->minz + 1 == octree1->linkE->maxz) {
+												bSituationZ = true;
+											}
+											if ((octree1->linkE->link0 != nullptr)) {
+												if (bSituationX != octree1->linkE->link0->brootSituationX) {
+													printf("error ne sovpadenie Situation X.");
+												}
+												if (bSituationY != octree1->linkE->link0->brootSituationY) {
+													printf("error ne sovpadenie Situation Y.");
+												}
+												if (bSituationZ != octree1->linkE->link0->brootSituationZ) {
+													printf("error ne sovpadenie Situation Z.");
+												}
+											}
+										}
+										else {
+											// 4.01.2018 Попробуем так. Чисто на интуиции пока.
+											// Здесь мы сохраняем запрет дробления в заданном координатном направлении.
+											bSituationX = octree1->linkE->link0->brootSituationX;
+											bSituationY = octree1->linkE->link0->brootSituationY;
+											bSituationZ = octree1->linkE->link0->brootSituationZ;
+										}
+										bool bsitX = false;
+										if (((!bSituationX) && (bSituationY) && (bSituationZ))) bsitX = true;
+
+
+										//if ((!octree1->b_the_geometric_fragmentation)||(octree1->bcrushing_when_balancing)) {
+										if ((octree1->ilevel == octree1->linkE->ilevel) || (bsitX)) {
+											// Не дробленный лист контачит по грани E с дроблённым обектом.
+											// Situaton - это ситуация в Е соседе.
+											if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
+												// вырождение по Х
+												// 0,3,4,7 
+												octree1->b4E = true;
+												octree1->linkE1 = octree1->linkE->link0;
+												octree1->linkE2 = octree1->linkE->link3;
+												octree1->linkE5 = octree1->linkE->link4;
+												octree1->linkE6 = octree1->linkE->link7;
+												octree1->linkE = nullptr;
+											}
+											else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
+												// вырождение по Y
+												// 0,1,4,5 
+												octree1->b4E = true;
+												octree1->linkE1 = octree1->linkE->link0;
+												octree1->linkE2 = nullptr;
+												octree1->linkE5 = octree1->linkE->link4;
+												octree1->linkE6 = nullptr;
+												octree1->linkE = nullptr;
+											}
+											else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
+												// вырождение по Z
+												// 0,1,2,3
+												octree1->b4E = true;
+												octree1->linkE1 = octree1->linkE->link0;
+												octree1->linkE2 = octree1->linkE->link3;
+												octree1->linkE5 = nullptr;
+												octree1->linkE6 = nullptr;
+												octree1->linkE = nullptr;
+											}
+											else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
+												// direction Z
+												// 0,4
+												octree1->b4E = true;
+												octree1->linkE1 = octree1->linkE->link0;
+												octree1->linkE2 = nullptr;
+												octree1->linkE5 = octree1->linkE->link4;
+												octree1->linkE6 = nullptr;
+												octree1->linkE = nullptr;
+											}
+											else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
+												// direction X
+												// 0,1
+												//octree1->b4E = true;
+												//octree1->linkE1 = octree1->linkE->link0;
+												octree1->linkE2 = nullptr;
+												octree1->linkE5 = nullptr;
+												octree1->linkE6 = nullptr;
+												// Оратное редуцирование т.к. связь только одна.
+												octree1->b4E = false;
+												octree1->linkE1 = nullptr;
+												octree1->linkE = octree1->linkE->link0;
+												//printf("FOUND ERROR!!! E direction X\n");
+												//system("PAUSE");
+											}
+											else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
+												// direction Y
+												// 0,3
+												octree1->b4E = true;
+												octree1->linkE1 = octree1->linkE->link0;
+												octree1->linkE2 = octree1->linkE->link3;
+												octree1->linkE5 = nullptr;
+												octree1->linkE6 = nullptr;
+												octree1->linkE = nullptr;
+											}
+											else if (is_null1(octree1->linkE)) {
+												// Разбита на 8 равных частей:
+												// 1,2,5,6
+												octree1->b4E = true;
+												octree1->linkE1 = octree1->linkE->link0;
+												octree1->linkE2 = octree1->linkE->link3;
+												octree1->linkE5 = octree1->linkE->link4;
+												octree1->linkE6 = octree1->linkE->link7;
+												octree1->linkE = nullptr;
+											}
+
+
+										}
+										else {
+											if (octree1->ilevel - octree1->linkE->ilevel != 1) {
+
+												if (is_null1_new(octree1->linkE)) {
+													if (DEBUG_ALICE_MESH) {
+														printf("linkE  is_null1_new\n");
+													}
+													if (octree1->ilevel - octree1->linkE->ilevel == 2) {
+
+														if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
+															// вырождение по Х
+															// 0,3,4,7 
+															// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
+															// Разбита на 8 равных частей:
+															// 1,2,5,6
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// нет вырождения.
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5: octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 6: octree1->linkE = octree1->linkE->link7;
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Х
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:octree1->linkE = octree1->linkE->link7;
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Y
+																//1,5
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// вырождение по Z
+																//1,2
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// direction Z
+																// 0,4
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction X
+																//1
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction Y
+																//0,3
+																switch (octree1->parent->root) {
+																case 0:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+
+														}
+														else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
+															// вырождение по Y
+															// 0,1,4,5 
+															// (3->0),(2->1),(7->4), (6->5)
+															// Разбита на 8 равных частей:
+															// 1,2,5,6
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// нет вырождения.
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5: octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 6: octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Х
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:octree1->linkE = octree1->linkE->link4;
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Y
+																//1,5
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// вырождение по Z
+																//1,2
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// direction Z
+																// 0,4
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction X
+																//1
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction Y
+																//0,3
+																switch (octree1->parent->root) {
+																case 0:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+														}
+														else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
+															// вырождение по Z
+															// 0,1,2,3
+															// (4->0) (5->1) (6->2) (7->3)
+															// Разбита на 8 равных частей:
+															// 1,2,5,6
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// нет вырождения.
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 6: octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Х
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:octree1->linkE = octree1->linkE->link3;
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Y
+																//1,5
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// вырождение по Z
+																//1,2
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// direction Z
+																// 0,4
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction X
+																//1
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction Y
+																//0,3
+																switch (octree1->parent->root) {
+																case 0:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+														}
+														else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
+															// direction Z
+															// 0,4
+															// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
+															// Разбита на 8 равных частей:
+															// 1,2,5,6
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// нет вырождения.
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5: octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 6: octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Х
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:octree1->linkE = octree1->linkE->link4;
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Y
+																//1,5
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// вырождение по Z
+																//1,2
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// direction Z
+																// 0,4
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction X
+																//1
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction Y
+																//0,3
+																switch (octree1->parent->root) {
+																case 0:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+														}
+														else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
+															// direction X
+															// 0,1
+															// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
+															// Разбита на 8 равных частей:
+															// 1,2,5,6
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// нет вырождения.
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 6: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Х
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:octree1->linkE = octree1->linkE->link0;
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Y
+																//1,5
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// вырождение по Z
+																//1,2
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// direction Z
+																// 0,4
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction X
+																//1
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction Y
+																//0,3
+																switch (octree1->parent->root) {
+																case 0:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+														}
+														else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
+															// direction Y
+															// 0,3
+															// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
+															// Разбита на 8 равных частей:
+															// 1,2,5,6
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// нет вырождения.
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 6: octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Х
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:octree1->linkE = octree1->linkE->link3;
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Y
+																//1,5
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// вырождение по Z
+																//1,2
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// direction Z
+																// 0,4
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction X
+																//1
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction Y
+																//0,3
+																switch (octree1->parent->root) {
+																case 0:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+														}
+														else if (is_null1(octree1->linkE)) {
+															// Разбита на 8 равных частей:
+															// 1,2,5,6
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// нет вырождения.
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5: octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 6: octree1->linkE = octree1->linkE->link7;
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Х
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:octree1->linkE = octree1->linkE->link7;
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// вырождение по Y
+																//1,5
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// вырождение по Z
+																//1,2
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+																// direction Z
+																// 0,4
+																switch (octree1->parent->root) {
+																case 0: octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:octree1->linkE = octree1->linkE->link4;
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+															if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction X
+																//1
+																switch (octree1->parent->root) {
+																case 0:
+																	break;
+																case 1:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 2:
+																	break;
+																case 3:
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+															if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+																// direction Y
+																//0,3
+																switch (octree1->parent->root) {
+																case 0:octree1->linkE = octree1->linkE->link0;
+																	break;
+																case 1:
+																	break;
+																case 2:
+																	break;
+																case 3:octree1->linkE = octree1->linkE->link3;
+																	break;
+																case 4:
+																	break;
+																case 5:
+																	break;
+																case 6:
+																	break;
+																case 7:
+																	break;
+																}
+															}
+
+														}
+													}
+													else {
+														printf("Fatal error!!! E distance meshdu urovnqmi > 2\n");
+														if (is_null1_new(octree1->linkE)) {
+															printf("linkE  is_null1_new\n");
+														}
+#if doubleintprecision == 1
+														printf("octree1->ilevel=%c octree1->linkE->ilevel=%c\n", octree1->ilevel, octree1->linkE->ilevel);
 #else
-									printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
-									printf("%d ", print_link(octree1->linkE->link0));
-									if (octree1->linkE->link0 != nullptr) {
-										printf("%d ", print_link(octree1->linkE->link0->link0));
-										printf("%d ", print_link(octree1->linkE->link0->link1));
-										printf("%d ", print_link(octree1->linkE->link0->link2));
-										printf("%d ", print_link(octree1->linkE->link0->link3));
-										printf("%d ", print_link(octree1->linkE->link0->link4));
-										printf("%d ", print_link(octree1->linkE->link0->link5));
-										printf("%d ", print_link(octree1->linkE->link0->link6));
-										printf("%d ", print_link(octree1->linkE->link0->link7));
-									}
-									printf("%d ", print_link(octree1->linkE->link1));
-									if (octree1->linkE->link1 != nullptr) {
-										printf("%d ", print_link(octree1->linkE->link1->link0));
-										printf("%d ", print_link(octree1->linkE->link1->link1));
-										printf("%d ", print_link(octree1->linkE->link1->link2));
-										printf("%d ", print_link(octree1->linkE->link1->link3));
-										printf("%d ", print_link(octree1->linkE->link1->link4));
-										printf("%d ", print_link(octree1->linkE->link1->link5));
-										printf("%d ", print_link(octree1->linkE->link1->link6));
-										printf("%d ", print_link(octree1->linkE->link1->link7));
-									}
-									printf("%d ", print_link(octree1->linkE->link2));
-									if (octree1->linkE->link2 != nullptr) {
-										printf("%d ", print_link(octree1->linkE->link2->link0));
-										printf("%d ", print_link(octree1->linkE->link2->link1));
-										printf("%d ", print_link(octree1->linkE->link2->link2));
-										printf("%d ", print_link(octree1->linkE->link2->link3));
-										printf("%d ", print_link(octree1->linkE->link2->link4));
-										printf("%d ", print_link(octree1->linkE->link2->link5));
-										printf("%d ", print_link(octree1->linkE->link2->link6));
-										printf("%d ", print_link(octree1->linkE->link2->link7));
-									}
-									printf("%d ", print_link(octree1->linkE->link3));
-									if (octree1->linkE->link3 != nullptr) {
-										printf("%d ", print_link(octree1->linkE->link3->link0));
-										printf("%d ", print_link(octree1->linkE->link3->link1));
-										printf("%d ", print_link(octree1->linkE->link3->link2));
-										printf("%d ", print_link(octree1->linkE->link3->link3));
-										printf("%d ", print_link(octree1->linkE->link3->link4));
-										printf("%d ", print_link(octree1->linkE->link3->link5));
-										printf("%d ", print_link(octree1->linkE->link3->link6));
-										printf("%d ", print_link(octree1->linkE->link3->link7));
-									}
-									printf("%d ", print_link(octree1->linkE->link4));
-									if (octree1->linkE->link4 != nullptr) {
-										printf("%d ", print_link(octree1->linkE->link4->link0));
-										printf("%d ", print_link(octree1->linkE->link4->link1));
-										printf("%d ", print_link(octree1->linkE->link4->link2));
-										printf("%d ", print_link(octree1->linkE->link4->link3));
-										printf("%d ", print_link(octree1->linkE->link4->link4));
-										printf("%d ", print_link(octree1->linkE->link4->link5));
-										printf("%d ", print_link(octree1->linkE->link4->link6));
-										printf("%d ", print_link(octree1->linkE->link4->link7));
-									}
-									printf("%d ", print_link(octree1->linkE->link5));
-									if (octree1->linkE->link5 != nullptr) {
-										printf("%d ", print_link(octree1->linkE->link5->link0));
-										printf("%d ", print_link(octree1->linkE->link5->link1));
-										printf("%d ", print_link(octree1->linkE->link5->link2));
-										printf("%d ", print_link(octree1->linkE->link5->link3));
-										printf("%d ", print_link(octree1->linkE->link5->link4));
-										printf("%d ", print_link(octree1->linkE->link5->link5));
-										printf("%d ", print_link(octree1->linkE->link5->link6));
-										printf("%d ", print_link(octree1->linkE->link5->link7));
-									}
-									printf("%d ", print_link(octree1->linkE->link6));
-									if (octree1->linkE->link6 != nullptr) {
-										printf("%d ", print_link(octree1->linkE->link6->link0));
-										printf("%d ", print_link(octree1->linkE->link6->link1));
-										printf("%d ", print_link(octree1->linkE->link6->link2));
-										printf("%d ", print_link(octree1->linkE->link6->link3));
-										printf("%d ", print_link(octree1->linkE->link6->link4));
-										printf("%d ", print_link(octree1->linkE->link6->link5));
-										printf("%d ", print_link(octree1->linkE->link6->link6));
-										printf("%d ", print_link(octree1->linkE->link6->link7));
-									}
-									printf("%d ", print_link(octree1->linkE->link7));
-									if (oc->linkE->link7 != nullptr) {
-										printf("%d ", print_link(octree1->linkE->link7->link0));
-										printf("%d ", print_link(octree1->linkE->link7->link1));
-										printf("%d ", print_link(octree1->linkE->link7->link2));
-										printf("%d ", print_link(octree1->linkE->link7->link3));
-										printf("%d ", print_link(octree1->linkE->link7->link4));
-										printf("%d ", print_link(octree1->linkE->link7->link5));
-										printf("%d ", print_link(octree1->linkE->link7->link6));
-										printf("%d ", print_link(octree1->linkE->link7->link7));
-									}
+														printf("octree1->ilevel=%c octree1->linkE->ilevel=%c\n", octree1->ilevel, octree1->linkE->ilevel);
 #endif
-									
-									//system("PAUSE");
-									system("PAUSE");
 
-								}
+														//system("PAUSE");
+														system("PAUSE");
+														//exit(1);
+													}
 
-								//system("PAUSE");
-							}
-							else {
-						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
-							// вырождение по Х
-							// 0,3,4,7 
-							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
-							// Разбита на 8 равных частей:
-							// 1,2,5,6
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// нет вырождения.
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5: octree1->linkE = octree1->linkE->link4;
-									break;
-								case 6: octree1->linkE = octree1->linkE->link7;
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 4:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkE = octree1->linkE->link7;
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//1,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
 
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//1,2
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
+												}
+												else {
+													printf("error: linkE nepravilnje urovni.\n");
+													char c0 = 0;
+													char c1 = 0;
+													char c2 = 0;
+													char c3 = 0;
+													char c4 = 0;
+													char c5 = 0;
+													char c6 = 0;
+													char c7 = 0;
+													is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+#if doubleintprecision == 1
+													printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
+													printf("%lld ", print_link(octree1->linkE->link0));
+													if (octree1->linkE->link0 != nullptr) {
+														printf("%lld ", print_link(octree1->linkE->link0->link0));
+														printf("%lld ", print_link(octree1->linkE->link0->link1));
+														printf("%lld ", print_link(octree1->linkE->link0->link2));
+														printf("%lld ", print_link(octree1->linkE->link0->link3));
+														printf("%lld ", print_link(octree1->linkE->link0->link4));
+														printf("%lld ", print_link(octree1->linkE->link0->link5));
+														printf("%lld ", print_link(octree1->linkE->link0->link6));
+														printf("%lld ", print_link(octree1->linkE->link0->link7));
+													}
+													printf("%lld ", print_link(octree1->linkE->link1));
+													if (octree1->linkE->link1 != nullptr) {
+														printf("%lld ", print_link(octree1->linkE->link1->link0));
+														printf("%lld ", print_link(octree1->linkE->link1->link1));
+														printf("%lld ", print_link(octree1->linkE->link1->link2));
+														printf("%lld ", print_link(octree1->linkE->link1->link3));
+														printf("%lld ", print_link(octree1->linkE->link1->link4));
+														printf("%lld ", print_link(octree1->linkE->link1->link5));
+														printf("%lld ", print_link(octree1->linkE->link1->link6));
+														printf("%lld ", print_link(octree1->linkE->link1->link7));
+													}
+													printf("%lld ", print_link(octree1->linkE->link2));
+													if (octree1->linkE->link2 != nullptr) {
+														printf("%lld ", print_link(octree1->linkE->link2->link0));
+														printf("%lld ", print_link(octree1->linkE->link2->link1));
+														printf("%lld ", print_link(octree1->linkE->link2->link2));
+														printf("%lld ", print_link(octree1->linkE->link2->link3));
+														printf("%lld ", print_link(octree1->linkE->link2->link4));
+														printf("%lld ", print_link(octree1->linkE->link2->link5));
+														printf("%lld ", print_link(octree1->linkE->link2->link6));
+														printf("%lld ", print_link(octree1->linkE->link2->link7));
+													}
+													printf("%lld ", print_link(octree1->linkE->link3));
+													if (octree1->linkE->link3 != nullptr) {
+														printf("%lld ", print_link(octree1->linkE->link3->link0));
+														printf("%lld ", print_link(octree1->linkE->link3->link1));
+														printf("%lld ", print_link(octree1->linkE->link3->link2));
+														printf("%lld ", print_link(octree1->linkE->link3->link3));
+														printf("%lld ", print_link(octree1->linkE->link3->link4));
+														printf("%lld ", print_link(octree1->linkE->link3->link5));
+														printf("%lld ", print_link(octree1->linkE->link3->link6));
+														printf("%lld ", print_link(octree1->linkE->link3->link7));
+													}
+													printf("%lld ", print_link(octree1->linkE->link4));
+													if (octree1->linkE->link4 != nullptr) {
+														printf("%lld ", print_link(octree1->linkE->link4->link0));
+														printf("%lld ", print_link(octree1->linkE->link4->link1));
+														printf("%lld ", print_link(octree1->linkE->link4->link2));
+														printf("%lld ", print_link(octree1->linkE->link4->link3));
+														printf("%lld ", print_link(octree1->linkE->link4->link4));
+														printf("%lld ", print_link(octree1->linkE->link4->link5));
+														printf("%lld ", print_link(octree1->linkE->link4->link6));
+														printf("%lld ", print_link(octree1->linkE->link4->link7));
+													}
+													printf("%lld ", print_link(octree1->linkE->link5));
+													if (octree1->linkE->link5 != nullptr) {
+														printf("%lld ", print_link(octree1->linkE->link5->link0));
+														printf("%lld ", print_link(octree1->linkE->link5->link1));
+														printf("%lld ", print_link(octree1->linkE->link5->link2));
+														printf("%lld ", print_link(octree1->linkE->link5->link3));
+														printf("%lld ", print_link(octree1->linkE->link5->link4));
+														printf("%lld ", print_link(octree1->linkE->link5->link5));
+														printf("%lld ", print_link(octree1->linkE->link5->link6));
+														printf("%lld ", print_link(octree1->linkE->link5->link7));
+													}
+													printf("%lld ", print_link(octree1->linkE->link6));
+													if (octree1->linkE->link6 != nullptr) {
+														printf("%lld ", print_link(octree1->linkE->link6->link0));
+														printf("%lld ", print_link(octree1->linkE->link6->link1));
+														printf("%lld ", print_link(octree1->linkE->link6->link2));
+														printf("%lld ", print_link(octree1->linkE->link6->link3));
+														printf("%lld ", print_link(octree1->linkE->link6->link4));
+														printf("%lld ", print_link(octree1->linkE->link6->link5));
+														printf("%lld ", print_link(octree1->linkE->link6->link6));
+														printf("%lld ", print_link(octree1->linkE->link6->link7));
+													}
+													printf("%lld ", print_link(octree1->linkE->link7));
+													if (oc->linkE->link7 != nullptr) {
+														printf("%lld ", print_link(octree1->linkE->link7->link0));
+														printf("%lld ", print_link(octree1->linkE->link7->link1));
+														printf("%lld ", print_link(octree1->linkE->link7->link2));
+														printf("%lld ", print_link(octree1->linkE->link7->link3));
+														printf("%lld ", print_link(octree1->linkE->link7->link4));
+														printf("%lld ", print_link(octree1->linkE->link7->link5));
+														printf("%lld ", print_link(octree1->linkE->link7->link6));
+														printf("%lld ", print_link(octree1->linkE->link7->link7));
+													}
+#else
+													printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
+													printf("%d ", print_link(octree1->linkE->link0));
+													if (octree1->linkE->link0 != nullptr) {
+														printf("%d ", print_link(octree1->linkE->link0->link0));
+														printf("%d ", print_link(octree1->linkE->link0->link1));
+														printf("%d ", print_link(octree1->linkE->link0->link2));
+														printf("%d ", print_link(octree1->linkE->link0->link3));
+														printf("%d ", print_link(octree1->linkE->link0->link4));
+														printf("%d ", print_link(octree1->linkE->link0->link5));
+														printf("%d ", print_link(octree1->linkE->link0->link6));
+														printf("%d ", print_link(octree1->linkE->link0->link7));
+													}
+													printf("%d ", print_link(octree1->linkE->link1));
+													if (octree1->linkE->link1 != nullptr) {
+														printf("%d ", print_link(octree1->linkE->link1->link0));
+														printf("%d ", print_link(octree1->linkE->link1->link1));
+														printf("%d ", print_link(octree1->linkE->link1->link2));
+														printf("%d ", print_link(octree1->linkE->link1->link3));
+														printf("%d ", print_link(octree1->linkE->link1->link4));
+														printf("%d ", print_link(octree1->linkE->link1->link5));
+														printf("%d ", print_link(octree1->linkE->link1->link6));
+														printf("%d ", print_link(octree1->linkE->link1->link7));
+													}
+													printf("%d ", print_link(octree1->linkE->link2));
+													if (octree1->linkE->link2 != nullptr) {
+														printf("%d ", print_link(octree1->linkE->link2->link0));
+														printf("%d ", print_link(octree1->linkE->link2->link1));
+														printf("%d ", print_link(octree1->linkE->link2->link2));
+														printf("%d ", print_link(octree1->linkE->link2->link3));
+														printf("%d ", print_link(octree1->linkE->link2->link4));
+														printf("%d ", print_link(octree1->linkE->link2->link5));
+														printf("%d ", print_link(octree1->linkE->link2->link6));
+														printf("%d ", print_link(octree1->linkE->link2->link7));
+													}
+													printf("%d ", print_link(octree1->linkE->link3));
+													if (octree1->linkE->link3 != nullptr) {
+														printf("%d ", print_link(octree1->linkE->link3->link0));
+														printf("%d ", print_link(octree1->linkE->link3->link1));
+														printf("%d ", print_link(octree1->linkE->link3->link2));
+														printf("%d ", print_link(octree1->linkE->link3->link3));
+														printf("%d ", print_link(octree1->linkE->link3->link4));
+														printf("%d ", print_link(octree1->linkE->link3->link5));
+														printf("%d ", print_link(octree1->linkE->link3->link6));
+														printf("%d ", print_link(octree1->linkE->link3->link7));
+													}
+													printf("%d ", print_link(octree1->linkE->link4));
+													if (octree1->linkE->link4 != nullptr) {
+														printf("%d ", print_link(octree1->linkE->link4->link0));
+														printf("%d ", print_link(octree1->linkE->link4->link1));
+														printf("%d ", print_link(octree1->linkE->link4->link2));
+														printf("%d ", print_link(octree1->linkE->link4->link3));
+														printf("%d ", print_link(octree1->linkE->link4->link4));
+														printf("%d ", print_link(octree1->linkE->link4->link5));
+														printf("%d ", print_link(octree1->linkE->link4->link6));
+														printf("%d ", print_link(octree1->linkE->link4->link7));
+													}
+													printf("%d ", print_link(octree1->linkE->link5));
+													if (octree1->linkE->link5 != nullptr) {
+														printf("%d ", print_link(octree1->linkE->link5->link0));
+														printf("%d ", print_link(octree1->linkE->link5->link1));
+														printf("%d ", print_link(octree1->linkE->link5->link2));
+														printf("%d ", print_link(octree1->linkE->link5->link3));
+														printf("%d ", print_link(octree1->linkE->link5->link4));
+														printf("%d ", print_link(octree1->linkE->link5->link5));
+														printf("%d ", print_link(octree1->linkE->link5->link6));
+														printf("%d ", print_link(octree1->linkE->link5->link7));
+													}
+													printf("%d ", print_link(octree1->linkE->link6));
+													if (octree1->linkE->link6 != nullptr) {
+														printf("%d ", print_link(octree1->linkE->link6->link0));
+														printf("%d ", print_link(octree1->linkE->link6->link1));
+														printf("%d ", print_link(octree1->linkE->link6->link2));
+														printf("%d ", print_link(octree1->linkE->link6->link3));
+														printf("%d ", print_link(octree1->linkE->link6->link4));
+														printf("%d ", print_link(octree1->linkE->link6->link5));
+														printf("%d ", print_link(octree1->linkE->link6->link6));
+														printf("%d ", print_link(octree1->linkE->link6->link7));
+													}
+													printf("%d ", print_link(octree1->linkE->link7));
+													if (oc->linkE->link7 != nullptr) {
+														printf("%d ", print_link(octree1->linkE->link7->link0));
+														printf("%d ", print_link(octree1->linkE->link7->link1));
+														printf("%d ", print_link(octree1->linkE->link7->link2));
+														printf("%d ", print_link(octree1->linkE->link7->link3));
+														printf("%d ", print_link(octree1->linkE->link7->link4));
+														printf("%d ", print_link(octree1->linkE->link7->link5));
+														printf("%d ", print_link(octree1->linkE->link7->link6));
+														printf("%d ", print_link(octree1->linkE->link7->link7));
+													}
+#endif
 
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//1
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
+													//system("PAUSE");
+													system("PAUSE");
 
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
+												}
+
+												//system("PAUSE");
+											}
+											else {
+												if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
+													// вырождение по Х
+													// 0,3,4,7 
+													// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
+													// Разбита на 8 равных частей:
+													// 1,2,5,6
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// нет вырождения.
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5: octree1->linkE = octree1->linkE->link4;
+															break;
+														case 6: octree1->linkE = octree1->linkE->link7;
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Х
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 4:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkE = octree1->linkE->link7;
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Y
+														//1,5
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// вырождение по Z
+														//1,2
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction X
+														//1
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->root) {
+														case 0:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+
+												}
+												else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
+													// вырождение по Y
+													// 0,1,4,5 
+													// (3->0),(2->1),(7->4), (6->5)
+													// Разбита на 8 равных частей:
+													// 1,2,5,6
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// нет вырождения.
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5: octree1->linkE = octree1->linkE->link4;
+															break;
+														case 6: octree1->linkE = octree1->linkE->link4;
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Х
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 4:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkE = octree1->linkE->link4;
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Y
+														//1,5
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// вырождение по Z
+														//1,2
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction X
+														//1
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->root) {
+														case 0:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+												}
+												else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
+													// вырождение по Z
+													// 0,1,2,3
+													// (4->0) (5->1) (6->2) (7->3)
+													// Разбита на 8 равных частей:
+													// 1,2,5,6
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// нет вырождения.
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 6: octree1->linkE = octree1->linkE->link3;
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Х
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 4:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkE = octree1->linkE->link3;
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Y
+														//1,5
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// вырождение по Z
+														//1,2
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction X
+														//1
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->root) {
+														case 0:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
+													// direction Z
+													// 0,4
+													// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
+													// Разбита на 8 равных частей:
+													// 1,2,5,6
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// нет вырождения.
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5: octree1->linkE = octree1->linkE->link4;
+															break;
+														case 6: octree1->linkE = octree1->linkE->link4;
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Х
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 4:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkE = octree1->linkE->link4;
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Y
+														//1,5
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// вырождение по Z
+														//1,2
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction X
+														//1
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->root) {
+														case 0:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+												}
+												else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
+													// direction X
+													// 0,1
+													// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
+													// Разбита на 8 равных частей:
+													// 1,2,5,6
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// нет вырождения.
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 6: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Х
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 4:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkE = octree1->linkE->link0;
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Y
+														//1,5
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// вырождение по Z
+														//1,2
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction X
+														//1
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->root) {
+														case 0:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
+													// direction Y
+													// 0,3
+													// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
+													// Разбита на 8 равных частей:
+													// 1,2,5,6
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// нет вырождения.
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 6: octree1->linkE = octree1->linkE->link3;
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Х
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 4:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkE = octree1->linkE->link3;
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Y
+														//1,5
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// вырождение по Z
+														//1,2
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction X
+														//1
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->root) {
+														case 0:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if (is_null1(octree1->linkE)) {
+													// Разбита на 8 равных частей:
+													// 1,2,5,6
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// нет вырождения.
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5: octree1->linkE = octree1->linkE->link4;
+															break;
+														case 6: octree1->linkE = octree1->linkE->link7;
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Х
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 4:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkE = octree1->linkE->link7;
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// вырождение по Y
+														//1,5
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// вырождение по Z
+														//1,2
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->root) {
+														case 0: octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkE = octree1->linkE->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction X
+														//1
+														switch (octree1->root) {
+														case 0:
+															break;
+														case 1:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->root) {
+														case 0:octree1->linkE = octree1->linkE->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkE = octree1->linkE->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+												}
+											}
+										}
+									}
 								}
 							}
 
 
 						}
-						else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
-							// вырождение по Y
-							// 0,1,4,5 
-							// (3->0),(2->1),(7->4), (6->5)
-							// Разбита на 8 равных частей:
-							// 1,2,5,6
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// нет вырождения.
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5: octree1->linkE = octree1->linkE->link4;
-									break;
-								case 6: octree1->linkE = octree1->linkE->link4;
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 4:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkE = octree1->linkE->link4;
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//1,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//1,2
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//1
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-						}
-						else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
-							// вырождение по Z
-							// 0,1,2,3
-							// (4->0) (5->1) (6->2) (7->3)
-							// Разбита на 8 равных частей:
-							// 1,2,5,6
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// нет вырождения.
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 6: octree1->linkE = octree1->linkE->link3;
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 4:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkE = octree1->linkE->link3;
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//1,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//1,2
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//1
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
-							// direction Z
-							// 0,4
-							// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
-							// Разбита на 8 равных частей:
-							// 1,2,5,6
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// нет вырождения.
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5: octree1->linkE = octree1->linkE->link4;
-									break;
-								case 6: octree1->linkE = octree1->linkE->link4;
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 4:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkE = octree1->linkE->link4;
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//1,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//1,2
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//1
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-						}
-						else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
-							// direction X
-							// 0,1
-							// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
-							// Разбита на 8 равных частей:
-							// 1,2,5,6
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// нет вырождения.
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 6: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 4:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkE = octree1->linkE->link0;
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//1,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//1,2
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//1
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
-							// direction Y
-							// 0,3
-							// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
-							// Разбита на 8 равных частей:
-							// 1,2,5,6
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// нет вырождения.
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 6: octree1->linkE = octree1->linkE->link3;
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 4:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkE = octree1->linkE->link3;
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//1,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//1,2
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//1
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if (is_null1(octree1->linkE)) {
-							// Разбита на 8 равных частей:
-							// 1,2,5,6
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// нет вырождения.
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5: octree1->linkE = octree1->linkE->link4;
-									break;
-								case 6: octree1->linkE = octree1->linkE->link7;
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 4:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkE = octree1->linkE->link7;
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//1,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//1,2
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0: octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkE = octree1->linkE->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//1
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0:octree1->linkE = octree1->linkE->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkE = octree1->linkE->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-						}
-						}
-						}
-						}
-					}
-					}
+//#pragma omp section
+						{
 
 					// А другие случаи исключаются при додроблении.
 					// одиночная связь, НЕ 4
@@ -21550,18 +22581,18 @@ void update_link_neighbor(octree* &oc) {
 								}
 								else {
 									printf("error: linkW nepravilnje urovni.\n");
-									integer c0 = 0;
-									integer c1 = 0;
-									integer c2 = 0;
-									integer c3 = 0;
-									integer c4 = 0;
-									integer c5 = 0;
-									integer c6 = 0;
-									integer c7 = 0;
+									char c0 = 0;
+									char c1 = 0;
+									char c2 = 0;
+									char c3 = 0;
+									char c4 = 0;
+									char c5 = 0;
+									char c6 = 0;
+									char c7 = 0;
 									is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 #if doubleintprecision == 1
-									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
+									printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
 									printf("%lld ", print_link(octree1->linkW->link0));
 									if (octree1->linkW->link0 != nullptr) {
 										printf("%lld ", print_link(octree1->linkW->link0->link0));
@@ -22881,6 +23912,11 @@ void update_link_neighbor(octree* &oc) {
 					}
 					}
 
+					}
+
+//#pragma omp section
+						{
+
 					// А другие случаи исключаются при додроблении.
 					// одиночная связь, НЕ 4
 					if (octree1->b4N == false) {
@@ -24186,22 +25222,22 @@ void update_link_neighbor(octree* &oc) {
 								else {
 									printf("error: linkN nepravilnje urovni.\n");
 #if doubleintprecision == 1
-									printf("octree1->ilevel=%lld octree1->linkN->ilevel=%lld\n", octree1->ilevel, octree1->linkN->ilevel);
+									printf("octree1->ilevel=%d octree1->linkN->ilevel=%lld\n", octree1->ilevel, octree1->linkN->ilevel);
 #else
 									printf("octree1->ilevel=%d octree1->linkN->ilevel=%d\n", octree1->ilevel, octree1->linkN->ilevel);
 #endif
-									integer c0 = 0;
-									integer c1 = 0;
-									integer c2 = 0;
-									integer c3 = 0;
-									integer c4 = 0;
-									integer c5 = 0;
-									integer c6 = 0;
-									integer c7 = 0;
+									char c0 = 0;
+									char c1 = 0;
+									char c2 = 0;
+									char c3 = 0;
+									char c4 = 0;
+									char c5 = 0;
+									char c6 = 0;
+									char c7 = 0;
 									is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 #if doubleintprecision == 1
 
-									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
+									printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
 									printf("%lld ", print_link(octree1->linkN->link0));
 									if (octree1->linkN->link0 != nullptr) {
 										printf("%lld ", print_link(octree1->linkN->link0->link0));
@@ -25528,151 +26564,1509 @@ void update_link_neighbor(octree* &oc) {
 					}
 					}
 
-					// А другие случаи исключаются при додроблении.
+					}
+
+//#pragma omp section
+						{
+
+						// А другие случаи исключаются при додроблении.
 					// одиночная связь, НЕ 4
 					if (octree1->b4S == false) {
-					if (octree1->linkS != nullptr) {
-						if (octree1->linkS->link0!=nullptr) {
-							if ((octree1->linkS->link1 == nullptr) && (octree1->linkS->link2 == nullptr) && (octree1->linkS->link3 == nullptr) && (octree1->linkS->link4 == nullptr) && (octree1->linkS->link5 == nullptr) && (octree1->linkS->link6 == nullptr) && (octree1->linkS->link7 == nullptr)) {
-								printf("error: octree1->linkS->link0!=nullptr a na samom dele ==nullptr\n");
-								//system("PAUSE");
-								system("PAUSE");
-								exit(1);
-							}
-
-
-						// octree1 это лист.
-						bool bSituationX = false;
-						bool bSituationY = false;
-						bool bSituationZ = false;
-
-						if (bold_stable_version) {
-							if (octree1->linkS->minx + 1 == octree1->linkS->maxx) {
-								bSituationX = true;
-							}
-							if (octree1->linkS->miny + 1 == octree1->linkS->maxy) {
-								bSituationY = true;
-							}
-							if (octree1->linkS->minz + 1 == octree1->linkS->maxz) {
-								bSituationZ = true;
-							}
-							if ((octree1->linkS->link0 != nullptr)) {
-								if (bSituationX != octree1->linkS->link0->brootSituationX) {
-									printf("error ne sovpadenie Situation X.");
+						if (octree1->linkS != nullptr) {
+							if (octree1->linkS->link0 != nullptr) {
+								if ((octree1->linkS->link1 == nullptr) && (octree1->linkS->link2 == nullptr) && (octree1->linkS->link3 == nullptr) && (octree1->linkS->link4 == nullptr) && (octree1->linkS->link5 == nullptr) && (octree1->linkS->link6 == nullptr) && (octree1->linkS->link7 == nullptr)) {
+									printf("error: octree1->linkS->link0!=nullptr a na samom dele ==nullptr\n");
+									//system("PAUSE");
+									system("PAUSE");
+									exit(1);
 								}
-								if (bSituationY != octree1->linkS->link0->brootSituationY) {
-									printf("error ne sovpadenie Situation Y.");
-								}
-								if (bSituationZ != octree1->linkS->link0->brootSituationZ) {
-									printf("error ne sovpadenie Situation Z.");
-								}
-							}
-						}
-						else {
-							// 4.01.2018 Попробуем так. Чисто на интуиции пока.
-							// Здесь мы сохраняем запрет дробления в заданном координатном направлении.
-							bSituationX = octree1->linkS->link0->brootSituationX;
-							bSituationY = octree1->linkS->link0->brootSituationY;
-							bSituationZ = octree1->linkS->link0->brootSituationZ;
-						}
 
-						// Чрезвычайно коварный случай. 7 сентября 2016.
-						bool bsitY = false;
-						if (((!bSituationY) && (bSituationX) && (bSituationZ))) bsitY = true;
 
-						//if ((!octree1->b_the_geometric_fragmentation) || (octree1->bcrushing_when_balancing)) {
-						if ((octree1->ilevel==octree1->linkS->ilevel)||(bsitY)) {
-						    // Не дробленный лист контачит по грани E с дроблённым обектом.
-							if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
-								// вырождение по Х
-								// 0,3,4,7 
-								octree1->b4S = true;
-								octree1->linkS0 = octree1->linkS->link3;
-								octree1->linkS1 = nullptr; 
-								octree1->linkS4 = octree1->linkS->link7;
-								octree1->linkS5 = nullptr; 
-								octree1->linkS = nullptr;
-							}
-							else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
-								// вырождение по Y
-								// 0,1,4,5 
-								octree1->b4S = true;
-								octree1->linkS0 = octree1->linkS->link0;
-								octree1->linkS1 = octree1->linkS->link1;
-								octree1->linkS4 = octree1->linkS->link4;
-								octree1->linkS5 = octree1->linkS->link5;
-								octree1->linkS = nullptr;
-							}
-							else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
-								// вырождение по Z
-								// 0,1,2,3
-								octree1->b4S = true;
-								octree1->linkS0 = octree1->linkS->link3;
-								octree1->linkS1 = octree1->linkS->link2;
-								octree1->linkS4 = nullptr; 
-								octree1->linkS5 = nullptr; 
-								octree1->linkS = nullptr;
-							}
-							else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
-								// direction Z
-								// 0,4
-								octree1->b4S = true;
-								octree1->linkS0 = octree1->linkS->link0;
-								octree1->linkS1 = nullptr; 
-								octree1->linkS4 = octree1->linkS->link4;
-								octree1->linkS5 = nullptr;
-								octree1->linkS = nullptr;
-							}
-							else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
-								// direction X
-								// 0,1
-								octree1->b4S = true;
-								octree1->linkS0 = octree1->linkS->link0;
-								octree1->linkS1 = octree1->linkS->link1;
-								octree1->linkS4 = nullptr;
-								octree1->linkS5 = nullptr;
-								octree1->linkS = nullptr;
-							}
-							else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
-								// direction Y
-								// 0,3
-								//octree1->b4S = true;
-								//octree1->linkS0 = octree1->linkS->link3;
-								octree1->linkS1 = nullptr; 
-								octree1->linkS4 = nullptr; 
-								octree1->linkS5 = nullptr;
-								// редуцирование четырёх соседов к одному.
-								octree1->b4S = false;
-								octree1->linkS0 = nullptr;
-								octree1->linkS = octree1->linkS->link3;
-							}
-							else if (is_null1(octree1->linkS)) {
-								// Разбита на 8 равных частей:
-								// 1,2,5,6
-								octree1->b4S = true;
-								octree1->linkS0 = octree1->linkS->link3;
-								octree1->linkS1 = octree1->linkS->link2;
-								octree1->linkS4 = octree1->linkS->link7;
-								octree1->linkS5 = octree1->linkS->link6;
-								octree1->linkS = nullptr;
-							}
-						}
-						else {
-							if (octree1->ilevel - octree1->linkS->ilevel != 1) {
-								
-								if (is_null1_new(octree1->linkS)) {
-									if (DEBUG_ALICE_MESH) {
-										printf("linkS  is_null1_new. \n");
+								// octree1 это лист.
+								bool bSituationX = false;
+								bool bSituationY = false;
+								bool bSituationZ = false;
+
+								if (bold_stable_version) {
+									if (octree1->linkS->minx + 1 == octree1->linkS->maxx) {
+										bSituationX = true;
 									}
-									if (octree1->ilevel - octree1->linkS->ilevel ==2) {
+									if (octree1->linkS->miny + 1 == octree1->linkS->maxy) {
+										bSituationY = true;
+									}
+									if (octree1->linkS->minz + 1 == octree1->linkS->maxz) {
+										bSituationZ = true;
+									}
+									if ((octree1->linkS->link0 != nullptr)) {
+										if (bSituationX != octree1->linkS->link0->brootSituationX) {
+											printf("error ne sovpadenie Situation X.");
+										}
+										if (bSituationY != octree1->linkS->link0->brootSituationY) {
+											printf("error ne sovpadenie Situation Y.");
+										}
+										if (bSituationZ != octree1->linkS->link0->brootSituationZ) {
+											printf("error ne sovpadenie Situation Z.");
+										}
+									}
+								}
+								else {
+									// 4.01.2018 Попробуем так. Чисто на интуиции пока.
+									// Здесь мы сохраняем запрет дробления в заданном координатном направлении.
+									bSituationX = octree1->linkS->link0->brootSituationX;
+									bSituationY = octree1->linkS->link0->brootSituationY;
+									bSituationZ = octree1->linkS->link0->brootSituationZ;
+								}
+
+								// Чрезвычайно коварный случай. 7 сентября 2016.
+								bool bsitY = false;
+								if (((!bSituationY) && (bSituationX) && (bSituationZ))) bsitY = true;
+
+								//if ((!octree1->b_the_geometric_fragmentation) || (octree1->bcrushing_when_balancing)) {
+								if ((octree1->ilevel == octree1->linkS->ilevel) || (bsitY)) {
+									// Не дробленный лист контачит по грани E с дроблённым обектом.
+									if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
+										// вырождение по Х
+										// 0,3,4,7 
+										octree1->b4S = true;
+										octree1->linkS0 = octree1->linkS->link3;
+										octree1->linkS1 = nullptr;
+										octree1->linkS4 = octree1->linkS->link7;
+										octree1->linkS5 = nullptr;
+										octree1->linkS = nullptr;
+									}
+									else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
+										// вырождение по Y
+										// 0,1,4,5 
+										octree1->b4S = true;
+										octree1->linkS0 = octree1->linkS->link0;
+										octree1->linkS1 = octree1->linkS->link1;
+										octree1->linkS4 = octree1->linkS->link4;
+										octree1->linkS5 = octree1->linkS->link5;
+										octree1->linkS = nullptr;
+									}
+									else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
+										// вырождение по Z
+										// 0,1,2,3
+										octree1->b4S = true;
+										octree1->linkS0 = octree1->linkS->link3;
+										octree1->linkS1 = octree1->linkS->link2;
+										octree1->linkS4 = nullptr;
+										octree1->linkS5 = nullptr;
+										octree1->linkS = nullptr;
+									}
+									else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
+										// direction Z
+										// 0,4
+										octree1->b4S = true;
+										octree1->linkS0 = octree1->linkS->link0;
+										octree1->linkS1 = nullptr;
+										octree1->linkS4 = octree1->linkS->link4;
+										octree1->linkS5 = nullptr;
+										octree1->linkS = nullptr;
+									}
+									else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
+										// direction X
+										// 0,1
+										octree1->b4S = true;
+										octree1->linkS0 = octree1->linkS->link0;
+										octree1->linkS1 = octree1->linkS->link1;
+										octree1->linkS4 = nullptr;
+										octree1->linkS5 = nullptr;
+										octree1->linkS = nullptr;
+									}
+									else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
+										// direction Y
+										// 0,3
+										//octree1->b4S = true;
+										//octree1->linkS0 = octree1->linkS->link3;
+										octree1->linkS1 = nullptr;
+										octree1->linkS4 = nullptr;
+										octree1->linkS5 = nullptr;
+										// редуцирование четырёх соседов к одному.
+										octree1->b4S = false;
+										octree1->linkS0 = nullptr;
+										octree1->linkS = octree1->linkS->link3;
+									}
+									else if (is_null1(octree1->linkS)) {
+										// Разбита на 8 равных частей:
+										// 1,2,5,6
+										octree1->b4S = true;
+										octree1->linkS0 = octree1->linkS->link3;
+										octree1->linkS1 = octree1->linkS->link2;
+										octree1->linkS4 = octree1->linkS->link7;
+										octree1->linkS5 = octree1->linkS->link6;
+										octree1->linkS = nullptr;
+									}
+								}
+								else {
+									if (octree1->ilevel - octree1->linkS->ilevel != 1) {
+
+										if (is_null1_new(octree1->linkS)) {
+											if (DEBUG_ALICE_MESH) {
+												printf("linkS  is_null1_new. \n");
+											}
+											if (octree1->ilevel - octree1->linkS->ilevel == 2) {
+												if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
+													// вырождение по Х
+													// 0,3,4,7 
+													// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
+													// Разбита на 8 равных частей:
+													// 0,1,4,5
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkS = octree1->linkS->link7;
+															break;
+														case 5: octree1->linkS = octree1->linkS->link7;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link7;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//0,1,4,5
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link7;
+															break;
+														case 5:octree1->linkS = octree1->linkS->link7;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link7;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+												}
+												else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
+													// вырождение по Y
+													// 0,1,4,5 
+													// (3->0),(2->1),(7->4), (6->5)
+													// Разбита на 8 равных частей:
+													// 0,1,4,5
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkS = octree1->linkS->link4;
+															break;
+														case 5: octree1->linkS = octree1->linkS->link5;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//0,1,4,5
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link4;
+															break;
+														case 5:octree1->linkS = octree1->linkS->link5;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+												}
+												else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
+													// вырождение по Z
+													// 0,1,2,3
+													// (4->0) (5->1) (6->2) (7->3)
+													// Разбита на 8 равных частей:
+													// 0,1,4,5
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link2;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 5: octree1->linkS = octree1->linkS->link2;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//0,1,4,5
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link2;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 5:octree1->linkS = octree1->linkS->link2;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link2;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link2;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+												}
+												else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
+													// direction Z
+													// 0,4
+													// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
+													// Разбита на 8 равных частей:
+													// 0,1,4,5
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkS = octree1->linkS->link4;
+															break;
+														case 5: octree1->linkS = octree1->linkS->link4;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//0,1,4,5
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link4;
+															break;
+														case 5:octree1->linkS = octree1->linkS->link4;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link4;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
+													// direction X
+													// 0,1
+													// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
+													// Разбита на 8 равных частей:
+													// 0,1,4,5
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 5: octree1->linkS = octree1->linkS->link1;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//0,1,4,5
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 5:octree1->linkS = octree1->linkS->link1;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
+													// direction Y
+													// 0,3
+													// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
+													// Разбита на 8 равных частей:
+													// 0,1,4,5
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 5: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//0,1,4,5
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 5:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if (is_null1(octree1->linkS)) {
+													// Разбита на 8 равных частей:
+													// 0,1,4,5
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link2;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkS = octree1->linkS->link7;
+															break;
+														case 5: octree1->linkS = octree1->linkS->link6;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link7;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//0,1,4,5
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link2;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link7;
+															break;
+														case 5:octree1->linkS = octree1->linkS->link6;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1: octree1->linkS = octree1->linkS->link2;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkS = octree1->linkS->link7;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:octree1->linkS = octree1->linkS->link2;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0
+														switch (octree1->parent->root) {
+														case 0: octree1->linkS = octree1->linkS->link3;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+												}
+
+											}
+											else {
+												printf("Fatal error!!! S distance meshdu urovnqmi > 2\n");
+												//system("PAUSE");
+												system("PAUSE");
+												//exit(1);
+											}
+
+										}
+										else {
+											printf("error: linkS nepravilnje urovni.\n");
+
+											char c0 = 0;
+											char c1 = 0;
+											char c2 = 0;
+											char c3 = 0;
+											char c4 = 0;
+											char c5 = 0;
+											char c6 = 0;
+											char c7 = 0;
+											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+#if doubleintprecision == 1
+											printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
+											printf("%lld ", print_link(octree1->linkS->link0));
+											if (octree1->linkS->link0 != nullptr) {
+												printf("%lld ", print_link(octree1->linkS->link0->link0));
+												printf("%lld ", print_link(octree1->linkS->link0->link1));
+												printf("%lld ", print_link(octree1->linkS->link0->link2));
+												printf("%lld ", print_link(octree1->linkS->link0->link3));
+												printf("%lld ", print_link(octree1->linkS->link0->link4));
+												printf("%lld ", print_link(octree1->linkS->link0->link5));
+												printf("%lld ", print_link(octree1->linkS->link0->link6));
+												printf("%lld ", print_link(octree1->linkS->link0->link7));
+											}
+											printf("%lld ", print_link(octree1->linkS->link1));
+											if (octree1->linkS->link1 != nullptr) {
+												printf("%lld ", print_link(octree1->linkS->link1->link0));
+												printf("%lld ", print_link(octree1->linkS->link1->link1));
+												printf("%lld ", print_link(octree1->linkS->link1->link2));
+												printf("%lld ", print_link(octree1->linkS->link1->link3));
+												printf("%lld ", print_link(octree1->linkS->link1->link4));
+												printf("%lld ", print_link(octree1->linkS->link1->link5));
+												printf("%lld ", print_link(octree1->linkS->link1->link6));
+												printf("%lld ", print_link(octree1->linkS->link1->link7));
+											}
+											printf("%lld ", print_link(octree1->linkS->link2));
+											if (octree1->linkS->link2 != nullptr) {
+												printf("%lld ", print_link(octree1->linkS->link2->link0));
+												printf("%lld ", print_link(octree1->linkS->link2->link1));
+												printf("%lld ", print_link(octree1->linkS->link2->link2));
+												printf("%lld ", print_link(octree1->linkS->link2->link3));
+												printf("%lld ", print_link(octree1->linkS->link2->link4));
+												printf("%lld ", print_link(octree1->linkS->link2->link5));
+												printf("%lld ", print_link(octree1->linkS->link2->link6));
+												printf("%lld ", print_link(octree1->linkS->link2->link7));
+											}
+											printf("%lld ", print_link(octree1->linkS->link3));
+											if (octree1->linkS->link3 != nullptr) {
+												printf("%lld ", print_link(octree1->linkS->link3->link0));
+												printf("%lld ", print_link(octree1->linkS->link3->link1));
+												printf("%lld ", print_link(octree1->linkS->link3->link2));
+												printf("%lld ", print_link(octree1->linkS->link3->link3));
+												printf("%lld ", print_link(octree1->linkS->link3->link4));
+												printf("%lld ", print_link(octree1->linkS->link3->link5));
+												printf("%lld ", print_link(octree1->linkS->link3->link6));
+												printf("%lld ", print_link(octree1->linkS->link3->link7));
+											}
+											printf("%lld ", print_link(octree1->linkS->link4));
+											if (octree1->linkS->link4 != nullptr) {
+												printf("%lld ", print_link(octree1->linkS->link4->link0));
+												printf("%lld ", print_link(octree1->linkS->link4->link1));
+												printf("%lld ", print_link(octree1->linkS->link4->link2));
+												printf("%lld ", print_link(octree1->linkS->link4->link3));
+												printf("%lld ", print_link(octree1->linkS->link4->link4));
+												printf("%lld ", print_link(octree1->linkS->link4->link5));
+												printf("%lld ", print_link(octree1->linkS->link4->link6));
+												printf("%lld ", print_link(octree1->linkS->link4->link7));
+											}
+											printf("%lld ", print_link(octree1->linkS->link5));
+											if (octree1->linkS->link5 != nullptr) {
+												printf("%lld ", print_link(octree1->linkS->link5->link0));
+												printf("%lld ", print_link(octree1->linkS->link5->link1));
+												printf("%lld ", print_link(octree1->linkS->link5->link2));
+												printf("%lld ", print_link(octree1->linkS->link5->link3));
+												printf("%lld ", print_link(octree1->linkS->link5->link4));
+												printf("%lld ", print_link(octree1->linkS->link5->link5));
+												printf("%lld ", print_link(octree1->linkS->link5->link6));
+												printf("%lld ", print_link(octree1->linkS->link5->link7));
+											}
+											printf("%lld ", print_link(octree1->linkS->link6));
+											if (octree1->linkS->link6 != nullptr) {
+												printf("%lld ", print_link(octree1->linkS->link6->link0));
+												printf("%lld ", print_link(octree1->linkS->link6->link1));
+												printf("%lld ", print_link(octree1->linkS->link6->link2));
+												printf("%lld ", print_link(octree1->linkS->link6->link3));
+												printf("%lld ", print_link(octree1->linkS->link6->link4));
+												printf("%lld ", print_link(octree1->linkS->link6->link5));
+												printf("%lld ", print_link(octree1->linkS->link6->link6));
+												printf("%lld ", print_link(octree1->linkS->link6->link7));
+											}
+											printf("%lld ", print_link(octree1->linkS->link7));
+											if (oc->linkS->link7 != nullptr) {
+												printf("%lld ", print_link(octree1->linkS->link7->link0));
+												printf("%lld ", print_link(octree1->linkS->link7->link1));
+												printf("%lld ", print_link(octree1->linkS->link7->link2));
+												printf("%lld ", print_link(octree1->linkS->link7->link3));
+												printf("%lld ", print_link(octree1->linkS->link7->link4));
+												printf("%lld ", print_link(octree1->linkS->link7->link5));
+												printf("%lld ", print_link(octree1->linkS->link7->link6));
+												printf("%lld ", print_link(octree1->linkS->link7->link7));
+											}
+#else
+											printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
+											printf("%d ", print_link(octree1->linkS->link0));
+											if (octree1->linkS->link0 != nullptr) {
+												printf("%d ", print_link(octree1->linkS->link0->link0));
+												printf("%d ", print_link(octree1->linkS->link0->link1));
+												printf("%d ", print_link(octree1->linkS->link0->link2));
+												printf("%d ", print_link(octree1->linkS->link0->link3));
+												printf("%d ", print_link(octree1->linkS->link0->link4));
+												printf("%d ", print_link(octree1->linkS->link0->link5));
+												printf("%d ", print_link(octree1->linkS->link0->link6));
+												printf("%d ", print_link(octree1->linkS->link0->link7));
+											}
+											printf("%d ", print_link(octree1->linkS->link1));
+											if (octree1->linkS->link1 != nullptr) {
+												printf("%d ", print_link(octree1->linkS->link1->link0));
+												printf("%d ", print_link(octree1->linkS->link1->link1));
+												printf("%d ", print_link(octree1->linkS->link1->link2));
+												printf("%d ", print_link(octree1->linkS->link1->link3));
+												printf("%d ", print_link(octree1->linkS->link1->link4));
+												printf("%d ", print_link(octree1->linkS->link1->link5));
+												printf("%d ", print_link(octree1->linkS->link1->link6));
+												printf("%d ", print_link(octree1->linkS->link1->link7));
+											}
+											printf("%d ", print_link(octree1->linkS->link2));
+											if (octree1->linkS->link2 != nullptr) {
+												printf("%d ", print_link(octree1->linkS->link2->link0));
+												printf("%d ", print_link(octree1->linkS->link2->link1));
+												printf("%d ", print_link(octree1->linkS->link2->link2));
+												printf("%d ", print_link(octree1->linkS->link2->link3));
+												printf("%d ", print_link(octree1->linkS->link2->link4));
+												printf("%d ", print_link(octree1->linkS->link2->link5));
+												printf("%d ", print_link(octree1->linkS->link2->link6));
+												printf("%d ", print_link(octree1->linkS->link2->link7));
+											}
+											printf("%d ", print_link(octree1->linkS->link3));
+											if (octree1->linkS->link3 != nullptr) {
+												printf("%d ", print_link(octree1->linkS->link3->link0));
+												printf("%d ", print_link(octree1->linkS->link3->link1));
+												printf("%d ", print_link(octree1->linkS->link3->link2));
+												printf("%d ", print_link(octree1->linkS->link3->link3));
+												printf("%d ", print_link(octree1->linkS->link3->link4));
+												printf("%d ", print_link(octree1->linkS->link3->link5));
+												printf("%d ", print_link(octree1->linkS->link3->link6));
+												printf("%d ", print_link(octree1->linkS->link3->link7));
+											}
+											printf("%d ", print_link(octree1->linkS->link4));
+											if (octree1->linkS->link4 != nullptr) {
+												printf("%d ", print_link(octree1->linkS->link4->link0));
+												printf("%d ", print_link(octree1->linkS->link4->link1));
+												printf("%d ", print_link(octree1->linkS->link4->link2));
+												printf("%d ", print_link(octree1->linkS->link4->link3));
+												printf("%d ", print_link(octree1->linkS->link4->link4));
+												printf("%d ", print_link(octree1->linkS->link4->link5));
+												printf("%d ", print_link(octree1->linkS->link4->link6));
+												printf("%d ", print_link(octree1->linkS->link4->link7));
+											}
+											printf("%d ", print_link(octree1->linkS->link5));
+											if (octree1->linkS->link5 != nullptr) {
+												printf("%d ", print_link(octree1->linkS->link5->link0));
+												printf("%d ", print_link(octree1->linkS->link5->link1));
+												printf("%d ", print_link(octree1->linkS->link5->link2));
+												printf("%d ", print_link(octree1->linkS->link5->link3));
+												printf("%d ", print_link(octree1->linkS->link5->link4));
+												printf("%d ", print_link(octree1->linkS->link5->link5));
+												printf("%d ", print_link(octree1->linkS->link5->link6));
+												printf("%d ", print_link(octree1->linkS->link5->link7));
+											}
+											printf("%d ", print_link(octree1->linkS->link6));
+											if (octree1->linkS->link6 != nullptr) {
+												printf("%d ", print_link(octree1->linkS->link6->link0));
+												printf("%d ", print_link(octree1->linkS->link6->link1));
+												printf("%d ", print_link(octree1->linkS->link6->link2));
+												printf("%d ", print_link(octree1->linkS->link6->link3));
+												printf("%d ", print_link(octree1->linkS->link6->link4));
+												printf("%d ", print_link(octree1->linkS->link6->link5));
+												printf("%d ", print_link(octree1->linkS->link6->link6));
+												printf("%d ", print_link(octree1->linkS->link6->link7));
+											}
+											printf("%d ", print_link(octree1->linkS->link7));
+											if (oc->linkS->link7 != nullptr) {
+												printf("%d ", print_link(octree1->linkS->link7->link0));
+												printf("%d ", print_link(octree1->linkS->link7->link1));
+												printf("%d ", print_link(octree1->linkS->link7->link2));
+												printf("%d ", print_link(octree1->linkS->link7->link3));
+												printf("%d ", print_link(octree1->linkS->link7->link4));
+												printf("%d ", print_link(octree1->linkS->link7->link5));
+												printf("%d ", print_link(octree1->linkS->link7->link6));
+												printf("%d ", print_link(octree1->linkS->link7->link7));
+											}
+#endif
+
+											//system("PAUSE");
+											system("PAUSE");
+
+										}
+										//system("PAUSE");
+									}
+									else {
 										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 											// вырождение по Х
 											// 0,3,4,7 
 											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 											// Разбита на 8 равных частей:
 											// 0,1,4,5
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link3;
@@ -25692,10 +28086,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -25714,10 +28108,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//0,1,4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link3;
@@ -25737,10 +28131,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link3;
@@ -25760,10 +28154,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -25782,10 +28176,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link3;
@@ -25805,10 +28199,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -25835,8 +28229,8 @@ void update_link_neighbor(octree* &oc) {
 											// (3->0),(2->1),(7->4), (6->5)
 											// Разбита на 8 равных частей:
 											// 0,1,4,5
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link1;
@@ -25856,10 +28250,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -25878,10 +28272,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//0,1,4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link1;
@@ -25901,10 +28295,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link1;
@@ -25924,10 +28318,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -25946,10 +28340,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link1;
@@ -25969,10 +28363,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -25999,8 +28393,8 @@ void update_link_neighbor(octree* &oc) {
 											// (4->0) (5->1) (6->2) (7->3)
 											// Разбита на 8 равных частей:
 											// 0,1,4,5
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link2;
@@ -26020,10 +28414,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26042,10 +28436,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//0,1,4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link2;
@@ -26065,10 +28459,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link2;
@@ -26088,10 +28482,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26110,10 +28504,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link2;
@@ -26133,10 +28527,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26163,8 +28557,8 @@ void update_link_neighbor(octree* &oc) {
 											// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
 											// Разбита на 8 равных частей:
 											// 0,1,4,5
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link0;
@@ -26184,10 +28578,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -26206,10 +28600,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//0,1,4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link0;
@@ -26229,10 +28623,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link0;
@@ -26252,10 +28646,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -26274,10 +28668,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link0;
@@ -26297,10 +28691,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -26326,8 +28720,8 @@ void update_link_neighbor(octree* &oc) {
 											// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
 											// Разбита на 8 равных частей:
 											// 0,1,4,5
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link1;
@@ -26347,10 +28741,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -26369,10 +28763,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//0,1,4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link1;
@@ -26392,10 +28786,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link1;
@@ -26415,10 +28809,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -26437,10 +28831,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link1;
@@ -26460,10 +28854,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link0;
 													break;
 												case 1:
@@ -26489,8 +28883,8 @@ void update_link_neighbor(octree* &oc) {
 											// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
 											// Разбита на 8 равных частей:
 											// 0,1,4,5
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link3;
@@ -26510,10 +28904,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26532,10 +28926,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//0,1,4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link3;
@@ -26555,10 +28949,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link3;
@@ -26578,10 +28972,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26600,10 +28994,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link3;
@@ -26623,10 +29017,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26649,8 +29043,8 @@ void update_link_neighbor(octree* &oc) {
 										else if (is_null1(octree1->linkS)) {
 											// Разбита на 8 равных частей:
 											// 0,1,4,5
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link2;
@@ -26670,10 +29064,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26692,10 +29086,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//0,1,4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link2;
@@ -26715,10 +29109,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1: octree1->linkS = octree1->linkS->link2;
@@ -26738,10 +29132,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26760,10 +29154,10 @@ void update_link_neighbor(octree* &oc) {
 													break;
 												}
 											}
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:octree1->linkS = octree1->linkS->link2;
@@ -26783,10 +29177,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkS = octree1->linkS->link3;
 													break;
 												case 1:
@@ -26807,1510 +29201,1532 @@ void update_link_neighbor(octree* &oc) {
 											}
 
 										}
-
 									}
-									else {
-										printf("Fatal error!!! S distance meshdu urovnqmi > 2\n");
-										//system("PAUSE");
-										system("PAUSE");
-										//exit(1);
-									}
-
-								}
-								else {
-									printf("error: linkS nepravilnje urovni.\n");
-
-									integer c0 = 0;
-									integer c1 = 0;
-									integer c2 = 0;
-									integer c3 = 0;
-									integer c4 = 0;
-									integer c5 = 0;
-									integer c6 = 0;
-									integer c7 = 0;
-									is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-#if doubleintprecision == 1
-									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
-									printf("%lld ", print_link(octree1->linkS->link0));
-									if (octree1->linkS->link0 != nullptr) {
-										printf("%lld ", print_link(octree1->linkS->link0->link0));
-										printf("%lld ", print_link(octree1->linkS->link0->link1));
-										printf("%lld ", print_link(octree1->linkS->link0->link2));
-										printf("%lld ", print_link(octree1->linkS->link0->link3));
-										printf("%lld ", print_link(octree1->linkS->link0->link4));
-										printf("%lld ", print_link(octree1->linkS->link0->link5));
-										printf("%lld ", print_link(octree1->linkS->link0->link6));
-										printf("%lld ", print_link(octree1->linkS->link0->link7));
-									}
-									printf("%lld ", print_link(octree1->linkS->link1));
-									if (octree1->linkS->link1 != nullptr) {
-										printf("%lld ", print_link(octree1->linkS->link1->link0));
-										printf("%lld ", print_link(octree1->linkS->link1->link1));
-										printf("%lld ", print_link(octree1->linkS->link1->link2));
-										printf("%lld ", print_link(octree1->linkS->link1->link3));
-										printf("%lld ", print_link(octree1->linkS->link1->link4));
-										printf("%lld ", print_link(octree1->linkS->link1->link5));
-										printf("%lld ", print_link(octree1->linkS->link1->link6));
-										printf("%lld ", print_link(octree1->linkS->link1->link7));
-									}
-									printf("%lld ", print_link(octree1->linkS->link2));
-									if (octree1->linkS->link2 != nullptr) {
-										printf("%lld ", print_link(octree1->linkS->link2->link0));
-										printf("%lld ", print_link(octree1->linkS->link2->link1));
-										printf("%lld ", print_link(octree1->linkS->link2->link2));
-										printf("%lld ", print_link(octree1->linkS->link2->link3));
-										printf("%lld ", print_link(octree1->linkS->link2->link4));
-										printf("%lld ", print_link(octree1->linkS->link2->link5));
-										printf("%lld ", print_link(octree1->linkS->link2->link6));
-										printf("%lld ", print_link(octree1->linkS->link2->link7));
-									}
-									printf("%lld ", print_link(octree1->linkS->link3));
-									if (octree1->linkS->link3 != nullptr) {
-										printf("%lld ", print_link(octree1->linkS->link3->link0));
-										printf("%lld ", print_link(octree1->linkS->link3->link1));
-										printf("%lld ", print_link(octree1->linkS->link3->link2));
-										printf("%lld ", print_link(octree1->linkS->link3->link3));
-										printf("%lld ", print_link(octree1->linkS->link3->link4));
-										printf("%lld ", print_link(octree1->linkS->link3->link5));
-										printf("%lld ", print_link(octree1->linkS->link3->link6));
-										printf("%lld ", print_link(octree1->linkS->link3->link7));
-									}
-									printf("%lld ", print_link(octree1->linkS->link4));
-									if (octree1->linkS->link4 != nullptr) {
-										printf("%lld ", print_link(octree1->linkS->link4->link0));
-										printf("%lld ", print_link(octree1->linkS->link4->link1));
-										printf("%lld ", print_link(octree1->linkS->link4->link2));
-										printf("%lld ", print_link(octree1->linkS->link4->link3));
-										printf("%lld ", print_link(octree1->linkS->link4->link4));
-										printf("%lld ", print_link(octree1->linkS->link4->link5));
-										printf("%lld ", print_link(octree1->linkS->link4->link6));
-										printf("%lld ", print_link(octree1->linkS->link4->link7));
-									}
-									printf("%lld ", print_link(octree1->linkS->link5));
-									if (octree1->linkS->link5 != nullptr) {
-										printf("%lld ", print_link(octree1->linkS->link5->link0));
-										printf("%lld ", print_link(octree1->linkS->link5->link1));
-										printf("%lld ", print_link(octree1->linkS->link5->link2));
-										printf("%lld ", print_link(octree1->linkS->link5->link3));
-										printf("%lld ", print_link(octree1->linkS->link5->link4));
-										printf("%lld ", print_link(octree1->linkS->link5->link5));
-										printf("%lld ", print_link(octree1->linkS->link5->link6));
-										printf("%lld ", print_link(octree1->linkS->link5->link7));
-									}
-									printf("%lld ", print_link(octree1->linkS->link6));
-									if (octree1->linkS->link6 != nullptr) {
-										printf("%lld ", print_link(octree1->linkS->link6->link0));
-										printf("%lld ", print_link(octree1->linkS->link6->link1));
-										printf("%lld ", print_link(octree1->linkS->link6->link2));
-										printf("%lld ", print_link(octree1->linkS->link6->link3));
-										printf("%lld ", print_link(octree1->linkS->link6->link4));
-										printf("%lld ", print_link(octree1->linkS->link6->link5));
-										printf("%lld ", print_link(octree1->linkS->link6->link6));
-										printf("%lld ", print_link(octree1->linkS->link6->link7));
-									}
-									printf("%lld ", print_link(octree1->linkS->link7));
-									if (oc->linkS->link7 != nullptr) {
-										printf("%lld ", print_link(octree1->linkS->link7->link0));
-										printf("%lld ", print_link(octree1->linkS->link7->link1));
-										printf("%lld ", print_link(octree1->linkS->link7->link2));
-										printf("%lld ", print_link(octree1->linkS->link7->link3));
-										printf("%lld ", print_link(octree1->linkS->link7->link4));
-										printf("%lld ", print_link(octree1->linkS->link7->link5));
-										printf("%lld ", print_link(octree1->linkS->link7->link6));
-										printf("%lld ", print_link(octree1->linkS->link7->link7));
-									}
-#else
-									printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
-									printf("%d ", print_link(octree1->linkS->link0));
-									if (octree1->linkS->link0 != nullptr) {
-										printf("%d ", print_link(octree1->linkS->link0->link0));
-										printf("%d ", print_link(octree1->linkS->link0->link1));
-										printf("%d ", print_link(octree1->linkS->link0->link2));
-										printf("%d ", print_link(octree1->linkS->link0->link3));
-										printf("%d ", print_link(octree1->linkS->link0->link4));
-										printf("%d ", print_link(octree1->linkS->link0->link5));
-										printf("%d ", print_link(octree1->linkS->link0->link6));
-										printf("%d ", print_link(octree1->linkS->link0->link7));
-									}
-									printf("%d ", print_link(octree1->linkS->link1));
-									if (octree1->linkS->link1 != nullptr) {
-										printf("%d ", print_link(octree1->linkS->link1->link0));
-										printf("%d ", print_link(octree1->linkS->link1->link1));
-										printf("%d ", print_link(octree1->linkS->link1->link2));
-										printf("%d ", print_link(octree1->linkS->link1->link3));
-										printf("%d ", print_link(octree1->linkS->link1->link4));
-										printf("%d ", print_link(octree1->linkS->link1->link5));
-										printf("%d ", print_link(octree1->linkS->link1->link6));
-										printf("%d ", print_link(octree1->linkS->link1->link7));
-									}
-									printf("%d ", print_link(octree1->linkS->link2));
-									if (octree1->linkS->link2 != nullptr) {
-										printf("%d ", print_link(octree1->linkS->link2->link0));
-										printf("%d ", print_link(octree1->linkS->link2->link1));
-										printf("%d ", print_link(octree1->linkS->link2->link2));
-										printf("%d ", print_link(octree1->linkS->link2->link3));
-										printf("%d ", print_link(octree1->linkS->link2->link4));
-										printf("%d ", print_link(octree1->linkS->link2->link5));
-										printf("%d ", print_link(octree1->linkS->link2->link6));
-										printf("%d ", print_link(octree1->linkS->link2->link7));
-									}
-									printf("%d ", print_link(octree1->linkS->link3));
-									if (octree1->linkS->link3 != nullptr) {
-										printf("%d ", print_link(octree1->linkS->link3->link0));
-										printf("%d ", print_link(octree1->linkS->link3->link1));
-										printf("%d ", print_link(octree1->linkS->link3->link2));
-										printf("%d ", print_link(octree1->linkS->link3->link3));
-										printf("%d ", print_link(octree1->linkS->link3->link4));
-										printf("%d ", print_link(octree1->linkS->link3->link5));
-										printf("%d ", print_link(octree1->linkS->link3->link6));
-										printf("%d ", print_link(octree1->linkS->link3->link7));
-									}
-									printf("%d ", print_link(octree1->linkS->link4));
-									if (octree1->linkS->link4 != nullptr) {
-										printf("%d ", print_link(octree1->linkS->link4->link0));
-										printf("%d ", print_link(octree1->linkS->link4->link1));
-										printf("%d ", print_link(octree1->linkS->link4->link2));
-										printf("%d ", print_link(octree1->linkS->link4->link3));
-										printf("%d ", print_link(octree1->linkS->link4->link4));
-										printf("%d ", print_link(octree1->linkS->link4->link5));
-										printf("%d ", print_link(octree1->linkS->link4->link6));
-										printf("%d ", print_link(octree1->linkS->link4->link7));
-									}
-									printf("%d ", print_link(octree1->linkS->link5));
-									if (octree1->linkS->link5 != nullptr) {
-										printf("%d ", print_link(octree1->linkS->link5->link0));
-										printf("%d ", print_link(octree1->linkS->link5->link1));
-										printf("%d ", print_link(octree1->linkS->link5->link2));
-										printf("%d ", print_link(octree1->linkS->link5->link3));
-										printf("%d ", print_link(octree1->linkS->link5->link4));
-										printf("%d ", print_link(octree1->linkS->link5->link5));
-										printf("%d ", print_link(octree1->linkS->link5->link6));
-										printf("%d ", print_link(octree1->linkS->link5->link7));
-									}
-									printf("%d ", print_link(octree1->linkS->link6));
-									if (octree1->linkS->link6 != nullptr) {
-										printf("%d ", print_link(octree1->linkS->link6->link0));
-										printf("%d ", print_link(octree1->linkS->link6->link1));
-										printf("%d ", print_link(octree1->linkS->link6->link2));
-										printf("%d ", print_link(octree1->linkS->link6->link3));
-										printf("%d ", print_link(octree1->linkS->link6->link4));
-										printf("%d ", print_link(octree1->linkS->link6->link5));
-										printf("%d ", print_link(octree1->linkS->link6->link6));
-										printf("%d ", print_link(octree1->linkS->link6->link7));
-									}
-									printf("%d ", print_link(octree1->linkS->link7));
-									if (oc->linkS->link7 != nullptr) {
-										printf("%d ", print_link(octree1->linkS->link7->link0));
-										printf("%d ", print_link(octree1->linkS->link7->link1));
-										printf("%d ", print_link(octree1->linkS->link7->link2));
-										printf("%d ", print_link(octree1->linkS->link7->link3));
-										printf("%d ", print_link(octree1->linkS->link7->link4));
-										printf("%d ", print_link(octree1->linkS->link7->link5));
-										printf("%d ", print_link(octree1->linkS->link7->link6));
-										printf("%d ", print_link(octree1->linkS->link7->link7));
-									}
-#endif
-									
-									//system("PAUSE");
-									system("PAUSE");
-
-								}
-								//system("PAUSE");
-							}
-							else {
-						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
-							// вырождение по Х
-							// 0,3,4,7 
-							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
-							// Разбита на 8 равных частей:
-							// 0,1,4,5
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkS = octree1->linkS->link7;
-									break;
-								case 5: octree1->linkS = octree1->linkS->link7;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
 								}
 							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link7;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//0,1,4,5
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link7;
-									break;
-								case 5:octree1->linkS = octree1->linkS->link7;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link7;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-						}
-						else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
-							// вырождение по Y
-							// 0,1,4,5 
-							// (3->0),(2->1),(7->4), (6->5)
-							// Разбита на 8 равных частей:
-							// 0,1,4,5
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkS = octree1->linkS->link4;
-									break;
-								case 5: octree1->linkS = octree1->linkS->link5;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//0,1,4,5
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link4;
-									break;
-								case 5:octree1->linkS = octree1->linkS->link5;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-						}
-						else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
-							// вырождение по Z
-							// 0,1,2,3
-							// (4->0) (5->1) (6->2) (7->3)
-							// Разбита на 8 равных частей:
-							// 0,1,4,5
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link2;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 5: octree1->linkS = octree1->linkS->link2;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//0,1,4,5
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link2;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 5:octree1->linkS = octree1->linkS->link2;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link2;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link2;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-						}
-						else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
-							// direction Z
-							// 0,4
-							// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
-							// Разбита на 8 равных частей:
-							// 0,1,4,5
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkS = octree1->linkS->link4;
-									break;
-								case 5: octree1->linkS = octree1->linkS->link4;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//0,1,4,5
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link4;
-									break;
-								case 5:octree1->linkS = octree1->linkS->link4;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link4;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
-							// direction X
-							// 0,1
-							// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
-							// Разбита на 8 равных частей:
-							// 0,1,4,5
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 5: octree1->linkS = octree1->linkS->link1;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//0,1,4,5
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 5:octree1->linkS = octree1->linkS->link1;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
-							// direction Y
-							// 0,3
-							// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
-							// Разбита на 8 равных частей:
-							// 0,1,4,5
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 5: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//0,1,4,5
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 5:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if (is_null1(octree1->linkS)) {
-							// Разбита на 8 равных частей:
-							// 0,1,4,5
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link2;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkS = octree1->linkS->link7;
-									break;
-								case 5: octree1->linkS = octree1->linkS->link6;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link7;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//0,1,4,5
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link2;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link7;
-									break;
-								case 5:octree1->linkS = octree1->linkS->link6;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1: octree1->linkS = octree1->linkS->link2;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkS = octree1->linkS->link7;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:octree1->linkS = octree1->linkS->link2;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0
-								switch (octree1->root) {
-								case 0: octree1->linkS = octree1->linkS->link3;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-						}
-						}
-						}
 						}
 					}
+
 					}
 
+					//#pragma omp section
+					{
 					// А другие случаи исключаются при додроблении.
 					// одиночная связь, НЕ 4
 					if (octree1->b4T == false) {
-					if (octree1->linkT != nullptr) {
-						if (octree1->linkT->link0!=nullptr) {
-							if ((octree1->linkT->link1 == nullptr) && (octree1->linkT->link2 == nullptr) && (octree1->linkT->link3 == nullptr) && (octree1->linkT->link4 == nullptr) && (octree1->linkT->link5 == nullptr) && (octree1->linkT->link6 == nullptr) && (octree1->linkT->link7 == nullptr)) {
-								printf("error: octree1->linkT->link0!=nullptr a na samom dele ==nullptr\n");
-								//system("PAUSE");
-								system("PAUSE");
-								exit(1);
-							}
-
-						// octree1 это лист.
-						bool bSituationX = false;
-						bool bSituationY = false;
-						bool bSituationZ = false;
-
-						if (bold_stable_version) {
-							if (octree1->linkT->minx + 1 == octree1->linkT->maxx) {
-								bSituationX = true;
-							}
-							if (octree1->linkT->miny + 1 == octree1->linkT->maxy) {
-								bSituationY = true;
-							}
-							if (octree1->linkT->minz + 1 == octree1->linkT->maxz) {
-								bSituationZ = true;
-							}
-							if ((octree1->linkT->link0 != nullptr)) {
-								if (bSituationX != octree1->linkT->link0->brootSituationX) {
-									printf("error ne sovpadenie Situation X.");
+						if (octree1->linkT != nullptr) {
+							if (octree1->linkT->link0 != nullptr) {
+								if ((octree1->linkT->link1 == nullptr) && (octree1->linkT->link2 == nullptr) && (octree1->linkT->link3 == nullptr) && (octree1->linkT->link4 == nullptr) && (octree1->linkT->link5 == nullptr) && (octree1->linkT->link6 == nullptr) && (octree1->linkT->link7 == nullptr)) {
+									printf("error: octree1->linkT->link0!=nullptr a na samom dele ==nullptr\n");
+									//system("PAUSE");
+									system("PAUSE");
+									exit(1);
 								}
-								if (bSituationY != octree1->linkT->link0->brootSituationY) {
-									printf("error ne sovpadenie Situation Y.");
-								}
-								if (bSituationZ != octree1->linkT->link0->brootSituationZ) {
-									printf("error ne sovpadenie Situation Z.");
-								}
-							}
-						}
-						else {
-							// 4.01.2018 Попробуем так. Чисто на интуиции пока.
-							// Здесь мы сохраняем запрет дробления в заданном координатном направлении.
-							bSituationX = octree1->linkT->link0->brootSituationX;
-							bSituationY = octree1->linkT->link0->brootSituationY;
-							bSituationZ = octree1->linkT->link0->brootSituationZ;
-						}
 
+								// octree1 это лист.
+								bool bSituationX = false;
+								bool bSituationY = false;
+								bool bSituationZ = false;
 
-						// Чрезвычайно коварный случай. 7сентября 2016.
-						bool bsitZ = false;
-						if (((!bSituationZ) && (bSituationX) && (bSituationY))) bsitZ = true;
-
-						//if ((!octree1->b_the_geometric_fragmentation) || (octree1->bcrushing_when_balancing)) {
-						if ((octree1->ilevel==octree1->linkT->ilevel)||(bsitZ)) {
-						// Не дробленный лист контачит по грани E с дроблённым обектом.
-							if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
-								// вырождение по Х
-								// 0,3,4,7 
-								octree1->b4T = true;
-								octree1->linkT4 = octree1->linkT->link0;
-								octree1->linkT5 = nullptr; 
-								octree1->linkT6 = nullptr; 
-								octree1->linkT7 = octree1->linkT->link3;
-								octree1->linkT = nullptr;
-							}
-							else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
-								// вырождение по Y
-								// 0,1,4,5 
-								octree1->b4T = true;
-								octree1->linkT4 = octree1->linkT->link0;
-								octree1->linkT5 = octree1->linkT->link1;
-								octree1->linkT6 = nullptr; 
-								octree1->linkT7 = nullptr; 
-								octree1->linkT = nullptr;
-							}
-							else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
-								// вырождение по Z
-								// 0,1,2,3
-								octree1->b4T = true;
-								octree1->linkT4 = octree1->linkT->link0;
-								octree1->linkT5 = octree1->linkT->link1;
-								octree1->linkT6 = octree1->linkT->link2;
-								octree1->linkT7 = octree1->linkT->link3;
-								octree1->linkT = nullptr;
-							}
-							else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
-								// direction Z
-								// 0,4
-								//octree1->b4T = true;
-								//octree1->linkT4 = octree1->linkT->link0;
-								octree1->linkT5 = nullptr; 
-								octree1->linkT6 = nullptr; 
-								octree1->linkT7 = nullptr; 
-								// Вырождение четырёх соседов к одному.
-								octree1->b4T = false;
-								octree1->linkT4 = nullptr;
-								octree1->linkT = octree1->linkT->link0;
-							}
-							else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
-								// direction X
-								// 0,1
-								octree1->b4T = true;
-								octree1->linkT4 = octree1->linkT->link0;
-								octree1->linkT5 = octree1->linkT->link1;
-								octree1->linkT6 = nullptr; 
-								octree1->linkT7 = nullptr;
-								octree1->linkT = nullptr;
-							}
-							else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
-								// direction Y
-								// 0,3
-								octree1->b4T = true;
-								octree1->linkT4 = octree1->linkT->link0;
-								octree1->linkT5 = nullptr; 
-								octree1->linkT6 = nullptr; 
-								octree1->linkT7 = octree1->linkT->link3;
-								octree1->linkT = nullptr;
-							}
-							else if (is_null1(octree1->linkT)) {
-								// Разбита на 8 равных частей:
-								// 1,2,5,6
-								octree1->b4T = true;
-								octree1->linkT4 = octree1->linkT->link0;
-								octree1->linkT5 = octree1->linkT->link1;
-								octree1->linkT6 = octree1->linkT->link2;
-								octree1->linkT7 = octree1->linkT->link3;
-								octree1->linkT = nullptr;
-							}
-						}
-						else {
-							if (octree1->ilevel - octree1->linkT->ilevel != 1) {
-								
-								if (is_null1_new(octree1->linkT)) {
-									if (DEBUG_ALICE_MESH) {
-										printf("linkT  is_null1_new. \n");
+								if (bold_stable_version) {
+									if (octree1->linkT->minx + 1 == octree1->linkT->maxx) {
+										bSituationX = true;
 									}
-									if (octree1->ilevel - octree1->linkT->ilevel ==2) {
+									if (octree1->linkT->miny + 1 == octree1->linkT->maxy) {
+										bSituationY = true;
+									}
+									if (octree1->linkT->minz + 1 == octree1->linkT->maxz) {
+										bSituationZ = true;
+									}
+									if ((octree1->linkT->link0 != nullptr)) {
+										if (bSituationX != octree1->linkT->link0->brootSituationX) {
+											printf("error ne sovpadenie Situation X.");
+										}
+										if (bSituationY != octree1->linkT->link0->brootSituationY) {
+											printf("error ne sovpadenie Situation Y.");
+										}
+										if (bSituationZ != octree1->linkT->link0->brootSituationZ) {
+											printf("error ne sovpadenie Situation Z.");
+										}
+									}
+								}
+								else {
+									// 4.01.2018 Попробуем так. Чисто на интуиции пока.
+									// Здесь мы сохраняем запрет дробления в заданном координатном направлении.
+									bSituationX = octree1->linkT->link0->brootSituationX;
+									bSituationY = octree1->linkT->link0->brootSituationY;
+									bSituationZ = octree1->linkT->link0->brootSituationZ;
+								}
+
+
+								// Чрезвычайно коварный случай. 7сентября 2016.
+								bool bsitZ = false;
+								if (((!bSituationZ) && (bSituationX) && (bSituationY))) bsitZ = true;
+
+								//if ((!octree1->b_the_geometric_fragmentation) || (octree1->bcrushing_when_balancing)) {
+								if ((octree1->ilevel == octree1->linkT->ilevel) || (bsitZ)) {
+									// Не дробленный лист контачит по грани E с дроблённым обектом.
+									if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
+										// вырождение по Х
+										// 0,3,4,7 
+										octree1->b4T = true;
+										octree1->linkT4 = octree1->linkT->link0;
+										octree1->linkT5 = nullptr;
+										octree1->linkT6 = nullptr;
+										octree1->linkT7 = octree1->linkT->link3;
+										octree1->linkT = nullptr;
+									}
+									else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
+										// вырождение по Y
+										// 0,1,4,5 
+										octree1->b4T = true;
+										octree1->linkT4 = octree1->linkT->link0;
+										octree1->linkT5 = octree1->linkT->link1;
+										octree1->linkT6 = nullptr;
+										octree1->linkT7 = nullptr;
+										octree1->linkT = nullptr;
+									}
+									else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
+										// вырождение по Z
+										// 0,1,2,3
+										octree1->b4T = true;
+										octree1->linkT4 = octree1->linkT->link0;
+										octree1->linkT5 = octree1->linkT->link1;
+										octree1->linkT6 = octree1->linkT->link2;
+										octree1->linkT7 = octree1->linkT->link3;
+										octree1->linkT = nullptr;
+									}
+									else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
+										// direction Z
+										// 0,4
+										//octree1->b4T = true;
+										//octree1->linkT4 = octree1->linkT->link0;
+										octree1->linkT5 = nullptr;
+										octree1->linkT6 = nullptr;
+										octree1->linkT7 = nullptr;
+										// Вырождение четырёх соседов к одному.
+										octree1->b4T = false;
+										octree1->linkT4 = nullptr;
+										octree1->linkT = octree1->linkT->link0;
+									}
+									else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
+										// direction X
+										// 0,1
+										octree1->b4T = true;
+										octree1->linkT4 = octree1->linkT->link0;
+										octree1->linkT5 = octree1->linkT->link1;
+										octree1->linkT6 = nullptr;
+										octree1->linkT7 = nullptr;
+										octree1->linkT = nullptr;
+									}
+									else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
+										// direction Y
+										// 0,3
+										octree1->b4T = true;
+										octree1->linkT4 = octree1->linkT->link0;
+										octree1->linkT5 = nullptr;
+										octree1->linkT6 = nullptr;
+										octree1->linkT7 = octree1->linkT->link3;
+										octree1->linkT = nullptr;
+									}
+									else if (is_null1(octree1->linkT)) {
+										// Разбита на 8 равных частей:
+										// 1,2,5,6
+										octree1->b4T = true;
+										octree1->linkT4 = octree1->linkT->link0;
+										octree1->linkT5 = octree1->linkT->link1;
+										octree1->linkT6 = octree1->linkT->link2;
+										octree1->linkT7 = octree1->linkT->link3;
+										octree1->linkT = nullptr;
+									}
+								}
+								else {
+									if (octree1->ilevel - octree1->linkT->ilevel != 1) {
+
+										if (is_null1_new(octree1->linkT)) {
+											if (DEBUG_ALICE_MESH) {
+												printf("linkT  is_null1_new. \n");
+											}
+											if (octree1->ilevel - octree1->linkT->ilevel == 2) {
+												if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
+													// вырождение по Х
+													// 0,3,4,7 
+													// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
+													// Разбита на 8 равных частей:
+													// 4,5,6,7
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 6: octree1->linkT = octree1->linkT->link3;
+															break;
+														case 7: octree1->linkT = octree1->linkT->link3;
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 4,7
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkT = octree1->linkT->link3;
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//4,5
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1,2,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 2:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 3:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+
+												}
+												else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
+													// вырождение по Y
+													// 0,1,4,5 
+													// (3->0),(2->1),(7->4), (6->5)
+													// Разбита на 8 равных частей:
+													// 4,5,6,7
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 6: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 7: octree1->linkT = octree1->linkT->link0;
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 4,7
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkT = octree1->linkT->link0;
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//4,5
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1,2,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 2:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 3:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
+													// вырождение по Z
+													// 0,1,2,3
+													// (4->0) (5->1) (6->2) (7->3)
+													// Разбита на 8 равных частей:
+													// 4,5,6,7
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 6: octree1->linkT = octree1->linkT->link2;
+															break;
+														case 7: octree1->linkT = octree1->linkT->link3;
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 4,7
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkT = octree1->linkT->link3;
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//4,5
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1,2,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 2:octree1->linkT = octree1->linkT->link2;
+															break;
+														case 3:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
+													// direction Z
+													// 0,4
+													// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
+													// Разбита на 8 равных частей:
+													// 4,5,6,7
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 6: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 7: octree1->linkT = octree1->linkT->link0;
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 4,7
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkT = octree1->linkT->link0;
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//4,5
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1,2,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 2:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 3:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
+													// direction X
+													// 0,1
+													// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
+													// Разбита на 8 равных частей:
+													// 4,5,6,7
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 6: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 7: octree1->linkT = octree1->linkT->link0;
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 4,7
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkT = octree1->linkT->link0;
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//4,5
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1,2,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 2:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 3:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
+													// direction Y
+													// 0,3
+													// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
+													// Разбита на 8 равных частей:
+													// 4,5,6,7
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 6: octree1->linkT = octree1->linkT->link3;
+															break;
+														case 7: octree1->linkT = octree1->linkT->link3;
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 4,7
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkT = octree1->linkT->link3;
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//4,5
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1,2,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 2:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 3:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+												}
+												else if (is_null1(octree1->linkT)) {
+													// Разбита на 8 равных частей:
+													// 4,5,6,7
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 6: octree1->linkT = octree1->linkT->link2;
+															break;
+														case 7: octree1->linkT = octree1->linkT->link3;
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Х
+														// 4,7
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:octree1->linkT = octree1->linkT->link3;
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// вырождение по Y
+														//4,5
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// вырождение по Z
+														//0,1,2,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1: octree1->linkT = octree1->linkT->link1;
+															break;
+														case 2:octree1->linkT = octree1->linkT->link2;
+															break;
+														case 3:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+														// direction Z
+														// 0,4
+														switch (octree1->parent->root) {
+														case 0:
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction X
+														//0,1
+														switch (octree1->parent->root) {
+														case 0:octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:octree1->linkT = octree1->linkT->link1;
+															break;
+														case 2:
+															break;
+														case 3:
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+													if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+														// direction Y
+														//0,3
+														switch (octree1->parent->root) {
+														case 0: octree1->linkT = octree1->linkT->link0;
+															break;
+														case 1:
+															break;
+														case 2:
+															break;
+														case 3:octree1->linkT = octree1->linkT->link3;
+															break;
+														case 4:
+															break;
+														case 5:
+															break;
+														case 6:
+															break;
+														case 7:
+															break;
+														}
+													}
+
+												}
+
+											}
+											else {
+												printf("Fatal error!!! T distance meshdu urovnqmi > 2\n");
+												//system("PAUSE");
+												system("PAUSE");
+												//exit(1);
+											}
+
+										}
+										else {
+											printf("error: linkT nepravilnje urovni.\n");
+
+											char c0 = 0;
+											char c1 = 0;
+											char c2 = 0;
+											char c3 = 0;
+											char c4 = 0;
+											char c5 = 0;
+											char c6 = 0;
+											char c7 = 0;
+											is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+#if doubleintprecision == 1
+											printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
+											printf("%lld ", print_link(octree1->linkT->link0));
+											if (octree1->linkT->link0 != nullptr) {
+												printf("%lld ", print_link(octree1->linkT->link0->link0));
+												printf("%lld ", print_link(octree1->linkT->link0->link1));
+												printf("%lld ", print_link(octree1->linkT->link0->link2));
+												printf("%lld ", print_link(octree1->linkT->link0->link3));
+												printf("%lld ", print_link(octree1->linkT->link0->link4));
+												printf("%lld ", print_link(octree1->linkT->link0->link5));
+												printf("%lld ", print_link(octree1->linkT->link0->link6));
+												printf("%lld ", print_link(octree1->linkT->link0->link7));
+											}
+											printf("%lld ", print_link(octree1->linkT->link1));
+											if (octree1->linkT->link1 != nullptr) {
+												printf("%lld ", print_link(octree1->linkT->link1->link0));
+												printf("%lld ", print_link(octree1->linkT->link1->link1));
+												printf("%lld ", print_link(octree1->linkT->link1->link2));
+												printf("%lld ", print_link(octree1->linkT->link1->link3));
+												printf("%lld ", print_link(octree1->linkT->link1->link4));
+												printf("%lld ", print_link(octree1->linkT->link1->link5));
+												printf("%lld ", print_link(octree1->linkT->link1->link6));
+												printf("%lld ", print_link(octree1->linkT->link1->link7));
+											}
+											printf("%lld ", print_link(octree1->linkT->link2));
+											if (octree1->linkT->link2 != nullptr) {
+												printf("%lld ", print_link(octree1->linkT->link2->link0));
+												printf("%lld ", print_link(octree1->linkT->link2->link1));
+												printf("%lld ", print_link(octree1->linkT->link2->link2));
+												printf("%lld ", print_link(octree1->linkT->link2->link3));
+												printf("%lld ", print_link(octree1->linkT->link2->link4));
+												printf("%lld ", print_link(octree1->linkT->link2->link5));
+												printf("%lld ", print_link(octree1->linkT->link2->link6));
+												printf("%lld ", print_link(octree1->linkT->link2->link7));
+											}
+											printf("%lld ", print_link(octree1->linkT->link3));
+											if (octree1->linkT->link3 != nullptr) {
+												printf("%lld ", print_link(octree1->linkT->link3->link0));
+												printf("%lld ", print_link(octree1->linkT->link3->link1));
+												printf("%lld ", print_link(octree1->linkT->link3->link2));
+												printf("%lld ", print_link(octree1->linkT->link3->link3));
+												printf("%lld ", print_link(octree1->linkT->link3->link4));
+												printf("%lld ", print_link(octree1->linkT->link3->link5));
+												printf("%lld ", print_link(octree1->linkT->link3->link6));
+												printf("%lld ", print_link(octree1->linkT->link3->link7));
+											}
+											printf("%lld ", print_link(octree1->linkT->link4));
+											if (octree1->linkT->link4 != nullptr) {
+												printf("%lld ", print_link(octree1->linkT->link4->link0));
+												printf("%lld ", print_link(octree1->linkT->link4->link1));
+												printf("%lld ", print_link(octree1->linkT->link4->link2));
+												printf("%lld ", print_link(octree1->linkT->link4->link3));
+												printf("%lld ", print_link(octree1->linkT->link4->link4));
+												printf("%lld ", print_link(octree1->linkT->link4->link5));
+												printf("%lld ", print_link(octree1->linkT->link4->link6));
+												printf("%lld ", print_link(octree1->linkT->link4->link7));
+											}
+											printf("%lld ", print_link(octree1->linkT->link5));
+											if (octree1->linkT->link5 != nullptr) {
+												printf("%lld ", print_link(octree1->linkT->link5->link0));
+												printf("%lld ", print_link(octree1->linkT->link5->link1));
+												printf("%lld ", print_link(octree1->linkT->link5->link2));
+												printf("%lld ", print_link(octree1->linkT->link5->link3));
+												printf("%lld ", print_link(octree1->linkT->link5->link4));
+												printf("%lld ", print_link(octree1->linkT->link5->link5));
+												printf("%lld ", print_link(octree1->linkT->link5->link6));
+												printf("%lld ", print_link(octree1->linkT->link5->link7));
+											}
+											printf("%lld ", print_link(octree1->linkT->link6));
+											if (octree1->linkT->link6 != nullptr) {
+												printf("%lld ", print_link(octree1->linkT->link6->link0));
+												printf("%lld ", print_link(octree1->linkT->link6->link1));
+												printf("%lld ", print_link(octree1->linkT->link6->link2));
+												printf("%lld ", print_link(octree1->linkT->link6->link3));
+												printf("%lld ", print_link(octree1->linkT->link6->link4));
+												printf("%lld ", print_link(octree1->linkT->link6->link5));
+												printf("%lld ", print_link(octree1->linkT->link6->link6));
+												printf("%lld ", print_link(octree1->linkT->link6->link7));
+											}
+											printf("%lld ", print_link(octree1->linkT->link7));
+											if (oc->linkT->link7 != nullptr) {
+												printf("%lld ", print_link(octree1->linkT->link7->link0));
+												printf("%lld ", print_link(octree1->linkT->link7->link1));
+												printf("%lld ", print_link(octree1->linkT->link7->link2));
+												printf("%lld ", print_link(octree1->linkT->link7->link3));
+												printf("%lld ", print_link(octree1->linkT->link7->link4));
+												printf("%lld ", print_link(octree1->linkT->link7->link5));
+												printf("%lld ", print_link(octree1->linkT->link7->link6));
+												printf("%lld ", print_link(octree1->linkT->link7->link7));
+											}
+#else
+											printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
+											printf("%d ", print_link(octree1->linkT->link0));
+											if (octree1->linkT->link0 != nullptr) {
+												printf("%d ", print_link(octree1->linkT->link0->link0));
+												printf("%d ", print_link(octree1->linkT->link0->link1));
+												printf("%d ", print_link(octree1->linkT->link0->link2));
+												printf("%d ", print_link(octree1->linkT->link0->link3));
+												printf("%d ", print_link(octree1->linkT->link0->link4));
+												printf("%d ", print_link(octree1->linkT->link0->link5));
+												printf("%d ", print_link(octree1->linkT->link0->link6));
+												printf("%d ", print_link(octree1->linkT->link0->link7));
+											}
+											printf("%d ", print_link(octree1->linkT->link1));
+											if (octree1->linkT->link1 != nullptr) {
+												printf("%d ", print_link(octree1->linkT->link1->link0));
+												printf("%d ", print_link(octree1->linkT->link1->link1));
+												printf("%d ", print_link(octree1->linkT->link1->link2));
+												printf("%d ", print_link(octree1->linkT->link1->link3));
+												printf("%d ", print_link(octree1->linkT->link1->link4));
+												printf("%d ", print_link(octree1->linkT->link1->link5));
+												printf("%d ", print_link(octree1->linkT->link1->link6));
+												printf("%d ", print_link(octree1->linkT->link1->link7));
+											}
+											printf("%d ", print_link(octree1->linkT->link2));
+											if (octree1->linkT->link2 != nullptr) {
+												printf("%d ", print_link(octree1->linkT->link2->link0));
+												printf("%d ", print_link(octree1->linkT->link2->link1));
+												printf("%d ", print_link(octree1->linkT->link2->link2));
+												printf("%d ", print_link(octree1->linkT->link2->link3));
+												printf("%d ", print_link(octree1->linkT->link2->link4));
+												printf("%d ", print_link(octree1->linkT->link2->link5));
+												printf("%d ", print_link(octree1->linkT->link2->link6));
+												printf("%d ", print_link(octree1->linkT->link2->link7));
+											}
+											printf("%d ", print_link(octree1->linkT->link3));
+											if (octree1->linkT->link3 != nullptr) {
+												printf("%d ", print_link(octree1->linkT->link3->link0));
+												printf("%d ", print_link(octree1->linkT->link3->link1));
+												printf("%d ", print_link(octree1->linkT->link3->link2));
+												printf("%d ", print_link(octree1->linkT->link3->link3));
+												printf("%d ", print_link(octree1->linkT->link3->link4));
+												printf("%d ", print_link(octree1->linkT->link3->link5));
+												printf("%d ", print_link(octree1->linkT->link3->link6));
+												printf("%d ", print_link(octree1->linkT->link3->link7));
+											}
+											printf("%d ", print_link(octree1->linkT->link4));
+											if (octree1->linkT->link4 != nullptr) {
+												printf("%d ", print_link(octree1->linkT->link4->link0));
+												printf("%d ", print_link(octree1->linkT->link4->link1));
+												printf("%d ", print_link(octree1->linkT->link4->link2));
+												printf("%d ", print_link(octree1->linkT->link4->link3));
+												printf("%d ", print_link(octree1->linkT->link4->link4));
+												printf("%d ", print_link(octree1->linkT->link4->link5));
+												printf("%d ", print_link(octree1->linkT->link4->link6));
+												printf("%d ", print_link(octree1->linkT->link4->link7));
+											}
+											printf("%d ", print_link(octree1->linkT->link5));
+											if (octree1->linkT->link5 != nullptr) {
+												printf("%d ", print_link(octree1->linkT->link5->link0));
+												printf("%d ", print_link(octree1->linkT->link5->link1));
+												printf("%d ", print_link(octree1->linkT->link5->link2));
+												printf("%d ", print_link(octree1->linkT->link5->link3));
+												printf("%d ", print_link(octree1->linkT->link5->link4));
+												printf("%d ", print_link(octree1->linkT->link5->link5));
+												printf("%d ", print_link(octree1->linkT->link5->link6));
+												printf("%d ", print_link(octree1->linkT->link5->link7));
+											}
+											printf("%d ", print_link(octree1->linkT->link6));
+											if (octree1->linkT->link6 != nullptr) {
+												printf("%d ", print_link(octree1->linkT->link6->link0));
+												printf("%d ", print_link(octree1->linkT->link6->link1));
+												printf("%d ", print_link(octree1->linkT->link6->link2));
+												printf("%d ", print_link(octree1->linkT->link6->link3));
+												printf("%d ", print_link(octree1->linkT->link6->link4));
+												printf("%d ", print_link(octree1->linkT->link6->link5));
+												printf("%d ", print_link(octree1->linkT->link6->link6));
+												printf("%d ", print_link(octree1->linkT->link6->link7));
+											}
+											printf("%d ", print_link(octree1->linkT->link7));
+											if (oc->linkT->link7 != nullptr) {
+												printf("%d ", print_link(octree1->linkT->link7->link0));
+												printf("%d ", print_link(octree1->linkT->link7->link1));
+												printf("%d ", print_link(octree1->linkT->link7->link2));
+												printf("%d ", print_link(octree1->linkT->link7->link3));
+												printf("%d ", print_link(octree1->linkT->link7->link4));
+												printf("%d ", print_link(octree1->linkT->link7->link5));
+												printf("%d ", print_link(octree1->linkT->link7->link6));
+												printf("%d ", print_link(octree1->linkT->link7->link7));
+											}
+#endif
+
+
+											//system("PAUSE");
+											system("PAUSE");
+
+										}
+
+
+
+										//system("PAUSE");
+									}
+									else {
 										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 											// вырождение по Х
 											// 0,3,4,7 
 											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 											// Разбита на 8 равных частей:
 											// 4,5,6,7
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28330,10 +30746,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 4,7
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28353,10 +30769,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28376,10 +30792,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1,2,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1: octree1->linkT = octree1->linkT->link0;
@@ -28399,10 +30815,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28422,10 +30838,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:octree1->linkT = octree1->linkT->link0;
@@ -28445,10 +30861,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:
@@ -28476,8 +30892,8 @@ void update_link_neighbor(octree* &oc) {
 											// (3->0),(2->1),(7->4), (6->5)
 											// Разбита на 8 равных частей:
 											// 4,5,6,7
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28497,10 +30913,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 4,7
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28520,10 +30936,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28543,10 +30959,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1,2,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1: octree1->linkT = octree1->linkT->link1;
@@ -28566,10 +30982,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28589,10 +31005,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:octree1->linkT = octree1->linkT->link1;
@@ -28612,10 +31028,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:
@@ -28641,8 +31057,8 @@ void update_link_neighbor(octree* &oc) {
 											// (4->0) (5->1) (6->2) (7->3)
 											// Разбита на 8 равных частей:
 											// 4,5,6,7
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28662,10 +31078,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 4,7
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28685,10 +31101,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28708,10 +31124,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1,2,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1: octree1->linkT = octree1->linkT->link1;
@@ -28731,10 +31147,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28754,10 +31170,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:octree1->linkT = octree1->linkT->link1;
@@ -28777,10 +31193,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:
@@ -28806,8 +31222,8 @@ void update_link_neighbor(octree* &oc) {
 											// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
 											// Разбита на 8 равных частей:
 											// 4,5,6,7
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28827,10 +31243,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 4,7
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28850,10 +31266,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28873,10 +31289,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1,2,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1: octree1->linkT = octree1->linkT->link0;
@@ -28896,10 +31312,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28919,10 +31335,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:octree1->linkT = octree1->linkT->link0;
@@ -28942,10 +31358,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:
@@ -28971,9 +31387,8 @@ void update_link_neighbor(octree* &oc) {
 											// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
 											// Разбита на 8 равных частей:
 											// 4,5,6,7
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-											
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -28993,10 +31408,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 4,7
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29016,10 +31431,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29039,10 +31454,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1,2,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1: octree1->linkT = octree1->linkT->link1;
@@ -29062,10 +31477,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29085,10 +31500,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:octree1->linkT = octree1->linkT->link1;
@@ -29108,10 +31523,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:
@@ -29137,8 +31552,8 @@ void update_link_neighbor(octree* &oc) {
 											// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
 											// Разбита на 8 равных частей:
 											// 4,5,6,7
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29158,10 +31573,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 4,7
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29181,10 +31596,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29204,10 +31619,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1,2,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1: octree1->linkT = octree1->linkT->link0;
@@ -29227,10 +31642,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29250,10 +31665,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:octree1->linkT = octree1->linkT->link0;
@@ -29273,10 +31688,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:
@@ -29299,8 +31714,8 @@ void update_link_neighbor(octree* &oc) {
 										else if (is_null1(octree1->linkT)) {
 											// Разбита на 8 равных частей:
 											// 4,5,6,7
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
-												switch (octree1->parent->root) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29320,10 +31735,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Х
 												// 4,7
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29343,10 +31758,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// вырождение по Y
 												//4,5
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29366,10 +31781,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// вырождение по Z
 												//0,1,2,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1: octree1->linkT = octree1->linkT->link1;
@@ -29389,10 +31804,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
 												// direction Z
 												// 0,4
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:
 													break;
 												case 1:
@@ -29412,10 +31827,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((!octree1->parent->brootSituationX) && (octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction X
 												//0,1
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0:octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:octree1->linkT = octree1->linkT->link1;
@@ -29435,10 +31850,10 @@ void update_link_neighbor(octree* &oc) {
 												}
 											}
 
-											if ((octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (octree1->parent->brootSituationZ)) {
+											if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
 												// direction Y
 												//0,3
-												switch (octree1->parent->root) {
+												switch (octree1->root) {
 												case 0: octree1->linkT = octree1->linkT->link0;
 													break;
 												case 1:
@@ -29459,1381 +31874,15 @@ void update_link_neighbor(octree* &oc) {
 											}
 
 										}
-
 									}
-									else {
-										printf("Fatal error!!! T distance meshdu urovnqmi > 2\n");
-										//system("PAUSE");
-										system("PAUSE");
-										//exit(1);
-									}
-
-								}
-								else {
-									printf("error: linkT nepravilnje urovni.\n");
-
-									integer c0 = 0;
-									integer c1 = 0;
-									integer c2 = 0;
-									integer c3 = 0;
-									integer c4 = 0;
-									integer c5 = 0;
-									integer c6 = 0;
-									integer c7 = 0;
-									is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-#if doubleintprecision == 1
-									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
-									printf("%lld ", print_link(octree1->linkT->link0));
-									if (octree1->linkT->link0 != nullptr) {
-										printf("%lld ", print_link(octree1->linkT->link0->link0));
-										printf("%lld ", print_link(octree1->linkT->link0->link1));
-										printf("%lld ", print_link(octree1->linkT->link0->link2));
-										printf("%lld ", print_link(octree1->linkT->link0->link3));
-										printf("%lld ", print_link(octree1->linkT->link0->link4));
-										printf("%lld ", print_link(octree1->linkT->link0->link5));
-										printf("%lld ", print_link(octree1->linkT->link0->link6));
-										printf("%lld ", print_link(octree1->linkT->link0->link7));
-									}
-									printf("%lld ", print_link(octree1->linkT->link1));
-									if (octree1->linkT->link1 != nullptr) {
-										printf("%lld ", print_link(octree1->linkT->link1->link0));
-										printf("%lld ", print_link(octree1->linkT->link1->link1));
-										printf("%lld ", print_link(octree1->linkT->link1->link2));
-										printf("%lld ", print_link(octree1->linkT->link1->link3));
-										printf("%lld ", print_link(octree1->linkT->link1->link4));
-										printf("%lld ", print_link(octree1->linkT->link1->link5));
-										printf("%lld ", print_link(octree1->linkT->link1->link6));
-										printf("%lld ", print_link(octree1->linkT->link1->link7));
-									}
-									printf("%lld ", print_link(octree1->linkT->link2));
-									if (octree1->linkT->link2 != nullptr) {
-										printf("%lld ", print_link(octree1->linkT->link2->link0));
-										printf("%lld ", print_link(octree1->linkT->link2->link1));
-										printf("%lld ", print_link(octree1->linkT->link2->link2));
-										printf("%lld ", print_link(octree1->linkT->link2->link3));
-										printf("%lld ", print_link(octree1->linkT->link2->link4));
-										printf("%lld ", print_link(octree1->linkT->link2->link5));
-										printf("%lld ", print_link(octree1->linkT->link2->link6));
-										printf("%lld ", print_link(octree1->linkT->link2->link7));
-									}
-									printf("%lld ", print_link(octree1->linkT->link3));
-									if (octree1->linkT->link3 != nullptr) {
-										printf("%lld ", print_link(octree1->linkT->link3->link0));
-										printf("%lld ", print_link(octree1->linkT->link3->link1));
-										printf("%lld ", print_link(octree1->linkT->link3->link2));
-										printf("%lld ", print_link(octree1->linkT->link3->link3));
-										printf("%lld ", print_link(octree1->linkT->link3->link4));
-										printf("%lld ", print_link(octree1->linkT->link3->link5));
-										printf("%lld ", print_link(octree1->linkT->link3->link6));
-										printf("%lld ", print_link(octree1->linkT->link3->link7));
-									}
-									printf("%lld ", print_link(octree1->linkT->link4));
-									if (octree1->linkT->link4 != nullptr) {
-										printf("%lld ", print_link(octree1->linkT->link4->link0));
-										printf("%lld ", print_link(octree1->linkT->link4->link1));
-										printf("%lld ", print_link(octree1->linkT->link4->link2));
-										printf("%lld ", print_link(octree1->linkT->link4->link3));
-										printf("%lld ", print_link(octree1->linkT->link4->link4));
-										printf("%lld ", print_link(octree1->linkT->link4->link5));
-										printf("%lld ", print_link(octree1->linkT->link4->link6));
-										printf("%lld ", print_link(octree1->linkT->link4->link7));
-									}
-									printf("%lld ", print_link(octree1->linkT->link5));
-									if (octree1->linkT->link5 != nullptr) {
-										printf("%lld ", print_link(octree1->linkT->link5->link0));
-										printf("%lld ", print_link(octree1->linkT->link5->link1));
-										printf("%lld ", print_link(octree1->linkT->link5->link2));
-										printf("%lld ", print_link(octree1->linkT->link5->link3));
-										printf("%lld ", print_link(octree1->linkT->link5->link4));
-										printf("%lld ", print_link(octree1->linkT->link5->link5));
-										printf("%lld ", print_link(octree1->linkT->link5->link6));
-										printf("%lld ", print_link(octree1->linkT->link5->link7));
-									}
-									printf("%lld ", print_link(octree1->linkT->link6));
-									if (octree1->linkT->link6 != nullptr) {
-										printf("%lld ", print_link(octree1->linkT->link6->link0));
-										printf("%lld ", print_link(octree1->linkT->link6->link1));
-										printf("%lld ", print_link(octree1->linkT->link6->link2));
-										printf("%lld ", print_link(octree1->linkT->link6->link3));
-										printf("%lld ", print_link(octree1->linkT->link6->link4));
-										printf("%lld ", print_link(octree1->linkT->link6->link5));
-										printf("%lld ", print_link(octree1->linkT->link6->link6));
-										printf("%lld ", print_link(octree1->linkT->link6->link7));
-									}
-									printf("%lld ", print_link(octree1->linkT->link7));
-									if (oc->linkT->link7 != nullptr) {
-										printf("%lld ", print_link(octree1->linkT->link7->link0));
-										printf("%lld ", print_link(octree1->linkT->link7->link1));
-										printf("%lld ", print_link(octree1->linkT->link7->link2));
-										printf("%lld ", print_link(octree1->linkT->link7->link3));
-										printf("%lld ", print_link(octree1->linkT->link7->link4));
-										printf("%lld ", print_link(octree1->linkT->link7->link5));
-										printf("%lld ", print_link(octree1->linkT->link7->link6));
-										printf("%lld ", print_link(octree1->linkT->link7->link7));
-									}
-#else
-									printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
-									printf("%d ", print_link(octree1->linkT->link0));
-									if (octree1->linkT->link0 != nullptr) {
-										printf("%d ", print_link(octree1->linkT->link0->link0));
-										printf("%d ", print_link(octree1->linkT->link0->link1));
-										printf("%d ", print_link(octree1->linkT->link0->link2));
-										printf("%d ", print_link(octree1->linkT->link0->link3));
-										printf("%d ", print_link(octree1->linkT->link0->link4));
-										printf("%d ", print_link(octree1->linkT->link0->link5));
-										printf("%d ", print_link(octree1->linkT->link0->link6));
-										printf("%d ", print_link(octree1->linkT->link0->link7));
-									}
-									printf("%d ", print_link(octree1->linkT->link1));
-									if (octree1->linkT->link1 != nullptr) {
-										printf("%d ", print_link(octree1->linkT->link1->link0));
-										printf("%d ", print_link(octree1->linkT->link1->link1));
-										printf("%d ", print_link(octree1->linkT->link1->link2));
-										printf("%d ", print_link(octree1->linkT->link1->link3));
-										printf("%d ", print_link(octree1->linkT->link1->link4));
-										printf("%d ", print_link(octree1->linkT->link1->link5));
-										printf("%d ", print_link(octree1->linkT->link1->link6));
-										printf("%d ", print_link(octree1->linkT->link1->link7));
-									}
-									printf("%d ", print_link(octree1->linkT->link2));
-									if (octree1->linkT->link2 != nullptr) {
-										printf("%d ", print_link(octree1->linkT->link2->link0));
-										printf("%d ", print_link(octree1->linkT->link2->link1));
-										printf("%d ", print_link(octree1->linkT->link2->link2));
-										printf("%d ", print_link(octree1->linkT->link2->link3));
-										printf("%d ", print_link(octree1->linkT->link2->link4));
-										printf("%d ", print_link(octree1->linkT->link2->link5));
-										printf("%d ", print_link(octree1->linkT->link2->link6));
-										printf("%d ", print_link(octree1->linkT->link2->link7));
-									}
-									printf("%d ", print_link(octree1->linkT->link3));
-									if (octree1->linkT->link3 != nullptr) {
-										printf("%d ", print_link(octree1->linkT->link3->link0));
-										printf("%d ", print_link(octree1->linkT->link3->link1));
-										printf("%d ", print_link(octree1->linkT->link3->link2));
-										printf("%d ", print_link(octree1->linkT->link3->link3));
-										printf("%d ", print_link(octree1->linkT->link3->link4));
-										printf("%d ", print_link(octree1->linkT->link3->link5));
-										printf("%d ", print_link(octree1->linkT->link3->link6));
-										printf("%d ", print_link(octree1->linkT->link3->link7));
-									}
-									printf("%d ", print_link(octree1->linkT->link4));
-									if (octree1->linkT->link4 != nullptr) {
-										printf("%d ", print_link(octree1->linkT->link4->link0));
-										printf("%d ", print_link(octree1->linkT->link4->link1));
-										printf("%d ", print_link(octree1->linkT->link4->link2));
-										printf("%d ", print_link(octree1->linkT->link4->link3));
-										printf("%d ", print_link(octree1->linkT->link4->link4));
-										printf("%d ", print_link(octree1->linkT->link4->link5));
-										printf("%d ", print_link(octree1->linkT->link4->link6));
-										printf("%d ", print_link(octree1->linkT->link4->link7));
-									}
-									printf("%d ", print_link(octree1->linkT->link5));
-									if (octree1->linkT->link5 != nullptr) {
-										printf("%d ", print_link(octree1->linkT->link5->link0));
-										printf("%d ", print_link(octree1->linkT->link5->link1));
-										printf("%d ", print_link(octree1->linkT->link5->link2));
-										printf("%d ", print_link(octree1->linkT->link5->link3));
-										printf("%d ", print_link(octree1->linkT->link5->link4));
-										printf("%d ", print_link(octree1->linkT->link5->link5));
-										printf("%d ", print_link(octree1->linkT->link5->link6));
-										printf("%d ", print_link(octree1->linkT->link5->link7));
-									}
-									printf("%d ", print_link(octree1->linkT->link6));
-									if (octree1->linkT->link6 != nullptr) {
-										printf("%d ", print_link(octree1->linkT->link6->link0));
-										printf("%d ", print_link(octree1->linkT->link6->link1));
-										printf("%d ", print_link(octree1->linkT->link6->link2));
-										printf("%d ", print_link(octree1->linkT->link6->link3));
-										printf("%d ", print_link(octree1->linkT->link6->link4));
-										printf("%d ", print_link(octree1->linkT->link6->link5));
-										printf("%d ", print_link(octree1->linkT->link6->link6));
-										printf("%d ", print_link(octree1->linkT->link6->link7));
-									}
-									printf("%d ", print_link(octree1->linkT->link7));
-									if (oc->linkT->link7 != nullptr) {
-										printf("%d ", print_link(octree1->linkT->link7->link0));
-										printf("%d ", print_link(octree1->linkT->link7->link1));
-										printf("%d ", print_link(octree1->linkT->link7->link2));
-										printf("%d ", print_link(octree1->linkT->link7->link3));
-										printf("%d ", print_link(octree1->linkT->link7->link4));
-										printf("%d ", print_link(octree1->linkT->link7->link5));
-										printf("%d ", print_link(octree1->linkT->link7->link6));
-										printf("%d ", print_link(octree1->linkT->link7->link7));
-									}
-#endif
-									
-
-									//system("PAUSE");
-									system("PAUSE");
-
-								}
-
-
-
-								//system("PAUSE");
-							}
-							else {
-						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
-							// вырождение по Х
-							// 0,3,4,7 
-							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
-							// Разбита на 8 равных частей:
-							// 4,5,6,7
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 6: octree1->linkT = octree1->linkT->link3;
-									break;
-								case 7: octree1->linkT = octree1->linkT->link3;
-									break;
 								}
 							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 4,7
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkT = octree1->linkT->link3;
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//4,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1,2,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 2:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 3:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-
-						}
-						else if ((!bSituationX) && (bSituationY) && (!bSituationZ)) {
-							// вырождение по Y
-							// 0,1,4,5 
-							// (3->0),(2->1),(7->4), (6->5)
-							// Разбита на 8 равных частей:
-							// 4,5,6,7
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 6: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 7: octree1->linkT = octree1->linkT->link0;
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 4,7
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkT = octree1->linkT->link0;
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//4,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1,2,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 2:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 3:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if ((!bSituationX) && (!bSituationY) && (bSituationZ)) {
-							// вырождение по Z
-							// 0,1,2,3
-							// (4->0) (5->1) (6->2) (7->3)
-							// Разбита на 8 равных частей:
-							// 4,5,6,7
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 6: octree1->linkT = octree1->linkT->link2;
-									break;
-								case 7: octree1->linkT = octree1->linkT->link3;
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 4,7
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkT = octree1->linkT->link3;
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//4,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1,2,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 2:octree1->linkT = octree1->linkT->link2;
-									break;
-								case 3:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if ((bSituationX) && (bSituationY) && (!bSituationZ)) {
-							// direction Z
-							// 0,4
-							// (1->0),(3->0),(2->0), (5->4), (6->4), (7->4)
-							// Разбита на 8 равных частей:
-							// 4,5,6,7
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 6: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 7: octree1->linkT = octree1->linkT->link0;
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 4,7
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkT = octree1->linkT->link0;
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//4,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1,2,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 2:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 3:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if ((!bSituationX) && (bSituationY) && (bSituationZ)) {
-							// direction X
-							// 0,1
-							// (3->0), (4->0), (7->0), (2->1), (5->1), (6->1)
-							// Разбита на 8 равных частей:
-							// 4,5,6,7
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 6: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 7: octree1->linkT = octree1->linkT->link0;
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 4,7
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkT = octree1->linkT->link0;
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//4,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1,2,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 2:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 3:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
-							// direction Y
-							// 0,3
-							// (1->0) (4->0) (5->0) (2->3) (7->3) (6->3)
-							// Разбита на 8 равных частей:
-							// 4,5,6,7
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 6: octree1->linkT = octree1->linkT->link3;
-									break;
-								case 7: octree1->linkT = octree1->linkT->link3;
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 4,7
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkT = octree1->linkT->link3;
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//4,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1,2,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 2:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 3:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-						}
-						else if (is_null1(octree1->linkT)) {
-							// Разбита на 8 равных частей:
-							// 4,5,6,7
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 6: octree1->linkT = octree1->linkT->link2;
-									break;
-								case 7: octree1->linkT = octree1->linkT->link3;
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Х
-								// 4,7
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:octree1->linkT = octree1->linkT->link3;
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// вырождение по Y
-								//4,5
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// вырождение по Z
-								//0,1,2,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1: octree1->linkT = octree1->linkT->link1;
-									break;
-								case 2:octree1->linkT = octree1->linkT->link2;
-									break;
-								case 3:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (octree1->brootSituationY) && (!octree1->brootSituationZ)) {
-								// direction Z
-								// 0,4
-								switch (octree1->root) {
-								case 0:
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((!octree1->brootSituationX) && (octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction X
-								//0,1
-								switch (octree1->root) {
-								case 0:octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:octree1->linkT = octree1->linkT->link1;
-									break;
-								case 2:
-									break;
-								case 3:
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-							if ((octree1->brootSituationX) && (!octree1->brootSituationY) && (octree1->brootSituationZ)) {
-								// direction Y
-								//0,3
-								switch (octree1->root) {
-								case 0: octree1->linkT = octree1->linkT->link0;
-									break;
-								case 1:
-									break;
-								case 2:
-									break;
-								case 3:octree1->linkT = octree1->linkT->link3;
-									break;
-								case 4:
-									break;
-								case 5:
-									break;
-								case 6:
-									break;
-								case 7:
-									break;
-								}
-							}
-
-						}
-						}
-						}
 						}
 					}
 					}
+
+//#pragma omp section
+						{
 
 					// А другие случаи исключаются при додроблении.
 					// одиночная связь, НЕ 4
@@ -32146,17 +33195,17 @@ void update_link_neighbor(octree* &oc) {
 								else {
 									printf("error: linkB nepravilnje urovni.\n");
 
-									integer c0 = 0;
-									integer c1 = 0;
-									integer c2 = 0;
-									integer c3 = 0;
-									integer c4 = 0;
-									integer c5 = 0;
-									integer c6 = 0;
-									integer c7 = 0;
+									char c0 = 0;
+									char c1 = 0;
+									char c2 = 0;
+									char c3 = 0;
+									char c4 = 0;
+									char c5 = 0;
+									char c6 = 0;
+									char c7 = 0;
 									is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 #if doubleintprecision == 1
-									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
+									printf("c0=%d c1=%d c2=%d c3=%d c4=%d c5=%d c6=%d c7=%d\n", c0, c1, c2, c3, c4, c5, c6, c7);
 									printf("%lld ", print_link(octree1->linkB->link0));
 									if (octree1->linkB->link0 != nullptr) {
 										printf("%lld ", print_link(octree1->linkB->link0->link0));
@@ -33509,6 +34558,10 @@ void update_link_neighbor(octree* &oc) {
 					}
 					}
 
+
+					}
+				}
+
 					// НАДО ПРЕДУСМОТРЕТЬ ВЫРОЖДЕНИЯ 294 варианта!!!. TODO
 					// Для этого нужно хранить вырождения родителя внутри листа (потомка).
 					// вырождения сделаны 25 08 2016.
@@ -33613,6 +34666,13 @@ void update_link_neighbor(octree* &oc) {
 		//}
 		//system("PAUSE");
 	}
+
+
+
+#ifdef _OPENMP
+	//omp_set_num_threads(i_my_num_core_parallelesation); // Возвращаем количество потоков которое было изначально.
+#endif
+
 } // update_link_neighbor
 
 
@@ -33724,12 +34784,12 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 						ikount_list++;
 
 						octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
-						integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
-						integer maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
-						integer miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
-						integer maxy = my_ALICE_STACK[top_ALICE_STACK - 1].maxy;
-						integer minz = my_ALICE_STACK[top_ALICE_STACK - 1].minz;
-						integer maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
+						int minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
+						int maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
+						int miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
+						int maxy = my_ALICE_STACK[top_ALICE_STACK - 1].maxy;
+						int minz = my_ALICE_STACK[top_ALICE_STACK - 1].minz;
+						int maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
 
 						// Вырождение по Z.
 						bool bSituationZ = false;
@@ -33850,7 +34910,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 								if (octree1->brootSituationZ) i_Z = 1;
 #if doubleintprecision == 1
 								printf("%lld octree1->root=%lld parent=%lld parent>parent=%lld bonly_dir_X  \n", ikount_dir_X++, octree1->root, octree1->parent->root, octree1->parent->parent->root);
-								printf("sitx=%lld sity=%lld sitz=%lld S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxEneighbour, octree1->maxWneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
+								printf("sitx=%lld sity=%lld sitz=%lld S=%d N=%d B=%d T=%d E=%d W=%d linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxEneighbour, octree1->maxWneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
 #else
 								printf("%d octree1->root=%d parent=%d parent>parent=%d bonly_dir_X  \n", ikount_dir_X++, octree1->root, octree1->parent->root, octree1->parent->parent->root);
 								printf("sitx=%d sity=%d sitz=%d S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxEneighbour, octree1->maxWneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
@@ -33862,7 +34922,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 								if (octree1->parent->brootSituationY) i_Y = 1;
 								if (octree1->parent->brootSituationZ) i_Z = 1;
 #if doubleintprecision == 1
-								printf("->parent sitx=%lld sity=%lld sitz=%lld  S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour, octree1->parent->maxEneighbour, octree1->parent->maxWneighbour, print_link(octree1->parent->linkW), print_link(octree1->parent->linkE), print_link(octree1->parent->linkS), print_link(octree1->parent->linkN), print_link(octree1->parent->linkB), print_link(octree1->parent->linkT));
+								printf("->parent sitx=%lld sity=%lld sitz=%lld  S=%d N=%d B=%d T=%d E=%d W=%d linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour, octree1->parent->maxEneighbour, octree1->parent->maxWneighbour, print_link(octree1->parent->linkW), print_link(octree1->parent->linkE), print_link(octree1->parent->linkS), print_link(octree1->parent->linkN), print_link(octree1->parent->linkB), print_link(octree1->parent->linkT));
 #else
 								printf("->parent sitx=%d sity=%d sitz=%d  S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour, octree1->parent->maxEneighbour, octree1->parent->maxWneighbour, print_link(octree1->parent->linkW), print_link(octree1->parent->linkE), print_link(octree1->parent->linkS), print_link(octree1->parent->linkN), print_link(octree1->parent->linkB), print_link(octree1->parent->linkT));
 #endif
@@ -33873,7 +34933,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 								if (octree1->parent->parent->brootSituationY) i_Y = 1;
 								if (octree1->parent->parent->brootSituationZ) i_Z = 1;
 #if doubleintprecision == 1
-								printf("->parent->parent sitx=%lld sity=%lld sitz=%lld  S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxWneighbour, print_link(octree1->parent->parent->linkW), print_link(octree1->parent->parent->linkE), print_link(octree1->parent->parent->linkS), print_link(octree1->parent->parent->linkN), print_link(octree1->parent->parent->linkB), print_link(octree1->parent->parent->linkT));
+								printf("->parent->parent sitx=%lld sity=%lld sitz=%lld  S=%d N=%d B=%d T=%d E=%d W=%d linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxWneighbour, print_link(octree1->parent->parent->linkW), print_link(octree1->parent->parent->linkE), print_link(octree1->parent->parent->linkS), print_link(octree1->parent->parent->linkN), print_link(octree1->parent->parent->linkB), print_link(octree1->parent->parent->linkT));
 #else
 								printf("->parent->parent sitx=%d sity=%d sitz=%d  S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxWneighbour, print_link(octree1->parent->parent->linkW), print_link(octree1->parent->parent->linkE), print_link(octree1->parent->parent->linkS), print_link(octree1->parent->parent->linkN), print_link(octree1->parent->parent->linkB), print_link(octree1->parent->parent->linkT));
 #endif
@@ -34149,7 +35209,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 								//system("PAUSE");
 								// move STACK
 #if doubleintprecision == 1
-								printf("%lld octree1->root=%lld SituationY W=%lld E=%lld B=%lld T=%lld N=%lld S=%lld octree1->parent->root=%lld %lld\n", ikount_sit_Y++, octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxNneighbour, octree1->maxSneighbour, octree1->parent->root, octree1->parent->parent->root);
+								printf("%lld octree1->root=%lld SituationY W=%d E=%d B=%d T=%d N=%d S=%d octree1->parent->root=%lld %lld\n", ikount_sit_Y++, octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxNneighbour, octree1->maxSneighbour, octree1->parent->root, octree1->parent->parent->root);
 #else
 								printf("%d octree1->root=%d SituationY W=%d E=%d B=%d T=%d N=%d S=%d octree1->parent->root=%d %d\n", ikount_sit_Y++, octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxNneighbour, octree1->maxSneighbour, octree1->parent->root, octree1->parent->parent->root);
 #endif
@@ -34272,7 +35332,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 								printf("fatal error: atomarnaq\n");
 #if doubleintprecision == 1
 								printf("root=%lld\n", octree1->root);
-								printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour);
+								printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour);
 #else
 								printf("root=%d\n", octree1->root);
 								printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour);
@@ -34307,7 +35367,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 								if (octree1->parent != nullptr) {
 #if doubleintprecision == 1
 									printf("parent->root=%lld\n", octree1->parent->root);
-									printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->maxWneighbour, octree1->parent->maxEneighbour, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour);
+									printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->maxWneighbour, octree1->parent->maxEneighbour, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour);
 #else
 									printf("parent->root=%d\n", octree1->parent->root);
 									printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->maxWneighbour, octree1->parent->maxEneighbour, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour);
@@ -34339,7 +35399,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 									if (octree1->parent->parent != nullptr) {
 #if doubleintprecision == 1
 										printf("parent->parent->root=%lld\n", octree1->parent->parent->root);
-										printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->parent->maxWneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour);
+										printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->parent->maxWneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour);
 #else
 										printf("parent->parent->root=%d\n", octree1->parent->parent->root);
 										printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->parent->maxWneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour);
@@ -34371,7 +35431,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 										if (octree1->parent->parent->parent != nullptr) {
 #if doubleintprecision == 1
 											printf("parent->parent->parent->root=%lld\n", octree1->parent->parent->parent->root);
-											printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->parent->parent->maxWneighbour, octree1->parent->parent->parent->maxEneighbour, octree1->parent->parent->parent->maxSneighbour, octree1->parent->parent->parent->maxNneighbour, octree1->parent->parent->parent->maxBneighbour, octree1->parent->parent->parent->maxTneighbour);
+											printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->parent->parent->maxWneighbour, octree1->parent->parent->parent->maxEneighbour, octree1->parent->parent->parent->maxSneighbour, octree1->parent->parent->parent->maxNneighbour, octree1->parent->parent->parent->maxBneighbour, octree1->parent->parent->parent->maxTneighbour);
 #else
 											printf("parent->parent->parent->root=%d\n", octree1->parent->parent->parent->root);
 											printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->parent->parent->maxWneighbour, octree1->parent->parent->parent->maxEneighbour, octree1->parent->parent->parent->maxSneighbour, octree1->parent->parent->parent->maxNneighbour, octree1->parent->parent->parent->maxBneighbour, octree1->parent->parent->parent->maxTneighbour);
@@ -35230,7 +36290,16 @@ void droblenie_list_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, dou
 	integer inx, integer iny, integer inz, BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer &ls,
 	doublereal epsToolx, doublereal epsTooly, doublereal epsToolz, bool bsimpledefine) {
 
-	
+#ifdef _OPENMP
+	//int i_my_num_core_parallelesation = omp_get_max_threads();
+	//omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
+#endif
+
+	srand(time(NULL));
+
+	i0r = 0; 
+	i1r = 0;
+	i2r = 0;
 
 	// Здесь необходимо сохранить сбалансированность построенного дерева.
 	// Уровень дробления не более 2 (двойки).
@@ -35489,29 +36558,38 @@ void droblenie_list_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, dou
 		//}
 		//system("PAUSE");
 	}
+
+
+	printf("%lld %lld %lld", i0r, i1r, i2r );
+
+#ifdef _OPENMP
+	//omp_set_num_threads(i_my_num_core_parallelesation); // Возвращаем количество потоков которое было изначально.
+#endif
+	//getchar();
 } // droblenie_list_octree2
 
 
 
 // визуализация.
 // визуализация в tecplot 360 с учётом hollow блоков в программной модели.
-void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
+void expt(octree* &oc, int inx, int iny, int inz, integer maxelm,
+	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 
 	// Вычисление допуска.
-	doublereal epsTolx = 1.0e40;
-	doublereal epsToly = 1.0e40;
-	doublereal epsTolz = 1.0e40;
-	for (integer i = 0; i < inx; i++) {
+	doublereal epsTolx = 1.0e36;
+	doublereal epsToly = 1.0e36;
+	doublereal epsTolz = 1.0e36;
+	for (int i = 0; i < inx; i++) {
 		if (fabs(xpos[i + 1] - xpos[i]) < epsTolx) {
 			epsTolx = 0.5*fabs(xpos[i + 1] - xpos[i]);
 		}
 	}
-	for (integer i = 0; i < iny; i++) {
+	for (int i = 0; i < iny; i++) {
 		if (fabs(ypos[i + 1] - ypos[i]) < epsToly) {
 			epsToly = 0.5*fabs(ypos[i + 1] - ypos[i]);
 		}
 	}
-	for (integer i = 0; i < inz; i++) {
+	for (int i = 0; i < inz; i++) {
 		if (fabs(zpos[i + 1] - zpos[i]) < epsTolz) {
 			epsTolz = 0.5*fabs(zpos[i + 1] - zpos[i]);
 		}
@@ -35525,13 +36603,14 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 	// визуализировать сетку.
 	// Память под pa_alice выделяется после вычисления точного необходимого её объема, т.к.
 	// на больших объектах мы можем не вылететь по недостатку памяти.
-	integer marker_pa = 0;
+	int marker_pa = 0;
 	
 	
-	HASH_POLE* hash_table_export = new HASH_POLE[(inx + 1)*(iny + 1)*(inz + 1)];
+	bool *flag23=new bool[(inx + 1) * (iny + 1) * (inz + 1)];
+
+	
 	for (integer i_1 = 0; i_1 < (inx + 1)*(iny + 1)*(inz + 1); i_1++) {
-		hash_table_export[i_1].flag = false;
-		hash_table_export[i_1].inum = -1;
+		flag23[i_1] = false;
 	}
 	
 	// модификация 25 марта 2017. Сначала просто посчитаем сколько же надо памяти в действительности.
@@ -35634,109 +36713,76 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 
 				bool bfound = false;
 				integer key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p0, epsTolx, epsToly, epsTolz);
-				bfound = hash_table_export[key_now].flag;
+				bfound = flag23[key_now];
 
 				if (!bfound) {
 					//i0 = marker_pa_shadow;
-					hash_table_export[key_now].flag = true;
-					hash_table_export[key_now].inum = marker_pa;
+					flag23[key_now] = true;
 					marker_pa_shadow++;
 				}
-				//else {
-					//i0 = hash_table_export[key_now].inum;
-				//}
+				
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p1, epsTolx, epsToly, epsTolz);
-				bfound = hash_table_export[key_now].flag;
+				bfound = flag23[key_now];
 				if (!bfound) {
-					//i1 = marker_pa_shadow;
 					
-					hash_table_export[key_now].flag = true;
-					hash_table_export[key_now].inum = marker_pa;
+					flag23[key_now] = true;
 					marker_pa_shadow++;
 				}
-				//else {
-					//i1 = hash_table_export[key_now].inum;
-				//}
+				
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p2, epsTolx, epsToly, epsTolz);
-				bfound = hash_table_export[key_now].flag;
+				bfound = flag23[key_now];
 				if (!bfound) {
-					//i2 = marker_pa_shadow;
 					
-					hash_table_export[key_now].flag = true;
-					hash_table_export[key_now].inum = marker_pa;
+					flag23[key_now] = true;
 					marker_pa_shadow++;
 				}
-				//else {
-					//i2 = hash_table_export[key_now].inum;
-				//}
+				
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p3, epsTolx, epsToly, epsTolz);
-				bfound = hash_table_export[key_now].flag;
+				bfound = flag23[key_now];
 				if (!bfound) {
-					//i3 = marker_pa_shadow;
 					
-					hash_table_export[key_now].flag = true;
-					hash_table_export[key_now].inum = marker_pa;
+					flag23[key_now] = true;
 					marker_pa_shadow++;
 				}
-				//else {
-					//i3 = hash_table_export[key_now].inum;
-				//}
+				
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p4, epsTolx, epsToly, epsTolz);
-				bfound = hash_table_export[key_now].flag;
-				if (!bfound) {
-					//i4 = marker_pa_shadow;
+				bfound = flag23[key_now];
+				if (!bfound) {				
 					
-					hash_table_export[key_now].flag = true;
-					hash_table_export[key_now].inum = marker_pa;
+					flag23[key_now] = true;
 					marker_pa_shadow++;
 				}
-				//else {
-					//i4 = hash_table_export[key_now].inum;
-				//}
+				
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p5, epsTolx, epsToly, epsTolz);
-				bfound = hash_table_export[key_now].flag;
-				if (!bfound) {
-					//i5 = marker_pa_shadow;
+				bfound = flag23[key_now];
+				if (!bfound) {				
 					
-					hash_table_export[key_now].flag = true;
-					hash_table_export[key_now].inum = marker_pa;
+					flag23[key_now] = true;
 					marker_pa_shadow++;
 				}
-				//else {
-					//i5 = hash_table_export[key_now].inum;
-				//}
+				
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p6, epsTolx, epsToly, epsTolz);
-				bfound = hash_table_export[key_now].flag;
+				bfound = flag23[key_now];
 				if (!bfound) {
-					//i6 = marker_pa_shadow;
-					
-					hash_table_export[key_now].flag = true;
-					hash_table_export[key_now].inum = marker_pa;
+										
+					flag23[key_now] = true;
 					marker_pa_shadow++;
 				}
-				//else {
-					//i6 = hash_table_export[key_now].inum;
-				//}
+				
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p7, epsTolx, epsToly, epsTolz);
-				bfound = hash_table_export[key_now].flag;
-				if (!bfound) {
-					//i7 = marker_pa_shadow;
+				bfound = flag23[key_now];
+				if (!bfound) {					
 					
-					hash_table_export[key_now].flag = true;
-					hash_table_export[key_now].inum = marker_pa;
+					flag23[key_now] = true;
 					marker_pa_shadow++;
 				}
-				//else {
-					//i7 = hash_table_export[key_now].inum;
-				//}
-
 				
 
 				octree1 = nullptr;
@@ -35835,7 +36881,7 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 		}
 
 	}
-	delete[] hash_table_export;
+	delete[] flag23;
 
 	// конец модификации 25 марта 2017.
 
@@ -35855,8 +36901,8 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 	//}
 
 	// И тут же сразу формируем nvtx:
-	integer** nvtx = nullptr;
-	nvtx = new integer*[8];
+	int** nvtx = nullptr;
+	nvtx = new int*[8];
 	// Оператор new не требует проверки.
 	//if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -35864,11 +36910,11 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
-	for (integer k_1 = 0; k_1 < 8; k_1++) {
+	for (char k_1 = 0; k_1 < 8; k_1++) {
 		nvtx[k_1] = nullptr;
 		//nvtx[k_1] = new integer[maxelm + 1];
 		// Это существенно экономит память т.к. число призм не может быть больше чем число вершин призм.
-		nvtx[k_1] = new integer[marker_pa_shadow + 2];
+		nvtx[k_1] = new int[marker_pa_shadow + 2];
 		// Оператор new не требует проверки.
 		//if (nvtx[k_1] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
@@ -35884,7 +36930,7 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 	}
 	integer imarker_nvtx = 1;
 
-	hash_table_export = new HASH_POLE[(inx + 1)*(iny + 1)*(inz + 1)];
+	HASH_POLE* hash_table_export = new HASH_POLE[(inx + 1)*(iny + 1)*(inz + 1)];
 	for (integer i_1 = 0; i_1 < (inx + 1)*(iny + 1)*(inz + 1); i_1++) {
 		hash_table_export[i_1].flag = false;
 		hash_table_export[i_1].inum = -1;
@@ -35983,7 +37029,7 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
-				integer i0, i1, i2, i3, i4, i5, i6, i7;
+				int i0, i1, i2, i3, i4, i5, i6, i7;
 				
 
 				bool bfound = false;
@@ -36251,7 +37297,7 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 			fprintf(fp_4, "\n");
 			for (integer i = 1; i <= imarker_nvtx - 1; i++) {
 #if doubleintprecision == 1
-				fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+				fprintf(fp_4, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
 #else
 				fprintf(fp_4, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
 #endif
@@ -41253,7 +42299,7 @@ void defa_nullptr_additional(octree* &oc) {
 // Новый метод освобождения оперативной памяти из под octree дерева 10.08.2019. 
 // Проверено работает корректно в отличие от предыдущей реализации.
 void free_octree(octree* &oc, integer maxelm) {
-	printf("FREE OCTREE MEMORY...Pool Size=%lld %e%%\n", icount_Length_vector_octree,100.0*icount_Length_vector_octree/ iMAX_Length_vector_octree);
+	//printf("FREE OCTREE MEMORY...Pool Size=%lld %e%%\n", icount_Length_vector_octree,100.0*icount_Length_vector_octree/ iMAX_Length_vector_octree);
 
 	if (oc == nullptr) {
 		printf("error oc==nullptr in free_octree function\n");
@@ -41261,19 +42307,27 @@ void free_octree(octree* &oc, integer maxelm) {
 	}
 	else {
 		// Ссылки на каждый узел octree дерева для его полной очистки.
-		oc = nullptr;
-		for (integer jclear = icount_Length_vector_octree - 1; jclear >= 0; jclear--) {
-			
-			defa_nullptr(rootClear_octree[jclear]);
-			defa_nullptr_additional(rootClear_octree[jclear]);			
+		oc = nullptr;		
+
+		rootClear_octree = head_rootClear_octree;
+		while (rootClear_octree != nullptr) {
+			octree_list *tmp_octree = rootClear_octree;
+			defa_nullptr(tmp_octree->pnode);
+			defa_nullptr_additional(tmp_octree->pnode);
+			rootClear_octree = rootClear_octree->next;
+			tmp_octree = nullptr;
 		}
-		for (integer jclear = icount_Length_vector_octree - 1; jclear >= 0; jclear--) {
-			delete rootClear_octree[jclear]; // освобождение оперативной памяти.
-			rootClear_octree[jclear] = nullptr;
+
+		rootClear_octree = head_rootClear_octree;
+		while (rootClear_octree != nullptr) {
+			octree_list *tmp_octree = rootClear_octree;
+			rootClear_octree = rootClear_octree->next;
+			tmp_octree->next = nullptr;
+			delete tmp_octree->pnode; // освобождение оперативной памяти.
+			delete tmp_octree; 
+			tmp_octree = nullptr;
 		}
-		delete[] rootClear_octree;
-		rootClear_octree = nullptr;
-		icount_Length_vector_octree = 0;
+		head_rootClear_octree = nullptr;
 
 	}
 }
@@ -41659,6 +42713,465 @@ integer myisblock_id_stab(integer lb, BLOCK*& b, TOCHKA p) {
 // глобальный счётчик числа попыток
 integer iOk28_number_popjtka = 0;
 
+// Предсказания числа элементов АЛИС сетки до этапа построения самой АЛИС сетки.
+// Это требуется для корректного выделения оперативной памяти, например под Alice_Stack.
+// 01.11.2020
+integer ALICE_maxelm_size_prediction(integer inx, integer iny, integer inz, 
+	BLOCK*& b, integer lb, integer lw, WALL*& w,
+	SOURCE*& s, integer& ls) {
+
+	// Подобрано на серии tgf задач 31.10.2020.
+	//return (integer)(0.04*((inx+1)*(iny+1)*(inz+1)));
+
+	doublereal min_dx = 1.0e30;
+	doublereal min_dy = 1.0e30;
+	doublereal min_dz = 1.0e30;
+
+
+	for (integer i = 1; i < lb; i++) {
+		if (b[i].g.itypegeom == PRISM) {
+			if (min_dx > fabs(b[i].g.xE - b[i].g.xS)) {
+				min_dx = fabs(b[i].g.xE - b[i].g.xS);
+			}
+			if (min_dy > fabs(b[i].g.yE - b[i].g.yS)) {
+				min_dy = fabs(b[i].g.yE - b[i].g.yS);
+			}
+			if (min_dz > fabs(b[i].g.zE - b[i].g.zS)) {
+				min_dz = fabs(b[i].g.zE - b[i].g.zS);
+			}
+		}
+		if (b[i].g.itypegeom == CYLINDER) {
+			switch (b[i].g.iPlane) {
+			case XY_PLANE :
+				if (min_dz > fabs(b[i].g.Hcyl)) {
+					min_dz = fabs(b[i].g.Hcyl);
+				}
+				if (min_dx > fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) {
+					min_dx = fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl);
+				}
+				if (min_dy > fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) {
+					min_dy = fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl);
+				}
+				break;
+			case XZ_PLANE:
+				if (min_dy > fabs(b[i].g.Hcyl)) {
+					min_dy = fabs(b[i].g.Hcyl);
+				}
+				if (min_dx > fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) {
+					min_dx = fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl);
+				}
+				if (min_dz > fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) {
+					min_dz = fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl);
+				}
+				break;
+			case YZ_PLANE:
+				if (min_dx > fabs(b[i].g.Hcyl)) {
+					min_dx = fabs(b[i].g.Hcyl);
+				}
+				if (min_dy > fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) {
+					min_dy = fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl);
+				}
+				if (min_dz > fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) {
+					min_dz = fabs(b[i].g.R_out_cyl - b[i].g.R_in_cyl);
+				}
+				break;
+			}
+
+		}
+		if (b[i].g.itypegeom == CAD_STL) {
+			doublereal dist = 0.0;
+			dist = b[i].g.min_size_edge();
+			if (min_dx > dist) {
+				min_dx = dist;
+			}
+			if (min_dy > dist) {
+				min_dy = dist;
+			}
+			if (min_dz > dist) {
+				min_dz = dist;
+			}
+		}
+		if (b[i].g.itypegeom == POLYGON) {
+
+			integer j=0;
+			doublereal dist = 0.0;
+			switch (b[i].g.iPlane_obj2) {
+			case XY_PLANE:
+				if (min_dz > fabs(b[i].g.hi[0])) {
+					min_dz = fabs(b[i].g.hi[0]);
+				}
+				for (j = 0; j < b[i].g.nsizei - 1; j++) {
+					dist = sqrt((b[i].g.xi[j] - b[i].g.xi[j + 1]) * (b[i].g.xi[j] - b[i].g.xi[j + 1]) + (b[i].g.yi[j] - b[i].g.yi[j + 1]) * (b[i].g.yi[j] - b[i].g.yi[j + 1]));
+					if (min_dx > dist) {
+						min_dx = dist;
+					}
+					if (min_dy > dist) {
+						min_dy = dist;
+					}
+				}
+				dist = sqrt((b[i].g.xi[0] - b[i].g.xi[b[i].g.nsizei - 1]) * (b[i].g.xi[0] - b[i].g.xi[b[i].g.nsizei - 1]) + (b[i].g.yi[0] - b[i].g.yi[b[i].g.nsizei - 1]) * (b[i].g.yi[0] - b[i].g.yi[b[i].g.nsizei - 1]));
+				if (min_dx > dist) {
+					min_dx = dist;
+				}
+				if (min_dy > dist) {
+					min_dy = dist;
+				}
+				break;
+			case XZ_PLANE:
+				if (min_dy > fabs(b[i].g.hi[0])) {
+					min_dy = fabs(b[i].g.hi[0]);
+				}
+				for (j = 0; j < b[i].g.nsizei - 1; j++) {
+					dist = sqrt((b[i].g.xi[j] - b[i].g.xi[j + 1]) * (b[i].g.xi[j] - b[i].g.xi[j + 1]) + (b[i].g.zi[j] - b[i].g.zi[j + 1]) * (b[i].g.zi[j] - b[i].g.zi[j + 1]));
+					if (min_dx > dist) {
+						min_dx = dist;
+					}
+					if (min_dz > dist) {
+						min_dz = dist;
+					}
+				}
+				dist = sqrt((b[i].g.xi[0] - b[i].g.xi[b[i].g.nsizei - 1]) * (b[i].g.xi[0] - b[i].g.xi[b[i].g.nsizei - 1]) + (b[i].g.zi[0] - b[i].g.zi[b[i].g.nsizei - 1]) * (b[i].g.zi[0] - b[i].g.zi[b[i].g.nsizei - 1]));
+				if (min_dx > dist) {
+					min_dx = dist;
+				}
+				if (min_dz > dist) {
+					min_dz = dist;
+				}
+				break;
+			case YZ_PLANE:
+				if (min_dx > fabs(b[i].g.hi[0])) {
+					min_dx = fabs(b[i].g.hi[0]);
+				}
+				for (j = 0; j < b[i].g.nsizei - 1; j++) {
+					dist = sqrt((b[i].g.zi[j] - b[i].g.zi[j + 1]) * (b[i].g.zi[j] - b[i].g.zi[j + 1]) + (b[i].g.yi[j] - b[i].g.yi[j + 1]) * (b[i].g.yi[j] - b[i].g.yi[j + 1]));
+					if (min_dz > dist) {
+						min_dz = dist;
+					}
+					if (min_dy > dist) {
+						min_dy = dist;
+					}
+				}
+				dist = sqrt((b[i].g.zi[0] - b[i].g.zi[b[i].g.nsizei - 1]) * (b[i].g.zi[0] - b[i].g.zi[b[i].g.nsizei - 1]) + (b[i].g.yi[0] - b[i].g.yi[b[i].g.nsizei - 1]) * (b[i].g.yi[0] - b[i].g.yi[b[i].g.nsizei - 1]));
+				if (min_dz > dist) {
+					min_dz = dist;
+				}
+				if (min_dy > dist) {
+					min_dy = dist;
+				}
+				break;
+			}
+
+		}
+
+	}
+
+	doublereal min_div = min_dx / fabs(b[0].g.xE - b[0].g.xS);
+	if (min_dy / fabs(b[0].g.yE - b[0].g.yS) < min_div) {
+		min_div = min_dy / fabs(b[0].g.yE - b[0].g.yS);
+	}
+	if (min_dz / fabs(b[0].g.zE - b[0].g.zS) < min_div) {
+		min_div = min_dz / fabs(b[0].g.zE - b[0].g.zS);
+	}
+
+	printf("min_div=%e\n",min_div);
+	//system("PAUSE");
+
+	// 01.11.2020
+	doublereal K = 1.0;
+	if (min_div > 0.2) {
+		K = 1.0;
+	}
+	else if (min_div > 0.002) {
+		K = 0.52;
+	}
+	else if (min_div > 5e-4) {
+		// Пионер
+		K = 0.25;
+	}
+	else if (min_div > 5e-5) {
+		K = 0.12;
+	}
+	else {
+		// min_div==4.428698e-6
+		K = 0.04; // tgf series
+	}
+	return (integer)(K * ((inx + 1) * (iny + 1) * (inz + 1)));
+
+} // ALICE_maxelm_size_prediction
+
+// Записываем номер блока которому принадлежит ячейка АЛИС сетки, для
+// каждой ячейки. 18.11.2020.
+void calculate_whot_is_block(octree*& oc, BLOCK*& b, integer lb) {
+	top_ALICE_STACK = 0;
+	if (oc->link0 != nullptr) {
+		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
+		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link0->maxx;
+		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link0->minx;
+		my_ALICE_STACK[top_ALICE_STACK].maxy = oc->link0->maxy;
+		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link0->miny;
+		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link0->maxz;
+		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link0->minz;
+		top_ALICE_STACK++;
+	}
+	if (oc->link1 != nullptr) {
+		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link1);
+		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link1->maxx;
+		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link1->minx;
+		my_ALICE_STACK[top_ALICE_STACK].maxy = oc->link1->maxy;
+		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link1->miny;
+		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link1->maxz;
+		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link1->minz;
+		top_ALICE_STACK++;
+	}
+	if (oc->link2 != nullptr) {
+		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link2);
+		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link2->maxx;
+		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link2->minx;
+		my_ALICE_STACK[top_ALICE_STACK].maxy = oc->link2->maxy;
+		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link2->miny;
+		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link2->maxz;
+		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link2->minz;
+		top_ALICE_STACK++;
+	}
+	if (oc->link3 != nullptr) {
+		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link3);
+		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link3->maxx;
+		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link3->minx;
+		my_ALICE_STACK[top_ALICE_STACK].maxy = oc->link3->maxy;
+		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link3->miny;
+		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link3->maxz;
+		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link3->minz;
+		top_ALICE_STACK++;
+	}
+	if (oc->link4 != nullptr) {
+		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link4);
+		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link4->maxx;
+		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link4->minx;
+		my_ALICE_STACK[top_ALICE_STACK].maxy = oc->link4->maxy;
+		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link4->miny;
+		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link4->maxz;
+		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link4->minz;
+		top_ALICE_STACK++;
+	}
+	if (oc->link5 != nullptr) {
+		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link5);
+		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link5->maxx;
+		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link5->minx;
+		my_ALICE_STACK[top_ALICE_STACK].maxy = oc->link5->maxy;
+		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link5->miny;
+		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link5->maxz;
+		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link5->minz;
+		top_ALICE_STACK++;
+	}
+	if (oc->link6 != nullptr) {
+		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link6);
+		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link6->maxx;
+		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link6->minx;
+		my_ALICE_STACK[top_ALICE_STACK].maxy = oc->link6->maxy;
+		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link6->miny;
+		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link6->maxz;
+		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link6->minz;
+		top_ALICE_STACK++;
+	}
+	if (oc->link7 != nullptr) {
+		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link7);
+		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link7->maxx;
+		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link7->minx;
+		my_ALICE_STACK[top_ALICE_STACK].maxy = oc->link7->maxy;
+		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link7->miny;
+		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link7->maxz;
+		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link7->minz;
+		top_ALICE_STACK++;
+	}
+	while (top_ALICE_STACK > 0) {
+		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist) {
+				// Гасим информацию о посещениях.
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+
+				bool blabeling = true;
+
+				if ((octree1->minx == octree1->maxx-1) || (octree1->miny == octree1->maxy - 1)|| (octree1->minz == octree1->maxz - 1)) {
+					// Одна клетка особый случай.
+					TOCHKA p;
+				    p.x = 0.125 * (octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
+				    p.y = 0.125 * (octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
+				    p.z = 0.125 * (octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
+				    integer ib;
+				    bool inDomain = false;
+
+			        inDomain=in_model_temp(p, ib, b, lb);
+
+					// Определяем номер блока который присвоен ячейке АЛИС сетки.
+				    // Все клеточки ячейки данной АЛИС сетки имеют один и тот же номер блока.
+				    // Данное запоминание нужно для ускорения работы программы.
+					if (/*(inDomain)&&*/(blabeling))
+					{
+						//if ((octree1->minx== octree1->maxx-1)&& (octree1->miny == octree1->maxy - 1)&& (octree1->minz == octree1->maxz - 1)) 
+						{
+							octree1->whot_is_block = ib;
+							if (ib == -1) {
+								std::cout << "ERROR 1 : ib == -1\n";
+								system("PAUSE");
+							}
+						}
+					}
+
+				}
+				else {
+
+				    int ib = hash_for_droblenie_xyz[octree1->minx][octree1->miny][octree1->minz];
+
+				    for (int i = octree1->minx; i < octree1->maxx; i++) {
+					    for (int j = octree1->miny; j < octree1->maxy; j++) {
+						    for (int k = octree1->minz; k < octree1->maxz; k++) {
+							    if (ib != hash_for_droblenie_xyz[i][j][k]) {
+								   blabeling = false;
+							    }
+						    }
+				    	}
+				    }
+
+
+					if (ib == -1) {
+
+						if (ib == -1) {
+							std::cout << "ERROR 2 : ib == -1\n";
+							system("PAUSE");
+						}
+
+						// Не удалось определить быстрым способом номер блока.
+						// Применяем тяжелый с вычислительной точки зрения способ прямого вычисления.
+
+						TOCHKA p;
+						p.x = 0.125 * (octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
+						p.y = 0.125 * (octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
+						p.z = 0.125 * (octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
+						integer ib;
+						bool inDomain = false;
+
+						inDomain = in_model_temp(p, ib, b, lb);
+
+						if (ib == -1) {
+							std::cout << "ERROR 3 : ib == -1\n";
+							system("PAUSE");
+						}
+
+					}
+
+					// Определяем номер блока который присвоен ячейке АЛИС сетки.
+				    // Все клеточки ячейки данной АЛИС сетки имеют один и тот же номер блока.
+				    // Данное запоминание нужно для ускорения работы программы.
+					if (/*(inDomain)&&*/(blabeling))
+					{
+						//if ((octree1->minx== octree1->maxx-1)&& (octree1->miny == octree1->maxy - 1)&& (octree1->minz == octree1->maxz - 1)) 
+						{
+							octree1->whot_is_block = ib;
+						}
+					}
+			    }
+				
+					
+
+				
+				
+				
+				octree1 = nullptr;
+				my_ALICE_STACK[top_ALICE_STACK - 1].link = nullptr;
+				top_ALICE_STACK--;
+			}
+			else {
+				// продолжаем добираться до листьев.
+				STACK_ALICE buf1 = my_ALICE_STACK[top_ALICE_STACK - 1];
+				STACK_ALICE* buf = &buf1;
+				top_ALICE_STACK--;
+				if (buf->link->link0 != nullptr) {
+					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link0);
+					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link0->maxx;
+					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link0->minx;
+					my_ALICE_STACK[top_ALICE_STACK].maxy = buf->link->link0->maxy;
+					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link0->miny;
+					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link0->maxz;
+					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link0->minz;
+					top_ALICE_STACK++;
+				}
+				if (buf->link->link1 != nullptr) {
+					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link1);
+					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link1->maxx;
+					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link1->minx;
+					my_ALICE_STACK[top_ALICE_STACK].maxy = buf->link->link1->maxy;
+					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link1->miny;
+					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link1->maxz;
+					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link1->minz;
+					top_ALICE_STACK++;
+				}
+				if (buf->link->link2 != nullptr) {
+					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link2);
+					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link2->maxx;
+					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link2->minx;
+					my_ALICE_STACK[top_ALICE_STACK].maxy = buf->link->link2->maxy;
+					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link2->miny;
+					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link2->maxz;
+					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link2->minz;
+					top_ALICE_STACK++;
+				}
+				if (buf->link->link3 != nullptr) {
+					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link3);
+					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link3->maxx;
+					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link3->minx;
+					my_ALICE_STACK[top_ALICE_STACK].maxy = buf->link->link3->maxy;
+					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link3->miny;
+					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link3->maxz;
+					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link3->minz;
+					top_ALICE_STACK++;
+				}
+				if (buf->link->link4 != nullptr) {
+					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link4);
+					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link4->maxx;
+					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link4->minx;
+					my_ALICE_STACK[top_ALICE_STACK].maxy = buf->link->link4->maxy;
+					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link4->miny;
+					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link4->maxz;
+					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link4->minz;
+					top_ALICE_STACK++;
+				}
+				if (buf->link->link5 != nullptr) {
+					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link5);
+					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link5->maxx;
+					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link5->minx;
+					my_ALICE_STACK[top_ALICE_STACK].maxy = buf->link->link5->maxy;
+					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link5->miny;
+					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link5->maxz;
+					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link5->minz;
+					top_ALICE_STACK++;
+				}
+				if (buf->link->link6 != nullptr) {
+					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link6);
+					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link6->maxx;
+					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link6->minx;
+					my_ALICE_STACK[top_ALICE_STACK].maxy = buf->link->link6->maxy;
+					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link6->miny;
+					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link6->maxz;
+					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link6->minz;
+					top_ALICE_STACK++;
+				}
+				if (buf->link->link7 != nullptr) {
+					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link7);
+					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link7->maxx;
+					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link7->minx;
+					my_ALICE_STACK[top_ALICE_STACK].maxy = buf->link->link7->maxy;
+					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link7->miny;
+					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link7->maxz;
+					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link7->minz;
+					top_ALICE_STACK++;
+				}
+			}
+		}
+		//}
+		//getchar();
+	}
+}
+
 // Процесс построение Адаптивной Локально Измельчённой расчётной Сетки.
 // АЛИС - экономит ресурсы ЭВМ и позволяет рассчитывать большие задачи на слабом оборудовании.
 bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
@@ -41669,11 +43182,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	integer &inxadd, integer &inyadd, integer &inzadd) {
 
 
-	// Ссылки на каждый узел octree дерева для его полной очистки.
-	// Мы хотим сэкономить оперативную память.
-	iMAX_Length_vector_octree = (integer)(1.4*inx*iny*inz);//6.5% 8% 14% (ПИОНЕР х64 34%)
-	rootClear_octree = new octree*[iMAX_Length_vector_octree];
-	icount_Length_vector_octree = 0;
+	bool b_resize1 = false;
+
+	
 
 	bool bsimpledefine = true;
 	for (integer i1 = 0; i1 < lb; i1++) {
@@ -41720,20 +43231,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 #endif
 	
 	// Вычисление допуска.
-	doublereal epsToolx = 1.0e40;
-	doublereal epsTooly = 1.0e40;
-	doublereal epsToolz = 1.0e40;
-	for (integer i = 0; i < inx; i++) {
+	doublereal epsToolx = 1.0e36;
+	doublereal epsTooly = 1.0e36;
+	doublereal epsToolz = 1.0e36;
+	for (int i = 0; i < inx; i++) {
 		if (fabs(xpos[i + 1] - xpos[i]) < epsToolx) {
 			epsToolx = 0.5*fabs(xpos[i + 1] - xpos[i]);
 		}
 	}
-	for (integer i = 0; i < iny; i++) {
+	for (int i = 0; i < iny; i++) {
 		if (fabs(ypos[i + 1] - ypos[i]) < epsTooly) {
 			epsTooly = 0.5*fabs(ypos[i + 1] - ypos[i]);
 		}
 	}
-	for (integer i = 0; i < inz; i++) {
+	for (int i = 0; i < inz; i++) {
 		if (fabs(zpos[i + 1] - zpos[i]) < epsToolz) {
 			epsToolz = 0.5*fabs(zpos[i + 1] - zpos[i]);
 		}
@@ -41742,37 +43253,37 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	//epsToolx *= 5.0;
 	//epsTooly *= 5.0;
 	//epsToolz *= 5.0;
-	epsToolx = -1.0e40;
-	epsTooly = -1.0e40;
-	epsToolz = -1.0e40;
-	for (integer i = 0; i < inx; i++) {
+	epsToolx = -1.0e36;
+	epsTooly = -1.0e36;
+	epsToolz = -1.0e36;
+	for (int i = 0; i < inx; i++) {
 		if (fabs(xpos[i + 1] - xpos[i]) > epsToolx) {
 			epsToolx = 0.5*fabs(xpos[i + 1] - xpos[i]);
 		}
 	}
-	for (integer i = 0; i < iny; i++) {
+	for (int i = 0; i < iny; i++) {
 		if (fabs(ypos[i + 1] - ypos[i]) > epsTooly) {
 			epsTooly = 0.5*fabs(ypos[i + 1] - ypos[i]);
 		}
 	}
-	for (integer i = 0; i < inz; i++) {
+	for (int i = 0; i < inz; i++) {
 		if (fabs(zpos[i + 1] - zpos[i]) > epsToolz) {
 			epsToolz = 0.5*fabs(zpos[i + 1] - zpos[i]);
 		}
 	}
 	
-	hash_for_droblenie_xyz = new integer**[inx];
-	for (integer i_54 = 0; i_54 < inx; i_54++) {
-		hash_for_droblenie_xyz[i_54] = new integer*[iny];
+	hash_for_droblenie_xyz = new int**[inx];
+	for (int i_54 = 0; i_54 < inx; i_54++) {
+		hash_for_droblenie_xyz[i_54] = new int*[iny];
 	}
-	for (integer i_54 = 0; i_54 < inx; i_54++) {
-		for (integer i_55 = 0; i_55 < iny; i_55++) {
-			hash_for_droblenie_xyz[i_54][i_55] = new integer[inz];
+	for (int i_54 = 0; i_54 < inx; i_54++) {
+		for (int i_55 = 0; i_55 < iny; i_55++) {
+			hash_for_droblenie_xyz[i_54][i_55] = new int[inz];
 		}
 	}
-	for (integer i_54 = 0; i_54 < inx; i_54++) {
-		for (integer i_55 = 0; i_55 < iny; i_55++) {
-			for (integer i_56 = 0; i_56 < inz; i_56++) {
+	for (int i_54 = 0; i_54 < inx; i_54++) {
+		for (int i_55 = 0; i_55 < iny; i_55++) {
+			for (int i_56 = 0; i_56 < inz; i_56++) {
 				hash_for_droblenie_xyz[i_54][i_55][i_56] = -1;
 			}
 		}
@@ -41830,7 +43341,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			// только для ячеек сетки находящихся внутри данной прямоугольной призмы, что сильно 
 			// ускоряет обработку.
 			// marker 30.07.2019 исключена проверка bfound
-			if ((b[i].g.itypegeom == PRISM) || (b[i].g.itypegeom == CYLINDER) || (b[i].g.itypegeom == POLYGON))
+			if ((b[i].g.itypegeom == PRISM) || (b[i].g.itypegeom == CYLINDER) ||
+				(b[i].g.itypegeom == POLYGON) || (b[i].g.itypegeom == CAD_STL))
 			{
 
 				doublereal x4 = b[i].g.xS;
@@ -42068,7 +43580,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					printf("alice_mesh  function\n");
 					printf("violation of the order block_indexes\n");
 					printf("i=%lld iL=%lld iR=%lld\n", i_1, block_indexes[i_1].iL,
-						block_indexes[i_1].iR);
+						block_indexes[i_1].iR, xpos[block_indexes[i_1].iL]);
 					system("pause");
 				}
 
@@ -42085,7 +43597,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					printf("alice_mesh  function\n");
 					printf("violation of the order block_indexes\n");
 					printf("i=%lld jL=%lld jR=%lld\n", i_1, block_indexes[i_1].jL,
-						block_indexes[i_1].jR);
+						block_indexes[i_1].jR, ypos[block_indexes[i_1].jL] );
 					system("pause");
 				}
 
@@ -42178,6 +43690,16 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 					if (b[i].g.itypegeom == POLYGON) {
 						printf("print for POLYGON object...\n");
+						printf("alice_mesh function\n");
+						printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+							block_indexes[i_1].iL, block_indexes[i_1].iR,
+							block_indexes[i_1].jL, block_indexes[i_1].jR,
+							block_indexes[i_1].kL, block_indexes[i_1].kR);
+						std::cout << b[i].name << ": ";
+						system("pause");
+					}
+					if (b[i].g.itypegeom == CAD_STL) {
+						printf("print for CAD_STL object...\n");
 						printf("alice_mesh function\n");
 						printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
 							block_indexes[i_1].iL, block_indexes[i_1].iR,
@@ -42366,24 +43888,37 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			}
 		}
 
+		if (lb > 32760) {
+			printf("Error int type :  number of blocks lb > 32760\n");
+			system("PAUSE");
+			exit(1);
+		}
+
 		// Количество проходов существенно сократилось и в итоге это приводит к существенному
 		// увеличению быстродействия.
-		integer m7 = lb-1, m8;
+		int m7 = lb-1, m8;
 
 //#pragma omp parallel for
 		for (integer iP = 0; iP<(inx+1)*(iny+1)*(inz+1); iP++) {
 			bvisit[iP] = false;
-		}
+		}		
 
+		int i_my_num_core_parallelesation = 1;
+#ifdef _OPENMP 
+		i_my_num_core_parallelesation = omp_get_max_threads();
+		int inum_cores = number_cores();
+		omp_set_num_threads(inum_cores); // установка числа потоков
+#endif
+		
 
 		for (m8 = lb-1; m8 >= 0; m8--) {
 			m7 = m8;
 			if (b[m8].g.itypegeom == PRISM) {
 
 #pragma omp parallel for
-				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
-					for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) 
-						for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+				for (int i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
+					for (int j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+						for (int k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
 
 					if ((i1 < 0) || (i1 >= inx) || (j1 < 0) || (j1 >= iny) || (k1 < 0) || (k1 >= inz)) {
@@ -42414,9 +43949,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				// Cylinder
 				//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
 
-				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
-					for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) 
-						for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+				for (int i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
+					for (int j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+						for (int k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
 
@@ -42444,7 +43979,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 						switch (b[m8].g.iPlane) {
 						case XY_PLANE:
-							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+							if (fabs(b[m8].g.R_in_cyl) < 1.0e-36) {
 								if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[i1].g.R_out_cyl) {
 
@@ -42468,7 +44003,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							}
 							break;
 						case XZ_PLANE:
-							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+							if (fabs(b[m8].g.R_in_cyl) < 1.0e-36) {
 								if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
 
@@ -42492,7 +44027,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							}
 							break;
 						case YZ_PLANE:
-							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+							if (fabs(b[m8].g.R_in_cyl) < 1.0e-36) {
 								if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
 
@@ -42527,9 +44062,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				// рассматривая только точки внутри окаймляющей прямоугольной призмы.
 
 #pragma omp parallel for
-				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
-					for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
-						for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+				for (int i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
+					for (int j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+						for (int k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
 
@@ -42572,8 +44107,77 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				
 			}
+			else if (b[m8].g.itypegeom == CAD_STL) {
+
+			// CAD_STL
+			// Мы сокращаем число проверяемых точек 
+			// рассматривая только точки внутри окаймляющей прямоугольной призмы.
+
+			integer icompleate = 0;
+
+#pragma omp parallel for reduction(+: icompleate)
+			for (int i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) {
+				for (int j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+					for (int k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+
+						integer iP = i1 + j1 * inx + k1 * inx * iny;
+
+						icompleate++;
+
+						if (icompleate % 5000 == 0) {
+							printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+							printf("%e%%", 1.0 * (icompleate) / (1.0 * ((inx*iny*inz))));
+						}
+
+						if ((i1 < 0) || (i1 >= inx) || (j1 < 0) || (j1 >= iny) || (k1 < 0) || (k1 >= inz)) {
+							// ERROR
+							printf("ERROR CAD_STL\n");
+							std::cout << b[m8].name << ": ";
+							printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+							printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
+							printf("iP=%lld m8=%lld", iP, m8);
+							printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+							system("PAUSE");
+						}
+
+						if (bvisit[iP] == false)
+						{
+
+							//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
+							TOCHKA p;
+							p.x = 0.5 * (xpos[i1] + xpos[i1 + 1]);
+							p.y = 0.5 * (ypos[j1] + ypos[j1 + 1]);
+							p.z = 0.5 * (zpos[k1] + zpos[k1 + 1]);
+
+							integer k74 = -1;
+
+							if (b[m8].g.in_CAD_STL_check(p, k74, m8))
+							{
+								//printf("i1=%d j1=%d k1=%d inx*iny*inz=%d\n",i1,j1,k1, inx*iny*inz);
+								//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+
+								bvisit[iP] = true;
+								if ((m8 >= 0) && (m8 < lb)) {
+									hash_for_droblenie_xyz[i1][j1][k1] = m8;
+								}
+								else {
+									printf("ERROR in_CAD_STL_check() function m8 corrupt\n");
+									system("pause");
+								}
+							}
+						}
+					}
+
+				}
+
+			}
 			//m7--;
 		}
+
+
+#ifdef _OPENMP 
+		omp_set_num_threads(i_my_num_core_parallelesation);
+#endif
 
 		delete[] block_indexes;
 
@@ -42583,12 +44187,24 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		}
 
 		
+		bool bfirst_message = true;
+		integer iproblem_nodes = 0;
 
-		for (integer i_54 = 0; i_54 < inx; i_54++) {
-			for (integer i_55 = 0; i_55 < iny; i_55++) {
-				for (integer i_56 = 0; i_56 < inz; i_56++) {
+		for (int i_54 = 0; i_54 < inx; i_54++) {
+			for (int i_55 = 0; i_55 < iny; i_55++) {
+				for (int i_56 = 0; i_56 < inz; i_56++) {
 					if ((hash_for_droblenie_xyz[i_54][i_55][i_56] <= -1)||
 						(hash_for_droblenie_xyz[i_54][i_55][i_56]>=lb)) {
+
+						if (bfirst_message) {
+							
+							std::cout << "Attantion!!! Increase the number of grid nodes\n";
+							//system("PAUSE");
+							bfirst_message = false;
+						}
+
+						iproblem_nodes++;
+
 						// Мы что-то пропустили и из-за этого возможен сбой в дальнейшем.
 						// исправляем так чтобы сбоя не было 28.07.2019
 						TOCHKA p;
@@ -42611,14 +44227,18 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			}
 		}
 
+		if (iproblem_nodes > 0) {
+			printf("anomal hash_for_droblenie_xyz cell count=%lld\n", iproblem_nodes);
+		}
+
 		printf("enumerate_volume_improved end.\n");
 
 	}
 	else {
 		// Медленная версия, очевидное простое и медленное решение.
-		for (integer i_54 = 0; i_54 < inx; i_54++) {
-			for (integer i_55 = 0; i_55 < iny; i_55++) {
-				for (integer i_56 = 0; i_56 < inz; i_56++) {
+		for (int i_54 = 0; i_54 < inx; i_54++) {
+			for (int i_55 = 0; i_55 < iny; i_55++) {
+				for (int i_56 = 0; i_56 < inz; i_56++) {
 					TOCHKA p;
 					p.x = 0.5*(xpos[i_54] + xpos[i_54 + 1]);
 					p.y = 0.5*(ypos[i_55] + ypos[i_55 + 1]);
@@ -42636,10 +44256,19 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	}
 
 
+	
+	
+
 	oc_global = new octree;
 	// Ссылки на каждый узел octree дерева для его полной очистки.
-	rootClear_octree[icount_Length_vector_octree] = oc_global;
-	icount_Length_vector_octree++;
+
+	// Ссылки на каждый узел octree дерева для его полной очистки.
+	// Мы хотим сэкономить оперативную память.
+	rootClear_octree = new octree_list;
+	rootClear_octree->next=nullptr;
+	head_rootClear_octree = rootClear_octree;
+	rootClear_octree->pnode = oc_global;
+	
 
 	oc_global->inum_TD = 0; // Не принадлежит расчётной области.
 	oc_global->inum_FD = 0;// Не принадлежит расчётной области.
@@ -42716,7 +44345,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	oc_global->link6 = nullptr;
 	oc_global->link7 = nullptr;
 	my_ALICE_STACK = nullptr;
-	my_ALICE_STACK = new STACK_ALICE[maxelm];
+	// 0.04 импирически подобранный коэффициент запаса. 31.10.2020
+	// Он подобран на серии tgf задач.
+	//my_ALICE_STACK = new STACK_ALICE[(integer)(0.04*maxelm)];
+	integer isize_ALICE_STACK=ALICE_maxelm_size_prediction(inx, iny, inz, b, lb, lw, w, s, ls);
+	my_ALICE_STACK = new STACK_ALICE[isize_ALICE_STACK];
 	// Оператор new не требует проверки.
 	//if (my_ALICE_STACK == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -42762,7 +44395,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		my_ALICE_STACK[i_34].link = nullptr;
 	}
 	top_ALICE_STACK = 0;
-	expt(oc_global, inx, iny, inz, maxelm, xpos, ypos, zpos);
+	if (!B_QUICK_MESHING) {
+		printf("export paraview 5.5 geometry fragmentation.\n");
+		expt(oc_global, inx, iny, inz, maxelm, xpos, ypos, zpos);
+	}
 	printf("export ready\n");
 	if (DEBUG_ALICE_MESH) {
 		//system("PAUSE");
@@ -43153,16 +44789,16 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			
 		}
 		
+		
 
 		// 6. Гасим информацию о посещениях.
 		if (DEBUG_ALICE_MESH) printf("function: shutdown_visit\n");
 		shutdown_visit(oc_global);
 		top_ALICE_STACK = 0;
+		
 		if (iret_one_scan>0) bcont34 = true;
 		progress_bar += iret_one_scan;
-		if (!B_QUICK_MESHING) {
-			expt(oc_global, inx, iny, inz, maxelm, xpos, ypos, zpos);
-		}
+		
 		printf("linking is finished.\n");
 
 #if doubleintprecision == 1
@@ -43178,9 +44814,51 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			system("PAUSE");
 		}
 		// Важнейший контроль дисбаланса, никаких дисбалансов быть не должно.
+
 		integer iOk28 = 0;
 		iOk28 = if_disbalnce(oc_global,inx,iny,inz,maxelm,xpos,ypos,zpos, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd,b,lb,w,lw,s,ls);
-		if ((TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH == itype_ALICE_Mesh)&&(iOk28>0)) {
+		if (iOk28 > 0) {
+			//std::cout << "iOk28 > 0\n";
+			//system("PAUSE");
+		}
+		if (!B_QUICK_MESHING) {
+			if (0&&(TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH == itype_ALICE_Mesh)) {
+
+				// Если 0 то мы отказываемся от экономии памяти и hash_for_droblenie_xyz будет освобождено в конце.
+				// hash_for_droblenie_xyz требуется чтобы в самом конце вычислить calculate_whot_is_block для ускорения расчётов.
+				// Здесь calculate_whot_is_block вычислять нельзя, т.к. он должен быть вычислен именно в конце.
+
+				// 18.11.2020
+				calculate_whot_is_block(oc_global, b, lb);
+				top_ALICE_STACK = 0;
+
+				// Освобождение оперативной памяти из под хеш-таблицы.
+				for (int i_54 = 0; i_54 < inx; i_54++) {
+					for (int i_55 = 0; i_55 < iny; i_55++) {
+						delete[] hash_for_droblenie_xyz[i_54][i_55];
+						hash_for_droblenie_xyz[i_54][i_55] = nullptr;
+					}
+				}
+
+				for (int i_54 = 0; i_54 < inx; i_54++) {
+					delete[] hash_for_droblenie_xyz[i_54];
+					hash_for_droblenie_xyz[i_54] = nullptr;
+				}
+
+				delete[] hash_for_droblenie_xyz;
+				hash_for_droblenie_xyz = nullptr;
+
+
+
+				b_resize1 = true;
+
+			}
+
+
+		}
+		if ((TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH == itype_ALICE_Mesh)&&(iOk28>99)) {
+			// было (iOk28>0). Стало (iOk28>99). 26.10.2020
+
 			// Только в том случае если мы строим многопроходовую АЛИС сетку высочайшего качества.
 			// Это долгий вычислительный процесс.
 #if doubleintprecision == 1
@@ -43207,18 +44885,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// было: 344мин 133 прогонов, 22 глубина дробления. (3.2ггц процессор).
 		// стало: 
 
-
+        // 18.11.2020
+		calculate_whot_is_block(oc_global, b, lb);
+		top_ALICE_STACK = 0;
 
 		// Не забываем освобождать оперативную память.
 		// Освобождение оперативной памяти из под хеш-таблицы.
-		for (integer i_54 = 0; i_54 < inx; i_54++) {
-			for (integer i_55 = 0; i_55 < iny; i_55++) {
+		for (int i_54 = 0; i_54 < inx; i_54++) {
+			for (int i_55 = 0; i_55 < iny; i_55++) {
 				delete[] hash_for_droblenie_xyz[i_54][i_55];
 				hash_for_droblenie_xyz[i_54][i_55] = nullptr;
 			}
 		}
 
-		for (integer i_54 = 0; i_54 < inx; i_54++) {
+		for (int i_54 = 0; i_54 < inx; i_54++) {
 			delete[] hash_for_droblenie_xyz[i_54];
 			hash_for_droblenie_xyz[i_54] = nullptr;
 		}
@@ -43227,6 +44907,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		hash_for_droblenie_xyz = nullptr;
 
 		printf("Free memory for hash_for_droblenie_xyz. alice mesh return false\n");
+
+
+		expt(oc_global, inx, iny, inz, maxelm, xpos, ypos, zpos);
 
 		//system("PAUSE");
 		// Нужно добавить сеточных линий.
@@ -43247,21 +44930,41 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	//delete[] my_ALICE_STACK;
 
 
-	// Освобождение оперативной памяти из под хеш-таблицы.
-	for (integer i_54 = 0; i_54 < inx; i_54++) {
-		for (integer i_55 = 0; i_55 < iny; i_55++) {
-			delete[] hash_for_droblenie_xyz[i_54][i_55];
-			hash_for_droblenie_xyz[i_54][i_55] = nullptr;
-		}
-	}
 	
-	for (integer i_54 = 0; i_54 < inx; i_54++) {
-		delete[] hash_for_droblenie_xyz[i_54];
-		hash_for_droblenie_xyz[i_54] = nullptr;
-	}
 
-	delete[] hash_for_droblenie_xyz;
-	hash_for_droblenie_xyz = nullptr;
+	
+	// 29.10.2020
+	// Ужимаем в памяти хранилище для  rootClear_octree;
+	// Сокращение размера сильно экономит оперативную память.
+
+	if (!b_resize1) {
+
+		
+
+		// 18.11.2020
+		calculate_whot_is_block(oc_global, b, lb);
+		top_ALICE_STACK = 0;
+
+		/*
+		// Освобождение оперативной памяти из под хеш-таблицы.
+		for (int i_54 = 0; i_54 < inx; i_54++) {
+			for (int i_55 = 0; i_55 < iny; i_55++) {
+				delete[] hash_for_droblenie_xyz[i_54][i_55];
+				hash_for_droblenie_xyz[i_54][i_55] = nullptr;
+			}
+		}
+
+		for (int i_54 = 0; i_54 < inx; i_54++) {
+			delete[] hash_for_droblenie_xyz[i_54];
+			hash_for_droblenie_xyz[i_54] = nullptr;
+		}
+
+		delete[] hash_for_droblenie_xyz;
+		hash_for_droblenie_xyz = nullptr;
+		*/
+		
+
+	}
 
 	printf("Free memory for hash_for_droblenie_xyz. alice mesh return true\n");
 

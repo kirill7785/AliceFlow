@@ -83,13 +83,7 @@ integer my_imin(integer ia, integer ib )
 // 1 october 2016 cuda compiller.
 
 
-integer myi_max(integer ia, integer ib ) 
-{
-	integer ir;
-	if (ia<ib) ir=ib;
-	else ir=ia;
-	return ir;
-} // max
+
 
 
 doublereal myr_max(doublereal da, doublereal db ) 
@@ -14370,7 +14364,8 @@ integer amg1r5_non_linear_(doublereal *a, integer *ia, integer *ja,
 	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
 	integer *nwt, integer *ntr, integer *ierr,
-	BLOCK*& my_body, integer& lb, integer maxelm_out, integer maxelm_plus_maxbound);
+	BLOCK*& my_body, integer& lb, integer maxelm_out, integer maxelm_plus_maxbound,
+	int * &whot_is_block);
 
 // Здесь содержится обвязка вызывающая amg1r5.
 // Внешняя память, нет выделений и уничтожений памяти.
@@ -14380,7 +14375,8 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 			   doublereal alpharelax, integer iVar, bool bLRfree, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
 	           integer iVorst_version,
-	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, WALL* &w, integer lw)
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, WALL* &w, integer lw,
+	int * &whot_is_block)
 {
 
 
@@ -15589,7 +15585,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				&iprint, &levelx, &ifirst, &ncyc,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
-				&nwt, &ntr, &ierr,b,lb,maxelm, maxelm+maxbound);
+				&nwt, &ntr, &ierr,b,lb,maxelm, maxelm+maxbound, whot_is_block);
 		}
 
 		free_level_additional_data(milu2_amg1r5, levelx);
@@ -15788,7 +15784,8 @@ void amg(equation3D* &sl, equation3D_bon* &slb,
 	           bool bLRfree, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
 	           integer iVorst_version,  bool &worked_successfully,
-	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, WALL* &w, integer &lw)
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, WALL* &w, integer &lw,
+	int * &whot_is_block)
 {
 
 	              // iVorst_version == 0 - просто amg1r5 алгоритм.
@@ -15811,7 +15808,7 @@ void amg(equation3D* &sl, equation3D_bon* &slb,
 				   }
 				   else {
 					   // память выделяется лишь единожды.
-					   amg_global_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, ifrontregulationgl, ibackregulationgl, iVorst_version, b, lb, s_loc, ls,w,lw);
+					   amg_global_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, ifrontregulationgl, ibackregulationgl, iVorst_version, b, lb, s_loc, ls,w,lw, whot_is_block);
 				   }
 }
 

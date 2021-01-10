@@ -26,7 +26,8 @@
 	levels, integer *nda, integer *ndja, integer *ndu, integer *ndf,
 	integer *mda, integer *mdja, integer *mdu, integer *mdf, integer *iup,
 	integer *ium, doublereal *resi, doublereal *res0, doublereal *res,
-	BLOCK*& my_body, integer& lb, integer maxelm_out, integer maxelm_plus_maxbound)
+	BLOCK*& my_body, integer& lb, integer maxelm_out, integer maxelm_plus_maxbound,
+	int *& whot_is_block)
 {
 
 	
@@ -517,7 +518,7 @@ L9:
 							}
 						}
 
-						radiosity_patch_for_vacuum_Prism_Object_(rthdsd_loc123, my_body, lb, maxelm_out);
+						radiosity_patch_for_vacuum_Prism_Object_(rthdsd_loc123, my_body, lb, maxelm_out, whot_is_block);
 #pragma omp parallel for
 						for (integer i23 = 0; i23 < n_a; i23++) {
 							u_old[i23] = x_temper[i23];
@@ -952,7 +953,8 @@ L170:
 	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
 	integer *nwt, integer *ntr, integer *ierr,
-	BLOCK*& my_body, integer& lb, integer maxelm_out, integer maxelm_plus_maxbound)
+	BLOCK*& my_body, integer& lb, integer maxelm_out, integer maxelm_plus_maxbound,
+	int *& whot_is_block)
 {
 	/* Format strings */
 
@@ -1672,7 +1674,7 @@ L20:
 		ia[1], &ja[1], &ig[1], eps, imin, imax, iminw, imaxw, &ig[icgst],
 		&ig[icgst + ndicg], nstcol, iarr, time, &ncyc0, &irow0, &levels,
 		nda, ndja, ndu, ndf, &mda, &mdja, &mdu, &mdf, &iup, &ium, resi, &
-		res0, &res, my_body, lb, maxelm_out, maxelm_plus_maxbound);
+		res0, &res, my_body, lb, maxelm_out, maxelm_plus_maxbound, whot_is_block);
 	if (*ierr > 0) {
 		return 0;
 	}

@@ -70,8 +70,8 @@ typedef struct TPARDATA {
 */
 // Вычисление градиентов потенциала FI в центрах внутренних КО
 // и на границах с помощью линейной интерполяции.
-void green_gauss_FI_(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa,
-	ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
+void green_gauss_FI_(integer iP, doublereal** &potent, int** nvtx, TOCHKA* pa,
+	int*** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты скоростей для внутренних КО.
 	// если bbond   то будут вычислены значения в граничных КО, иначе только во внутренних.
@@ -81,7 +81,7 @@ void green_gauss_FI_(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* p
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP]; iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -193,8 +193,8 @@ void green_gauss_FI_(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* p
 // геометрическая форма, поэтому мы считает что сетка единичная равномерная, т.е. 
 // состоит из единичных кубов с единичными рёбрами.
 // 8 августа 2015.
-void green_gauss_FI_union(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa,
-	ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
+void green_gauss_FI_union(integer iP, doublereal** &potent, int** nvtx, TOCHKA* pa,
+	int*** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты скоростей для внутренних КО.
 	// если bbond   то будут вычислены значения в граничных КО, иначе только во внутренних.
@@ -204,7 +204,7 @@ void green_gauss_FI_union(integer iP, doublereal** &potent, integer** nvtx, TOCH
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP]; iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -326,7 +326,7 @@ void green_gauss_FI_union(integer iP, doublereal** &potent, integer** nvtx, TOCH
 void my_nested_dissection_bound(integer inumber, integer maxelm, 
 							  bool bDirichlet, BOUND* border_neighbor, integer ls, integer lw,
 							  WALL* w, equation3D_bon* &slb, doublereal dbeta,
-							  TOCHKA* pa, integer** nvtx, doublereal* potent, integer &iMCB
+							  TOCHKA* pa, int** nvtx, doublereal* potent, integer &iMCB
 							  ) 
 {
 
@@ -482,7 +482,7 @@ void my_nested_dissection_bound(integer inumber, integer maxelm,
 void my_nested_dissection_bound_union(integer inumber, integer maxelm, 
 							  bool bDirichlet, BOUND* border_neighbor, integer ls, integer lw,
 							  WALL* w, equation3D_bon* &slb, doublereal dbeta,
-							  TOCHKA* pa, integer** nvtx, doublereal* potent, integer &iMCB
+							  TOCHKA* pa, int** nvtx, doublereal* potent, integer &iMCB
 							  ) 
 {
 
@@ -635,7 +635,7 @@ void my_nested_dissection_bound_union(integer inumber, integer maxelm,
 // Составляет матрицу для уравнения 
 // поправки давления
 void my_elmatr_quad_nested_dissection(integer iP, equation3D* &sl, equation3D_bon* &slb,  
-	TOCHKA* pa, integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, doublereal dbeta) {
+	TOCHKA* pa, int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm, doublereal dbeta) {
 
    
 	doublereal eps=1e-37; // для отделения вещественного нуля.
@@ -645,8 +645,8 @@ void my_elmatr_quad_nested_dissection(integer iP, equation3D* &sl, equation3D_bo
 
     // iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 	sl[iP].iP=iP;
 	sl[iP].iE=iE; sl[iP].iN=iN; 
 	sl[iP].iS=iS; sl[iP].iW=iW;
@@ -793,7 +793,7 @@ void my_elmatr_quad_nested_dissection(integer iP, equation3D* &sl, equation3D_bo
 // на качество разбиения nested desection.
 // 8 августа 2015. 
 void my_elmatr_quad_nested_dissection_union(integer iP, equation3D* &sl, equation3D_bon* &slb,  
-	TOCHKA* pa, integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, doublereal dbeta) {
+	TOCHKA* pa, int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm, doublereal dbeta) {
 
    
 	doublereal eps=1e-37; // для отделения вещественного нуля.
@@ -803,8 +803,8 @@ void my_elmatr_quad_nested_dissection_union(integer iP, equation3D* &sl, equatio
 
     // iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 	sl[iP].iP=iP;
 	sl[iP].iE=iE; sl[iP].iN=iN; 
 	sl[iP].iS=iS; sl[iP].iW=iW;
@@ -1149,7 +1149,7 @@ const integer znorm=2;
 void fill_marker_surface(integer iP, integer* &color, integer iNorm, FLOW &f) {
 	// 0 - не помечено, 1 - помечено, 2 - запрет на пометку.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW=f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE=f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=f.neighbors_for_the_internal_node[T_SIDE][0][iP]; iW=f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 	switch (iNorm) {
 	case xnorm: 
@@ -1250,8 +1250,8 @@ void fill_marker_surface(integer iP, integer* &color, integer iNorm, FLOW &f) {
 void fill_marker_volume(integer iP, integer* &color, FLOW &f) {
 	// 0 - не помечено, 1 - помечено, 2 - запрет на пометку.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW=f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE=f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=f.neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW=f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 	if ((color[iE]!=2)&&(color[iE]!=1)) {
 	    color[iE]=1; // помечено.
@@ -1296,8 +1296,8 @@ void fill_marker_volume_iterat(integer iP, integer* &color, FLOW &f) {
 		bweshouldbecontinue=false;
 		for (iP=0; iP<f.maxelm; iP++) {
 			if (color[iP]==1) {
-			   iE=f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	           iW=f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+			   iE=f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=f.neighbors_for_the_internal_node[T_SIDE][0][iP];
+	           iW=f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 			   if ((color[iE]!=2)&&(color[iE]!=1)) {
 	              color[iE]=1; // помечено.
@@ -1342,12 +1342,12 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 				integer i1, i2, i3, i4;
 				switch (iNorm) {
 		          case xnorm:
-					  i1=f.neighbors_for_the_internal_node[W_SIDE][i].iNODE1;
+					  i1=f.neighbors_for_the_internal_node[W_SIDE][0][i];
 					  if (color[i1]==1) {
 						  if (i1>=f.maxelm) {
 							  // граничный узел.
 							  i2=i;
-							  i3=f.neighbors_for_the_internal_node[E_SIDE][i].iNODE1;
+							  i3=f.neighbors_for_the_internal_node[E_SIDE][0][i];
 							  if (color[i3]==1) {
 								  if (i3<f.maxelm) {
 									  // стираем выделение.
@@ -1355,7 +1355,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									  color[i2]=0;
 									  color[i3]=0;
 									  brepeat=true;
-									  i4=f.neighbors_for_the_internal_node[E_SIDE][i3].iNODE1;
+									  i4=f.neighbors_for_the_internal_node[E_SIDE][0][i3];
 									  if (color[i4]==1) {
 										  color[i4]=0;
 									  }
@@ -1365,7 +1365,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 						  else {
 							  // узел i и сосед W узла i внутренние и отмеченные.
 							  i2=i1;
-							  i1=f.neighbors_for_the_internal_node[W_SIDE][i2].iNODE1;
+							  i1=f.neighbors_for_the_internal_node[W_SIDE][0][i2];
 							  if (color[i1]==1) {
 								  if (i1>=f.maxelm) {
 									  // i1 - граничный узел.
@@ -1376,7 +1376,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									 color[i3]=0;
 									 brepeat=true;
 									 if (i3<f.maxelm) {
-									    i4=f.neighbors_for_the_internal_node[E_SIDE][i3].iNODE1;
+									    i4=f.neighbors_for_the_internal_node[E_SIDE][0][i3];
 									    if (color[i4]==1) {
 										    color[i4]=0;
 									    }
@@ -1386,7 +1386,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 							  else {
 								  i3=i2;
 								  i2=i;
-								  i1=f.neighbors_for_the_internal_node[E_SIDE][i].iNODE1;
+								  i1=f.neighbors_for_the_internal_node[E_SIDE][0][i];
 								  if (color[i1]==1) {
 								     if (i1>=f.maxelm) {
 									     // i1 - граничный узел.
@@ -1396,7 +1396,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									     color[i3]=0;
 									     brepeat=true;
 										 if (i3<f.maxelm) {
-									        i4=f.neighbors_for_the_internal_node[W_SIDE][i3].iNODE1;
+									        i4=f.neighbors_for_the_internal_node[W_SIDE][0][i3];
 									        if (color[i4]==1) {
 										        color[i4]=0;
 									        }
@@ -1408,9 +1408,9 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 					  }
 					  else {
 						  i1=i;
-						  i2=f.neighbors_for_the_internal_node[E_SIDE][i].iNODE1;
+						  i2=f.neighbors_for_the_internal_node[E_SIDE][0][i];
 						  if (color[i2]==1) {
-							  i3=f.neighbors_for_the_internal_node[E_SIDE][i2].iNODE1;
+							  i3=f.neighbors_for_the_internal_node[E_SIDE][0][i2];
 							  if (color[i3]==1) {
 								  if (i3>=f.maxelm) {
 									  // граничный узел.
@@ -1420,7 +1420,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									  color[i3]=0;
 									  brepeat=true;
 									   if (i1<f.maxelm) {
-									      i4=f.neighbors_for_the_internal_node[W_SIDE][i1].iNODE1;
+									      i4=f.neighbors_for_the_internal_node[W_SIDE][0][i1];
 									      if (color[i4]==1) {
 										       color[i4]=0;
 									      }
@@ -1431,12 +1431,12 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 					  }
 			          break;
 		          case ynorm:
-					  i1=f.neighbors_for_the_internal_node[S_SIDE][i].iNODE1;
+					  i1=f.neighbors_for_the_internal_node[S_SIDE][0][i];
 					  if (color[i1]==1) {
 						  if (i1>=f.maxelm) {
 							  // граничный узел.
 							  i2=i;
-							  i3=f.neighbors_for_the_internal_node[N_SIDE][i].iNODE1;
+							  i3=f.neighbors_for_the_internal_node[N_SIDE][0][i];
 							  if (color[i3]==1) {
 								  if (i3<f.maxelm) {
 									  // стираем выделение.
@@ -1444,7 +1444,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									  color[i2]=0;
 									  color[i3]=0;
 									  brepeat=true;
-									  i4=f.neighbors_for_the_internal_node[N_SIDE][i3].iNODE1;
+									  i4=f.neighbors_for_the_internal_node[N_SIDE][0][i3];
 									  if (color[i4]==1) {
 										  color[i4]=0;
 									  }
@@ -1454,7 +1454,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 						  else {
 							  // узел i и сосед W узла i внутренние и отмеченные.
 							  i2=i1;
-							  i1=f.neighbors_for_the_internal_node[S_SIDE][i2].iNODE1;
+							  i1=f.neighbors_for_the_internal_node[S_SIDE][0][i2];
 							  if (color[i1]==1) {
 								  if (i1>=f.maxelm) {
 									  // i1 - граничный узел.
@@ -1465,7 +1465,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									 color[i3]=0;
 									 brepeat=true;
 									 if (i3<f.maxelm) {
-									    i4=f.neighbors_for_the_internal_node[N_SIDE][i3].iNODE1;
+									    i4=f.neighbors_for_the_internal_node[N_SIDE][0][i3];
 									    if (color[i4]==1) {
 										    color[i4]=0;
 									    }
@@ -1475,7 +1475,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 							  else {
 								  i3=i2;
 								  i2=i;
-								  i1=f.neighbors_for_the_internal_node[N_SIDE][i].iNODE1;
+								  i1=f.neighbors_for_the_internal_node[N_SIDE][0][i];
 								  if (color[i1]==1) {
 								     if (i1>=f.maxelm) {
 									     // i1 - граничный узел.
@@ -1485,7 +1485,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									     color[i3]=0;
 									     brepeat=true;
 										 if (i3<f.maxelm) {
-									        i4=f.neighbors_for_the_internal_node[S_SIDE][i3].iNODE1;
+									        i4=f.neighbors_for_the_internal_node[S_SIDE][0][i3];
 									        if (color[i4]==1) {
 										        color[i4]=0;
 									        }
@@ -1497,9 +1497,9 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 					  }
 					  else {
 						  i1=i;
-						  i2=f.neighbors_for_the_internal_node[N_SIDE][i].iNODE1;
+						  i2=f.neighbors_for_the_internal_node[N_SIDE][0][i];
 						  if (color[i2]==1) {
-							  i3=f.neighbors_for_the_internal_node[N_SIDE][i2].iNODE1;
+							  i3=f.neighbors_for_the_internal_node[N_SIDE][0][i2];
 							  if (color[i3]==1) {
 								  if (i3>=f.maxelm) {
 									  // граничный узел.
@@ -1509,7 +1509,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									  color[i3]=0;
 									  brepeat=true;
 									   if (i1<f.maxelm) {
-									      i4=f.neighbors_for_the_internal_node[S_SIDE][i1].iNODE1;
+									      i4=f.neighbors_for_the_internal_node[S_SIDE][0][i1];
 									      if (color[i4]==1) {
 										       color[i4]=0;
 									      }
@@ -1520,12 +1520,12 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 					  }
 			          break;
 		          case znorm:
-					  i1=f.neighbors_for_the_internal_node[B_SIDE][i].iNODE1;
+					  i1=f.neighbors_for_the_internal_node[B_SIDE][0][i];
 					  if (color[i1]==1) {
 						  if (i1>=f.maxelm) {
 							  // граничный узел.
 							  i2=i;
-							  i3=f.neighbors_for_the_internal_node[T_SIDE][i].iNODE1;
+							  i3=f.neighbors_for_the_internal_node[T_SIDE][0][i];
 							  if (color[i3]==1) {
 								  if (i3<f.maxelm) {
 									  // стираем выделение.
@@ -1533,7 +1533,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									  color[i2]=0;
 									  color[i3]=0;
 									  brepeat=true;
-									  i4=f.neighbors_for_the_internal_node[T_SIDE][i3].iNODE1;
+									  i4=f.neighbors_for_the_internal_node[T_SIDE][0][i3];
 									  if (color[i4]==1) {
 										  color[i4]=0;
 									  }
@@ -1543,7 +1543,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 						  else {
 							  // узел i и сосед W узла i внутренние и отмеченные.
 							  i2=i1;
-							  i1=f.neighbors_for_the_internal_node[B_SIDE][i2].iNODE1;
+							  i1=f.neighbors_for_the_internal_node[B_SIDE][0][i2];
 							  if (color[i1]==1) {
 								  if (i1>=f.maxelm) {
 									  // i1 - граничный узел.
@@ -1554,7 +1554,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									 color[i3]=0;
 									 brepeat=true;
 									 if (i3<f.maxelm) {
-									    i4=f.neighbors_for_the_internal_node[T_SIDE][i3].iNODE1;
+									    i4=f.neighbors_for_the_internal_node[T_SIDE][0][i3];
 									    if (color[i4]==1) {
 										    color[i4]=0;
 									    }
@@ -1564,7 +1564,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 							  else {
 								  i3=i2;
 								  i2=i;
-								  i1=f.neighbors_for_the_internal_node[T_SIDE][i].iNODE1;
+								  i1=f.neighbors_for_the_internal_node[T_SIDE][0][i];
 								  if (color[i1]==1) {
 								     if (i1>=f.maxelm) {
 									     // i1 - граничный узел.
@@ -1574,7 +1574,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									     color[i3]=0;
 									     brepeat=true;
 										 if (i3<f.maxelm) {
-									        i4=f.neighbors_for_the_internal_node[B_SIDE][i3].iNODE1;
+									        i4=f.neighbors_for_the_internal_node[B_SIDE][0][i3];
 									        if (color[i4]==1) {
 										        color[i4]=0;
 									        }
@@ -1586,9 +1586,9 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 					  }
 					  else {
 						  i1=i;
-						  i2=f.neighbors_for_the_internal_node[T_SIDE][i].iNODE1;
+						  i2=f.neighbors_for_the_internal_node[T_SIDE][0][i];
 						  if (color[i2]==1) {
-							  i3=f.neighbors_for_the_internal_node[T_SIDE][i2].iNODE1;
+							  i3=f.neighbors_for_the_internal_node[T_SIDE][0][i2];
 							  if (color[i3]==1) {
 								  if (i3>=f.maxelm) {
 									  // граничный узел.
@@ -1598,7 +1598,7 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 									  color[i3]=0;
 									  brepeat=true;
 									   if (i1<f.maxelm) {
-									      i4=f.neighbors_for_the_internal_node[B_SIDE][i1].iNODE1;
+									      i4=f.neighbors_for_the_internal_node[B_SIDE][0][i1];
 									      if (color[i4]==1) {
 										       color[i4]=0;
 									      }
@@ -1621,8 +1621,8 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 	for (integer iP=0; iP<f.maxelm; iP++) {
 			if (color[iP]==0) {
                 integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	            iE=f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-				iW=f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	            iE=f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=f.neighbors_for_the_internal_node[T_SIDE][0][iP];
+				iW=f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 			    if ((iE>=f.maxelm)&&(color[iE]==1)) {
 					color[iE]=0;
@@ -1712,7 +1712,7 @@ integer uluchenie_katchestva_razbieniq(FLOW &f, integer* &ifrontregulation, inte
 			   integer iP=ifrontregulation[i];
 			   if (iP<f.maxelm) {
 				   integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	               iE=f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW=f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	               iE=f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=f.neighbors_for_the_internal_node[T_SIDE][0][iP]; iW=f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 				   if ((iPseparator==iE)||(iPseparator==iW)||(iPseparator==iN)||(iPseparator==iS)||(iPseparator==iT)||(iPseparator==iB)) {
 					   iPseparator=iP; // именно внутренний контрольный объём.
@@ -1758,108 +1758,108 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 
 		// Если мы упёрлись в стенку то отодвигаемся от неё.
 		switch (iNorm) {
-		  case xnorm: iPsepNext=f.neighbors_for_the_internal_node[E_SIDE][iPseparator].iNODE1;
-			           iPsepBack=f.neighbors_for_the_internal_node[W_SIDE][iPseparator].iNODE1;
+		  case xnorm: iPsepNext=f.neighbors_for_the_internal_node[E_SIDE][0][iPseparator];
+			           iPsepBack=f.neighbors_for_the_internal_node[W_SIDE][0][iPseparator];
 					   if (iPsepNext>=f.maxelm) {
 						   // сдвиг влево в сторону West.
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack=f.neighbors_for_the_internal_node[W_SIDE][iPseparator].iNODE1;
+						   iPsepBack=f.neighbors_for_the_internal_node[W_SIDE][0][iPseparator];
 					   }
 					   if (iPsepBack>=f.maxelm) {
 						   // сдвиг вправо в сторону East.
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext=f.neighbors_for_the_internal_node[E_SIDE][iPseparator].iNODE1;
+						   iPsepNext=f.neighbors_for_the_internal_node[E_SIDE][0][iPseparator];
 					   }
 					   /*
-					   iPsepNext2=f.neighbors_for_the_internal_node[ESIDE][iPsepNext].iNODE1;
+					   iPsepNext2=f.neighbors_for_the_internal_node[ESIDE][0][iPsepNext];
 			           iPsepBack2=f.neighbors_for_the_internal_node[WSIDE][ iPsepBack].iNODE1;
 					   if (iPsepNext2>=f.maxelm) {
 						   // сдвиг влево в сторону West.
 						   iPsepNext2=iPsepNext;
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack=f.neighbors_for_the_internal_node[WSIDE][iPseparator].iNODE1;
-						   iPsepBack2=f.neighbors_for_the_internal_node[WSIDE][iPsepBack].iNODE1;
+						   iPsepBack=f.neighbors_for_the_internal_node[WSIDE][0][iPseparator];
+						   iPsepBack2=f.neighbors_for_the_internal_node[WSIDE][0][iPsepBack];
 					   }
 					   if (iPsepBack2>=f.maxelm) {
 						   // сдвиг вправо в сторону East.
 						   iPsepBack2=iPsepBack;
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext=f.neighbors_for_the_internal_node[ESIDE][iPseparator].iNODE1;
-						   iPsepNext2=f.neighbors_for_the_internal_node[ESIDE][iPsepNext].iNODE1;
+						   iPsepNext=f.neighbors_for_the_internal_node[ESIDE][0][iPseparator];
+						   iPsepNext2=f.neighbors_for_the_internal_node[ESIDE][0][iPsepNext];
 					   }
 					   */
 			           break;
-		  case ynorm: iPsepNext=f.neighbors_for_the_internal_node[N_SIDE][iPseparator].iNODE1;
-			           iPsepBack=f.neighbors_for_the_internal_node[S_SIDE][iPseparator].iNODE1;
+		  case ynorm: iPsepNext=f.neighbors_for_the_internal_node[N_SIDE][0][iPseparator];
+			           iPsepBack=f.neighbors_for_the_internal_node[S_SIDE][0][iPseparator];
 					   if (iPsepNext>=f.maxelm) {
 						   // сдвиг влево в сторону S.
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack=f.neighbors_for_the_internal_node[S_SIDE][iPseparator].iNODE1;
+						   iPsepBack=f.neighbors_for_the_internal_node[S_SIDE][0][iPseparator];
 					   }
 					   if (iPsepBack>=f.maxelm) {
 						   // сдвиг вправо в сторону N.
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext = f.neighbors_for_the_internal_node[N_SIDE][iPseparator].iNODE1;
+						   iPsepNext = f.neighbors_for_the_internal_node[N_SIDE][0][iPseparator];
 					   }
 					   /*
-					   iPsepNext2=f.neighbors_for_the_internal_node[NSIDE][iPsepNext].iNODE1;
+					   iPsepNext2=f.neighbors_for_the_internal_node[NSIDE][0][iPsepNext];
 			           iPsepBack2=f.neighbors_for_the_internal_node[SSIDE][ iPsepBack].iNODE1;
 					   if (iPsepNext2>=f.maxelm) {
 						   // сдвиг влево в сторону S.
 						   iPsepNext2=iPsepNext;
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack=f.neighbors_for_the_internal_node[SSIDE][iPseparator].iNODE1;
-						   iPsepBack2=f.neighbors_for_the_internal_node[SSIDE][iPsepBack].iNODE1;
+						   iPsepBack=f.neighbors_for_the_internal_node[SSIDE][0][iPseparator];
+						   iPsepBack2=f.neighbors_for_the_internal_node[SSIDE][0][iPsepBack];
 					   }
 					   if (iPsepBack2>=f.maxelm) {
 						   // сдвиг вправо в сторону N.
 						   iPsepBack2=iPsepBack;
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext=f.neighbors_for_the_internal_node[NSIDE][iPseparator].iNODE1;
-						   iPsepNext2=f.neighbors_for_the_internal_node[NSIDE][iPsepNext].iNODE1;
+						   iPsepNext=f.neighbors_for_the_internal_node[NSIDE][0][iPseparator];
+						   iPsepNext2=f.neighbors_for_the_internal_node[NSIDE][0][iPsepNext];
 					   }
 					   */
 			           break;
-		  case znorm: iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][iPseparator].iNODE1;
-			  iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][iPseparator].iNODE1;
+		  case znorm: iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][0][iPseparator];
+			  iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][0][iPseparator];
 					   if (iPsepNext>=f.maxelm) {
 						   // сдвиг влево в сторону Bottom.
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][iPseparator].iNODE1;
+						   iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][0][iPseparator];
 					   }
 					   if (iPsepBack>=f.maxelm) {
 						   // сдвиг вправо в сторону Top.
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][iPseparator].iNODE1;
+						   iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][0][iPseparator];
 					   }
 					   /*
-					   iPsepNext2=f.neighbors_for_the_internal_node[TSIDE][iPsepNext].iNODE1;
+					   iPsepNext2=f.neighbors_for_the_internal_node[TSIDE][0][iPsepNext];
 			           iPsepBack2=f.neighbors_for_the_internal_node[BSIDE][ iPsepBack].iNODE1;
 					    if (iPsepNext2>=f.maxelm) {
 						   // сдвиг влево в сторону Bottom.
                            iPsepNext2=iPsepNext;
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack=f.neighbors_for_the_internal_node[BSIDE][iPseparator].iNODE1;
-						   iPsepBack2=f.neighbors_for_the_internal_node[BSIDE][iPsepBack].iNODE1;
+						   iPsepBack=f.neighbors_for_the_internal_node[BSIDE][0][iPseparator];
+						   iPsepBack2=f.neighbors_for_the_internal_node[BSIDE][0][iPsepBack];
 					   }
 					   if (iPsepBack2>=f.maxelm) {
 						   // сдвиг вправо в сторону Top.
 						   iPsepBack2=iPsepBack;
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext=f.neighbors_for_the_internal_node[TSIDE][iPseparator].iNODE1;
-						   iPsepNext2=f.neighbors_for_the_internal_node[TSIDE][iPsepNext].iNODE1;
+						   iPsepNext=f.neighbors_for_the_internal_node[TSIDE][0][iPseparator];
+						   iPsepNext2=f.neighbors_for_the_internal_node[TSIDE][0][iPsepNext];
 					   }
 					   */
 			           break;
@@ -1988,108 +1988,108 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 				 if (bfound) {
 				     iPs=iPcandidate;
 				     switch (iNorm) {
-					 case xnorm: iPn = f.neighbors_for_the_internal_node[E_SIDE][iPs].iNODE1;
-						 iPb = f.neighbors_for_the_internal_node[W_SIDE][iPs].iNODE1;
+					 case xnorm: iPn = f.neighbors_for_the_internal_node[E_SIDE][0][iPs];
+						 iPb = f.neighbors_for_the_internal_node[W_SIDE][0][iPs];
 									 if (iPn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[W_SIDE][iPs].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[W_SIDE][0][iPs];
 					                 }
 					                 if (iPb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[E_SIDE][iPs].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[E_SIDE][0][iPs];
 					                 }
 									 /*
-									 iPnn=f.neighbors_for_the_internal_node[ESIDE][iPn].iNODE1;
-			                         iPbb=f.neighbors_for_the_internal_node[WSIDE][iPb].iNODE1;
+									 iPnn=f.neighbors_for_the_internal_node[ESIDE][0][iPn];
+			                         iPbb=f.neighbors_for_the_internal_node[WSIDE][0][iPb];
 									 if (iPnn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 										 iPnn=iPn;
 						                iPn=iPs;
 						                iPs=iPb;
-						                iPb=f.neighbors_for_the_internal_node[WSIDE][iPs].iNODE1;
-										iPbb=f.neighbors_for_the_internal_node[WSIDE][iPb].iNODE1;
+						                iPb=f.neighbors_for_the_internal_node[WSIDE][0][iPs];
+										iPbb=f.neighbors_for_the_internal_node[WSIDE][0][iPb];
 					                 }
 					                 if (iPbb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 										iPbb=iPb;
 						                iPb=iPs;
 						                iPs=iPn;
-						                iPn=f.neighbors_for_the_internal_node[ESIDE][iPs].iNODE1;
-										iPnn=f.neighbors_for_the_internal_node[ESIDE][iPn].iNODE1;
+						                iPn=f.neighbors_for_the_internal_node[ESIDE][0][iPs];
+										iPnn=f.neighbors_for_the_internal_node[ESIDE][0][iPn];
 					                 }
 									 */
 			                         break;
-					 case ynorm: iPn = f.neighbors_for_the_internal_node[N_SIDE][iPs].iNODE1;
-						 iPb = f.neighbors_for_the_internal_node[S_SIDE][iPs].iNODE1;
+					 case ynorm: iPn = f.neighbors_for_the_internal_node[N_SIDE][0][iPs];
+						 iPb = f.neighbors_for_the_internal_node[S_SIDE][0][iPs];
 									 if (iPn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[S_SIDE][iPs].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[S_SIDE][0][iPs];
 					                 }
 					                 if (iPb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[N_SIDE][iPs].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[N_SIDE][0][iPs];
 					                 }
 									 /*
-									 iPnn=f.neighbors_for_the_internal_node[NSIDE][iPn].iNODE1;
-			                         iPbb=f.neighbors_for_the_internal_node[SSIDE][iPb].iNODE1;
+									 iPnn=f.neighbors_for_the_internal_node[NSIDE][0][iPn];
+			                         iPbb=f.neighbors_for_the_internal_node[SSIDE][0][iPb];
 									 if (iPnn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 										iPnn=iPn;
 						                iPn=iPs;
 						                iPs=iPb;
-						                iPb=f.neighbors_for_the_internal_node[SSIDE][iPs].iNODE1;
-										iPbb=f.neighbors_for_the_internal_node[SSIDE][iPb].iNODE1;
+						                iPb=f.neighbors_for_the_internal_node[SSIDE][0][iPs];
+										iPbb=f.neighbors_for_the_internal_node[SSIDE][0][iPb];
 					                 }
 					                 if (iPbb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 										iPbb=iPb;
 						                iPb=iPs;
 						                iPs=iPn;
-						                iPn=f.neighbors_for_the_internal_node[NSIDE][iPs].iNODE1;
-										iPnn=f.neighbors_for_the_internal_node[NSIDE][iPn].iNODE1;
+						                iPn=f.neighbors_for_the_internal_node[NSIDE][0][iPs];
+										iPnn=f.neighbors_for_the_internal_node[NSIDE][0][iPn];
 					                 }
 									 */
 			                         break;
-					 case znorm: iPn = f.neighbors_for_the_internal_node[T_SIDE][iPs].iNODE1;
-						 iPb = f.neighbors_for_the_internal_node[B_SIDE][iPs].iNODE1;
+					 case znorm: iPn = f.neighbors_for_the_internal_node[T_SIDE][0][iPs];
+						 iPb = f.neighbors_for_the_internal_node[B_SIDE][0][iPs];
 									 if (iPn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[B_SIDE][iPs].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[B_SIDE][0][iPs];
 					                 }
 					                 if (iPb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[T_SIDE][iPs].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[T_SIDE][0][iPs];
 					                 }
 									 /*
-									 iPnn=f.neighbors_for_the_internal_node[TSIDE][iPn].iNODE1;
-			                         iPbb=f.neighbors_for_the_internal_node[BSIDE][iPb].iNODE1;
+									 iPnn=f.neighbors_for_the_internal_node[TSIDE][0][iPn];
+			                         iPbb=f.neighbors_for_the_internal_node[BSIDE][0][iPb];
 									 if (iPnn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 										iPnn=iPn;
 						                iPn=iPs;
 						                iPs=iPb;
-						                iPb=f.neighbors_for_the_internal_node[BSIDE][iPs].iNODE1;
-										iPbb=f.neighbors_for_the_internal_node[BSIDE][iPb].iNODE1;
+						                iPb=f.neighbors_for_the_internal_node[BSIDE][0][iPs];
+										iPbb=f.neighbors_for_the_internal_node[BSIDE][0][iPb];
 					                 }
 					                 if (iPbb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 										iPbb=iPb;
 						                iPb=iPs;
 						                iPs=iPn;
-						                iPn=f.neighbors_for_the_internal_node[TSIDE][iPs].iNODE1;
-										iPnn=f.neighbors_for_the_internal_node[TSIDE][iPn].iNODE1;
+						                iPn=f.neighbors_for_the_internal_node[TSIDE][0][iPs];
+										iPnn=f.neighbors_for_the_internal_node[TSIDE][0][iPn];
 					                 }
 									 */
 			                         break;
@@ -2583,103 +2583,103 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 
 		// Если мы упёрлись в стенку то отодвигаемся от неё.
 		switch (iNorm) {
-		case xnorm: iPsepNext = f.neighbors_for_the_internal_node[E_SIDE][iPseparator].iNODE1;
-			iPsepBack = f.neighbors_for_the_internal_node[W_SIDE][iPseparator].iNODE1;
+		case xnorm: iPsepNext = f.neighbors_for_the_internal_node[E_SIDE][0][iPseparator];
+			iPsepBack = f.neighbors_for_the_internal_node[W_SIDE][0][iPseparator];
 					   if (iPsepNext>=f.maxelm) {
 						   // сдвиг влево в сторону West.
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack = f.neighbors_for_the_internal_node[W_SIDE][iPseparator].iNODE1;
+						   iPsepBack = f.neighbors_for_the_internal_node[W_SIDE][0][iPseparator];
 					   }
 					   if (iPsepBack>=f.maxelm) {
 						   // сдвиг вправо в сторону East.
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext = f.neighbors_for_the_internal_node[E_SIDE][iPseparator].iNODE1;
+						   iPsepNext = f.neighbors_for_the_internal_node[E_SIDE][0][iPseparator];
 					   }
-					   iPsepNext2 = f.neighbors_for_the_internal_node[E_SIDE][iPsepNext].iNODE1;
-					   iPsepBack2 = f.neighbors_for_the_internal_node[W_SIDE][iPsepBack].iNODE1;
+					   iPsepNext2 = f.neighbors_for_the_internal_node[E_SIDE][0][iPsepNext];
+					   iPsepBack2 = f.neighbors_for_the_internal_node[W_SIDE][0][iPsepBack];
 					   if (iPsepNext2>=f.maxelm) {
 						   // сдвиг влево в сторону West.
 						   iPsepNext2=iPsepNext;
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack = f.neighbors_for_the_internal_node[W_SIDE][iPseparator].iNODE1;
-						   iPsepBack2 = f.neighbors_for_the_internal_node[W_SIDE][iPsepBack].iNODE1;
+						   iPsepBack = f.neighbors_for_the_internal_node[W_SIDE][0][iPseparator];
+						   iPsepBack2 = f.neighbors_for_the_internal_node[W_SIDE][0][iPsepBack];
 					   }
 					   if (iPsepBack2>=f.maxelm) {
 						   // сдвиг вправо в сторону East.
 						   iPsepBack2=iPsepBack;
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext = f.neighbors_for_the_internal_node[E_SIDE][iPseparator].iNODE1;
-						   iPsepNext2 = f.neighbors_for_the_internal_node[E_SIDE][iPsepNext].iNODE1;
+						   iPsepNext = f.neighbors_for_the_internal_node[E_SIDE][0][iPseparator];
+						   iPsepNext2 = f.neighbors_for_the_internal_node[E_SIDE][0][iPsepNext];
 					   }
 			           break;
-		case ynorm: iPsepNext = f.neighbors_for_the_internal_node[N_SIDE][iPseparator].iNODE1;
-			iPsepBack = f.neighbors_for_the_internal_node[S_SIDE][iPseparator].iNODE1;
+		case ynorm: iPsepNext = f.neighbors_for_the_internal_node[N_SIDE][0][iPseparator];
+			iPsepBack = f.neighbors_for_the_internal_node[S_SIDE][0][iPseparator];
 					   if (iPsepNext>=f.maxelm) {
 						   // сдвиг влево в сторону S.
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack = f.neighbors_for_the_internal_node[S_SIDE][iPseparator].iNODE1;
+						   iPsepBack = f.neighbors_for_the_internal_node[S_SIDE][0][iPseparator];
 					   }
 					   if (iPsepBack>=f.maxelm) {
 						   // сдвиг вправо в сторону N.
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext = f.neighbors_for_the_internal_node[N_SIDE][iPseparator].iNODE1;
+						   iPsepNext = f.neighbors_for_the_internal_node[N_SIDE][0][iPseparator];
 					   }
-					   iPsepNext2 = f.neighbors_for_the_internal_node[N_SIDE][iPsepNext].iNODE1;
-					   iPsepBack2 = f.neighbors_for_the_internal_node[S_SIDE][iPsepBack].iNODE1;
+					   iPsepNext2 = f.neighbors_for_the_internal_node[N_SIDE][0][iPsepNext];
+					   iPsepBack2 = f.neighbors_for_the_internal_node[S_SIDE][0][iPsepBack];
 					   if (iPsepNext2>=f.maxelm) {
 						   // сдвиг влево в сторону S.
 						   iPsepNext2=iPsepNext;
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack = f.neighbors_for_the_internal_node[S_SIDE][iPseparator].iNODE1;
-						   iPsepBack2 = f.neighbors_for_the_internal_node[S_SIDE][iPsepBack].iNODE1;
+						   iPsepBack = f.neighbors_for_the_internal_node[S_SIDE][0][iPseparator];
+						   iPsepBack2 = f.neighbors_for_the_internal_node[S_SIDE][0][iPsepBack];
 					   }
 					   if (iPsepBack2>=f.maxelm) {
 						   // сдвиг вправо в сторону N.
 						   iPsepBack2=iPsepBack;
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext = f.neighbors_for_the_internal_node[N_SIDE][iPseparator].iNODE1;
-						   iPsepNext2 = f.neighbors_for_the_internal_node[N_SIDE][iPsepNext].iNODE1;
+						   iPsepNext = f.neighbors_for_the_internal_node[N_SIDE][0][iPseparator];
+						   iPsepNext2 = f.neighbors_for_the_internal_node[N_SIDE][0][iPsepNext];
 					   }
 			           break;
-		case znorm: iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][iPseparator].iNODE1;
-			iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][iPseparator].iNODE1;
+		case znorm: iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][0][iPseparator];
+			iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][0][iPseparator];
 					   if (iPsepNext>=f.maxelm) {
 						   // сдвиг влево в сторону Bottom.
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][iPseparator].iNODE1;
+						   iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][0][iPseparator];
 					   }
 					   if (iPsepBack>=f.maxelm) {
 						   // сдвиг вправо в сторону Top.
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][iPseparator].iNODE1;
+						   iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][0][iPseparator];
 					   }
-					   iPsepNext2 = f.neighbors_for_the_internal_node[T_SIDE][iPsepNext].iNODE1;
-					   iPsepBack2 = f.neighbors_for_the_internal_node[B_SIDE][iPsepBack].iNODE1;
+					   iPsepNext2 = f.neighbors_for_the_internal_node[T_SIDE][0][iPsepNext];
+					   iPsepBack2 = f.neighbors_for_the_internal_node[B_SIDE][0][iPsepBack];
 					    if (iPsepNext2>=f.maxelm) {
 						   // сдвиг влево в сторону Bottom.
                            iPsepNext2=iPsepNext;
 						   iPsepNext=iPseparator;
 						   iPseparator=iPsepBack;
-						   iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][iPseparator].iNODE1;
-						   iPsepBack2 = f.neighbors_for_the_internal_node[B_SIDE][iPsepBack].iNODE1;
+						   iPsepBack = f.neighbors_for_the_internal_node[B_SIDE][0][iPseparator];
+						   iPsepBack2 = f.neighbors_for_the_internal_node[B_SIDE][0][iPsepBack];
 					   }
 					   if (iPsepBack2>=f.maxelm) {
 						   // сдвиг вправо в сторону Top.
 						   iPsepBack2=iPsepBack;
 						   iPsepBack=iPseparator;
 						   iPseparator=iPsepNext;
-						   iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][iPseparator].iNODE1;
-						   iPsepNext2 = f.neighbors_for_the_internal_node[T_SIDE][iPsepNext].iNODE1;
+						   iPsepNext = f.neighbors_for_the_internal_node[T_SIDE][0][iPseparator];
+						   iPsepNext2 = f.neighbors_for_the_internal_node[T_SIDE][0][iPsepNext];
 					   }
 
 			           break;
@@ -2808,103 +2808,103 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 				 if (bfound) {
 				     iPs=iPcandidate;
 				     switch (iNorm) {
-					 case xnorm: iPn = f.neighbors_for_the_internal_node[E_SIDE][iPs].iNODE1;
-						 iPb = f.neighbors_for_the_internal_node[W_SIDE][iPs].iNODE1;
+					 case xnorm: iPn = f.neighbors_for_the_internal_node[E_SIDE][0][iPs];
+						 iPb = f.neighbors_for_the_internal_node[W_SIDE][0][iPs];
 									 if (iPn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[W_SIDE][iPs].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[W_SIDE][0][iPs];
 					                 }
 					                 if (iPb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[E_SIDE][iPs].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[E_SIDE][0][iPs];
 					                 }
-									 iPnn = f.neighbors_for_the_internal_node[E_SIDE][iPn].iNODE1;
-									 iPbb = f.neighbors_for_the_internal_node[W_SIDE][iPb].iNODE1;
+									 iPnn = f.neighbors_for_the_internal_node[E_SIDE][0][iPn];
+									 iPbb = f.neighbors_for_the_internal_node[W_SIDE][0][iPb];
 									 if (iPnn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 										 iPnn=iPn;
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[W_SIDE][iPs].iNODE1;
-										iPbb = f.neighbors_for_the_internal_node[W_SIDE][iPb].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[W_SIDE][0][iPs];
+										iPbb = f.neighbors_for_the_internal_node[W_SIDE][0][iPb];
 					                 }
 					                 if (iPbb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 										iPbb=iPb;
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[E_SIDE][iPs].iNODE1;
-										iPnn = f.neighbors_for_the_internal_node[E_SIDE][iPn].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[E_SIDE][0][iPs];
+										iPnn = f.neighbors_for_the_internal_node[E_SIDE][0][iPn];
 					                 }
 			                         break;
-					 case ynorm: iPn = f.neighbors_for_the_internal_node[N_SIDE][iPs].iNODE1;
-						 iPb = f.neighbors_for_the_internal_node[S_SIDE][iPs].iNODE1;
+					 case ynorm: iPn = f.neighbors_for_the_internal_node[N_SIDE][0][iPs];
+						 iPb = f.neighbors_for_the_internal_node[S_SIDE][0][iPs];
 									 if (iPn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[S_SIDE][iPs].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[S_SIDE][0][iPs];
 					                 }
 					                 if (iPb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[N_SIDE][iPs].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[N_SIDE][0][iPs];
 					                 }
-									 iPnn = f.neighbors_for_the_internal_node[N_SIDE][iPn].iNODE1;
-									 iPbb = f.neighbors_for_the_internal_node[S_SIDE][iPb].iNODE1;
+									 iPnn = f.neighbors_for_the_internal_node[N_SIDE][0][iPn];
+									 iPbb = f.neighbors_for_the_internal_node[S_SIDE][0][iPb];
 									 if (iPnn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 										iPnn=iPn;
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[S_SIDE][iPs].iNODE1;
-										iPbb = f.neighbors_for_the_internal_node[S_SIDE][iPb].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[S_SIDE][0][iPs];
+										iPbb = f.neighbors_for_the_internal_node[S_SIDE][0][iPb];
 					                 }
 					                 if (iPbb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 										iPbb=iPb;
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[N_SIDE][iPs].iNODE1;
-										iPnn = f.neighbors_for_the_internal_node[N_SIDE][iPn].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[N_SIDE][0][iPs];
+										iPnn = f.neighbors_for_the_internal_node[N_SIDE][0][iPn];
 					                 }
 			                         break;
-					 case znorm: iPn = f.neighbors_for_the_internal_node[T_SIDE][iPs].iNODE1;
-						 iPb = f.neighbors_for_the_internal_node[B_SIDE][iPs].iNODE1;
+					 case znorm: iPn = f.neighbors_for_the_internal_node[T_SIDE][0][iPs];
+						 iPb = f.neighbors_for_the_internal_node[B_SIDE][0][iPs];
 									 if (iPn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[B_SIDE][iPs].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[B_SIDE][0][iPs];
 					                 }
 					                 if (iPb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[T_SIDE][iPs].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[T_SIDE][0][iPs];
 					                 }
-									 iPnn = f.neighbors_for_the_internal_node[T_SIDE][iPn].iNODE1;
-									 iPbb = f.neighbors_for_the_internal_node[B_SIDE][iPb].iNODE1;
+									 iPnn = f.neighbors_for_the_internal_node[T_SIDE][0][iPn];
+									 iPbb = f.neighbors_for_the_internal_node[B_SIDE][0][iPb];
 									 if (iPnn>=f.maxelm) {
 						                // сдвиг влево в сторону West.
 										iPnn=iPn;
 						                iPn=iPs;
 						                iPs=iPb;
-										iPb = f.neighbors_for_the_internal_node[B_SIDE][iPs].iNODE1;
-										iPbb = f.neighbors_for_the_internal_node[B_SIDE][iPb].iNODE1;
+										iPb = f.neighbors_for_the_internal_node[B_SIDE][0][iPs];
+										iPbb = f.neighbors_for_the_internal_node[B_SIDE][0][iPb];
 					                 }
 					                 if (iPbb>=f.maxelm) {
 						                // сдвиг вправо в сторону East.
 										iPbb=iPb;
 						                iPb=iPs;
 						                iPs=iPn;
-										iPn = f.neighbors_for_the_internal_node[T_SIDE][iPs].iNODE1;
-										iPnn = f.neighbors_for_the_internal_node[T_SIDE][iPn].iNODE1;
+										iPn = f.neighbors_for_the_internal_node[T_SIDE][0][iPs];
+										iPnn = f.neighbors_for_the_internal_node[T_SIDE][0][iPn];
 					                 }
 			                         break;
 		             }
@@ -3561,7 +3561,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 		
 			        if (fabs(front_orig[iP]-l1)<delta) {
 				         integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-						 iE = f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW = f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+						 iE = f.neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = f.neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = f.neighbors_for_the_internal_node[T_SIDE][0][iP]; iW = f.neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = f.neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = f.neighbors_for_the_internal_node[B_SIDE][0][iP];
 	
 	                     // Внутренний КО.	
 
@@ -3625,25 +3625,25 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 		        }
 				integer ilx=1;
 				integer iPsearch=f.neighbors_for_the_internal_node[ESIDE][iPseparatorl].iNODE1;
-				while ((f.neighbors_for_the_internal_node[ESIDE][iPsearch].iNODE1<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
-					iPsearch=f.neighbors_for_the_internal_node[ESIDE][iPsearch].iNODE1;
+				while ((f.neighbors_for_the_internal_node[ESIDE][0][iPsearch]<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
+					iPsearch=f.neighbors_for_the_internal_node[ESIDE][0][iPsearch];
 					ilx++;
 				}
 				 iPsearch=f.neighbors_for_the_internal_node[WSIDE][iPseparatorl].iNODE1;
-				while ((f.neighbors_for_the_internal_node[WSIDE][iPsearch].iNODE1<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
-					iPsearch=f.neighbors_for_the_internal_node[WSIDE][iPsearch].iNODE1;
+				while ((f.neighbors_for_the_internal_node[WSIDE][0][iPsearch]<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
+					iPsearch=f.neighbors_for_the_internal_node[WSIDE][0][iPsearch];
 					ilx++;
 				}
 				integer ily=1;
 				
                     iPsearch=f.neighbors_for_the_internal_node[NSIDE][iPseparatorl].iNODE1;
-				    while ((f.neighbors_for_the_internal_node[NSIDE][iPsearch].iNODE1<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
-					   iPsearch=f.neighbors_for_the_internal_node[NSIDE][iPsearch].iNODE1;
+				    while ((f.neighbors_for_the_internal_node[NSIDE][0][iPsearch]<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
+					   iPsearch=f.neighbors_for_the_internal_node[NSIDE][0][iPsearch];
 					   ily++;
 				    }
 				     iPsearch=f.neighbors_for_the_internal_node[SSIDE][iPseparatorl].iNODE1;
-				    while ((f.neighbors_for_the_internal_node[SSIDE][iPsearch].iNODE1<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
-					   iPsearch=f.neighbors_for_the_internal_node[SSIDE][iPsearch].iNODE1;
+				    while ((f.neighbors_for_the_internal_node[SSIDE][0][iPsearch]<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
+					   iPsearch=f.neighbors_for_the_internal_node[SSIDE][0][iPsearch];
 					   ily++;
 				    }
 					
@@ -3652,13 +3652,13 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 				integer ilz=1;
 				
                      iPsearch=f.neighbors_for_the_internal_node[TSIDE][iPseparatorl].iNODE1;
-				    while ((f.neighbors_for_the_internal_node[TSIDE][iPsearch].iNODE1<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
-					   iPsearch=f.neighbors_for_the_internal_node[TSIDE][iPsearch].iNODE1;
+				    while ((f.neighbors_for_the_internal_node[TSIDE][0][iPsearch]<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
+					   iPsearch=f.neighbors_for_the_internal_node[TSIDE][0][iPsearch];
 					   ilz++;
 				    }
 				     iPsearch=f.neighbors_for_the_internal_node[BSIDE][iPseparatorl].iNODE1;
-				    while ((f.neighbors_for_the_internal_node[BSIDE][iPsearch].iNODE1<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
-					   iPsearch=f.neighbors_for_the_internal_node[BSIDE][iPsearch].iNODE1;
+				    while ((f.neighbors_for_the_internal_node[BSIDE][0][iPsearch]<f.maxelm)&&(front[istart]<front_orig[iPsearch])&&(front_orig[iPsearch]<front[ifinish])) { 
+					   iPsearch=f.neighbors_for_the_internal_node[BSIDE][0][iPsearch];
 					   ilz++;
 				    }
 					if ((ilz>=ilx)&&(ilz>=ily)) iNorm=znorm;
@@ -3699,23 +3699,23 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 
 							integer ilx = 1;
 							integer iPsearch = iPseparatorl;
-							while ((f.neighbors_for_the_internal_node[E_SIDE][iPsearch].iNODE1 < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[E_SIDE][iPsearch].iNODE1])) {
-								iPsearch = f.neighbors_for_the_internal_node[E_SIDE][iPsearch].iNODE1;
+							while ((f.neighbors_for_the_internal_node[E_SIDE][0][iPsearch] < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[E_SIDE][0][iPsearch]])) {
+								iPsearch = f.neighbors_for_the_internal_node[E_SIDE][0][iPsearch];
 								ilx++;
 							}
-							if (f.neighbors_for_the_internal_node[E_SIDE][iPsearch].iNODE1 < f.maxelm + f.maxbound) {
-								if ((f.neighbors_for_the_internal_node[E_SIDE][iPsearch].iNODE1 >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[E_SIDE][iPsearch].iNODE1])) {
+							if (f.neighbors_for_the_internal_node[E_SIDE][0][iPsearch] < f.maxelm + f.maxbound) {
+								if ((f.neighbors_for_the_internal_node[E_SIDE][0][iPsearch] >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[E_SIDE][0][iPsearch]])) {
 									ilx++; // учёт граничного узла.
 								}
 							}
 
 							iPsearch = iPseparatorl;
-							while ((f.neighbors_for_the_internal_node[W_SIDE][iPsearch].iNODE1 < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[W_SIDE][iPsearch].iNODE1])) {
-								iPsearch = f.neighbors_for_the_internal_node[W_SIDE][iPsearch].iNODE1;
+							while ((f.neighbors_for_the_internal_node[W_SIDE][0][iPsearch] < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[W_SIDE][0][iPsearch]])) {
+								iPsearch = f.neighbors_for_the_internal_node[W_SIDE][0][iPsearch];
 								ilx++;
 							}
-							if (f.neighbors_for_the_internal_node[W_SIDE][iPsearch].iNODE1 < f.maxelm + f.maxbound) {
-								if ((f.neighbors_for_the_internal_node[W_SIDE][iPsearch].iNODE1 >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[W_SIDE][iPsearch].iNODE1])) {
+							if (f.neighbors_for_the_internal_node[W_SIDE][0][iPsearch] < f.maxelm + f.maxbound) {
+								if ((f.neighbors_for_the_internal_node[W_SIDE][0][iPsearch] >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[W_SIDE][0][iPsearch]])) {
 									ilx++; // учёт граничного узла.
 								}
 							}
@@ -3723,22 +3723,22 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 							integer ily = 1;
 
 							iPsearch = iPseparatorl;
-							while ((f.neighbors_for_the_internal_node[N_SIDE][iPsearch].iNODE1 < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[N_SIDE][iPsearch].iNODE1])) {
-								iPsearch = f.neighbors_for_the_internal_node[N_SIDE][iPsearch].iNODE1;
+							while ((f.neighbors_for_the_internal_node[N_SIDE][0][iPsearch] < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[N_SIDE][0][iPsearch]])) {
+								iPsearch = f.neighbors_for_the_internal_node[N_SIDE][0][iPsearch];
 								ily++;
 							}
-							if (f.neighbors_for_the_internal_node[N_SIDE][iPsearch].iNODE1 < f.maxelm + f.maxbound) {
-								if ((f.neighbors_for_the_internal_node[N_SIDE][iPsearch].iNODE1 >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[N_SIDE][iPsearch].iNODE1])) {
+							if (f.neighbors_for_the_internal_node[N_SIDE][0][iPsearch] < f.maxelm + f.maxbound) {
+								if ((f.neighbors_for_the_internal_node[N_SIDE][0][iPsearch] >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[N_SIDE][0][iPsearch]])) {
 									ily++; // учёт граничного узла.
 								}
 							}
 							iPsearch = iPseparatorl;
-							while ((f.neighbors_for_the_internal_node[S_SIDE][iPsearch].iNODE1 < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[S_SIDE][iPsearch].iNODE1])) {
-								iPsearch = f.neighbors_for_the_internal_node[S_SIDE][iPsearch].iNODE1;
+							while ((f.neighbors_for_the_internal_node[S_SIDE][0][iPsearch] < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[S_SIDE][0][iPsearch]])) {
+								iPsearch = f.neighbors_for_the_internal_node[S_SIDE][0][iPsearch];
 								ily++;
 							}
-							if (f.neighbors_for_the_internal_node[S_SIDE][iPsearch].iNODE1 < f.maxelm + f.maxbound) {
-								if ((f.neighbors_for_the_internal_node[S_SIDE][iPsearch].iNODE1 >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[S_SIDE][iPsearch].iNODE1])) {
+							if (f.neighbors_for_the_internal_node[S_SIDE][0][iPsearch] < f.maxelm + f.maxbound) {
+								if ((f.neighbors_for_the_internal_node[S_SIDE][0][iPsearch] >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[S_SIDE][0][iPsearch]])) {
 									ily++; // учёт граничного узла.
 								}
 							}
@@ -3747,22 +3747,22 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 							integer ilz = 1;
 
 							iPsearch = iPseparatorl;
-							while ((f.neighbors_for_the_internal_node[T_SIDE][iPsearch].iNODE1 < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[T_SIDE][iPsearch].iNODE1])) {
-								iPsearch = f.neighbors_for_the_internal_node[T_SIDE][iPsearch].iNODE1;
+							while ((f.neighbors_for_the_internal_node[T_SIDE][0][iPsearch] < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[T_SIDE][0][iPsearch]])) {
+								iPsearch = f.neighbors_for_the_internal_node[T_SIDE][0][iPsearch];
 								ilz++;
 							}
-							if (f.neighbors_for_the_internal_node[T_SIDE][iPsearch].iNODE1 < f.maxelm + f.maxbound) {
-								if ((f.neighbors_for_the_internal_node[T_SIDE][iPsearch].iNODE1 >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[T_SIDE][iPsearch].iNODE1])) {
+							if (f.neighbors_for_the_internal_node[T_SIDE][0][iPsearch] < f.maxelm + f.maxbound) {
+								if ((f.neighbors_for_the_internal_node[T_SIDE][0][iPsearch] >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[T_SIDE][0][iPsearch]])) {
 									ilz++; // учёт граничного узла.
 								}
 							}
 							iPsearch = iPseparatorl;
-							while ((f.neighbors_for_the_internal_node[B_SIDE][iPsearch].iNODE1 < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[B_SIDE][iPsearch].iNODE1])) {
-								iPsearch = f.neighbors_for_the_internal_node[B_SIDE][iPsearch].iNODE1;
+							while ((f.neighbors_for_the_internal_node[B_SIDE][0][iPsearch] < f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[B_SIDE][0][iPsearch]])) {
+								iPsearch = f.neighbors_for_the_internal_node[B_SIDE][0][iPsearch];
 								ilz++;
 							}
-							if (f.neighbors_for_the_internal_node[B_SIDE][iPsearch].iNODE1 < f.maxelm + f.maxbound) {
-								if ((f.neighbors_for_the_internal_node[B_SIDE][iPsearch].iNODE1 >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[B_SIDE][iPsearch].iNODE1])) {
+							if (f.neighbors_for_the_internal_node[B_SIDE][0][iPsearch] < f.maxelm + f.maxbound) {
+								if ((f.neighbors_for_the_internal_node[B_SIDE][0][iPsearch] >= f.maxelm) && (bactivcolor[f.neighbors_for_the_internal_node[B_SIDE][0][iPsearch]])) {
 									ilz++; // учёт граничного узла.
 								}
 							}
@@ -4538,7 +4538,7 @@ void calc_front(FLOW* &fglobal, FLOW &f, TEMPER &t, integer flow_interior,
 
 						  bool worked_successfully = false;
 						  const integer iHAVorstModification_id = 0;// 0 не используется.
-		   amg(sl, slb, f.maxelm, f.maxbound, rthdsd, potent[FIDISTW], 1.0, FIDISTW,false,my_memory_bicgstab, f.ifrontregulationgl, f.ibackregulationgl, iHAVorstModification_id, worked_successfully,b,lb,s_loc,ls, w, lw);
+		   amg(sl, slb, f.maxelm, f.maxbound, rthdsd, potent[FIDISTW], 1.0, FIDISTW,false,my_memory_bicgstab, f.ifrontregulationgl, f.ibackregulationgl, iHAVorstModification_id, worked_successfully,b,lb,s_loc,ls, w, lw, t.whot_is_block);
 		}
 
 	    // Вычисление градиентов.

@@ -5,7 +5,7 @@
 
 // возвращает вклад поправки Рхи-Чоу на грани контрольного объёма.
 doublereal rFgRhieChow_internal(integer iP, integer G, doublereal rhog, doublereal alpha, 
-	integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm,
+	int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm,
 				 doublereal* pressure, TOCHKA* pa, doublereal **diag_coef) {
 
 	// дата написания данной функции: 30 октября 2011 года.
@@ -57,9 +57,9 @@ doublereal rFgRhieChow_internal(integer iP, integer G, doublereal rhog, doublere
 	// SIMPLEC алгоритм.
 	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
 
-	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
-	integer iGG=neighbors_for_the_internal_node[GG][iP].iNODE1;
-	integer ibackG=neighbors_for_the_internal_node[backG][iP].iNODE1;
+	integer iG=neighbors_for_the_internal_node[G][0][iP];
+	integer iGG=neighbors_for_the_internal_node[GG][0][iP];
+	integer ibackG=neighbors_for_the_internal_node[backG][0][iP];
 
 	doublereal dlg=0.0, fgplus=1.0, dblg=0.0, fbgplus=1.0;
 	switch (G) {
@@ -210,7 +210,7 @@ doublereal rFgRhieChow_internal(integer iP, integer G, doublereal rhog, doublere
 // возвращает вклад поправки Рхи-Чоу в компоненту скорости 
 // на грани внутреннего  контрольного объёма.
 doublereal ugRhieChow_internal(integer iP, integer G, doublereal alpha, 
-	integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm,
+	int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm,
 				 doublereal* pressure, TOCHKA* pa, doublereal **diag_coef) {
 
 	// дата написания данной функции: 20 декабря 2011 года.
@@ -262,9 +262,9 @@ doublereal ugRhieChow_internal(integer iP, integer G, doublereal alpha,
 	// SIMPLEC алгоритм.
 	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
 
-	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
-	integer iGG=neighbors_for_the_internal_node[GG][iP].iNODE1;
-	integer ibackG=neighbors_for_the_internal_node[backG][iP].iNODE1;
+	integer iG=neighbors_for_the_internal_node[G][0][iP];
+	integer iGG=neighbors_for_the_internal_node[GG][0][iP];
+	integer ibackG=neighbors_for_the_internal_node[backG][0][iP];
 
 	doublereal dlg=0.0, fgplus=1.0, dblg=0.0, fbgplus=1.0;
 	switch (G) {
@@ -420,7 +420,7 @@ doublereal ugRhieChow_internal(integer iP, integer G, doublereal alpha,
 // ближайшего к границе контрольного объёма. Т.е. как раз туда куда аппроксимируется
 // первая производная на границе области.
 doublereal rFgRhieChow_internal_border1(integer iP, integer G, doublereal rhog, doublereal alpha, 
-	integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm,
+	int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm,
 				 doublereal* pressure, TOCHKA* pa, doublereal **diag_coef) {
 
     // Линейное восстановление давления в узле:
@@ -436,8 +436,8 @@ doublereal rFgRhieChow_internal_border1(integer iP, integer G, doublereal rhog, 
 		case B_SIDE:backG=T_SIDE; backGG=TT_SIDE; break;
 	}
 
-	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
-	integer ibackG=neighbors_for_the_internal_node[backG][iP].iNODE1;
+	integer iG=neighbors_for_the_internal_node[G][0][iP];
+	integer ibackG=neighbors_for_the_internal_node[backG][0][iP];
 
 	//printf("iP=%d, iG=%d, ibackG=%d, maxelm=%d",iP,iG,ibackG,maxelm);
 	//getchar(); // debug граничные условия для давления
@@ -446,7 +446,7 @@ doublereal rFgRhieChow_internal_border1(integer iP, integer G, doublereal rhog, 
 	PbackG=pressure[ibackG]; PP=pressure[iP]; PG=pressure[iG];
 
 	doublereal PbackGG;
-	integer ibackGG=neighbors_for_the_internal_node[backGG][iP].iNODE1; // такой узел должен существовать для линейной интерполяции
+	integer ibackGG=neighbors_for_the_internal_node[backGG][0][iP]; // такой узел должен существовать для линейной интерполяции
     PbackGG=pressure[ibackGG]; // значение давления в этом узле.
 	doublereal dx=0.0, dy=0.0, dz=0.0;
     volume3D(iP, nvtx, pa, dx, dy, dz);
@@ -583,7 +583,7 @@ doublereal rFgRhieChow_internal_border1(integer iP, integer G, doublereal rhog, 
 // результаты и требуется по-видимому вернуться к первоначальному варианту.
 // Смотри функцию реализованную внизу сразу после данной.
 doublereal rFgRhieChow_internal_border2(integer iP, integer G, doublereal rhog, doublereal alpha, 
-	integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm,
+	int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm,
 				 doublereal* pressure, TOCHKA* pa, doublereal **diag_coef) {
 
 	// Новая логика приложения:
@@ -601,9 +601,9 @@ doublereal rFgRhieChow_internal_border2(integer iP, integer G, doublereal rhog, 
 		case B_SIDE:backG=T_SIDE; backGG=TT_SIDE; break;
 	}
 
-	integer ibackGG=neighbors_for_the_internal_node[backGG][iP].iNODE1; // такой узел должен существовать для линейной интерполяции
-	integer ibackG=neighbors_for_the_internal_node[backG][iP].iNODE1;
-	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
+	integer ibackGG=neighbors_for_the_internal_node[backGG][0][iP]; // такой узел должен существовать для линейной интерполяции
+	integer ibackG=neighbors_for_the_internal_node[backG][0][iP];
+	integer iG=neighbors_for_the_internal_node[G][0][iP];
 	doublereal Pg=0.0, PP=0.0, PbackG=0.0, PbackGG=0.0;
 	Pg=pressure[iG]; PP=pressure[iP]; PbackG=pressure[ibackG]; PbackGG=pressure[ibackGG];
 
@@ -781,7 +781,7 @@ doublereal rFgRhieChow_internal_border2(integer iP, integer G, doublereal rhog, 
 // Судя по задаче обтекания куба это единственно-правильный вариант реализации
 // поправки Рхи-Чоу в приграничном контрольном объёме.
 doublereal rFgRhieChow_internal_border(integer iP, integer G, doublereal rhog, doublereal alpha, 
-	integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm,
+	int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm,
 				 doublereal* pressure, TOCHKA* pa, doublereal **diag_coef) {
 
 	integer backG=0, backGG=0; 
@@ -794,9 +794,9 @@ doublereal rFgRhieChow_internal_border(integer iP, integer G, doublereal rhog, d
 		case B_SIDE:backG=T_SIDE; backGG=TT_SIDE; break;
 	}
 
-	integer ibackGG=neighbors_for_the_internal_node[backGG][iP].iNODE1; // такой узел должен существовать для линейной интерполяции
-	integer ibackG=neighbors_for_the_internal_node[backG][iP].iNODE1;
-	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
+	integer ibackGG=neighbors_for_the_internal_node[backGG][0][iP]; // такой узел должен существовать для линейной интерполяции
+	integer ibackG=neighbors_for_the_internal_node[backG][0][iP];
+	integer iG=neighbors_for_the_internal_node[G][0][iP];
 
 	// Линейное восстановление давления в узле:
     doublereal PGG=0.0; // давление в узле iEE
@@ -932,7 +932,7 @@ doublereal rFgRhieChow_internal_border(integer iP, integer G, doublereal rhog, d
 // здесь рассматривается только  вклад поправки Рхи-Чоу в компоненту скорости, а не в поток
 // смотри изменённый коэффициент koef.
 doublereal ugRhieChow_internal_border(integer iP, integer G, doublereal alpha, 
-	integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm,
+	int** nvtx, int*** neighbors_for_the_internal_node, integer maxelm,
 				 doublereal* pressure, TOCHKA* pa, doublereal **diag_coef) {
 
 	integer backG=0, backGG=0; 
@@ -945,9 +945,9 @@ doublereal ugRhieChow_internal_border(integer iP, integer G, doublereal alpha,
 		case B_SIDE:backG=T_SIDE; backGG=TT_SIDE; break;
 	}
 
-	integer ibackGG=neighbors_for_the_internal_node[backGG][iP].iNODE1; // такой узел должен существовать для линейной интерполяции
-	integer ibackG=neighbors_for_the_internal_node[backG][iP].iNODE1;
-	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
+	integer ibackGG=neighbors_for_the_internal_node[backGG][0][iP]; // такой узел должен существовать для линейной интерполяции
+	integer ibackG=neighbors_for_the_internal_node[backG][0][iP];
+	integer iG=neighbors_for_the_internal_node[G][0][iP];
 
 	// Линейное восстановление давления в узле:
     doublereal PGG=0.0; // давление в узле iEE

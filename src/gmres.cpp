@@ -2297,6 +2297,8 @@ L20:
 				dterminatedTResudual = 1.0e-12;
 			}
 			if ((resid) < dterminatedTResudual) {
+				//std::cout << "dterminatedTResudual=" << dterminatedTResudual << std::endl;
+				//getchar();
 				if (iVar == TEMP) {
 					printf("dosrochnji vjhod\n");
 				}

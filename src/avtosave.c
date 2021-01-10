@@ -330,11 +330,11 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior,
             	// Градиенты давления понадобятся при вычислении поправки Рхи-Чоу 1983г.
 				for (integer j_1 = 0; j_1 < f[i].maxelm; j_1++) {
 					// градиенты давления для внутренних КО.
-					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].neighbors_for_the_internal_node, f[i].maxelm, false, f[i].border_neighbor, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
+					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].neighbors_for_the_internal_node, f[i].maxelm, false, f[i].border_neighbor, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr, f[i].volume);
 				}
 				for (integer j_1 = 0; j_1 < f[i].maxelm; j_1++) {
 					// градиенты давления для граничных КО.
-					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].neighbors_for_the_internal_node, f[i].maxelm, true, f[i].border_neighbor, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
+					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].neighbors_for_the_internal_node, f[i].maxelm, true, f[i].border_neighbor, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr, f[i].volume);
 				}
 
 

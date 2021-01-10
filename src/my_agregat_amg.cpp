@@ -983,7 +983,7 @@ void optimal_omega(doublerealT rn, doublerealT &omega) {
 			
 				doublerealT gold_const_x = 0.02;
 				gold_const_x = -0.32; // TODO
-				doublerealT foptimum = 1.0e40;
+				doublerealT foptimum = 1.0e36;
 				//for (integer iscan = 0; iscan < 97; iscan++) {
 				for (integer iscan = 0; iscan < 131; iscan++) {
 					doublerealT xgold = gold_const_x + iscan*0.01;
@@ -1025,7 +1025,7 @@ void optimal_omega(doublerealT rn, doublerealT &omega) {
 
 					doublerealT gold_const_x = 0.02;
 					gold_const_x = -0.32; // TODO
-					doublerealT foptimum = 1.0e40;
+					doublerealT foptimum = 1.0e36;
 					//for (integer iscan = 0; iscan < 97; iscan++) {
 					for (integer iscan = 0; iscan < 131; iscan++) {
 						doublerealT xgold = gold_const_x + iscan*0.01;
@@ -21906,10 +21906,10 @@ handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglom
 	integer istop_porog_reconst = 50;
 
 	bool ret_value = false;
-	doublerealT dres_previos = 1.0e40;
+	doublerealT dres_previos = 1.0e36;
 	integer icount_bad_convergence_Vcycles = 0;
 	integer i_count_stagnation = 0;
-	doublerealT res0start = 1.0e-40;
+	doublerealT res0start = 1.0e-36;
 	bool bfirst_divergence = true;
 
 	//for (integer iprohod = 0; iprohod < 20; iprohod++) {
@@ -37717,7 +37717,7 @@ void update_avg_temperatures(doublereal* &potent, BLOCK &b);
 // Модификация матрицы СЛАУ для учёта влияния radiosity Prism Object.
 //void radiosity_patch_for_vacuum_Prism_Object(equation3D* &sl, equation3D_bon* &slb, BLOCK* &b, integer lb, integer maxelm)
 // 26.09.2016 Работает и для АЛИС сетки тоже.
-void radiosity_patch_for_vacuum_Prism_Object_(doublereal* &rthdsd, BLOCK* &b, integer lb, integer maxelm);
+void radiosity_patch_for_vacuum_Prism_Object_(doublereal* &rthdsd, BLOCK* &b, integer lb, integer maxelm, int *&whot_is_block);
 
 // 19.04.2018 Печатает информацию о количестве контрольных объёмов.
 // 04.06.2019
@@ -46268,7 +46268,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	doublerealT &ret74,	integer iVar,
 	bool bmemory_savings,
 	BLOCK* &my_body, integer &lb, integer maxelm_out,
-	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::ZERO_INIT
+	int * &whot_is_block,
+	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::ZERO_INIT	
 ) {
 
 
@@ -57351,7 +57352,7 @@ if (bweSholdbeContinue_arr) {
 	doublerealT dres_previos = (doublerealT)(1.0e37);
 	integer icount_bad_convergence_Vcycles = 0;
 	integer i_count_stagnation = 0;
-	doublerealT res0start = (doublerealT)(1.0e-40);
+	doublerealT res0start = (doublerealT)(1.0e-36);
 	bool bfirst_divergence = true;
 
 	residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
@@ -57472,8 +57473,8 @@ if (bweSholdbeContinue_arr) {
 		if (iVar == PAM) tolerance *= (doublerealT)(1e-14);
 		if (iVar == TEMP) tolerance *= (doublerealT)(1e-6);
 		if (iVar == TOTALDEFORMATIONVAR) tolerance = (doublerealT)(1.0e-17);
-		doublereal minx_gl = 1.0e40;
-		doublereal maxx_gl = -1.0e40;
+		doublereal minx_gl = 1.0e36;
+		doublereal maxx_gl = -1.0e36;
 	//for (integer iprohod = 0; iprohod < 20; iprohod++) {
 	//while ((iflag_cont == 1) && ((dres>tolerance) || ((iVar != TEMP) && (icount_V_cycle<5)))) {
 	///	while ((iflag_cont == 1) && ((dres>tolerance) )) {
@@ -57609,7 +57610,7 @@ if (bweSholdbeContinue_arr) {
 							}
 						}
 
-						radiosity_patch_for_vacuum_Prism_Object_(rthdsd_loc123, my_body, lb, maxelm_out);
+						radiosity_patch_for_vacuum_Prism_Object_(rthdsd_loc123, my_body, lb, maxelm_out, whot_is_block);
 #pragma omp parallel for
 						for (integer i23 = 0; i23 < n_a[0]; i23++) {
 							x_old[i23 + 1] = x_temper[i23];
@@ -69437,7 +69438,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	doublerealT dres_previos = (doublerealT)(1.0e37);
 	integer icount_bad_convergence_Vcycles = 0;
 	integer i_count_stagnation = 0;
-	doublerealT res0start = (doublerealT)(1.0e-40);
+	doublerealT res0start = (doublerealT)(1.0e-36);
 	bool bfirst_divergence = true;
 
 	residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine, diag0);
@@ -75806,7 +75807,8 @@ integer main()
 // Нет сходимости. Дата успешного подключения 24 сентября 2017.
 void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	doublereal* &dV, doublereal* &dX0,
-	QuickMemVorst& m, BLOCK* &b, integer &lb)
+	QuickMemVorst& m, BLOCK* &b, integer &lb, 
+	int *& whot_is_block)
 {
 
 	// 11 января 2016. классический агломеративный алгебраический многосеточный метод.
@@ -76431,7 +76433,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	//if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7) {
      	real_mix_precision theta82f = (real_mix_precision)theta82, theta83f = (real_mix_precision)theta83, magic82f = (real_mix_precision)magic82, magic83f = (real_mix_precision)magic83, ret74f = (real_mix_precision)ret74;
 		//bdivergence_detected = classic_aglomerative_amg4<float>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, theta82, theta83, magic82, magic83, ret74, iVar, bmemory_savings, b, lb, maxelm_out);
-		bdivergence_detected = classic_aglomerative_amg4<real_mix_precision>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, theta82f, theta83f, magic82f, magic83f, ret74f, iVar, bmemory_savings, b, lb, maxelm_out);
+		bdivergence_detected = classic_aglomerative_amg4<real_mix_precision>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, theta82f, theta83f, magic82f, magic83f, ret74f, iVar, bmemory_savings, b, lb, maxelm_out, whot_is_block);
 		//bdivergence_detected = classic_aglomerative_amg6<doublereal>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, theta82, theta83, magic82, magic83, ret74, iVar, bmemory_savings, b, lb, maxelm_out);
 
 		//}
@@ -76521,7 +76523,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	doublereal* &dV, doublereal* &dX0,
 	QuickMemVorst& m, BLOCK* &b, integer &lb, WALL* &w, integer &lw,
-	bool* &bondary, integer iVarloc)
+	bool* &bondary, integer iVarloc, int * &whot_is_block)
 {
 
 	// 11 января 2016. классический агломеративный алгебраический многосеточный метод.
@@ -77220,7 +77222,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		bamg_bound = nullptr;
 	}
 
-	bdivergence_detected = classic_aglomerative_amg6<doublereal>(Amat, nsizeA, nna, nnu,  x_copy, rthdsd_amg,  ret74, iVar, bmemory_savings, b, lb, maxelm_out);
+	bdivergence_detected = classic_aglomerative_amg6<doublereal>(Amat, nsizeA, nna, nnu,  x_copy, rthdsd_amg,  ret74, iVar, bmemory_savings, b, lb, maxelm_out, whot_is_block);
 
 	if (bdivergence_detected) {
 		printf("Recomended: Setup one thread and Gauss-Seidel smoother.\n");
@@ -77334,7 +77336,8 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	doublereal &theta82, doublereal &theta83, doublereal &magic82,
 	doublereal &magic83, real_mix_precision &ret74, BLOCK* b, integer lb,
 	integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	SOURCE* &s_loc, integer &ls, WALL* &w, integer &lw)
+	SOURCE* &s_loc, integer &ls, WALL* &w, integer &lw,
+	int * &whot_is_block)
 {
 #ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_max_threads();
@@ -78304,7 +78307,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7) {
 			//float theta82f=(float)theta82, theta83f= (float)theta83, magic82f= (float)magic82, magic83f= (float)magic83, ret74f= (float)ret74;
 			real_mix_precision theta82f = (real_mix_precision)theta82, theta83f = (real_mix_precision)theta83, magic82f = (real_mix_precision)magic82, magic83f = (real_mix_precision)magic83, ret74f = (real_mix_precision)ret74;
-			bdivergence_detected = classic_aglomerative_amg4<real_mix_precision>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg,  theta82f, theta83f, magic82f, magic83f, ret74f, iVar, bmemory_savings,b, lb, maxelm);
+			bdivergence_detected = classic_aglomerative_amg4<real_mix_precision>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg,  theta82f, theta83f, magic82f, magic83f, ret74f, iVar, bmemory_savings,b, lb, maxelm, whot_is_block);
 			//bdivergence_detected = classic_aglomerative_amg6<doublereal>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, theta82, theta83, magic82, magic83, ret74, iVar, bmemory_savings, b, lb, maxelm);
 		}
 		else {
@@ -78673,7 +78676,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	real_mix_precision &ret74, BLOCK* b, integer lb,
 	integer* &ifrontregulationgl, integer* &ibackregulationgl,
 	SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE,
-	WALL* &w, integer &lw)
+	WALL* &w, integer &lw, int * &whot_is_block)
 {
 
 	
@@ -78800,7 +78803,9 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		res_sum += buf;
 	}
 	res_sum = sqrt(res_sum);
-	printf("input diagnostic residual =%e\n", res_sum);
+	if (my_amg_manager.iprint_log == 1) {
+		printf("input diagnostic residual =%e\n", res_sum);
+	}
 
 	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 		if (res_sum > 20.0) {
@@ -79278,22 +79283,32 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		char c2[5] = "Amat";
 		Amat.i = (integer_mix_precision*)malloc(nsizeA * sizeof(integer_mix_precision));  // 9
 		handle_error<integer_mix_precision>(Amat.i, c2, c1, (nsizeA));
-		printf("i alloc succseful...\n");
+		if (my_amg_manager.iprint_log == 1) {
+			printf("i alloc succseful...\n");
+		}
 		Amat.j = (integer_mix_precision*)malloc(nsizeA * sizeof(integer_mix_precision));  // 9
 		handle_error<integer_mix_precision>(Amat.j, c2, c1, (nsizeA));
-		printf("j alloc succseful...\n");
-		Amat.aij = (real_mix_precision*)malloc(nsizeA * sizeof(doublereal));  // 9
+		if (my_amg_manager.iprint_log == 1) {
+			printf("j alloc succseful...\n");
+		}
+		Amat.aij = (real_mix_precision*)malloc(nsizeA * sizeof(real_mix_precision));  // 9
 		handle_error<real_mix_precision>(Amat.aij, c2, c1, (nsizeA));
-		printf("aij alloc succseful...\n");
-		Amat.abs_aij = (real_mix_precision*)malloc(nsizeA * sizeof(doublereal));  // 9
+		if (my_amg_manager.iprint_log == 1) {
+			printf("aij alloc succseful...\n");
+		}
+		Amat.abs_aij = (real_mix_precision*)malloc(nsizeA * sizeof(real_mix_precision));  // 9
 		handle_error<real_mix_precision>(Amat.abs_aij, c2, c1, (nsizeA));
-		printf("abs_aij alloc succseful...\n");
+		if (my_amg_manager.iprint_log == 1) {
+			printf("abs_aij alloc succseful...\n");
+		}
 
 
 		char c0[11] = "bamg_bound";
 		bamg_bound = new bool[((nsizePR * nnu) + 1)];
 		handle_error<bool>(bamg_bound, c0, c1, ((nsizePR * nnu) + 1));
-		printf("bamg_bound alloc succseful...\n");
+		if (my_amg_manager.iprint_log == 1) {
+			printf("bamg_bound alloc succseful...\n");
+		}
 
 		// real size 9.4 for resistor.
 		// 
@@ -79323,13 +79338,17 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		result_amg = (doublereal*)malloc((nnu + 1) * sizeof(doublereal));
 		char c3[11] = "result_amg";
 		handle_error<doublereal>(result_amg, c3, c1, (nnu + 1));
-		printf("result_amg alloc succseful...\n");
+		if (my_amg_manager.iprint_log == 1) {
+			printf("result_amg alloc succseful...\n");
+		}
 
 		//rthdsd_amg = new doublereal[nnu + 1];
 		rthdsd_amg = (doublereal*)malloc((nnu + 1) * sizeof(doublereal));
 		char c4[11] = "rthdsd_amg";
 		handle_error<doublereal>(rthdsd_amg, c4, c1, (nnu + 1));
-		printf("rthdsd_amg alloc succseful...\n");
+		if (my_amg_manager.iprint_log == 1) {
+			printf("rthdsd_amg alloc succseful...\n");
+		}
 
 
 
@@ -79722,7 +79741,9 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		for (integer i47 = 1; i47 <= nnu; i47++) {
 			x_copy[i47] = result_amg[i47];
 		}
-		printf("x_copy alloc succseful...\n");
+		if (my_amg_manager.iprint_log == 1) {
+			printf("x_copy alloc succseful...\n");
+		}
 
 		//doublereal theta83 = 0.23;
 		//doublereal magic82 = 0.4;
@@ -79741,8 +79762,10 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			//float theta82f=(float)theta82, theta83f= (float)theta83, magic82f= (float)magic82, magic83f= (float)magic83, ret74f= (float)ret74;
 			//doublereal theta82f = (doublereal)theta82, theta83f = (doublereal)theta83, magic82f = (doublereal)magic82, magic83f = (doublereal)magic83, ret74f = (doublereal)ret74;
 			//bdivergence_detected = classic_aglomerative_amg4<float>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg,  theta82f, theta83f, magic82f, magic83f, ret74f, iVar, bmemory_savings,b, lb, maxelm);
-			printf("START CAMG RUMBA...\n");
-			bdivergence_detected = classic_aglomerative_amg6<real_mix_precision>(Amat, nsizeA,  nna, nnu, x_copy, rthdsd_amg,  ret74, iVar, bmemory_savings, b, lb, maxelm);
+			if (my_amg_manager.iprint_log == 1) {
+				printf("start Classic Algebraic MultiGrid RUMBA v.0.14...\n");
+			}
+			bdivergence_detected = classic_aglomerative_amg6<real_mix_precision>(Amat, nsizeA,  nna, nnu, x_copy, rthdsd_amg,  ret74, iVar, bmemory_savings, b, lb, maxelm, whot_is_block);
 		}
 		else {
 			//float theta82f = (float)theta82, theta83f = (float)theta83, magic82f = (float)magic82, magic83f = (float)magic83, ret74f = (float)ret74;
@@ -80058,7 +80081,9 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			res_sum += buf;
 		}
 		res_sum = sqrt(res_sum);
-		printf("output diagnostic residual =%e\n", res_sum);
+		if (my_amg_manager.iprint_log == 1) {
+			printf("output diagnostic residual =%e\n", res_sum);
+		}
 		//printf("residual finish=%1.4e\n",res_sum);
 		//getchar();
 		if (bsolid_static_only) {

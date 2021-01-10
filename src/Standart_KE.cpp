@@ -45,15 +45,15 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	//integer iVar,
 	//bool btimedep,
 	//doublereal tauparam,
-	integer* ptr,
-	integer** nvtx,
+	int* ptr,
+	int** nvtx,
 	doublereal** potent,
 	//doublereal* potent_temper,
 	TOCHKA* pa,
-	doublereal** prop,
-	doublereal** prop_b,
+	float** prop,
+	float** prop_b,
 	integer maxelm,
-	ALICE_PARTITION** neighbors_for_the_internal_node,
+	int*** neighbors_for_the_internal_node,
 	//doublereal* alpha,
 	//doublereal dgx,
 	//doublereal dgy,
@@ -75,32 +75,36 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	//doublereal &sumanb,
 	integer *ilevel_alice,
 	doublereal* &distance_to_wall,
-	doublereal* &SInvariantStrainRateTensor
+	doublereal* &SInvariantStrainRateTensor,
+	TOCHKA*& center_coord_loc,
+	TOCHKA*& volume_loc,
+	integer maxbound
 ) {
 
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iE = iE; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iN = iN; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iT = iT;
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iS = iS; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iW = iW; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iB = iB;
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iP = iP;
 
 	// 26.09.2016 Добавок для АЛИС сетки.
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
 
-										  // NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
-
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+	// NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
+	if (b_on_adaptive_local_refinement_mesh) {
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iE2 = iE2; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iN2 = iN2; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iT2 = iT2;
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iS2 = iS2; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iW2 = iW2; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iB2 = iB2;
@@ -181,43 +185,48 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	// то соответствующая переменная равна true
 	bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
 
-	if (iE >= maxelm) bE = true;
-	if (iN >= maxelm) bN = true;
-	if (iT >= maxelm) bT = true;
-	if (iW >= maxelm) bW = true;
-	if (iS >= maxelm) bS = true;
-	if (iB >= maxelm) bB = true;
+	if ((iE >= maxelm) && (iE < maxelm + maxbound)) bE = true;
+	if ((iN >= maxelm) && (iN < maxelm + maxbound)) bN = true;
+	if ((iT >= maxelm) && (iT < maxelm + maxbound)) bT = true;
+	if ((iW >= maxelm) && (iW < maxelm + maxbound)) bW = true;
+	if ((iS >= maxelm) && (iS < maxelm + maxbound)) bS = true;
+	if ((iB >= maxelm) && (iB < maxelm + maxbound)) bB = true;
 
 	bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
 
-	if (iE2 >= maxelm) bE2 = true;
-	if (iN2 >= maxelm) bN2 = true;
-	if (iT2 >= maxelm) bT2 = true;
-	if (iW2 >= maxelm) bW2 = true;
-	if (iS2 >= maxelm) bS2 = true;
-	if (iB2 >= maxelm) bB2 = true;
+	if ((iE2 >= maxelm) && (iE2 < maxelm + maxbound)) bE2 = true;
+	if ((iN2 >= maxelm) && (iN2 < maxelm + maxbound)) bN2 = true;
+	if ((iT2 >= maxelm) && (iT2 < maxelm + maxbound)) bT2 = true;
+	if ((iW2 >= maxelm) && (iW2 < maxelm + maxbound)) bW2 = true;
+	if ((iS2 >= maxelm) && (iS2 < maxelm + maxbound)) bS2 = true;
+	if ((iB2 >= maxelm) && (iB2 < maxelm + maxbound)) bB2 = true;
 
 	bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
 
-	if (iE3 >= maxelm) bE3 = true;
-	if (iN3 >= maxelm) bN3 = true;
-	if (iT3 >= maxelm) bT3 = true;
-	if (iW3 >= maxelm) bW3 = true;
-	if (iS3 >= maxelm) bS3 = true;
-	if (iB3 >= maxelm) bB3 = true;
+	if ((iE3 >= maxelm) && (iE3 < maxelm + maxbound)) bE3 = true;
+	if ((iN3 >= maxelm) && (iN3 < maxelm + maxbound)) bN3 = true;
+	if ((iT3 >= maxelm) && (iT3 < maxelm + maxbound)) bT3 = true;
+	if ((iW3 >= maxelm) && (iW3 < maxelm + maxbound)) bW3 = true;
+	if ((iS3 >= maxelm) && (iS3 < maxelm + maxbound)) bS3 = true;
+	if ((iB3 >= maxelm) && (iB3 < maxelm + maxbound)) bB3 = true;
 
 	bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
 
-	if (iE4 >= maxelm) bE4 = true;
-	if (iN4 >= maxelm) bN4 = true;
-	if (iT4 >= maxelm) bT4 = true;
-	if (iW4 >= maxelm) bW4 = true;
-	if (iS4 >= maxelm) bS4 = true;
-	if (iB4 >= maxelm) bB4 = true;
+	if ((iE4 >= maxelm) && (iE4 < maxelm + maxbound)) bE4 = true;
+	if ((iN4 >= maxelm) && (iN4 < maxelm + maxbound)) bN4 = true;
+	if ((iT4 >= maxelm) && (iT4 < maxelm + maxbound)) bT4 = true;
+	if ((iW4 >= maxelm) && (iW4 < maxelm + maxbound)) bW4 = true;
+	if ((iS4 >= maxelm) && (iS4 < maxelm + maxbound)) bS4 = true;
+	if ((iB4 >= maxelm) && (iB4 < maxelm + maxbound)) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-	volume3D(iP, nvtx, pa, dx, dy, dz);
+	//volume3D(iP, nvtx, pa, dx, dy, dz);
+
+	TOCHKA pvol = volume_loc[iP];
+	dx = pvol.x;
+	dy = pvol.y;
+	dz = pvol.z;
 
 	//printf("%.2f %.2f\n",dx,dy); // debug GOOD
 	//getchar();
@@ -1266,7 +1275,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iE];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				De = Ge * dy_loc*dz_loc / dxe;
 			}
@@ -1285,7 +1299,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iW];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dw = Gw * dy_loc*dz_loc / dxw;
 			}
@@ -1304,7 +1323,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iN];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dn = Gn * dx_loc*dz_loc / dyn;
 			}
@@ -1322,7 +1346,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iS];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Ds = Gs * dx_loc*dz_loc / dys;
 			}
@@ -1340,7 +1369,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iT];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dt = Gt * dx_loc*dy_loc / dzt;
 			}
@@ -1360,7 +1394,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iB];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Db = Gb * dx_loc*dy_loc / dzb;
 			}
@@ -1383,7 +1422,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iE2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				De2 = Ge2 * dy_loc*dz_loc / dxe2;
 			}
@@ -1402,7 +1446,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iW2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dw2 = Gw2 * dy_loc*dz_loc / dxw2;
 			}
@@ -1421,7 +1470,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iN2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dn2 = Gn2 * dx_loc*dz_loc / dyn2;
 			}
@@ -1439,7 +1493,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iS2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Ds2 = Gs2 * dx_loc*dz_loc / dys2;
 			}
@@ -1457,7 +1516,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iT2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dt2 = Gt2 * dx_loc*dy_loc / dzt2;
 			}
@@ -1477,7 +1541,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iB2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Db2 = Gb2 * dx_loc*dy_loc / dzb2;
 			}
@@ -1500,7 +1569,13 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iE3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
+
 
 				De3 = Ge3 * dy_loc*dz_loc / dxe3;
 			}
@@ -1519,7 +1594,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iW3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dw3 = Gw3 * dy_loc*dz_loc / dxw3;
 			}
@@ -1538,7 +1618,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iN3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dn3 = Gn3 * dx_loc*dz_loc / dyn3;
 			}
@@ -1556,7 +1641,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iS3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Ds3 = Gs3 * dx_loc*dz_loc / dys3;
 			}
@@ -1574,7 +1664,13 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iT3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
+
 
 				Dt3 = Gt3 * dx_loc*dy_loc / dzt3;
 			}
@@ -1594,7 +1690,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iB3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Db3 = Gb3 * dx_loc*dy_loc / dzb3;
 			}
@@ -1617,7 +1718,13 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iE4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
+
 
 				De4 = Ge4 * dy_loc*dz_loc / dxe4;
 			}
@@ -1636,7 +1743,13 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iW4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
+
 
 				Dw4 = Gw4 * dy_loc*dz_loc / dxw4;
 			}
@@ -1655,7 +1768,13 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iN4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
+
 
 				Dn4 = Gn4 * dx_loc*dz_loc / dyn4;
 			}
@@ -1673,7 +1792,13 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iS4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
+
 
 				Ds4 = Gs4 * dx_loc*dz_loc / dys4;
 			}
@@ -1691,7 +1816,13 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iT4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
+
 
 				Dt4 = Gt4 * dx_loc*dy_loc / dzt4;
 			}
@@ -1711,7 +1842,13 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iB4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
+
 
 				Db4 = Gb4 * dx_loc*dy_loc / dzb4;
 			}
@@ -2009,6 +2146,268 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 				}
 			}
 
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				if (!bE2) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+				}
+				else {
+					integer inumber = iE2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fabs(Fe2);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+					}
+				}
+				if (!bW2) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+				}
+				else {
+					integer inumber = iW2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fabs(Fw2);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+					}
+				}
+				if (!bN2) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+				}
+				else {
+					integer inumber = iN2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fabs(Fn2);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+					}
+				}
+				if (!bS2) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+				}
+				else {
+					integer inumber = iS2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fabs(Fs2);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+					}
+				}
+				if (!bT2) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+				}
+				else {
+					integer inumber = iT2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fabs(Ft2);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+					}
+				}
+				if (!bB2) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+				}
+				else
+				{
+					integer inumber = iB2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fabs(Fb2);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+					}
+				}
+
+				if (!bE3) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+				}
+				else {
+					integer inumber = iE3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fabs(Fe3);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+					}
+				}
+				if (!bW3) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+				}
+				else {
+					integer inumber = iW3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fabs(Fw3);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+					}
+				}
+				if (!bN3) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+				}
+				else {
+					integer inumber = iN3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fabs(Fn3);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+					}
+				}
+				if (!bS3) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+				}
+				else {
+					integer inumber = iS3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fabs(Fs3);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+					}
+				}
+				if (!bT3) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+				}
+				else {
+					integer inumber = iT3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fabs(Ft3);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+					}
+				}
+				if (!bB3) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+				}
+				else
+				{
+					integer inumber = iB3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fabs(Fb3);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+					}
+				}
+
+				if (!bE4) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+				}
+				else {
+					integer inumber = iE4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fabs(Fe4);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+					}
+				}
+				if (!bW4) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+				}
+				else {
+					integer inumber = iW4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fabs(Fw4);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+					}
+				}
+				if (!bN4) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+				}
+				else {
+					integer inumber = iN4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fabs(Fn4);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+					}
+				}
+				if (!bS4) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+				}
+				else {
+					integer inumber = iS4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fabs(Fs4);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+					}
+				}
+				if (!bT4) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+				}
+				else {
+					integer inumber = iT4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fabs(Ft4);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+					}
+				}
+				if (!bB4) {
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+				}
+				else
+				{
+					integer inumber = iB4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fabs(Fb4);
+					}
+					else {
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+					}
+				}
+			}
+
+
 		}
 
 		// Вернул как единственно верное и описанное в литературе. 7.05.2017.
@@ -2070,7 +2469,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 
 
 
-		if (sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap < 1.0e-40) {
+		if (sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap < 1.0e-36) {
 			printf("Zero diagonal coefficient in internal volume in my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D.\n");
 #if doubleintprecision == 1
 			printf("ap=%e iP=%lld\n", sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap, iP);
@@ -2175,39 +2574,137 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	}
 	else if (ishconvection < QUICK)
 	{
-		// Вычисление коэффициентов дискретного аналога:
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
-		//sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap=sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab;
+		if (b_on_adaptive_local_refinement_mesh) {
 
-		// Вернул как единственно верное и описанное в литературе. 7.05.2017.
-		//sumanb=sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab;
-		//13 августа 2016.
-		//sumanb = fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab);
+			// Вычисление коэффициентов дискретного аналога:
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
 
-		// 08.05.2017.
-		// Моя наработка:
-		// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+			// Вычисление коэффициентов дискретного аналога:
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 = -(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 = (Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 = -(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 = (Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 = -(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2 = (Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
 
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-		sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 = -(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 = (Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 = -(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 = (Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 = -(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3 = (Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
 
-		/*
-		sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-		sumanb += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-		sumanb += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-		sumanb += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-		sumanb += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-		sumanb += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
-		*/
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 = -(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 = (Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 = -(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 = (Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 = -(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = (Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+
+			// 08.05.2017.
+			// Моя наработка:
+			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
+
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
+
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+
+			/*
+			sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sumanb += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sumanb += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sumanb += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sumanb += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sumanb += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+
+			sumanb += +(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sumanb += -(Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sumanb += +(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sumanb += -(Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sumanb += +(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sumanb += -(Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
+
+			sumanb += +(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sumanb += -(Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sumanb += +(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sumanb += -(Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sumanb += +(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sumanb += -(Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
+
+			sumanb += +(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sumanb += -(Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sumanb += +(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sumanb += -(Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sumanb += +(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sumanb += -(Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+			*/
+
+		}
+		else
+		{
+			// Вычисление коэффициентов дискретного аналога:
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			//sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap=sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab;
+
+			// Вернул как единственно верное и описанное в литературе. 7.05.2017.
+			//sumanb=sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab;
+			//13 августа 2016.
+			//sumanb = fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at) + fabs(sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab);
+
+			// 08.05.2017.
+			// Моя наработка:
+			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+
+			/*
+			sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sumanb += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sumanb += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sumanb += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sumanb += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sumanb += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			*/
+		}
 	}
 	else if (ishconvection >= QUICK)
 	{
@@ -2224,193 +2721,1366 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		// Z - direction
 		doublereal positionzP, positionzT, positionzB, positionzTT, positionzBB, positionzt, positionzb;
 
+		doublereal SpeedE2 = 0.0, SpeedW2 = 0.0, SpeedEE2 = 0.0, SpeedWW2 = 0.0, SpeedN2 = 0.0, SpeedS2 = 0.0;
+		doublereal SpeedNN2 = 0.0, SpeedSS2 = 0.0, SpeedT2 = 0.0, SpeedB2 = 0.0, SpeedTT2 = 0.0, SpeedBB2 = 0.0;
+		doublereal Speede2 = 0.0, Speedw2 = 0.0, Speedn2 = 0.0, Speeds2 = 0.0, Speedt2 = 0.0, Speedb2 = 0.0;
+
+		doublereal  SpeedE3 = 0.0, SpeedW3 = 0.0, SpeedEE3 = 0.0, SpeedWW3 = 0.0, SpeedN3 = 0.0, SpeedS3 = 0.0;
+		doublereal SpeedNN3 = 0.0, SpeedSS3 = 0.0, SpeedT3 = 0.0, SpeedB3 = 0.0, SpeedTT3 = 0.0, SpeedBB3 = 0.0;
+		doublereal Speede3 = 0.0, Speedw3 = 0.0, Speedn3 = 0.0, Speeds3 = 0.0, Speedt3 = 0.0, Speedb3 = 0.0;
+
+		doublereal SpeedE4 = 0.0, SpeedW4 = 0.0, SpeedEE4 = 0.0, SpeedWW4 = 0.0, SpeedN4 = 0.0, SpeedS4 = 0.0;
+		doublereal SpeedNN4 = 0.0, SpeedSS4 = 0.0, SpeedT4 = 0.0, SpeedB4 = 0.0, SpeedTT4 = 0.0, SpeedBB4 = 0.0;
+		doublereal Speede4 = 0.0, Speedw4 = 0.0, Speedn4 = 0.0, Speeds4 = 0.0, Speedt4 = 0.0, Speedb4 = 0.0;
+
+		// X - direction
+		doublereal  positionxE2, positionxW2, positionxEE2, positionxWW2, positionxe2, positionxw2;
+		// Y - direction
+		doublereal  positionyN2, positionyS2, positionyNN2, positionySS2, positionyn2, positionys2;
+		// Z - direction
+		doublereal  positionzT2, positionzB2, positionzTT2, positionzBB2, positionzt2, positionzb2;
+
+		// X - direction
+		doublereal  positionxE3, positionxW3, positionxEE3, positionxWW3, positionxe3, positionxw3;
+		// Y - direction
+		doublereal  positionyN3, positionyS3, positionyNN3, positionySS3, positionyn3, positionys3;
+		// Z - direction
+		doublereal  positionzT3, positionzB3, positionzTT3, positionzBB3, positionzt3, positionzb3;
+
+		// X - direction
+		doublereal  positionxE4, positionxW4, positionxEE4, positionxWW4, positionxe4, positionxw4;
+		// Y - direction
+		doublereal  positionyN4, positionyS4, positionyNN4, positionySS4, positionyn4, positionys4;
+		// Z - direction
+		doublereal  positionzT4, positionzB4, positionzTT4, positionzBB4, positionzt4, positionzb4;
+
 		TOCHKA pointP;
-		center_cord3D(iP, nvtx, pa, pointP, 100);
+		//center_cord3D(iP, nvtx, pa, pointP, 100);
+		pointP = center_coord_loc[iP];
+
 		positionxP = pointP.x; positionyP = pointP.y; positionzP = pointP.z;
 		SpeedP = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP];
 		// X - direction
 		if (!bE) {
 			SpeedE = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
-			center_cord3D(iE, nvtx, pa, pointP, E_SIDE);
-			positionxE = pointP.x;
-			positionxe = positionxP + 0.5*dx;
+			//center_cord3D(iE,nvtx,pa,pointP,E_SIDE);
+			pointP = center_coord_loc[iE];
 
-			integer iEE = neighbors_for_the_internal_node[EE_SIDE][iP].iNODE1;
+			positionxE = pointP.x;
+			positionxe = positionxP + 0.5 * dx;
+
+			integer iEE = neighbors_for_the_internal_node[E_SIDE][0][iE];
+			if (iEE < 0) {
+				iEE = neighbors_for_the_internal_node[E_SIDE][1][iE];
+			}
+			if (iEE < 0) {
+				iEE = neighbors_for_the_internal_node[E_SIDE][2][iE];
+			}
+			if (iEE < 0) {
+				iEE = neighbors_for_the_internal_node[E_SIDE][3][iE];
+			}
+
 			if ((iEE >= 0) && (iEE < maxelm)) {
 				// внутренний узел
 				SpeedEE = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE];
-				center_cord3D(iEE, nvtx, pa, pointP, EE_SIDE);
+				//center_cord3D(iEE,nvtx,pa,pointP,EE_SIDE);
+				pointP = center_coord_loc[iEE];
 				positionxEE = pointP.x;
 			}
 			else
 			{
 				// граничный узел
-				SpeedEE = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE];
-				volume3D(iE, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionxEE = positionxE + 0.5*pointP.x;
+				if ((iEE >= maxelm) && (iEE < maxelm + maxbound)) {
+					SpeedEE = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE];
+				}
+				else {
+					SpeedEE = SpeedE;
+				}
+				//volume3D(iE, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iE];
+
+				positionxEE = positionxE + 0.5 * pointP.x;
 			}
 		}
 		else {
 			// это граничный узел
 			SpeedE = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
 			SpeedEE = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
-			positionxe = positionxP + 0.5*dx;
-			positionxE = positionxP + 0.5*dx;
+			positionxe = positionxP + 0.5 * dx;
+			positionxE = positionxP + 0.5 * dx;
 			positionxEE = positionxP + dx; // этого узла не существует !
 		}
 
 		if (!bW) {
-			center_cord3D(iW, nvtx, pa, pointP, W_SIDE);
+			//center_cord3D(iW,nvtx,pa,pointP,W_SIDE);
+			pointP = center_coord_loc[iW];
 			positionxW = pointP.x;
-			positionxw = positionxP - 0.5*dx;
+			positionxw = positionxP - 0.5 * dx;
 			SpeedW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW];
 
-			integer iWW = neighbors_for_the_internal_node[WW_SIDE][iP].iNODE1;
+			integer iWW = neighbors_for_the_internal_node[W_SIDE][0][iW];
+			if (iWW < 0) {
+				iWW = neighbors_for_the_internal_node[W_SIDE][1][iW];
+			}
+			if (iWW < 0) {
+				iWW = neighbors_for_the_internal_node[W_SIDE][2][iW];
+			}
+			if (iWW < 0) {
+				iWW = neighbors_for_the_internal_node[W_SIDE][3][iW];
+			}
+
 			if ((iWW >= 0) && (iWW < maxelm)) {
 				// внутренний узел
 				SpeedWW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW];
-				center_cord3D(iWW, nvtx, pa, pointP, WW_SIDE);
+				//center_cord3D(iWW,nvtx,pa,pointP,WW_SIDE);
+				pointP = center_coord_loc[iWW];
 				positionxWW = pointP.x;
 			}
 			else
 			{
 				// граничный узел
-				SpeedWW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW];
-				volume3D(iW, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionxWW = positionxW - 0.5*pointP.x;
+				if ((iWW >= maxelm) && (iWW < maxelm + maxbound)) {
+					SpeedWW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW];
+				}
+				else {
+					SpeedWW = SpeedW;
+				}
+				//volume3D(iW, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iW];
+
+				positionxWW = positionxW - 0.5 * pointP.x;
 			}
 		}
 		else {
 			// это граничный узел
-			SpeedW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW]; // Attantion !! Debug TODO
+			SpeedW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW]; // Attantion !! Debug
 			SpeedWW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW];
 			//printf("SpeedW==%e\n",SpeedW); getchar();
-			positionxw = positionxP - 0.5*dx;
-			positionxW = positionxP - 0.5*dx;
+			positionxw = positionxP - 0.5 * dx;
+			positionxW = positionxP - 0.5 * dx;
 			positionxWW = positionxP - dx; // этого узла не существует !
 		}
 
 		// Y - direction
 		if (!bN) {
 			SpeedN = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
-			center_cord3D(iN, nvtx, pa, pointP, N_SIDE);
+			//center_cord3D(iN,nvtx,pa,pointP,N_SIDE);
+			pointP = center_coord_loc[iN];
 			positionyN = pointP.y;
-			positionyn = positionxP + 0.5*dy;
+			positionyn = positionxP + 0.5 * dy;
 
-			integer iNN = neighbors_for_the_internal_node[NN_SIDE][iP].iNODE1;
+			integer iNN = neighbors_for_the_internal_node[N_SIDE][0][iN];
+			if (iNN < 0) {
+				iNN = neighbors_for_the_internal_node[N_SIDE][1][iN];
+			}
+			if (iNN < 0) {
+				iNN = neighbors_for_the_internal_node[N_SIDE][2][iN];
+			}
+			if (iNN < 0) {
+				iNN = neighbors_for_the_internal_node[N_SIDE][3][iN];
+			}
+
 			if ((iNN >= 0) && (iNN < maxelm)) {
 				// внутренний узел
 				SpeedNN = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN];
-				center_cord3D(iNN, nvtx, pa, pointP, NN_SIDE);
+				//center_cord3D(iNN,nvtx,pa,pointP,NN_SIDE);
+				pointP = center_coord_loc[iNN];
 				positionyNN = pointP.y;
 			}
 			else
 			{
 				// граничный узел
-				SpeedNN = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN];
-				volume3D(iN, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionyNN = positionyN + 0.5*pointP.y;
+				if ((iNN >= maxelm) && (iNN < maxelm + maxbound)) {
+					SpeedNN = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN];
+				}
+				else {
+					SpeedNN = SpeedN;
+				}
+				//volume3D(iN, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iN];
+
+				positionyNN = positionyN + 0.5 * pointP.y;
 			}
 		}
 		else {
 			// это граничный узел
 			SpeedN = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
 			SpeedNN = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
-			positionyn = positionyP + 0.5*dy;
-			positionyN = positionyP + 0.5*dy;
+			positionyn = positionyP + 0.5 * dy;
+			positionyN = positionyP + 0.5 * dy;
 			positionyNN = positionyP + dy; // этого узла не существует !
 		}
 
 		if (!bS) {
 			SpeedS = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS];
-			center_cord3D(iS, nvtx, pa, pointP, S_SIDE);
+			//center_cord3D(iS,nvtx,pa,pointP,S_SIDE);
+			pointP = center_coord_loc[iS];
 			positionyS = pointP.y;
-			positionys = positionyP - 0.5*dy;
+			positionys = positionyP - 0.5 * dy;
 
-			integer iSS = neighbors_for_the_internal_node[SS_SIDE][iP].iNODE1;
+			integer iSS = neighbors_for_the_internal_node[S_SIDE][0][iS];
+			if (iSS < 0) {
+				iSS = neighbors_for_the_internal_node[S_SIDE][1][iS];
+			}
+			if (iSS < 0) {
+				iSS = neighbors_for_the_internal_node[S_SIDE][2][iS];
+			}
+			if (iSS < 0) {
+				iSS = neighbors_for_the_internal_node[S_SIDE][3][iS];
+			}
+
 			if ((iSS >= 0) && (iSS < maxelm)) {
 				// внутренний узел
 				SpeedSS = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS];
-				center_cord3D(iSS, nvtx, pa, pointP, SS_SIDE);
+				//center_cord3D(iSS,nvtx,pa,pointP,SS_SIDE);
+				pointP = center_coord_loc[iSS];
 				positionySS = pointP.y;
 			}
 			else
 			{
 				// граничный узел
-				SpeedSS = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS];
-				volume3D(iS, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionySS = positionyS - 0.5*pointP.y;
+				if ((iSS >= maxelm) && (iSS < maxelm + maxbound)) {
+					SpeedSS = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS];
+				}
+				else {
+					SpeedSS = SpeedS;
+				}
+				//volume3D(iS, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iS];
+
+				positionySS = positionyS - 0.5 * pointP.y;
 			}
 		}
 		else {
 			// это граничный узел
-			SpeedS = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // ATTANTION !!!! TODO 
+			SpeedS = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // ATTANTION !!!!
 			SpeedSS = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // нулевая скорость внутри твёрдого тела.
-			positionys = positionyP - 0.5*dy;
-			positionyS = positionyP - 0.5*dy;
+			positionys = positionyP - 0.5 * dy;
+			positionyS = positionyP - 0.5 * dy;
 			positionySS = positionyP - dy; // этого узла не существует !
 		}
 
 		// Z - direction
 		if (!bT) {
 			SpeedT = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT];
-			center_cord3D(iT, nvtx, pa, pointP, T_SIDE);
+			//center_cord3D(iT,nvtx,pa,pointP,T_SIDE);
+			pointP = center_coord_loc[iT];
 			positionzT = pointP.z;
-			positionzt = positionzP + 0.5*dz;
+			positionzt = positionzP + 0.5 * dz;
 
-			integer iTT = neighbors_for_the_internal_node[TT_SIDE][iP].iNODE1;
+			integer iTT = neighbors_for_the_internal_node[T_SIDE][0][iT];
+			if (iTT < 0) {
+				iTT = neighbors_for_the_internal_node[T_SIDE][1][iT];
+			}
+			if (iTT < 0) {
+				iTT = neighbors_for_the_internal_node[T_SIDE][2][iT];
+			}
+			if (iTT < 0) {
+				iTT = neighbors_for_the_internal_node[T_SIDE][3][iT];
+			}
+
 			if ((iTT >= 0) && (iTT < maxelm)) {
 				// внутренний узел
 				SpeedTT = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT];
-				center_cord3D(iTT, nvtx, pa, pointP, TT_SIDE);
+				//center_cord3D(iTT,nvtx,pa,pointP,TT_SIDE);
+				pointP = center_coord_loc[iTT];
 				positionzTT = pointP.z;
 			}
 			else
 			{
 				// граничный узел
-				SpeedTT = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT];
-				volume3D(iT, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionzTT = positionzT + 0.5*pointP.z;
+				if ((iTT >= maxelm) && (iTT < maxelm + maxbound)) {
+
+					SpeedTT = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT];
+				}
+				else {
+					SpeedTT = SpeedT;
+				}
+				//volume3D(iT, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iT];
+
+				positionzTT = positionzT + 0.5 * pointP.z;
 			}
 		}
 		else {
 			// это граничный узел
 			SpeedT = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT];
 			SpeedTT = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT]; // скорость внутри твёрдого тела
-			positionzt = positionzP + 0.5*dz;
-			positionzT = positionzP + 0.5*dz;
+			positionzt = positionzP + 0.5 * dz;
+			positionzT = positionzP + 0.5 * dz;
 			positionzTT = positionzP + dz; // этого узла не существует !
 		}
 
 		if (!bB) {
 			SpeedB = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB];
-			center_cord3D(iB, nvtx, pa, pointP, B_SIDE);
+			//center_cord3D(iB,nvtx,pa,pointP,B_SIDE);
+			pointP = center_coord_loc[iB];
 			positionzB = pointP.z;
-			positionzb = positionzP - 0.5*dz;
+			positionzb = positionzP - 0.5 * dz;
 
-			integer iBB = neighbors_for_the_internal_node[BB_SIDE][iP].iNODE1;
+			integer iBB = neighbors_for_the_internal_node[B_SIDE][0][iB];
+			if (iBB < 0) {
+				iBB = neighbors_for_the_internal_node[B_SIDE][1][iB];
+			}
+			if (iBB < 0) {
+				iBB = neighbors_for_the_internal_node[B_SIDE][2][iB];
+			}
+			if (iBB < 0) {
+				iBB = neighbors_for_the_internal_node[B_SIDE][3][iB];
+			}
+
 			if ((iBB >= 0) && (iBB < maxelm)) {
 				// внутренний узел
 				SpeedBB = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB];
-				center_cord3D(iBB, nvtx, pa, pointP, BB_SIDE);
+				//center_cord3D(iBB,nvtx,pa,pointP,BB_SIDE);
+				pointP = center_coord_loc[iBB];
 				positionzBB = pointP.z;
 			}
 			else
 			{
 				// граничный узел
-				SpeedBB = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB];
-				volume3D(iB, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionzBB = positionzB - 0.5*pointP.z;
+				if ((iBB >= maxelm) && (iBB < maxelm + maxbound)) {
+					SpeedBB = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB];
+				}
+				else {
+					SpeedBB = SpeedB;
+				}
+				//volume3D(iB, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iB];
+
+				positionzBB = positionzB - 0.5 * pointP.z;
 			}
 		}
 		else {
 			// это граничный узел
 			SpeedB = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB];
 			SpeedBB = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB]; // скорость внутри твёрдого тела
-			positionzb = positionzP - 0.5*dz;
-			positionzB = positionzP - 0.5*dz;
+			positionzb = positionzP - 0.5 * dz;
+			positionzB = positionzP - 0.5 * dz;
 			positionzBB = positionzP - dz; // этого узла не существует !
 		}
+
+		if (b_on_adaptive_local_refinement_mesh)
+		{
+
+			// X - direction
+			if ((!bE2) && (iE2 > -1)) {
+				SpeedE2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE2];
+				//center_cord3D(iE,nvtx,pa,pointP,E_SIDE);
+				pointP = center_coord_loc[iE2];
+
+				positionxE2 = pointP.x;
+				positionxe2 = positionxP + 0.5 * dx;
+
+				integer iEE2 = neighbors_for_the_internal_node[E_SIDE][0][iE2];
+				if (iEE2 < 0) {
+					iEE2 = neighbors_for_the_internal_node[E_SIDE][1][iE2];
+				}
+				if (iEE2 < 0) {
+					iEE2 = neighbors_for_the_internal_node[E_SIDE][2][iE2];
+				}
+				if (iEE2 < 0) {
+					iEE2 = neighbors_for_the_internal_node[E_SIDE][3][iE2];
+				}
+				if ((iEE2 >= 0) && (iEE2 < maxelm)) {
+					// внутренний узел
+					SpeedEE2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE2];
+					//center_cord3D(iEE2,nvtx,pa,pointP,EE_SIDE);
+					pointP = center_coord_loc[iEE2];
+					positionxEE2 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iEE2 >= maxelm) && (iEE2 < maxelm + maxbound)) {
+						SpeedEE2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE2];
+					}
+					else {
+						SpeedEE2 = SpeedE2;
+						//std::cout << "iEE2 =" << iEE2 << " maxelm=" << maxelm << " maxbound=" << maxbound << std::endl;
+						//getchar();
+					}
+					//volume3D(iE, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iE2];
+
+					positionxEE2 = positionxE2 + 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iE2 > -1) {
+					SpeedE2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE2];
+					SpeedEE2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE2];
+				}
+				else {
+					SpeedE2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
+					SpeedEE2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
+				}
+				positionxe2 = positionxP + 0.5 * dx;
+				positionxE2 = positionxP + 0.5 * dx;
+				positionxEE2 = positionxP + dx; // этого узла не существует !
+			}
+
+			if ((!bW2) && ((iW2 > -1))) {
+				//center_cord3D(iW,nvtx,pa,pointP,W_SIDE);
+				pointP = center_coord_loc[iW2];
+				positionxW2 = pointP.x;
+				positionxw2 = positionxP - 0.5 * dx;
+				SpeedW2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW2];
+
+				integer iWW2 = neighbors_for_the_internal_node[W_SIDE][0][iW2];
+				if (iWW2 < 0) {
+					iWW2 = neighbors_for_the_internal_node[W_SIDE][1][iW2];
+				}
+				if (iWW2 < 0) {
+					iWW2 = neighbors_for_the_internal_node[W_SIDE][2][iW2];
+				}
+				if (iWW2 < 0) {
+					iWW2 = neighbors_for_the_internal_node[W_SIDE][3][iW2];
+				}
+
+				if ((iWW2 >= 0) && (iWW2 < maxelm)) {
+					// внутренний узел
+					SpeedWW2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW2];
+					//center_cord3D(iWW2,nvtx,pa,pointP,WW_SIDE);
+					pointP = center_coord_loc[iWW2];
+					positionxWW2 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iWW2 >= maxelm) && (iWW2 < maxelm + maxbound)) {
+						SpeedWW2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW2];
+					}
+					else {
+
+						SpeedWW2 = SpeedW2;
+						//std::cout << "iWW2 =" << iWW2 << " maxelm=" << maxelm << " maxbound=" << maxbound << std::endl;
+						//getchar();
+					}
+					//volume3D(iW2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iW2];
+
+					positionxWW2 = positionxW2 - 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iW2 > -1) {
+					SpeedW2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW2];
+					SpeedWW2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW2];
+				}
+				else {
+					SpeedW2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW];
+					SpeedWW2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW];
+				}
+				//printf("SpeedW2==%e\n",SpeedW2); getchar();
+				positionxw2 = positionxP - 0.5 * dx;
+				positionxW2 = positionxP - 0.5 * dx;
+				positionxWW2 = positionxP - dx; // этого узла не существует !
+			}
+
+			// Y - direction
+			if ((!bN2) && (iN2 > -1)) {
+				SpeedN2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN2];
+				//center_cord3D(iN2,nvtx,pa,pointP,N_SIDE);
+				pointP = center_coord_loc[iN2];
+				positionyN2 = pointP.y;
+				positionyn2 = positionxP + 0.5 * dy;
+
+				integer iNN2 = neighbors_for_the_internal_node[N_SIDE][0][iN2];
+				if (iNN2 < 0) {
+					iNN2 = neighbors_for_the_internal_node[N_SIDE][1][iN2];
+				}
+				if (iNN2 < 0) {
+					iNN2 = neighbors_for_the_internal_node[N_SIDE][2][iN2];
+				}
+				if (iNN2 < 0) {
+					iNN2 = neighbors_for_the_internal_node[N_SIDE][3][iN2];
+				}
+
+
+				if ((iNN2 >= 0) && (iNN2 < maxelm)) {
+					// внутренний узел
+					SpeedNN2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN2];
+					//center_cord3D(iNN2,nvtx,pa,pointP,NN_SIDE);
+					pointP = center_coord_loc[iNN2];
+					positionyNN2 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iNN2 >= maxelm) && (iNN2 < maxelm + maxbound)) {
+						SpeedNN2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN2];
+					}
+					else {
+						SpeedNN2 = SpeedN2;
+					}
+					//volume3D(iN2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iN2];
+
+					positionyNN2 = positionyN2 + 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iN2 > -1) {
+					SpeedN2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN2];
+					SpeedNN2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN2];
+				}
+				else {
+					SpeedN2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
+					SpeedNN2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
+				}
+				positionyn2 = positionyP + 0.5 * dy;
+				positionyN2 = positionyP + 0.5 * dy;
+				positionyNN2 = positionyP + dy; // этого узла не существует !
+			}
+
+			if ((!bS2) && (iS2 > -1)) {
+				SpeedS2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS2];
+				//center_cord3D(iS2,nvtx,pa,pointP,S_SIDE);
+				pointP = center_coord_loc[iS2];
+				positionyS2 = pointP.y;
+				positionys2 = positionyP - 0.5 * dy;
+
+				integer iSS2 = neighbors_for_the_internal_node[S_SIDE][0][iS2];
+				if (iSS2 < 0) {
+					iSS2 = neighbors_for_the_internal_node[S_SIDE][1][iS2];
+				}
+				if (iSS2 < 0) {
+					iSS2 = neighbors_for_the_internal_node[S_SIDE][2][iS2];
+				}
+				if (iSS2 < 0) {
+					iSS2 = neighbors_for_the_internal_node[S_SIDE][3][iS2];
+				}
+
+				if ((iSS2 >= 0) && (iSS2 < maxelm)) {
+					// внутренний узел
+					SpeedSS2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS2];
+					//center_cord3D(iSS2,nvtx,pa,pointP,SS_SIDE);
+					pointP = center_coord_loc[iSS2];
+					positionySS2 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iSS2 >= maxelm) && (iSS2 < maxelm + maxbound)) {
+						SpeedSS2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS2];
+					}
+					else {
+						SpeedSS2 = SpeedS2;
+					}
+					//volume3D(iS2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iS2];
+
+					positionySS2 = positionyS2 - 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iS2 > -1) {
+					SpeedS2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS2]; // ATTANTION !!!!
+					SpeedSS2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS2]; // нулевая скорость внутри твёрдого тела.
+				}
+				else {
+					SpeedS2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // ATTANTION !!!!
+					SpeedSS2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // нулевая скорость внутри твёрдого тела.
+				}
+				positionys2 = positionyP - 0.5 * dy;
+				positionyS2 = positionyP - 0.5 * dy;
+				positionySS2 = positionyP - dy; // этого узла не существует !
+			}
+
+			// Z - direction
+			if ((!bT2) && (iT2 > -1)) {
+				SpeedT2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT2];
+				//center_cord3D(iT2,nvtx,pa,pointP,T_SIDE);
+				pointP = center_coord_loc[iT2];
+				positionzT2 = pointP.z;
+				positionzt2 = positionzP + 0.5 * dz;
+
+				integer iTT2 = neighbors_for_the_internal_node[T_SIDE][0][iT2];
+				if (iTT2 < 0) {
+					iTT2 = neighbors_for_the_internal_node[T_SIDE][1][iT2];
+				}
+				if (iTT2 < 0) {
+					iTT2 = neighbors_for_the_internal_node[T_SIDE][2][iT2];
+				}
+				if (iTT2 < 0) {
+					iTT2 = neighbors_for_the_internal_node[T_SIDE][3][iT2];
+				}
+
+
+				if ((iTT2 >= 0) && (iTT2 < maxelm)) {
+					// внутренний узел
+					SpeedTT2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT2];
+					//center_cord3D(iTT2,nvtx,pa,pointP,TT_SIDE);
+					pointP = center_coord_loc[iTT2];
+					positionzTT2 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iTT2 >= maxelm) && (iTT2 < maxelm + maxbound)) {
+						SpeedTT2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT2];
+					}
+					else {
+						SpeedTT2 = SpeedT2;
+					}
+					//volume3D(iT2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iT2];
+
+					positionzTT2 = positionzT2 + 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iT2 > -1) {
+					SpeedT2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT2];
+					SpeedTT2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT2]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedT2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT];
+					SpeedTT2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT]; // скорость внутри твёрдого тела
+				}
+				positionzt2 = positionzP + 0.5 * dz;
+				positionzT2 = positionzP + 0.5 * dz;
+				positionzTT2 = positionzP + dz; // этого узла не существует !
+			}
+
+			if ((!bB2) && (iB2 > -1)) {
+				SpeedB2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB2];
+				//center_cord3D(iB2,nvtx,pa,pointP,B_SIDE);
+				pointP = center_coord_loc[iB2];
+				positionzB2 = pointP.z;
+				positionzb2 = positionzP - 0.5 * dz;
+
+				integer iBB2 = neighbors_for_the_internal_node[B_SIDE][0][iB2];
+				if (iBB2 < 0) {
+					iBB2 = neighbors_for_the_internal_node[B_SIDE][1][iB2];
+				}
+				if (iBB2 < 0) {
+					iBB2 = neighbors_for_the_internal_node[B_SIDE][2][iB2];
+				}
+				if (iBB2 < 0) {
+					iBB2 = neighbors_for_the_internal_node[B_SIDE][3][iB2];
+				}
+
+				if ((iBB2 >= 0) && (iBB2 < maxelm)) {
+					// внутренний узел
+					SpeedBB2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB2];
+					//center_cord3D(iBB2,nvtx,pa,pointP,BB_SIDE);
+					pointP = center_coord_loc[iBB2];
+					positionzBB2 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iBB2 >= maxelm) && (iBB2 < maxelm + maxbound)) {
+						SpeedBB2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB2];
+					}
+					else {
+						SpeedBB2 = SpeedB2;
+					}
+					//volume3D(iB2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iB2];
+
+					positionzBB2 = positionzB2 - 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iB2 > -1) {
+					SpeedB2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB2];
+					SpeedBB2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB2]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedB2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB];
+					SpeedBB2 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB]; // скорость внутри твёрдого тела
+				}
+				positionzb2 = positionzP - 0.5 * dz;
+				positionzB2 = positionzP - 0.5 * dz;
+				positionzBB2 = positionzP - dz; // этого узла не существует !
+			}
+
+
+			// X - direction
+			if ((!bE3) && (iE3 > -1)) {
+				SpeedE3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE3];
+				//center_cord3D(iE3,nvtx,pa,pointP,E_SIDE);
+				pointP = center_coord_loc[iE3];
+
+				positionxE3 = pointP.x;
+				positionxe3 = positionxP + 0.5 * dx;
+
+				integer iEE3 = neighbors_for_the_internal_node[E_SIDE][0][iE3];
+				if (iEE3 < 0) {
+					iEE3 = neighbors_for_the_internal_node[E_SIDE][1][iE3];
+				}
+				if (iEE3 < 0) {
+					iEE3 = neighbors_for_the_internal_node[E_SIDE][2][iE3];
+				}
+				if (iEE3 < 0) {
+					iEE3 = neighbors_for_the_internal_node[E_SIDE][3][iE3];
+				}
+
+				if ((iEE3 >= 0) && (iEE3 < maxelm)) {
+					// внутренний узел
+					SpeedEE3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE3];
+					//center_cord3D(iEE3,nvtx,pa,pointP,EE_SIDE);
+					pointP = center_coord_loc[iEE3];
+					positionxEE3 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iEE3 >= maxelm) && (iEE3 < maxelm + maxbound)) {
+						SpeedEE3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE3];
+					}
+					else {
+						SpeedEE3 = SpeedE3;
+					}
+					//volume3D(iE3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iE3];
+
+					positionxEE3 = positionxE3 + 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iE3 > -1) {
+					SpeedE3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE3];
+					SpeedEE3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE3];
+				}
+				else {
+					SpeedE3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
+					SpeedEE3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
+				}
+				positionxe3 = positionxP + 0.5 * dx;
+				positionxE3 = positionxP + 0.5 * dx;
+				positionxEE3 = positionxP + dx; // этого узла не существует !
+			}
+
+			if ((!bW3) && (iW3 > -1)) {
+				//center_cord3D(iW3,nvtx,pa,pointP,W_SIDE);
+				pointP = center_coord_loc[iW3];
+				positionxW3 = pointP.x;
+				positionxw3 = positionxP - 0.5 * dx;
+				SpeedW3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW3];
+
+				integer iWW3 = neighbors_for_the_internal_node[W_SIDE][0][iW3];
+				if (iWW3 < 0) {
+					iWW3 = neighbors_for_the_internal_node[W_SIDE][1][iW3];
+				}
+				if (iWW3 < 0) {
+					iWW3 = neighbors_for_the_internal_node[W_SIDE][2][iW3];
+				}
+				if (iWW3 < 0) {
+					iWW3 = neighbors_for_the_internal_node[W_SIDE][3][iW3];
+				}
+
+				if ((iWW3 >= 0) && (iWW3 < maxelm)) {
+					// внутренний узел
+					SpeedWW3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW3];
+					//center_cord3D(iWW3,nvtx,pa,pointP,WW_SIDE);
+					pointP = center_coord_loc[iWW3];
+					positionxWW3 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iWW3 >= maxelm) && (iWW3 < maxelm + maxbound)) {
+						SpeedWW3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW3];
+					}
+					else {
+						SpeedWW3 = SpeedW3;
+						//std::cout << "iWW3 =" << iWW3 << " maxelm=" << maxelm << " maxbound=" << maxbound << std::endl;
+						//getchar();
+					}
+					//volume3D(iW3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iW3];
+
+					positionxWW3 = positionxW3 - 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iW3 > -1) {
+					SpeedW3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW3]; // Attantion !! Debug
+					SpeedWW3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW3];
+				}
+				else {
+					SpeedW3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW]; // Attantion !! Debug
+					SpeedWW3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW];
+				}
+				//printf("SpeedW3==%e\n",SpeedW3); getchar();
+				positionxw3 = positionxP - 0.5 * dx;
+				positionxW3 = positionxP - 0.5 * dx;
+				positionxWW3 = positionxP - dx; // этого узла не существует !
+			}
+
+			// Y - direction
+			if ((!bN3) && (iN3 > -1)) {
+				SpeedN3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN3];
+				//center_cord3D(iN3,nvtx,pa,pointP,N_SIDE);
+				pointP = center_coord_loc[iN3];
+				positionyN3 = pointP.y;
+				positionyn3 = positionxP + 0.5 * dy;
+
+				integer iNN3 = neighbors_for_the_internal_node[N_SIDE][0][iN3];
+				if (iNN3 < 0) {
+					iNN3 = neighbors_for_the_internal_node[N_SIDE][1][iN3];
+				}
+				if (iNN3 < 0) {
+					iNN3 = neighbors_for_the_internal_node[N_SIDE][2][iN3];
+				}
+				if (iNN3 < 0) {
+					iNN3 = neighbors_for_the_internal_node[N_SIDE][3][iN3];
+				}
+
+				if ((iNN3 >= 0) && (iNN3 < maxelm)) {
+					// внутренний узел
+					SpeedNN3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN3];
+					//center_cord3D(iNN3,nvtx,pa,pointP,NN_SIDE);
+					pointP = center_coord_loc[iNN3];
+					positionyNN3 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iNN3 >= maxelm) && (iNN3 < maxelm + maxbound)) {
+						SpeedNN3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN3];
+					}
+					else {
+						SpeedNN3 = SpeedN3;
+					}
+					//volume3D(iN3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iN3];
+
+					positionyNN3 = positionyN3 + 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iN3 > -1) {
+					SpeedN3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN3];
+					SpeedNN3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN3];
+				}
+				else {
+					SpeedN3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
+					SpeedNN3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
+				}
+				positionyn3 = positionyP + 0.5 * dy;
+				positionyN3 = positionyP + 0.5 * dy;
+				positionyNN3 = positionyP + dy; // этого узла не существует !
+			}
+
+			if ((!bS3) && (iS3 > -1)) {
+				SpeedS3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS3];
+				//center_cord3D(iS3,nvtx,pa,pointP,S_SIDE);
+				pointP = center_coord_loc[iS3];
+				positionyS3 = pointP.y;
+				positionys3 = positionyP - 0.5 * dy;
+
+				integer iSS3 = neighbors_for_the_internal_node[S_SIDE][0][iS3];
+				if (iSS3 < 0) {
+					iSS3 = neighbors_for_the_internal_node[S_SIDE][1][iS3];
+				}
+				if (iSS3 < 0) {
+					iSS3 = neighbors_for_the_internal_node[S_SIDE][2][iS3];
+				}
+				if (iSS3 < 0) {
+					iSS3 = neighbors_for_the_internal_node[S_SIDE][3][iS3];
+				}
+
+				if ((iSS3 >= 0) && (iSS3 < maxelm)) {
+					// внутренний узел
+					SpeedSS3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS3];
+					//center_cord3D(iSS3,nvtx,pa,pointP,SS_SIDE);
+					pointP = center_coord_loc[iSS3];
+					positionySS3 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iSS3 >= maxelm) && (iSS3 < maxelm + maxbound)) {
+						SpeedSS3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS3];
+					}
+					else {
+						SpeedSS3 = SpeedS3;
+					}
+					//volume3D(iS3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iS3];
+
+					positionySS3 = positionyS3 - 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iS3 > -1) {
+					SpeedS3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS3]; // ATTANTION !!!!
+					SpeedSS3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS3]; // нулевая скорость внутри твёрдого тела.
+				}
+				else {
+					SpeedS3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // ATTANTION !!!!
+					SpeedSS3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // нулевая скорость внутри твёрдого тела.
+				}
+				positionys3 = positionyP - 0.5 * dy;
+				positionyS3 = positionyP - 0.5 * dy;
+				positionySS3 = positionyP - dy; // этого узла не существует !
+			}
+
+			// Z - direction
+			if ((!bT3) && (iT3 > -1)) {
+				SpeedT3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT3];
+				//center_cord3D(iT3,nvtx,pa,pointP,T_SIDE);
+				pointP = center_coord_loc[iT3];
+				positionzT3 = pointP.z;
+				positionzt3 = positionzP + 0.5 * dz;
+
+				integer iTT3 = neighbors_for_the_internal_node[T_SIDE][0][iT3];
+				if (iTT3 < 0) {
+					iTT3 = neighbors_for_the_internal_node[T_SIDE][1][iT3];
+				}
+				if (iTT3 < 0) {
+					iTT3 = neighbors_for_the_internal_node[T_SIDE][2][iT3];
+				}
+				if (iTT3 < 0) {
+					iTT3 = neighbors_for_the_internal_node[T_SIDE][3][iT3];
+				}
+
+				if ((iTT3 >= 0) && (iTT3 < maxelm)) {
+					// внутренний узел
+					SpeedTT3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT3];
+					//center_cord3D(iTT3,nvtx,pa,pointP,TT_SIDE);
+					pointP = center_coord_loc[iTT3];
+					positionzTT3 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iTT3 >= maxelm) && (iTT3 < maxelm + maxbound)) {
+						SpeedTT3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT3];
+					}
+					else {
+						SpeedTT3 = SpeedT3;
+					}
+					//volume3D(iT3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iT3];
+
+					positionzTT3 = positionzT3 + 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iT3 > -1) {
+					SpeedT3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT3];
+					SpeedTT3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT3]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedT3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT];
+					SpeedTT3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT]; // скорость внутри твёрдого тела
+				}
+				positionzt3 = positionzP + 0.5 * dz;
+				positionzT3 = positionzP + 0.5 * dz;
+				positionzTT3 = positionzP + dz; // этого узла не существует !
+			}
+
+			if ((!bB3) && (iB3 > -1)) {
+				SpeedB3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB3];
+				//center_cord3D(iB3,nvtx,pa,pointP,B_SIDE);
+				pointP = center_coord_loc[iB3];
+				positionzB3 = pointP.z;
+				positionzb3 = positionzP - 0.5 * dz;
+
+				integer iBB3 = neighbors_for_the_internal_node[B_SIDE][0][iB3];
+				if (iBB3 < 0) {
+					iBB3 = neighbors_for_the_internal_node[B_SIDE][1][iB3];
+				}
+				if (iBB3 < 0) {
+					iBB3 = neighbors_for_the_internal_node[B_SIDE][2][iB3];
+				}
+				if (iBB3 < 0) {
+					iBB3 = neighbors_for_the_internal_node[B_SIDE][3][iB3];
+				}
+
+				if ((iBB3 >= 0) && (iBB3 < maxelm)) {
+					// внутренний узел
+					SpeedBB3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB3];
+					//center_cord3D(iBB3,nvtx,pa,pointP,BB_SIDE);
+					pointP = center_coord_loc[iBB3];
+					positionzBB3 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iBB3 >= maxelm) && (iBB3 < maxelm + maxbound)) {
+						SpeedBB3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB3];
+					}
+					else {
+						SpeedBB3 = SpeedB3;
+					}
+					//volume3D(iB3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iB3];
+
+					positionzBB3 = positionzB3 - 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iB3 > -1) {
+					SpeedB3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB3];
+					SpeedBB3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB3]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedB3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB];
+					SpeedBB3 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB]; // скорость внутри твёрдого тела
+				}
+				positionzb3 = positionzP - 0.5 * dz;
+				positionzB3 = positionzP - 0.5 * dz;
+				positionzBB3 = positionzP - dz; // этого узла не существует !
+			}
+
+			// X - direction
+			if ((!bE4) && (iE4 > -1)) {
+				SpeedE4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE4];
+				//center_cord3D(iE4,nvtx,pa,pointP,E_SIDE);
+				pointP = center_coord_loc[iE4];
+
+				positionxE4 = pointP.x;
+				positionxe4 = positionxP + 0.5 * dx;
+
+				integer iEE4 = neighbors_for_the_internal_node[E_SIDE][0][iE4];
+				if (iEE4 < 0) {
+					iEE4 = neighbors_for_the_internal_node[E_SIDE][1][iE4];
+				}
+				if (iEE4 < 0) {
+					iEE4 = neighbors_for_the_internal_node[E_SIDE][2][iE4];
+				}
+				if (iEE4 < 0) {
+					iEE4 = neighbors_for_the_internal_node[E_SIDE][3][iE4];
+				}
+
+				if ((iEE4 >= 0) && (iEE4 < maxelm)) {
+					// внутренний узел
+					SpeedEE4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE4];
+					//center_cord3D(iEE4,nvtx,pa,pointP,EE_SIDE);
+					pointP = center_coord_loc[iEE4];
+					positionxEE4 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iEE4 >= maxelm) && (iEE4 < maxelm + maxbound)) {
+						SpeedEE4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE4];
+					}
+					else {
+						SpeedEE4 = SpeedE4;
+					}
+					//volume3D(iE4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iE4];
+
+					positionxEE4 = positionxE4 + 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iE4 > -1) {
+					SpeedE4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE4];
+					SpeedEE4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE4];
+				}
+				else {
+					SpeedE4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
+					SpeedEE4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iE];
+				}
+				positionxe4 = positionxP + 0.5 * dx;
+				positionxE4 = positionxP + 0.5 * dx;
+				positionxEE4 = positionxP + dx; // этого узла не существует !
+			}
+
+			if ((!bW4) && (iW4 > -1)) {
+				//center_cord3D(iW4,nvtx,pa,pointP,W_SIDE);
+				pointP = center_coord_loc[iW4];
+				positionxW4 = pointP.x;
+				positionxw4 = positionxP - 0.5 * dx;
+				SpeedW4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW4];
+
+				integer iWW4 = neighbors_for_the_internal_node[W_SIDE][0][iW4];
+				if (iWW4 < 0) {
+					iWW4 = neighbors_for_the_internal_node[W_SIDE][1][iW4];
+				}
+				if (iWW4 < 0) {
+					iWW4 = neighbors_for_the_internal_node[W_SIDE][2][iW4];
+				}
+				if (iWW4 < 0) {
+					iWW4 = neighbors_for_the_internal_node[W_SIDE][3][iW4];
+				}
+
+				if ((iWW4 >= 0) && (iWW4 < maxelm)) {
+					// внутренний узел
+					SpeedWW4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW4];
+					//center_cord3D(iWW4,nvtx,pa,pointP,WW_SIDE);
+					pointP = center_coord_loc[iWW4];
+					positionxWW4 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iWW4 >= maxelm) && (iWW4 < maxelm + maxbound)) {
+						SpeedWW4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW4];
+					}
+					else {
+						SpeedWW4 = SpeedW4;
+						//std::cout << "iWW4 =" << iWW4 << " maxelm=" << maxelm << " maxbound=" << maxbound << std::endl;
+						//getchar();
+					}
+					//volume3D(iW4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iW4];
+
+					positionxWW4 = positionxW4 - 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iW4 > -1) {
+					SpeedW4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW4]; // Attantion !! Debug
+					SpeedWW4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW4];
+				}
+				else {
+					SpeedW4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW]; // Attantion !! Debug
+					SpeedWW4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW];
+				}
+				//printf("SpeedW4==%e\n",SpeedW4); getchar();
+				positionxw4 = positionxP - 0.5 * dx;
+				positionxW4 = positionxP - 0.5 * dx;
+				positionxWW4 = positionxP - dx; // этого узла не существует !
+			}
+
+			// Y - direction
+			if ((!bN4) && (iN4 > -1)) {
+				SpeedN4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN4];
+				//center_cord3D(iN4,nvtx,pa,pointP,N_SIDE);
+				pointP = center_coord_loc[iN4];
+				positionyN4 = pointP.y;
+				positionyn4 = positionxP + 0.5 * dy;
+
+				integer iNN4 = neighbors_for_the_internal_node[N_SIDE][0][iN4];
+				if (iNN4 < 0) {
+					iNN4 = neighbors_for_the_internal_node[N_SIDE][1][iN4];
+				}
+				if (iNN4 < 0) {
+					iNN4 = neighbors_for_the_internal_node[N_SIDE][2][iN4];
+				}
+				if (iNN4 < 0) {
+					iNN4 = neighbors_for_the_internal_node[N_SIDE][3][iN4];
+				}
+
+				if ((iNN4 >= 0) && (iNN4 < maxelm)) {
+					// внутренний узел
+					SpeedNN4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN4];
+					//center_cord3D(iNN4,nvtx,pa,pointP,NN_SIDE);
+					pointP = center_coord_loc[iNN4];
+					positionyNN4 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iNN4 >= maxelm) && (iNN4 < maxelm + maxbound)) {
+						SpeedNN4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN4];
+					}
+					else {
+						SpeedNN4 = SpeedN4;
+					}
+					//volume3D(iN4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iN4];
+
+					positionyNN4 = positionyN4 + 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iN4 > -1) {
+					SpeedN4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN4];
+					SpeedNN4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN4];
+				}
+				else {
+					SpeedN4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
+					SpeedNN4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
+				}
+				positionyn4 = positionyP + 0.5 * dy;
+				positionyN4 = positionyP + 0.5 * dy;
+				positionyNN4 = positionyP + dy; // этого узла не существует !
+			}
+
+			if ((!bS4) && (iS4 > -1)) {
+				SpeedS4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS4];
+				//center_cord3D(iS4,nvtx,pa,pointP,S_SIDE);
+				pointP = center_coord_loc[iS4];
+				positionyS4 = pointP.y;
+				positionys4 = positionyP - 0.5 * dy;
+
+				integer iSS4 = neighbors_for_the_internal_node[S_SIDE][0][iS4];
+				if (iSS4 < 0) {
+					iSS4 = neighbors_for_the_internal_node[S_SIDE][1][iS4];
+				}
+				if (iSS4 < 0) {
+					iSS4 = neighbors_for_the_internal_node[S_SIDE][2][iS4];
+				}
+				if (iSS4 < 0) {
+					iSS4 = neighbors_for_the_internal_node[S_SIDE][3][iS4];
+				}
+
+				if ((iSS4 >= 0) && (iSS4 < maxelm)) {
+					// внутренний узел
+					SpeedSS4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS4];
+					//center_cord3D(iSS4,nvtx,pa,pointP,SS_SIDE);
+					pointP = center_coord_loc[iSS4];
+					positionySS4 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iSS4 >= maxelm) && (iSS4 < maxelm + maxbound)) {
+						SpeedSS4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS4];
+					}
+					else {
+						SpeedSS4 = SpeedS4;
+					}
+					//volume3D(iS4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iS4];
+
+					positionySS4 = positionyS4 - 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iS4 > -1) {
+					SpeedS4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS4]; // ATTANTION !!!!
+					SpeedSS4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS4]; // нулевая скорость внутри твёрдого тела.
+				}
+				else {
+					SpeedS4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // ATTANTION !!!!
+					SpeedSS4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iS]; // нулевая скорость внутри твёрдого тела.
+				}
+				positionys4 = positionyP - 0.5 * dy;
+				positionyS4 = positionyP - 0.5 * dy;
+				positionySS4 = positionyP - dy; // этого узла не существует !
+			}
+
+			// Z - direction
+			if ((!bT4) && (iT4 > -1)) {
+				SpeedT4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT4];
+				//center_cord3D(iT4,nvtx,pa,pointP,T_SIDE);
+				pointP = center_coord_loc[iT4];
+				positionzT4 = pointP.z;
+				positionzt4 = positionzP + 0.5 * dz;
+
+				integer iTT4 = neighbors_for_the_internal_node[T_SIDE][0][iT4];
+				if (iTT4 < 0) {
+					iTT4 = neighbors_for_the_internal_node[T_SIDE][1][iT4];
+				}
+				if (iTT4 < 0) {
+					iTT4 = neighbors_for_the_internal_node[T_SIDE][2][iT4];
+				}
+				if (iTT4 < 0) {
+					iTT4 = neighbors_for_the_internal_node[T_SIDE][3][iT4];
+				}
+
+				if ((iTT4 >= 0) && (iTT4 < maxelm)) {
+					// внутренний узел
+					SpeedTT4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT4];
+					//center_cord3D(iTT4,nvtx,pa,pointP,TT_SIDE);
+					pointP = center_coord_loc[iTT4];
+					positionzTT4 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iTT4 >= maxelm) && (iTT4 < maxelm + maxbound)) {
+						SpeedTT4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT4];
+					}
+					else {
+						SpeedTT4 = SpeedT4;
+					}
+					//volume3D(iT4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iT4];
+
+					positionzTT4 = positionzT4 + 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iT4 > -1) {
+					SpeedT4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT4];
+					SpeedTT4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT4]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedT4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT];
+					SpeedTT4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iT]; // скорость внутри твёрдого тела
+				}
+				positionzt4 = positionzP + 0.5 * dz;
+				positionzT4 = positionzP + 0.5 * dz;
+				positionzTT4 = positionzP + dz; // этого узла не существует !
+			}
+
+			if ((!bB4) && (iB4 > -1)) {
+				SpeedB4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB4];
+				//center_cord3D(iB4,nvtx,pa,pointP,B_SIDE);
+				pointP = center_coord_loc[iB4];
+				positionzB4 = pointP.z;
+				positionzb4 = positionzP - 0.5 * dz;
+
+				integer iBB4 = neighbors_for_the_internal_node[B_SIDE][0][iB4];
+				if (iBB4 < 0) {
+					iBB4 = neighbors_for_the_internal_node[B_SIDE][1][iB4];
+				}
+				if (iBB4 < 0) {
+					iBB4 = neighbors_for_the_internal_node[B_SIDE][2][iB4];
+				}
+				if (iBB4 < 0) {
+					iBB4 = neighbors_for_the_internal_node[B_SIDE][3][iB4];
+				}
+
+				if ((iBB4 >= 0) && (iBB4 < maxelm)) {
+					// внутренний узел
+					SpeedBB4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB4];
+					//center_cord3D(iBB4,nvtx,pa,pointP,BB_SIDE);
+					pointP = center_coord_loc[iBB4];
+					positionzBB4 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iBB4 >= maxelm) && (iBB4 < maxelm + maxbound)) {
+						SpeedBB4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB4];
+					}
+					else {
+						SpeedBB4 = SpeedB4;
+					}
+					//volume3D(iB4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iB4];
+
+					positionzBB4 = positionzB4 - 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iB4 > -1) {
+					SpeedB4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB4];
+					SpeedBB4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB4]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedB4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB];
+					SpeedBB4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iB]; // скорость внутри твёрдого тела
+				}
+				positionzb4 = positionzP - 0.5 * dz;
+				positionzB4 = positionzP - 0.5 * dz;
+				positionzBB4 = positionzP - dz; // этого узла не существует !
+			}
+
+		}
+
 
 
 		if ((ishconvection >= QUICK) && (ishconvection <= FROMM)) {
@@ -2426,6 +4096,42 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			// Z - direction
 			Speedt = cell_face_value_global(ishconvection, (Ft), SpeedB, SpeedP, SpeedT, SpeedTT);
 			Speedb = cell_face_value_global(ishconvection, (Fb), SpeedBB, SpeedB, SpeedP, SpeedT);
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// X - direction
+				Speede2 = cell_face_value_global(ishconvection, (Fe2), SpeedW2, SpeedP, SpeedE2, SpeedEE2);
+				Speedw2 = cell_face_value_global(ishconvection, (Fw2), SpeedWW2, SpeedW2, SpeedP, SpeedE2);
+				// Y - direction
+				Speedn2 = cell_face_value_global(ishconvection, (Fn2), SpeedS2, SpeedP, SpeedN2, SpeedNN2);
+				Speeds2 = cell_face_value_global(ishconvection, (Fs2), SpeedSS2, SpeedS2, SpeedP, SpeedN2);
+				// Z - direction
+				Speedt2 = cell_face_value_global(ishconvection, (Ft2), SpeedB2, SpeedP, SpeedT2, SpeedTT2);
+				Speedb2 = cell_face_value_global(ishconvection, (Fb2), SpeedBB2, SpeedB2, SpeedP, SpeedT2);
+
+
+				// X - direction
+				Speede3 = cell_face_value_global(ishconvection, (Fe3), SpeedW3, SpeedP, SpeedE3, SpeedEE3);
+				Speedw3 = cell_face_value_global(ishconvection, (Fw3), SpeedWW3, SpeedW3, SpeedP, SpeedE3);
+				// Y - direction
+				Speedn3 = cell_face_value_global(ishconvection, (Fn3), SpeedS3, SpeedP, SpeedN3, SpeedNN3);
+				Speeds3 = cell_face_value_global(ishconvection, (Fs3), SpeedSS3, SpeedS3, SpeedP, SpeedN3);
+				// Z - direction
+				Speedt3 = cell_face_value_global(ishconvection, (Ft3), SpeedB3, SpeedP, SpeedT3, SpeedTT3);
+				Speedb3 = cell_face_value_global(ishconvection, (Fb3), SpeedBB3, SpeedB3, SpeedP, SpeedT3);
+
+
+				// X - direction
+				Speede4 = cell_face_value_global(ishconvection, (Fe4), SpeedW4, SpeedP, SpeedE4, SpeedEE4);
+				Speedw4 = cell_face_value_global(ishconvection, (Fw4), SpeedWW4, SpeedW4, SpeedP, SpeedE4);
+				// Y - direction
+				Speedn4 = cell_face_value_global(ishconvection, (Fn4), SpeedS4, SpeedP, SpeedN4, SpeedNN4);
+				Speeds4 = cell_face_value_global(ishconvection, (Fs4), SpeedSS4, SpeedS4, SpeedP, SpeedN4);
+				// Z - direction
+				Speedt4 = cell_face_value_global(ishconvection, (Ft4), SpeedB4, SpeedP, SpeedT4, SpeedTT4);
+				Speedb4 = cell_face_value_global(ishconvection, (Fb4), SpeedBB4, SpeedB4, SpeedP, SpeedT4);
+
+			}
 
 		}
 
@@ -2505,6 +4211,44 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 				// Z - direction
 				Speedt = workQUICK(dz, 2.0*(positionzT - positionzt), positionzB, positionzP, positionzT, positionzTT, SpeedB, SpeedP, SpeedT, SpeedTT, (Ft));
 				Speedb = workQUICK(2.0*(positionzb - positionzB), dz, positionzBB, positionzB, positionzP, positionzT, SpeedBB, SpeedB, SpeedP, SpeedT, (Fb));
+
+				if (b_on_adaptive_local_refinement_mesh) {
+
+					// X - direction
+					Speede2 = workQUICK(dx, 2.0 * (positionxE2 - positionxe2), positionxW2, positionxP, positionxE2, positionxEE2, SpeedW2, SpeedP, SpeedE2, SpeedEE2, (Fe2));
+					Speedw2 = workQUICK(2.0 * (positionxw2 - positionxW2), dx, positionxWW2, positionxW2, positionxP, positionxE2, SpeedWW2, SpeedW2, SpeedP, SpeedE2, (Fw2));
+					// Y - direction
+					Speedn2 = workQUICK(dy, 2.0 * (positionyN2 - positionyn2), positionyS2, positionyP, positionyN2, positionyNN2, SpeedS2, SpeedP, SpeedN2, SpeedNN2, (Fn2));
+					Speeds2 = workQUICK(2.0 * (positionys2 - positionyS2), dy, positionySS2, positionyS2, positionyP, positionyN2, SpeedSS2, SpeedS2, SpeedP, SpeedN2, (Fs2));
+					// Z - direction
+					Speedt2 = workQUICK(dz, 2.0 * (positionzT2 - positionzt2), positionzB2, positionzP, positionzT2, positionzTT2, SpeedB2, SpeedP, SpeedT2, SpeedTT2, (Ft2));
+					Speedb2 = workQUICK(2.0 * (positionzb2 - positionzB2), dz, positionzBB2, positionzB2, positionzP, positionzT2, SpeedBB2, SpeedB2, SpeedP, SpeedT2, (Fb2));
+
+
+					// X - direction
+					Speede3 = workQUICK(dx, 2.0 * (positionxE3 - positionxe3), positionxW3, positionxP, positionxE3, positionxEE3, SpeedW3, SpeedP, SpeedE3, SpeedEE3, (Fe3));
+					Speedw3 = workQUICK(2.0 * (positionxw3 - positionxW3), dx, positionxWW3, positionxW3, positionxP, positionxE3, SpeedWW3, SpeedW3, SpeedP, SpeedE3, (Fw3));
+					// Y - direction
+					Speedn3 = workQUICK(dy, 2.0 * (positionyN3 - positionyn3), positionyS3, positionyP, positionyN3, positionyNN3, SpeedS3, SpeedP, SpeedN3, SpeedNN3, (Fn3));
+					Speeds3 = workQUICK(2.0 * (positionys3 - positionyS3), dy, positionySS3, positionyS3, positionyP, positionyN3, SpeedSS3, SpeedS3, SpeedP, SpeedN3, (Fs3));
+					// Z - direction
+					Speedt3 = workQUICK(dz, 2.0 * (positionzT3 - positionzt3), positionzB3, positionzP, positionzT3, positionzTT3, SpeedB3, SpeedP, SpeedT3, SpeedTT3, (Ft3));
+					Speedb3 = workQUICK(2.0 * (positionzb3 - positionzB3), dz, positionzBB3, positionzB3, positionzP, positionzT3, SpeedBB3, SpeedB3, SpeedP, SpeedT3, (Fb3));
+
+
+					// X - direction
+					Speede4 = workQUICK(dx, 2.0 * (positionxE4 - positionxe4), positionxW4, positionxP, positionxE4, positionxEE4, SpeedW4, SpeedP, SpeedE4, SpeedEE4, (Fe4));
+					Speedw4 = workQUICK(2.0 * (positionxw4 - positionxW4), dx, positionxWW4, positionxW4, positionxP, positionxE4, SpeedWW4, SpeedW4, SpeedP, SpeedE4, (Fw4));
+					// Y - direction
+					Speedn4 = workQUICK(dy, 2.0 * (positionyN4 - positionyn4), positionyS4, positionyP, positionyN4, positionyNN4, SpeedS4, SpeedP, SpeedN4, SpeedNN4, (Fn4));
+					Speeds4 = workQUICK(2.0 * (positionys4 - positionyS4), dy, positionySS4, positionyS4, positionyP, positionyN4, SpeedSS4, SpeedS4, SpeedP, SpeedN4, (Fs4));
+					// Z - direction
+					Speedt4 = workQUICK(dz, 2.0 * (positionzT4 - positionzt4), positionzB4, positionzP, positionzT4, positionzTT4, SpeedB4, SpeedP, SpeedT4, SpeedTT4, (Ft4));
+					Speedb4 = workQUICK(2.0 * (positionzb4 - positionzB4), dz, positionzBB4, positionzB4, positionzP, positionzT4, SpeedBB4, SpeedB4, SpeedP, SpeedT4, (Fb4));
+
+				}
+
+
 			}
 
 			if ((ishconvection > UNEVENQUICK) && (ishconvection <= UNEVEN_CUBISTA)) {
@@ -2525,6 +4269,44 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 				// debug первая итерация особая.
 				//printf("%f, %f, %f, %f, %f, %f\n",Speede,Speedw,Speedn,Speeds,Speedt,Speedb);
 				//getchar();
+
+
+				if (b_on_adaptive_local_refinement_mesh) {
+
+					// X - direction
+					Speede2 = workKN_VOLKOV(positionxW2, positionxP, positionxE2, positionxEE2, SpeedW2, SpeedP, SpeedE2, SpeedEE2, (Fe2), ishconvection);
+					Speedw2 = workKN_VOLKOV(positionxWW2, positionxW2, positionxP, positionxE2, SpeedWW2, SpeedW2, SpeedP, SpeedE2, (Fw2), ishconvection);
+					// Y - direction
+					Speedn2 = workKN_VOLKOV(positionyS2, positionyP, positionyN2, positionyNN2, SpeedS2, SpeedP, SpeedN2, SpeedNN2, (Fn2), ishconvection);
+					Speeds2 = workKN_VOLKOV(positionySS2, positionyS2, positionyP, positionyN2, SpeedSS2, SpeedS2, SpeedP, SpeedN2, (Fs2), ishconvection);
+					// Z - direction
+					Speedt2 = workKN_VOLKOV(positionzB2, positionzP, positionzT2, positionzTT2, SpeedB2, SpeedP, SpeedT2, SpeedTT2, (Ft2), ishconvection);
+					Speedb2 = workKN_VOLKOV(positionzBB2, positionzB2, positionzP, positionzT2, SpeedBB2, SpeedB2, SpeedP, SpeedT2, (Fb2), ishconvection);
+
+
+					// X - direction
+					Speede3 = workKN_VOLKOV(positionxW3, positionxP, positionxE3, positionxEE3, SpeedW3, SpeedP, SpeedE3, SpeedEE3, (Fe3), ishconvection);
+					Speedw3 = workKN_VOLKOV(positionxWW3, positionxW3, positionxP, positionxE3, SpeedWW3, SpeedW3, SpeedP, SpeedE3, (Fw3), ishconvection);
+					// Y - direction
+					Speedn3 = workKN_VOLKOV(positionyS3, positionyP, positionyN3, positionyNN3, SpeedS3, SpeedP, SpeedN3, SpeedNN3, (Fn3), ishconvection);
+					Speeds3 = workKN_VOLKOV(positionySS3, positionyS3, positionyP, positionyN3, SpeedSS3, SpeedS3, SpeedP, SpeedN3, (Fs3), ishconvection);
+					// Z - direction
+					Speedt3 = workKN_VOLKOV(positionzB3, positionzP, positionzT3, positionzTT3, SpeedB3, SpeedP, SpeedT3, SpeedTT3, (Ft3), ishconvection);
+					Speedb3 = workKN_VOLKOV(positionzBB3, positionzB3, positionzP, positionzT3, SpeedBB3, SpeedB3, SpeedP, SpeedT3, (Fb3), ishconvection);
+
+
+					// X - direction
+					Speede4 = workKN_VOLKOV(positionxW4, positionxP, positionxE4, positionxEE4, SpeedW4, SpeedP, SpeedE4, SpeedEE4, (Fe4), ishconvection);
+					Speedw4 = workKN_VOLKOV(positionxWW4, positionxW4, positionxP, positionxE4, SpeedWW4, SpeedW4, SpeedP, SpeedE4, (Fw4), ishconvection);
+					// Y - direction
+					Speedn4 = workKN_VOLKOV(positionyS4, positionyP, positionyN4, positionyNN4, SpeedS4, SpeedP, SpeedN4, SpeedNN4, (Fn4), ishconvection);
+					Speeds4 = workKN_VOLKOV(positionySS4, positionyS4, positionyP, positionyN4, SpeedSS4, SpeedS4, SpeedP, SpeedN4, (Fs4), ishconvection);
+					// Z - direction
+					Speedt4 = workKN_VOLKOV(positionzB4, positionzP, positionzT4, positionzTT4, SpeedB4, SpeedP, SpeedT4, SpeedTT4, (Ft4), ishconvection);
+					Speedb4 = workKN_VOLKOV(positionzBB4, positionzB4, positionzP, positionzT4, SpeedBB4, SpeedB4, SpeedP, SpeedT4, (Fb4), ishconvection);
+
+				}
+
 			}
 
 		} // endif (ishconvection >= UNEVENQUICK)
@@ -2579,6 +4361,103 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			sumanb += Dt + fmax(+(Ft), 0.0);
 			sumanb += Db + fmax(-(Fb), 0.0);
 			*/
+
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
+			 // Нужно просто UDS.
+			 // так рекомендуют в интернетах.
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
+
+
+				// 08.05.2017.
+				// Моя наработка:
+				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += De2 + fmax(+(Fe2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dw2 + fmax(-(Fw2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dn2 + fmax(+(Fn2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Ds2 + fmax(-(Fs2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dt2 + fmax(+(Ft2), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Db2 + fmax(-(Fb2), 0.0);
+
+				/*
+				sumanb += De2 + fmax(+(Fe2), 0.0);
+				sumanb += Dw2 + fmax(-(Fw2), 0.0);
+				sumanb += Dn2 + fmax(+(Fn2), 0.0);
+				sumanb += Ds2 + fmax(-(Fs2), 0.0);
+				sumanb += Dt2 + fmax(+(Ft2), 0.0);
+				sumanb += Db2 + fmax(-(Fb2), 0.0);
+				*/
+
+
+				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
+		   // Нужно просто UDS.
+		   // так рекомендуют в интернетах.
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
+
+
+				// 08.05.2017.
+				// Моя наработка:
+				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += De3 + fmax(+(Fe3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dw3 + fmax(-(Fw3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dn3 + fmax(+(Fn3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Ds3 + fmax(-(Fs3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dt3 + fmax(+(Ft3), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Db3 + fmax(-(Fb3), 0.0);
+
+				/*
+				sumanb += De3 + fmax(+(Fe3), 0.0);
+				sumanb += Dw3 + fmax(-(Fw3), 0.0);
+				sumanb += Dn3 + fmax(+(Fn3), 0.0);
+				sumanb += Ds3 + fmax(-(Fs3), 0.0);
+				sumanb += Dt3 + fmax(+(Ft3), 0.0);
+				sumanb += Db3 + fmax(-(Fb3), 0.0);
+				*/
+
+
+				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
+		   // Нужно просто UDS.
+		   // так рекомендуют в интернетах.
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
+
+
+				// 08.05.2017.
+				// Моя наработка:
+				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += De4 + fmax(+(Fe4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dw4 + fmax(-(Fw4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dn4 + fmax(+(Fn4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Ds4 + fmax(-(Fs4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Dt4 + fmax(+(Ft4), 0.0);
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += Db4 + fmax(-(Fb4), 0.0);
+
+				/*
+				sumanb += De4 + fmax(+(Fe4), 0.0);
+				sumanb += Dw4 + fmax(-(Fw4), 0.0);
+				sumanb += Dn4 + fmax(+(Fn4), 0.0);
+				sumanb += Ds4 + fmax(-(Fs4), 0.0);
+				sumanb += Dt4 + fmax(+(Ft4), 0.0);
+				sumanb += Db4 + fmax(-(Fb4), 0.0);
+				*/
+
+			}
 		}
 		else {
 
@@ -2693,10 +4572,346 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 				}
 			}
 
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// Вблизи стенки порядок схемы понижается до UDS.
+				if (!bE2) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
+				}
+				else {
+					integer inumber = iE2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 = De2 + fabs(Fe2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 = De2 + fabs(Fe2);
+					}
+				}
+
+				if (!bW2) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
+				}
+				else {
+					integer inumber = iW2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 = Dw2 + fabs(Fw2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 = Dw2 + fabs(Fw2);
+					}
+				}
+
+				if (!bN2) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
+				}
+				else {
+					integer inumber = iN2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 = Dn2 + fabs(Fn2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 = Dn2 + fabs(Fn2);
+					}
+				}
+
+				if (!bS2) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
+				}
+				else {
+					integer inumber = iS2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 = Ds2 + fabs(Fs2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 = Ds2 + fabs(Fs2);
+					}
+				}
+
+				if (!bT2) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
+				}
+				else {
+					integer inumber = iT2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 = Dt2 + fabs(Ft2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 = Dt2 + fabs(Ft2);
+					}
+				}
+
+				if (!bB2) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
+				}
+				else {
+					integer inumber = iB2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2 = Db2 + fabs(Fb2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2 = Db2 + fabs(Fb2);
+					}
+				}
+
+
+				// Вблизи стенки порядок схемы понижается до UDS.
+				if (!bE3) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
+				}
+				else {
+					integer inumber = iE3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 = De3 + fabs(Fe3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 = De3 + fabs(Fe3);
+					}
+				}
+
+				if (!bW3) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
+				}
+				else {
+					integer inumber = iW3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 = Dw3 + fabs(Fw3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 = Dw3 + fabs(Fw3);
+					}
+				}
+
+				if (!bN3) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
+				}
+				else {
+					integer inumber = iN3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 = Dn3 + fabs(Fn3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 = Dn3 + fabs(Fn3);
+					}
+				}
+
+				if (!bS3) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
+				}
+				else {
+					integer inumber = iS3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 = Ds3 + fabs(Fs3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 = Ds3 + fabs(Fs3);
+					}
+				}
+
+				if (!bT3) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
+				}
+				else {
+					integer inumber = iT3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 = Dt3 + fabs(Ft3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 = Dt3 + fabs(Ft3);
+					}
+				}
+
+				if (!bB3) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
+				}
+				else {
+					integer inumber = iB3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3 = Db3 + fabs(Fb3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3 = Db3 + fabs(Fb3);
+					}
+				}
+
+
+				// Вблизи стенки порядок схемы понижается до UDS.
+				if (!bE4) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
+				}
+				else {
+					integer inumber = iE4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 = De4 + fabs(Fe4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 = De4 + fabs(Fe4);
+					}
+				}
+
+				if (!bW4) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
+				}
+				else {
+					integer inumber = iW4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 = Dw4 + fabs(Fw4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 = Dw4 + fabs(Fw4);
+					}
+				}
+
+				if (!bN4) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
+				}
+				else {
+					integer inumber = iN4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 = Dn4 + fabs(Fn4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 = Dn4 + fabs(Fn4);
+					}
+				}
+
+				if (!bS4) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
+				}
+				else {
+					integer inumber = iS4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 = Ds4 + fabs(Fs4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 = Ds4 + fabs(Fs4);
+					}
+				}
+
+				if (!bT4) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
+				}
+				else {
+					integer inumber = iT4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 = Dt4 + fabs(Ft4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 = Dt4 + fabs(Ft4);
+					}
+				}
+
+				if (!bB4) {
+					// строго внутренняя.
+					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
+				}
+				else {
+					integer inumber = iB4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = Db4 + fabs(Fb4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = Db4 + fabs(Fb4);
+					}
+				}
+
+
+
+			}
+
+
 			// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
 			sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap = sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab;
 
 			//sumanb = sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab;
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2;
+
+				//sumanb += sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at2 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab2;
+
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3;
+
+				//sumanb += sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at3 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab3;
+
+				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4;
+
+				//sumanb += sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at4 + sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4;
+
+
+			}
 
 		}
 
@@ -2722,6 +4937,46 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			// Z - direction
 			attrs += -fmax((Ft), 0)*(Speedt - SpeedP) + fmax(-(Ft), 0)*(Speedt - SpeedT);
 			attrs += -fmax(-(Fb), 0)*(Speedb - SpeedP) + fmax((Fb), 0)*(Speedb - SpeedB);
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// Вклад в правую часть (метод отложенной коррекции):
+				// X - direction
+				attrs += -fmax((Fe2), 0) * (Speede2 - SpeedP) + fmax(-(Fe2), 0) * (Speede2 - SpeedE2);
+				attrs += -fmax(-(Fw2), 0) * (Speedw2 - SpeedP) + fmax((Fw2), 0) * (Speedw2 - SpeedW2);
+				// Y - direction
+				attrs += -fmax((Fn2), 0) * (Speedn2 - SpeedP) + fmax(-(Fn2), 0) * (Speedn2 - SpeedN2);
+				attrs += -fmax(-(Fs2), 0) * (Speeds2 - SpeedP) + fmax((Fs2), 0) * (Speeds2 - SpeedS2);
+				// Z - direction
+				attrs += -fmax((Ft2), 0) * (Speedt2 - SpeedP) + fmax(-(Ft2), 0) * (Speedt2 - SpeedT2);
+				attrs += -fmax(-(Fb2), 0) * (Speedb2 - SpeedP) + fmax((Fb2), 0) * (Speedb2 - SpeedB2);
+
+
+				// Вклад в правую часть (метод отложенной коррекции):
+				// X - direction
+				attrs += -fmax((Fe3), 0) * (Speede3 - SpeedP) + fmax(-(Fe3), 0) * (Speede3 - SpeedE3);
+				attrs += -fmax(-(Fw3), 0) * (Speedw3 - SpeedP) + fmax((Fw3), 0) * (Speedw3 - SpeedW3);
+				// Y - direction
+				attrs += -fmax((Fn3), 0) * (Speedn3 - SpeedP) + fmax(-(Fn3), 0) * (Speedn3 - SpeedN3);
+				attrs += -fmax(-(Fs3), 0) * (Speeds3 - SpeedP) + fmax((Fs3), 0) * (Speeds3 - SpeedS3);
+				// Z - direction
+				attrs += -fmax((Ft3), 0) * (Speedt3 - SpeedP) + fmax(-(Ft3), 0) * (Speedt3 - SpeedT3);
+				attrs += -fmax(-(Fb3), 0) * (Speedb3 - SpeedP) + fmax((Fb3), 0) * (Speedb3 - SpeedB3);
+
+
+				// Вклад в правую часть (метод отложенной коррекции):
+				// X - direction
+				attrs += -fmax((Fe4), 0) * (Speede4 - SpeedP) + fmax(-(Fe4), 0) * (Speede4 - SpeedE4);
+				attrs += -fmax(-(Fw4), 0) * (Speedw4 - SpeedP) + fmax((Fw4), 0) * (Speedw4 - SpeedW4);
+				// Y - direction
+				attrs += -fmax((Fn4), 0) * (Speedn4 - SpeedP) + fmax(-(Fn4), 0) * (Speedn4 - SpeedN4);
+				attrs += -fmax(-(Fs4), 0) * (Speeds4 - SpeedP) + fmax((Fs4), 0) * (Speeds4 - SpeedS4);
+				// Z - direction
+				attrs += -fmax((Ft4), 0) * (Speedt4 - SpeedP) + fmax(-(Ft4), 0) * (Speedt4 - SpeedT4);
+				attrs += -fmax(-(Fb4), 0) * (Speedb4 - SpeedP) + fmax((Fb4), 0) * (Speedb4 - SpeedB4);
+
+			}
+
 		}
 		else {
 			// Неверно.
@@ -2745,6 +5000,69 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			if (!bB) {
 				attrs += -fmax(-(Fb), 0)*(Speedb - SpeedP) + fmax((Fb), 0)*(Speedb - SpeedB);
+			}
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				if (!bE2) {
+					attrs += -fmax((Fe2), 0) * (Speede2 - SpeedP) + fmax(-(Fe2), 0) * (Speede2 - SpeedE2);
+				}
+				if (!bW2) {
+					attrs += -fmax(-(Fw2), 0) * (Speedw2 - SpeedP) + fmax((Fw2), 0) * (Speedw2 - SpeedW2);
+				}
+				if (!bN2) {
+					attrs += -fmax((Fn2), 0) * (Speedn2 - SpeedP) + fmax(-(Fn2), 0) * (Speedn2 - SpeedN2);
+				}
+				if (!bS2) {
+					attrs += -fmax(-(Fs2), 0) * (Speeds2 - SpeedP) + fmax((Fs2), 0) * (Speeds2 - SpeedS2);
+				}
+				if (!bT2) {
+					attrs += -fmax((Ft2), 0) * (Speedt2 - SpeedP) + fmax(-(Ft2), 0) * (Speedt2 - SpeedT2);
+				}
+				if (!bB2) {
+					attrs += -fmax(-(Fb2), 0) * (Speedb2 - SpeedP) + fmax((Fb2), 0) * (Speedb2 - SpeedB2);
+				}
+
+
+				if (!bE3) {
+					attrs += -fmax((Fe3), 0) * (Speede3 - SpeedP) + fmax(-(Fe3), 0) * (Speede3 - SpeedE3);
+				}
+				if (!bW3) {
+					attrs += -fmax(-(Fw3), 0) * (Speedw3 - SpeedP) + fmax((Fw3), 0) * (Speedw3 - SpeedW3);
+				}
+				if (!bN3) {
+					attrs += -fmax((Fn3), 0) * (Speedn3 - SpeedP) + fmax(-(Fn3), 0) * (Speedn3 - SpeedN3);
+				}
+				if (!bS3) {
+					attrs += -fmax(-(Fs3), 0) * (Speeds3 - SpeedP) + fmax((Fs3), 0) * (Speeds3 - SpeedS3);
+				}
+				if (!bT3) {
+					attrs += -fmax((Ft3), 0) * (Speedt3 - SpeedP) + fmax(-(Ft3), 0) * (Speedt3 - SpeedT3);
+				}
+				if (!bB3) {
+					attrs += -fmax(-(Fb3), 0) * (Speedb3 - SpeedP) + fmax((Fb3), 0) * (Speedb3 - SpeedB3);
+				}
+
+
+				if (!bE4) {
+					attrs += -fmax((Fe4), 0) * (Speede4 - SpeedP) + fmax(-(Fe4), 0) * (Speede4 - SpeedE4);
+				}
+				if (!bW4) {
+					attrs += -fmax(-(Fw4), 0) * (Speedw4 - SpeedP) + fmax((Fw4), 0) * (Speedw4 - SpeedW4);
+				}
+				if (!bN4) {
+					attrs += -fmax((Fn4), 0) * (Speedn4 - SpeedP) + fmax(-(Fn4), 0) * (Speedn4 - SpeedN4);
+				}
+				if (!bS4) {
+					attrs += -fmax(-(Fs4), 0) * (Speeds4 - SpeedP) + fmax((Fs4), 0) * (Speeds4 - SpeedS4);
+				}
+				if (!bT4) {
+					attrs += -fmax((Ft4), 0) * (Speedt4 - SpeedP) + fmax(-(Ft4), 0) * (Speedt4 - SpeedT4);
+				}
+				if (!bB4) {
+					attrs += -fmax(-(Fb4), 0) * (Speedb4 - SpeedP) + fmax((Fb4), 0) * (Speedb4 - SpeedB4);
+				}
+
 			}
 
 		}
@@ -2986,7 +5304,7 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 	WALL* w,
 	//integer iVar,
 	equation3D_bon* &slb,
-	TOCHKA* pa, integer** nvtx, doublereal** prop_b, doublereal** prop,
+	TOCHKA* pa, int** nvtx, float** prop_b, float** prop,
 	doublereal** potent
 	//, integer iflowregime
 ) {
@@ -3283,15 +5601,15 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	//integer iVar,
 	//bool btimedep,
 	//doublereal tauparam,
-	integer* ptr,
-	integer** nvtx,
+	int* ptr,
+	int** nvtx,
 	doublereal** potent,
 	//doublereal* potent_temper,
 	TOCHKA* pa,
-	doublereal** prop,
-	doublereal** prop_b,
+	float** prop,
+	float** prop_b,
 	integer maxelm,
-	ALICE_PARTITION** neighbors_for_the_internal_node,
+	int*** neighbors_for_the_internal_node,
 	//doublereal* alpha,
 	//doublereal dgx,
 	//doublereal dgy,
@@ -3313,7 +5631,10 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	//doublereal &sumanb,
 	integer *ilevel_alice,
 	doublereal* &distance_to_wall,
-	doublereal* &SInvariantStrainRateTensor
+	doublereal* &SInvariantStrainRateTensor,
+	TOCHKA*& center_coord_loc,
+	TOCHKA*& volume_loc,
+	integer maxbound
 ) {
 
 
@@ -3333,8 +5654,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iE = iE;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iN = iN;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iT = iT;
@@ -3344,19 +5665,20 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iP = iP;
 
 	// 26.09.2016 Добавок для АЛИС сетки.
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
 
 	// NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
-
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+	if (b_on_adaptive_local_refinement_mesh) {
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iE2 = iE2;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iN2 = iN2;
@@ -3449,43 +5771,48 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	// то соответствующая переменная равна true
 	bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
 
-	if (iE >= maxelm) bE = true;
-	if (iN >= maxelm) bN = true;
-	if (iT >= maxelm) bT = true;
-	if (iW >= maxelm) bW = true;
-	if (iS >= maxelm) bS = true;
-	if (iB >= maxelm) bB = true;
+	if ((iE >= maxelm) && (iE < maxelm + maxbound)) bE = true;
+	if ((iN >= maxelm) && (iN < maxelm + maxbound)) bN = true;
+	if ((iT >= maxelm) && (iT < maxelm + maxbound)) bT = true;
+	if ((iW >= maxelm) && (iW < maxelm + maxbound)) bW = true;
+	if ((iS >= maxelm) && (iS < maxelm + maxbound)) bS = true;
+	if ((iB >= maxelm) && (iB < maxelm + maxbound)) bB = true;
 
 	bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
 
-	if (iE2 >= maxelm) bE2 = true;
-	if (iN2 >= maxelm) bN2 = true;
-	if (iT2 >= maxelm) bT2 = true;
-	if (iW2 >= maxelm) bW2 = true;
-	if (iS2 >= maxelm) bS2 = true;
-	if (iB2 >= maxelm) bB2 = true;
+	if ((iE2 >= maxelm) && (iE2 < maxelm + maxbound)) bE2 = true;
+	if ((iN2 >= maxelm) && (iN2 < maxelm + maxbound)) bN2 = true;
+	if ((iT2 >= maxelm) && (iT2 < maxelm + maxbound)) bT2 = true;
+	if ((iW2 >= maxelm) && (iW2 < maxelm + maxbound)) bW2 = true;
+	if ((iS2 >= maxelm) && (iS2 < maxelm + maxbound)) bS2 = true;
+	if ((iB2 >= maxelm) && (iB2 < maxelm + maxbound)) bB2 = true;
 
 	bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
 
-	if (iE3 >= maxelm) bE3 = true;
-	if (iN3 >= maxelm) bN3 = true;
-	if (iT3 >= maxelm) bT3 = true;
-	if (iW3 >= maxelm) bW3 = true;
-	if (iS3 >= maxelm) bS3 = true;
-	if (iB3 >= maxelm) bB3 = true;
+	if ((iE3 >= maxelm) && (iE3 < maxelm + maxbound)) bE3 = true;
+	if ((iN3 >= maxelm) && (iN3 < maxelm + maxbound)) bN3 = true;
+	if ((iT3 >= maxelm) && (iT3 < maxelm + maxbound)) bT3 = true;
+	if ((iW3 >= maxelm) && (iW3 < maxelm + maxbound)) bW3 = true;
+	if ((iS3 >= maxelm) && (iS3 < maxelm + maxbound)) bS3 = true;
+	if ((iB3 >= maxelm) && (iB3 < maxelm + maxbound)) bB3 = true;
 
 	bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
 
-	if (iE4 >= maxelm) bE4 = true;
-	if (iN4 >= maxelm) bN4 = true;
-	if (iT4 >= maxelm) bT4 = true;
-	if (iW4 >= maxelm) bW4 = true;
-	if (iS4 >= maxelm) bS4 = true;
-	if (iB4 >= maxelm) bB4 = true;
+	if ((iE4 >= maxelm) && (iE4 < maxelm + maxbound)) bE4 = true;
+	if ((iN4 >= maxelm) && (iN4 < maxelm + maxbound)) bN4 = true;
+	if ((iT4 >= maxelm) && (iT4 < maxelm + maxbound)) bT4 = true;
+	if ((iW4 >= maxelm) && (iW4 < maxelm + maxbound)) bW4 = true;
+	if ((iS4 >= maxelm) && (iS4 < maxelm + maxbound)) bS4 = true;
+	if ((iB4 >= maxelm) && (iB4 < maxelm + maxbound)) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-	volume3D(iP, nvtx, pa, dx, dy, dz);
+	//volume3D(iP, nvtx, pa, dx, dy, dz);
+
+	TOCHKA pvol = volume_loc[iP];
+	dx = pvol.x;
+	dy = pvol.y;
+	dz = pvol.z;
 
 	//printf("%.2f %.2f\n",dx,dy); // debug GOOD
 	//getchar();
@@ -4553,7 +6880,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iE];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				De = Ge * dy_loc*dz_loc / dxe;
 			}
@@ -4572,7 +6904,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iW];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dw = Gw * dy_loc*dz_loc / dxw;
 			}
@@ -4591,7 +6928,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iN];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dn = Gn * dx_loc*dz_loc / dyn;
 			}
@@ -4609,7 +6951,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iS];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Ds = Gs * dx_loc*dz_loc / dys;
 			}
@@ -4627,7 +6974,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iT];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dt = Gt * dx_loc*dy_loc / dzt;
 			}
@@ -4647,7 +6999,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iB];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Db = Gb * dx_loc*dy_loc / dzb;
 			}
@@ -4670,7 +7027,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iE2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				De2 = Ge2 * dy_loc*dz_loc / dxe2;
 			}
@@ -4689,7 +7051,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iW2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dw2 = Gw2 * dy_loc*dz_loc / dxw2;
 			}
@@ -4708,7 +7075,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iN2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dn2 = Gn2 * dx_loc*dz_loc / dyn2;
 			}
@@ -4726,7 +7098,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iS2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Ds2 = Gs2 * dx_loc*dz_loc / dys2;
 			}
@@ -4744,7 +7121,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iT2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dt2 = Gt2 * dx_loc*dy_loc / dzt2;
 			}
@@ -4764,7 +7146,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iB2];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Db2 = Gb2 * dx_loc*dy_loc / dzb2;
 			}
@@ -4787,7 +7174,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iE3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				De3 = Ge3 * dy_loc*dz_loc / dxe3;
 			}
@@ -4806,7 +7198,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iW3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dw3 = Gw3 * dy_loc*dz_loc / dxw3;
 			}
@@ -4825,7 +7222,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iN3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dn3 = Gn3 * dx_loc*dz_loc / dyn3;
 			}
@@ -4843,7 +7245,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iS3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Ds3 = Gs3 * dx_loc*dz_loc / dys3;
 			}
@@ -4861,7 +7268,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iT3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dt3 = Gt3 * dx_loc*dy_loc / dzt3;
 			}
@@ -4881,7 +7293,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iB3];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Db3 = Gb3 * dx_loc*dy_loc / dzb3;
 			}
@@ -4904,7 +7321,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iE4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				De4 = Ge4 * dy_loc*dz_loc / dxe4;
 			}
@@ -4923,7 +7345,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iW4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dw4 = Gw4 * dy_loc*dz_loc / dxw4;
 			}
@@ -4942,7 +7369,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iN4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dn4 = Gn4 * dx_loc*dz_loc / dyn4;
 			}
@@ -4960,7 +7392,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iS4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Ds4 = Gs4 * dx_loc*dz_loc / dys4;
 			}
@@ -4978,7 +7415,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iT4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Dt4 = Gt4 * dx_loc*dy_loc / dzt4;
 			}
@@ -4998,7 +7440,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				pvol = volume_loc[iB4];
+				dx_loc = pvol.x;
+				dy_loc = pvol.y;
+				dz_loc = pvol.z;
 
 				Db4 = Gb4 * dx_loc*dy_loc / dzb4;
 			}
@@ -5307,6 +7754,269 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 				}
 			}
 
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				if (!bE2) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+				}
+				else {
+					integer inumber = iE2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fabs(Fe2);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+					}
+				}
+				if (!bW2) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+				}
+				else {
+					integer inumber = iW2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fabs(Fw2);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+					}
+				}
+				if (!bN2) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+				}
+				else {
+					integer inumber = iN2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fabs(Fn2);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+					}
+				}
+				if (!bS2) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+				}
+				else {
+					integer inumber = iS2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fabs(Fs2);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+					}
+				}
+				if (!bT2) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+				}
+				else {
+					integer inumber = iT2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fabs(Ft2);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+					}
+				}
+				if (!bB2) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+				}
+				else
+				{
+					integer inumber = iB2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fabs(Fb2);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+					}
+				}
+
+				if (!bE3) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+				}
+				else {
+					integer inumber = iE3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fabs(Fe3);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+					}
+				}
+				if (!bW3) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+				}
+				else {
+					integer inumber = iW3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fabs(Fw3);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+					}
+				}
+				if (!bN3) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+				}
+				else {
+					integer inumber = iN3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fabs(Fn3);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+					}
+				}
+				if (!bS3) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+				}
+				else {
+					integer inumber = iS3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fabs(Fs3);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+					}
+				}
+				if (!bT3) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+				}
+				else {
+					integer inumber = iT3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fabs(Ft3);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+					}
+				}
+				if (!bB3) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+				}
+				else
+				{
+					integer inumber = iB3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fabs(Fb3);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+					}
+				}
+
+				if (!bE4) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+				}
+				else {
+					integer inumber = iE4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fabs(Fe4);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+					}
+				}
+				if (!bW4) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+				}
+				else {
+					integer inumber = iW4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fabs(Fw4);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+					}
+				}
+				if (!bN4) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+				}
+				else {
+					integer inumber = iN4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fabs(Fn4);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+					}
+				}
+				if (!bS4) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+				}
+				else {
+					integer inumber = iS4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fabs(Fs4);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+					}
+				}
+				if (!bT4) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+				}
+				else {
+					integer inumber = iT4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fabs(Ft4);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+					}
+				}
+				if (!bB4) {
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+				}
+				else
+				{
+					integer inumber = iB4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fabs(Fb4);
+					}
+					else {
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+					}
+				}
+			}
+
+
 		}
 
 		// Вернул как единственно верное и описанное в литературе. 7.05.2017.
@@ -5368,7 +8078,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 
 
 
-		if (sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap < 1.0e-40) {
+		if (sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap < 1.0e-36) {
 			printf("Zero diagonal coefficient in internal volume in my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D.\n");
 #if doubleintprecision == 1
 			printf("ap=%e iP=%lld\n", sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap, iP);
@@ -5473,46 +8183,143 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	}
 	else if (ishconvection < QUICK)
 	{
-		// Вычисление коэффициентов дискретного аналога:
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
-		//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap=sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae+
-		//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an+
-		//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at+
-		//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab;
+		if (b_on_adaptive_local_refinement_mesh) {
 
-		// Вернул как единственно верное и описанное в литературе. 7.05.2017.
-		//sumanb=sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw+
-		//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as+
-		//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab;
-		//13 августа 2016.
-		//sumanb = fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae) + fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw) 
-		//+ fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an) + fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as) +
-		//fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at) + fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab);
+			// Вычисление коэффициентов дискретного аналога:
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
 
-		// 08.05.2017.
-		// Моя наработка:
-		// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+			// Вычисление коэффициентов дискретного аналога:
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 = -(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 = (Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 = -(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 = (Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 = -(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2 = (Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
 
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-		sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 = -(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 = (Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 = -(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 = (Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 = -(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3 = (Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
 
-		/*
-		sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-		sumanb += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-		sumanb += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-		sumanb += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-		sumanb += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-		sumanb += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
-		*/
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 = -(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 = (Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 = -(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 = (Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 = -(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = (Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+
+			// 08.05.2017.
+			// Моя наработка:
+			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
+
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
+
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+
+			/*
+			sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sumanb += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sumanb += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sumanb += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sumanb += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sumanb += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+
+			sumanb += +(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sumanb += -(Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sumanb += +(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sumanb += -(Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sumanb += +(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sumanb += -(Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
+
+			sumanb += +(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sumanb += -(Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sumanb += +(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sumanb += -(Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sumanb += +(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sumanb += -(Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
+
+			sumanb += +(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sumanb += -(Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sumanb += +(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sumanb += -(Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sumanb += +(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sumanb += -(Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+			*/
+		}
+		else
+		{
+			// Вычисление коэффициентов дискретного аналога:
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap=sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae+
+			//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an+
+			//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at+
+			//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab;
+
+			// Вернул как единственно верное и описанное в литературе. 7.05.2017.
+			//sumanb=sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw+
+			//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as+
+			//sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at+sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab;
+			//13 августа 2016.
+			//sumanb = fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae) + fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw) 
+			//+ fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an) + fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as) +
+			//fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at) + fabs(sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab);
+
+			// 08.05.2017.
+			// Моя наработка:
+			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+
+			/*
+			sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sumanb += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sumanb += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sumanb += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sumanb += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sumanb += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			*/
+		}
 	}
 	else if (ishconvection >= QUICK)
 	{
@@ -5529,193 +8336,1366 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		// Z - direction
 		doublereal positionzP, positionzT, positionzB, positionzTT, positionzBB, positionzt, positionzb;
 
+		doublereal SpeedE2 = 0.0, SpeedW2 = 0.0, SpeedEE2 = 0.0, SpeedWW2 = 0.0, SpeedN2 = 0.0, SpeedS2 = 0.0;
+		doublereal SpeedNN2 = 0.0, SpeedSS2 = 0.0, SpeedT2 = 0.0, SpeedB2 = 0.0, SpeedTT2 = 0.0, SpeedBB2 = 0.0;
+		doublereal Speede2 = 0.0, Speedw2 = 0.0, Speedn2 = 0.0, Speeds2 = 0.0, Speedt2 = 0.0, Speedb2 = 0.0;
+
+		doublereal  SpeedE3 = 0.0, SpeedW3 = 0.0, SpeedEE3 = 0.0, SpeedWW3 = 0.0, SpeedN3 = 0.0, SpeedS3 = 0.0;
+		doublereal SpeedNN3 = 0.0, SpeedSS3 = 0.0, SpeedT3 = 0.0, SpeedB3 = 0.0, SpeedTT3 = 0.0, SpeedBB3 = 0.0;
+		doublereal Speede3 = 0.0, Speedw3 = 0.0, Speedn3 = 0.0, Speeds3 = 0.0, Speedt3 = 0.0, Speedb3 = 0.0;
+
+		doublereal SpeedE4 = 0.0, SpeedW4 = 0.0, SpeedEE4 = 0.0, SpeedWW4 = 0.0, SpeedN4 = 0.0, SpeedS4 = 0.0;
+		doublereal SpeedNN4 = 0.0, SpeedSS4 = 0.0, SpeedT4 = 0.0, SpeedB4 = 0.0, SpeedTT4 = 0.0, SpeedBB4 = 0.0;
+		doublereal Speede4 = 0.0, Speedw4 = 0.0, Speedn4 = 0.0, Speeds4 = 0.0, Speedt4 = 0.0, Speedb4 = 0.0;
+
+		// X - direction
+		doublereal  positionxE2, positionxW2, positionxEE2, positionxWW2, positionxe2, positionxw2;
+		// Y - direction
+		doublereal  positionyN2, positionyS2, positionyNN2, positionySS2, positionyn2, positionys2;
+		// Z - direction
+		doublereal  positionzT2, positionzB2, positionzTT2, positionzBB2, positionzt2, positionzb2;
+
+		// X - direction
+		doublereal  positionxE3, positionxW3, positionxEE3, positionxWW3, positionxe3, positionxw3;
+		// Y - direction
+		doublereal  positionyN3, positionyS3, positionyNN3, positionySS3, positionyn3, positionys3;
+		// Z - direction
+		doublereal  positionzT3, positionzB3, positionzTT3, positionzBB3, positionzt3, positionzb3;
+
+		// X - direction
+		doublereal  positionxE4, positionxW4, positionxEE4, positionxWW4, positionxe4, positionxw4;
+		// Y - direction
+		doublereal  positionyN4, positionyS4, positionyNN4, positionySS4, positionyn4, positionys4;
+		// Z - direction
+		doublereal  positionzT4, positionzB4, positionzTT4, positionzBB4, positionzt4, positionzb4;
+
 		TOCHKA pointP;
-		center_cord3D(iP, nvtx, pa, pointP, 100);
+		//center_cord3D(iP, nvtx, pa, pointP, 100);
+		pointP = center_coord_loc[iP];
+
 		positionxP = pointP.x; positionyP = pointP.y; positionzP = pointP.z;
 		SpeedP = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP];
 		// X - direction
 		if (!bE) {
 			SpeedE = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
-			center_cord3D(iE, nvtx, pa, pointP, E_SIDE);
-			positionxE = pointP.x;
-			positionxe = positionxP + 0.5*dx;
+			//center_cord3D(iE,nvtx,pa,pointP,E_SIDE);
+			pointP = center_coord_loc[iE];
 
-			integer iEE = neighbors_for_the_internal_node[EE_SIDE][iP].iNODE1;
+			positionxE = pointP.x;
+			positionxe = positionxP + 0.5 * dx;
+
+			integer iEE = neighbors_for_the_internal_node[E_SIDE][0][iE];
+			if (iEE < 0) {
+				iEE = neighbors_for_the_internal_node[E_SIDE][1][iE];
+			}
+			if (iEE < 0) {
+				iEE = neighbors_for_the_internal_node[E_SIDE][2][iE];
+			}
+			if (iEE < 0) {
+				iEE = neighbors_for_the_internal_node[E_SIDE][3][iE];
+			}
+
 			if ((iEE >= 0) && (iEE < maxelm)) {
 				// внутренний узел
 				SpeedEE = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE];
-				center_cord3D(iEE, nvtx, pa, pointP, EE_SIDE);
+				//center_cord3D(iEE,nvtx,pa,pointP,EE_SIDE);
+				pointP = center_coord_loc[iEE];
 				positionxEE = pointP.x;
 			}
 			else
 			{
 				// граничный узел
-				SpeedEE = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE];
-				volume3D(iE, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionxEE = positionxE + 0.5*pointP.x;
+				if ((iEE >= maxelm) && (iEE < maxelm + maxbound)) {
+					SpeedEE = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE];
+				}
+				else {
+					SpeedEE = SpeedE;
+				}
+				//volume3D(iE, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iE];
+
+				positionxEE = positionxE + 0.5 * pointP.x;
 			}
 		}
 		else {
 			// это граничный узел
 			SpeedE = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
 			SpeedEE = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
-			positionxe = positionxP + 0.5*dx;
-			positionxE = positionxP + 0.5*dx;
+			positionxe = positionxP + 0.5 * dx;
+			positionxE = positionxP + 0.5 * dx;
 			positionxEE = positionxP + dx; // этого узла не существует !
 		}
 
 		if (!bW) {
-			center_cord3D(iW, nvtx, pa, pointP, W_SIDE);
+			//center_cord3D(iW,nvtx,pa,pointP,W_SIDE);
+			pointP = center_coord_loc[iW];
 			positionxW = pointP.x;
-			positionxw = positionxP - 0.5*dx;
+			positionxw = positionxP - 0.5 * dx;
 			SpeedW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW];
 
-			integer iWW = neighbors_for_the_internal_node[WW_SIDE][iP].iNODE1;
+			integer iWW = neighbors_for_the_internal_node[W_SIDE][0][iW];
+			if (iWW < 0) {
+				iWW = neighbors_for_the_internal_node[W_SIDE][1][iW];
+			}
+			if (iWW < 0) {
+				iWW = neighbors_for_the_internal_node[W_SIDE][2][iW];
+			}
+			if (iWW < 0) {
+				iWW = neighbors_for_the_internal_node[W_SIDE][3][iW];
+			}
+
 			if ((iWW >= 0) && (iWW < maxelm)) {
 				// внутренний узел
 				SpeedWW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW];
-				center_cord3D(iWW, nvtx, pa, pointP, WW_SIDE);
+				//center_cord3D(iWW,nvtx,pa,pointP,WW_SIDE);
+				pointP = center_coord_loc[iWW];
 				positionxWW = pointP.x;
 			}
 			else
 			{
 				// граничный узел
-				SpeedWW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW];
-				volume3D(iW, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionxWW = positionxW - 0.5*pointP.x;
+				if ((iWW >= maxelm) && (iWW < maxelm + maxbound)) {
+					SpeedWW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW];
+				}
+				else {
+					SpeedWW = SpeedW;
+				}
+				//volume3D(iW, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iW];
+
+				positionxWW = positionxW - 0.5 * pointP.x;
 			}
 		}
 		else {
 			// это граничный узел
-			SpeedW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW]; // Attantion !! Debug TODO
+			SpeedW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW]; // Attantion !! Debug
 			SpeedWW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW];
 			//printf("SpeedW==%e\n",SpeedW); getchar();
-			positionxw = positionxP - 0.5*dx;
-			positionxW = positionxP - 0.5*dx;
+			positionxw = positionxP - 0.5 * dx;
+			positionxW = positionxP - 0.5 * dx;
 			positionxWW = positionxP - dx; // этого узла не существует !
 		}
 
 		// Y - direction
 		if (!bN) {
 			SpeedN = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
-			center_cord3D(iN, nvtx, pa, pointP, N_SIDE);
+			//center_cord3D(iN,nvtx,pa,pointP,N_SIDE);
+			pointP = center_coord_loc[iN];
 			positionyN = pointP.y;
-			positionyn = positionxP + 0.5*dy;
+			positionyn = positionxP + 0.5 * dy;
 
-			integer iNN = neighbors_for_the_internal_node[NN_SIDE][iP].iNODE1;
+			integer iNN = neighbors_for_the_internal_node[N_SIDE][0][iN];
+			if (iNN < 0) {
+				iNN = neighbors_for_the_internal_node[N_SIDE][1][iN];
+			}
+			if (iNN < 0) {
+				iNN = neighbors_for_the_internal_node[N_SIDE][2][iN];
+			}
+			if (iNN < 0) {
+				iNN = neighbors_for_the_internal_node[N_SIDE][3][iN];
+			}
+
 			if ((iNN >= 0) && (iNN < maxelm)) {
 				// внутренний узел
 				SpeedNN = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN];
-				center_cord3D(iNN, nvtx, pa, pointP, NN_SIDE);
+				//center_cord3D(iNN,nvtx,pa,pointP,NN_SIDE);
+				pointP = center_coord_loc[iNN];
 				positionyNN = pointP.y;
 			}
 			else
 			{
 				// граничный узел
-				SpeedNN = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN];
-				volume3D(iN, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionyNN = positionyN + 0.5*pointP.y;
+				if ((iNN >= maxelm) && (iNN < maxelm + maxbound)) {
+					SpeedNN = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN];
+				}
+				else {
+					SpeedNN = SpeedN;
+				}
+				//volume3D(iN, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iN];
+
+				positionyNN = positionyN + 0.5 * pointP.y;
 			}
 		}
 		else {
 			// это граничный узел
 			SpeedN = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
 			SpeedNN = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
-			positionyn = positionyP + 0.5*dy;
-			positionyN = positionyP + 0.5*dy;
+			positionyn = positionyP + 0.5 * dy;
+			positionyN = positionyP + 0.5 * dy;
 			positionyNN = positionyP + dy; // этого узла не существует !
 		}
 
 		if (!bS) {
 			SpeedS = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS];
-			center_cord3D(iS, nvtx, pa, pointP, S_SIDE);
+			//center_cord3D(iS,nvtx,pa,pointP,S_SIDE);
+			pointP = center_coord_loc[iS];
 			positionyS = pointP.y;
-			positionys = positionyP - 0.5*dy;
+			positionys = positionyP - 0.5 * dy;
 
-			integer iSS = neighbors_for_the_internal_node[SS_SIDE][iP].iNODE1;
+			integer iSS = neighbors_for_the_internal_node[S_SIDE][0][iS];
+			if (iSS < 0) {
+				iSS = neighbors_for_the_internal_node[S_SIDE][1][iS];
+			}
+			if (iSS < 0) {
+				iSS = neighbors_for_the_internal_node[S_SIDE][2][iS];
+			}
+			if (iSS < 0) {
+				iSS = neighbors_for_the_internal_node[S_SIDE][3][iS];
+			}
+
 			if ((iSS >= 0) && (iSS < maxelm)) {
 				// внутренний узел
 				SpeedSS = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS];
-				center_cord3D(iSS, nvtx, pa, pointP, SS_SIDE);
+				//center_cord3D(iSS,nvtx,pa,pointP,SS_SIDE);
+				pointP = center_coord_loc[iSS];
 				positionySS = pointP.y;
 			}
 			else
 			{
 				// граничный узел
-				SpeedSS = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS];
-				volume3D(iS, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionySS = positionyS - 0.5*pointP.y;
+				if ((iSS >= maxelm) && (iSS < maxelm + maxbound)) {
+					SpeedSS = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS];
+				}
+				else {
+					SpeedSS = SpeedS;
+				}
+				//volume3D(iS, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iS];
+
+				positionySS = positionyS - 0.5 * pointP.y;
 			}
 		}
 		else {
 			// это граничный узел
-			SpeedS = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // ATTANTION !!!! TODO 
+			SpeedS = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // ATTANTION !!!!
 			SpeedSS = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // нулевая скорость внутри твёрдого тела.
-			positionys = positionyP - 0.5*dy;
-			positionyS = positionyP - 0.5*dy;
+			positionys = positionyP - 0.5 * dy;
+			positionyS = positionyP - 0.5 * dy;
 			positionySS = positionyP - dy; // этого узла не существует !
 		}
 
 		// Z - direction
 		if (!bT) {
 			SpeedT = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT];
-			center_cord3D(iT, nvtx, pa, pointP, T_SIDE);
+			//center_cord3D(iT,nvtx,pa,pointP,T_SIDE);
+			pointP = center_coord_loc[iT];
 			positionzT = pointP.z;
-			positionzt = positionzP + 0.5*dz;
+			positionzt = positionzP + 0.5 * dz;
 
-			integer iTT = neighbors_for_the_internal_node[TT_SIDE][iP].iNODE1;
+			integer iTT = neighbors_for_the_internal_node[T_SIDE][0][iT];
+			if (iTT < 0) {
+				iTT = neighbors_for_the_internal_node[T_SIDE][1][iT];
+			}
+			if (iTT < 0) {
+				iTT = neighbors_for_the_internal_node[T_SIDE][2][iT];
+			}
+			if (iTT < 0) {
+				iTT = neighbors_for_the_internal_node[T_SIDE][3][iT];
+			}
+
 			if ((iTT >= 0) && (iTT < maxelm)) {
 				// внутренний узел
 				SpeedTT = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT];
-				center_cord3D(iTT, nvtx, pa, pointP, TT_SIDE);
+				//center_cord3D(iTT,nvtx,pa,pointP,TT_SIDE);
+				pointP = center_coord_loc[iTT];
 				positionzTT = pointP.z;
 			}
 			else
 			{
 				// граничный узел
-				SpeedTT = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT];
-				volume3D(iT, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionzTT = positionzT + 0.5*pointP.z;
+				if ((iTT >= maxelm) && (iTT < maxelm + maxbound)) {
+
+					SpeedTT = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT];
+				}
+				else {
+					SpeedTT = SpeedT;
+				}
+				//volume3D(iT, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iT];
+
+				positionzTT = positionzT + 0.5 * pointP.z;
 			}
 		}
 		else {
 			// это граничный узел
 			SpeedT = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT];
 			SpeedTT = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT]; // скорость внутри твёрдого тела
-			positionzt = positionzP + 0.5*dz;
-			positionzT = positionzP + 0.5*dz;
+			positionzt = positionzP + 0.5 * dz;
+			positionzT = positionzP + 0.5 * dz;
 			positionzTT = positionzP + dz; // этого узла не существует !
 		}
 
 		if (!bB) {
 			SpeedB = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB];
-			center_cord3D(iB, nvtx, pa, pointP, B_SIDE);
+			//center_cord3D(iB,nvtx,pa,pointP,B_SIDE);
+			pointP = center_coord_loc[iB];
 			positionzB = pointP.z;
-			positionzb = positionzP - 0.5*dz;
+			positionzb = positionzP - 0.5 * dz;
 
-			integer iBB = neighbors_for_the_internal_node[BB_SIDE][iP].iNODE1;
+			integer iBB = neighbors_for_the_internal_node[B_SIDE][0][iB];
+			if (iBB < 0) {
+				iBB = neighbors_for_the_internal_node[B_SIDE][1][iB];
+			}
+			if (iBB < 0) {
+				iBB = neighbors_for_the_internal_node[B_SIDE][2][iB];
+			}
+			if (iBB < 0) {
+				iBB = neighbors_for_the_internal_node[B_SIDE][3][iB];
+			}
+
 			if ((iBB >= 0) && (iBB < maxelm)) {
 				// внутренний узел
 				SpeedBB = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB];
-				center_cord3D(iBB, nvtx, pa, pointP, BB_SIDE);
+				//center_cord3D(iBB,nvtx,pa,pointP,BB_SIDE);
+				pointP = center_coord_loc[iBB];
 				positionzBB = pointP.z;
 			}
 			else
 			{
 				// граничный узел
-				SpeedBB = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB];
-				volume3D(iB, nvtx, pa, pointP.x, pointP.y, pointP.z);
-				positionzBB = positionzB - 0.5*pointP.z;
+				if ((iBB >= maxelm) && (iBB < maxelm + maxbound)) {
+					SpeedBB = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB];
+				}
+				else {
+					SpeedBB = SpeedB;
+				}
+				//volume3D(iB, nvtx, pa, pointP.x, pointP.y, pointP.z);
+				pointP = volume_loc[iB];
+
+				positionzBB = positionzB - 0.5 * pointP.z;
 			}
 		}
 		else {
 			// это граничный узел
 			SpeedB = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB];
 			SpeedBB = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB]; // скорость внутри твёрдого тела
-			positionzb = positionzP - 0.5*dz;
-			positionzB = positionzP - 0.5*dz;
+			positionzb = positionzP - 0.5 * dz;
+			positionzB = positionzP - 0.5 * dz;
 			positionzBB = positionzP - dz; // этого узла не существует !
 		}
+
+		if (b_on_adaptive_local_refinement_mesh)
+		{
+
+			// X - direction
+			if ((!bE2) && (iE2 > -1)) {
+				SpeedE2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE2];
+				//center_cord3D(iE,nvtx,pa,pointP,E_SIDE);
+				pointP = center_coord_loc[iE2];
+
+				positionxE2 = pointP.x;
+				positionxe2 = positionxP + 0.5 * dx;
+
+				integer iEE2 = neighbors_for_the_internal_node[E_SIDE][0][iE2];
+				if (iEE2 < 0) {
+					iEE2 = neighbors_for_the_internal_node[E_SIDE][1][iE2];
+				}
+				if (iEE2 < 0) {
+					iEE2 = neighbors_for_the_internal_node[E_SIDE][2][iE2];
+				}
+				if (iEE2 < 0) {
+					iEE2 = neighbors_for_the_internal_node[E_SIDE][3][iE2];
+				}
+				if ((iEE2 >= 0) && (iEE2 < maxelm)) {
+					// внутренний узел
+					SpeedEE2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE2];
+					//center_cord3D(iEE2,nvtx,pa,pointP,EE_SIDE);
+					pointP = center_coord_loc[iEE2];
+					positionxEE2 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iEE2 >= maxelm) && (iEE2 < maxelm + maxbound)) {
+						SpeedEE2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE2];
+					}
+					else {
+						SpeedEE2 = SpeedE2;
+						//std::cout << "iEE2 =" << iEE2 << " maxelm=" << maxelm << " maxbound=" << maxbound << std::endl;
+						//getchar();
+					}
+					//volume3D(iE, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iE2];
+
+					positionxEE2 = positionxE2 + 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iE2 > -1) {
+					SpeedE2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE2];
+					SpeedEE2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE2];
+				}
+				else {
+					SpeedE2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
+					SpeedEE2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
+				}
+				positionxe2 = positionxP + 0.5 * dx;
+				positionxE2 = positionxP + 0.5 * dx;
+				positionxEE2 = positionxP + dx; // этого узла не существует !
+			}
+
+			if ((!bW2) && ((iW2 > -1))) {
+				//center_cord3D(iW,nvtx,pa,pointP,W_SIDE);
+				pointP = center_coord_loc[iW2];
+				positionxW2 = pointP.x;
+				positionxw2 = positionxP - 0.5 * dx;
+				SpeedW2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW2];
+
+				integer iWW2 = neighbors_for_the_internal_node[W_SIDE][0][iW2];
+				if (iWW2 < 0) {
+					iWW2 = neighbors_for_the_internal_node[W_SIDE][1][iW2];
+				}
+				if (iWW2 < 0) {
+					iWW2 = neighbors_for_the_internal_node[W_SIDE][2][iW2];
+				}
+				if (iWW2 < 0) {
+					iWW2 = neighbors_for_the_internal_node[W_SIDE][3][iW2];
+				}
+
+				if ((iWW2 >= 0) && (iWW2 < maxelm)) {
+					// внутренний узел
+					SpeedWW2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW2];
+					//center_cord3D(iWW2,nvtx,pa,pointP,WW_SIDE);
+					pointP = center_coord_loc[iWW2];
+					positionxWW2 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iWW2 >= maxelm) && (iWW2 < maxelm + maxbound)) {
+						SpeedWW2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW2];
+					}
+					else {
+
+						SpeedWW2 = SpeedW2;
+						//std::cout << "iWW2 =" << iWW2 << " maxelm=" << maxelm << " maxbound=" << maxbound << std::endl;
+						//getchar();
+					}
+					//volume3D(iW2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iW2];
+
+					positionxWW2 = positionxW2 - 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iW2 > -1) {
+					SpeedW2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW2];
+					SpeedWW2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW2];
+				}
+				else {
+					SpeedW2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW];
+					SpeedWW2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW];
+				}
+				//printf("SpeedW2==%e\n",SpeedW2); getchar();
+				positionxw2 = positionxP - 0.5 * dx;
+				positionxW2 = positionxP - 0.5 * dx;
+				positionxWW2 = positionxP - dx; // этого узла не существует !
+			}
+
+			// Y - direction
+			if ((!bN2) && (iN2 > -1)) {
+				SpeedN2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN2];
+				//center_cord3D(iN2,nvtx,pa,pointP,N_SIDE);
+				pointP = center_coord_loc[iN2];
+				positionyN2 = pointP.y;
+				positionyn2 = positionxP + 0.5 * dy;
+
+				integer iNN2 = neighbors_for_the_internal_node[N_SIDE][0][iN2];
+				if (iNN2 < 0) {
+					iNN2 = neighbors_for_the_internal_node[N_SIDE][1][iN2];
+				}
+				if (iNN2 < 0) {
+					iNN2 = neighbors_for_the_internal_node[N_SIDE][2][iN2];
+				}
+				if (iNN2 < 0) {
+					iNN2 = neighbors_for_the_internal_node[N_SIDE][3][iN2];
+				}
+
+
+				if ((iNN2 >= 0) && (iNN2 < maxelm)) {
+					// внутренний узел
+					SpeedNN2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN2];
+					//center_cord3D(iNN2,nvtx,pa,pointP,NN_SIDE);
+					pointP = center_coord_loc[iNN2];
+					positionyNN2 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iNN2 >= maxelm) && (iNN2 < maxelm + maxbound)) {
+						SpeedNN2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN2];
+					}
+					else {
+						SpeedNN2 = SpeedN2;
+					}
+					//volume3D(iN2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iN2];
+
+					positionyNN2 = positionyN2 + 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iN2 > -1) {
+					SpeedN2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN2];
+					SpeedNN2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN2];
+				}
+				else {
+					SpeedN2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
+					SpeedNN2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
+				}
+				positionyn2 = positionyP + 0.5 * dy;
+				positionyN2 = positionyP + 0.5 * dy;
+				positionyNN2 = positionyP + dy; // этого узла не существует !
+			}
+
+			if ((!bS2) && (iS2 > -1)) {
+				SpeedS2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS2];
+				//center_cord3D(iS2,nvtx,pa,pointP,S_SIDE);
+				pointP = center_coord_loc[iS2];
+				positionyS2 = pointP.y;
+				positionys2 = positionyP - 0.5 * dy;
+
+				integer iSS2 = neighbors_for_the_internal_node[S_SIDE][0][iS2];
+				if (iSS2 < 0) {
+					iSS2 = neighbors_for_the_internal_node[S_SIDE][1][iS2];
+				}
+				if (iSS2 < 0) {
+					iSS2 = neighbors_for_the_internal_node[S_SIDE][2][iS2];
+				}
+				if (iSS2 < 0) {
+					iSS2 = neighbors_for_the_internal_node[S_SIDE][3][iS2];
+				}
+
+				if ((iSS2 >= 0) && (iSS2 < maxelm)) {
+					// внутренний узел
+					SpeedSS2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS2];
+					//center_cord3D(iSS2,nvtx,pa,pointP,SS_SIDE);
+					pointP = center_coord_loc[iSS2];
+					positionySS2 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iSS2 >= maxelm) && (iSS2 < maxelm + maxbound)) {
+						SpeedSS2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS2];
+					}
+					else {
+						SpeedSS2 = SpeedS2;
+					}
+					//volume3D(iS2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iS2];
+
+					positionySS2 = positionyS2 - 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iS2 > -1) {
+					SpeedS2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS2]; // ATTANTION !!!!
+					SpeedSS2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS2]; // нулевая скорость внутри твёрдого тела.
+				}
+				else {
+					SpeedS2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // ATTANTION !!!!
+					SpeedSS2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // нулевая скорость внутри твёрдого тела.
+				}
+				positionys2 = positionyP - 0.5 * dy;
+				positionyS2 = positionyP - 0.5 * dy;
+				positionySS2 = positionyP - dy; // этого узла не существует !
+			}
+
+			// Z - direction
+			if ((!bT2) && (iT2 > -1)) {
+				SpeedT2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT2];
+				//center_cord3D(iT2,nvtx,pa,pointP,T_SIDE);
+				pointP = center_coord_loc[iT2];
+				positionzT2 = pointP.z;
+				positionzt2 = positionzP + 0.5 * dz;
+
+				integer iTT2 = neighbors_for_the_internal_node[T_SIDE][0][iT2];
+				if (iTT2 < 0) {
+					iTT2 = neighbors_for_the_internal_node[T_SIDE][1][iT2];
+				}
+				if (iTT2 < 0) {
+					iTT2 = neighbors_for_the_internal_node[T_SIDE][2][iT2];
+				}
+				if (iTT2 < 0) {
+					iTT2 = neighbors_for_the_internal_node[T_SIDE][3][iT2];
+				}
+
+
+				if ((iTT2 >= 0) && (iTT2 < maxelm)) {
+					// внутренний узел
+					SpeedTT2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT2];
+					//center_cord3D(iTT2,nvtx,pa,pointP,TT_SIDE);
+					pointP = center_coord_loc[iTT2];
+					positionzTT2 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iTT2 >= maxelm) && (iTT2 < maxelm + maxbound)) {
+						SpeedTT2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT2];
+					}
+					else {
+						SpeedTT2 = SpeedT2;
+					}
+					//volume3D(iT2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iT2];
+
+					positionzTT2 = positionzT2 + 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iT2 > -1) {
+					SpeedT2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT2];
+					SpeedTT2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT2]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedT2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT];
+					SpeedTT2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT]; // скорость внутри твёрдого тела
+				}
+				positionzt2 = positionzP + 0.5 * dz;
+				positionzT2 = positionzP + 0.5 * dz;
+				positionzTT2 = positionzP + dz; // этого узла не существует !
+			}
+
+			if ((!bB2) && (iB2 > -1)) {
+				SpeedB2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB2];
+				//center_cord3D(iB2,nvtx,pa,pointP,B_SIDE);
+				pointP = center_coord_loc[iB2];
+				positionzB2 = pointP.z;
+				positionzb2 = positionzP - 0.5 * dz;
+
+				integer iBB2 = neighbors_for_the_internal_node[B_SIDE][0][iB2];
+				if (iBB2 < 0) {
+					iBB2 = neighbors_for_the_internal_node[B_SIDE][1][iB2];
+				}
+				if (iBB2 < 0) {
+					iBB2 = neighbors_for_the_internal_node[B_SIDE][2][iB2];
+				}
+				if (iBB2 < 0) {
+					iBB2 = neighbors_for_the_internal_node[B_SIDE][3][iB2];
+				}
+
+				if ((iBB2 >= 0) && (iBB2 < maxelm)) {
+					// внутренний узел
+					SpeedBB2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB2];
+					//center_cord3D(iBB2,nvtx,pa,pointP,BB_SIDE);
+					pointP = center_coord_loc[iBB2];
+					positionzBB2 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iBB2 >= maxelm) && (iBB2 < maxelm + maxbound)) {
+						SpeedBB2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB2];
+					}
+					else {
+						SpeedBB2 = SpeedB2;
+					}
+					//volume3D(iB2, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iB2];
+
+					positionzBB2 = positionzB2 - 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iB2 > -1) {
+					SpeedB2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB2];
+					SpeedBB2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB2]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedB2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB];
+					SpeedBB2 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB]; // скорость внутри твёрдого тела
+				}
+				positionzb2 = positionzP - 0.5 * dz;
+				positionzB2 = positionzP - 0.5 * dz;
+				positionzBB2 = positionzP - dz; // этого узла не существует !
+			}
+
+
+			// X - direction
+			if ((!bE3) && (iE3 > -1)) {
+				SpeedE3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE3];
+				//center_cord3D(iE3,nvtx,pa,pointP,E_SIDE);
+				pointP = center_coord_loc[iE3];
+
+				positionxE3 = pointP.x;
+				positionxe3 = positionxP + 0.5 * dx;
+
+				integer iEE3 = neighbors_for_the_internal_node[E_SIDE][0][iE3];
+				if (iEE3 < 0) {
+					iEE3 = neighbors_for_the_internal_node[E_SIDE][1][iE3];
+				}
+				if (iEE3 < 0) {
+					iEE3 = neighbors_for_the_internal_node[E_SIDE][2][iE3];
+				}
+				if (iEE3 < 0) {
+					iEE3 = neighbors_for_the_internal_node[E_SIDE][3][iE3];
+				}
+
+				if ((iEE3 >= 0) && (iEE3 < maxelm)) {
+					// внутренний узел
+					SpeedEE3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE3];
+					//center_cord3D(iEE3,nvtx,pa,pointP,EE_SIDE);
+					pointP = center_coord_loc[iEE3];
+					positionxEE3 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iEE3 >= maxelm) && (iEE3 < maxelm + maxbound)) {
+						SpeedEE3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE3];
+					}
+					else {
+						SpeedEE3 = SpeedE3;
+					}
+					//volume3D(iE3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iE3];
+
+					positionxEE3 = positionxE3 + 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iE3 > -1) {
+					SpeedE3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE3];
+					SpeedEE3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE3];
+				}
+				else {
+					SpeedE3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
+					SpeedEE3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
+				}
+				positionxe3 = positionxP + 0.5 * dx;
+				positionxE3 = positionxP + 0.5 * dx;
+				positionxEE3 = positionxP + dx; // этого узла не существует !
+			}
+
+			if ((!bW3) && (iW3 > -1)) {
+				//center_cord3D(iW3,nvtx,pa,pointP,W_SIDE);
+				pointP = center_coord_loc[iW3];
+				positionxW3 = pointP.x;
+				positionxw3 = positionxP - 0.5 * dx;
+				SpeedW3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW3];
+
+				integer iWW3 = neighbors_for_the_internal_node[W_SIDE][0][iW3];
+				if (iWW3 < 0) {
+					iWW3 = neighbors_for_the_internal_node[W_SIDE][1][iW3];
+				}
+				if (iWW3 < 0) {
+					iWW3 = neighbors_for_the_internal_node[W_SIDE][2][iW3];
+				}
+				if (iWW3 < 0) {
+					iWW3 = neighbors_for_the_internal_node[W_SIDE][3][iW3];
+				}
+
+				if ((iWW3 >= 0) && (iWW3 < maxelm)) {
+					// внутренний узел
+					SpeedWW3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW3];
+					//center_cord3D(iWW3,nvtx,pa,pointP,WW_SIDE);
+					pointP = center_coord_loc[iWW3];
+					positionxWW3 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iWW3 >= maxelm) && (iWW3 < maxelm + maxbound)) {
+						SpeedWW3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW3];
+					}
+					else {
+						SpeedWW3 = SpeedW3;
+						//std::cout << "iWW3 =" << iWW3 << " maxelm=" << maxelm << " maxbound=" << maxbound << std::endl;
+						//getchar();
+					}
+					//volume3D(iW3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iW3];
+
+					positionxWW3 = positionxW3 - 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iW3 > -1) {
+					SpeedW3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW3]; // Attantion !! Debug
+					SpeedWW3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW3];
+				}
+				else {
+					SpeedW3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW]; // Attantion !! Debug
+					SpeedWW3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW];
+				}
+				//printf("SpeedW3==%e\n",SpeedW3); getchar();
+				positionxw3 = positionxP - 0.5 * dx;
+				positionxW3 = positionxP - 0.5 * dx;
+				positionxWW3 = positionxP - dx; // этого узла не существует !
+			}
+
+			// Y - direction
+			if ((!bN3) && (iN3 > -1)) {
+				SpeedN3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN3];
+				//center_cord3D(iN3,nvtx,pa,pointP,N_SIDE);
+				pointP = center_coord_loc[iN3];
+				positionyN3 = pointP.y;
+				positionyn3 = positionxP + 0.5 * dy;
+
+				integer iNN3 = neighbors_for_the_internal_node[N_SIDE][0][iN3];
+				if (iNN3 < 0) {
+					iNN3 = neighbors_for_the_internal_node[N_SIDE][1][iN3];
+				}
+				if (iNN3 < 0) {
+					iNN3 = neighbors_for_the_internal_node[N_SIDE][2][iN3];
+				}
+				if (iNN3 < 0) {
+					iNN3 = neighbors_for_the_internal_node[N_SIDE][3][iN3];
+				}
+
+				if ((iNN3 >= 0) && (iNN3 < maxelm)) {
+					// внутренний узел
+					SpeedNN3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN3];
+					//center_cord3D(iNN3,nvtx,pa,pointP,NN_SIDE);
+					pointP = center_coord_loc[iNN3];
+					positionyNN3 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iNN3 >= maxelm) && (iNN3 < maxelm + maxbound)) {
+						SpeedNN3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN3];
+					}
+					else {
+						SpeedNN3 = SpeedN3;
+					}
+					//volume3D(iN3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iN3];
+
+					positionyNN3 = positionyN3 + 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iN3 > -1) {
+					SpeedN3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN3];
+					SpeedNN3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN3];
+				}
+				else {
+					SpeedN3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
+					SpeedNN3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
+				}
+				positionyn3 = positionyP + 0.5 * dy;
+				positionyN3 = positionyP + 0.5 * dy;
+				positionyNN3 = positionyP + dy; // этого узла не существует !
+			}
+
+			if ((!bS3) && (iS3 > -1)) {
+				SpeedS3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS3];
+				//center_cord3D(iS3,nvtx,pa,pointP,S_SIDE);
+				pointP = center_coord_loc[iS3];
+				positionyS3 = pointP.y;
+				positionys3 = positionyP - 0.5 * dy;
+
+				integer iSS3 = neighbors_for_the_internal_node[S_SIDE][0][iS3];
+				if (iSS3 < 0) {
+					iSS3 = neighbors_for_the_internal_node[S_SIDE][1][iS3];
+				}
+				if (iSS3 < 0) {
+					iSS3 = neighbors_for_the_internal_node[S_SIDE][2][iS3];
+				}
+				if (iSS3 < 0) {
+					iSS3 = neighbors_for_the_internal_node[S_SIDE][3][iS3];
+				}
+
+				if ((iSS3 >= 0) && (iSS3 < maxelm)) {
+					// внутренний узел
+					SpeedSS3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS3];
+					//center_cord3D(iSS3,nvtx,pa,pointP,SS_SIDE);
+					pointP = center_coord_loc[iSS3];
+					positionySS3 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iSS3 >= maxelm) && (iSS3 < maxelm + maxbound)) {
+						SpeedSS3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS3];
+					}
+					else {
+						SpeedSS3 = SpeedS3;
+					}
+					//volume3D(iS3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iS3];
+
+					positionySS3 = positionyS3 - 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iS3 > -1) {
+					SpeedS3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS3]; // ATTANTION !!!!
+					SpeedSS3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS3]; // нулевая скорость внутри твёрдого тела.
+				}
+				else {
+					SpeedS3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // ATTANTION !!!!
+					SpeedSS3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // нулевая скорость внутри твёрдого тела.
+				}
+				positionys3 = positionyP - 0.5 * dy;
+				positionyS3 = positionyP - 0.5 * dy;
+				positionySS3 = positionyP - dy; // этого узла не существует !
+			}
+
+			// Z - direction
+			if ((!bT3) && (iT3 > -1)) {
+				SpeedT3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT3];
+				//center_cord3D(iT3,nvtx,pa,pointP,T_SIDE);
+				pointP = center_coord_loc[iT3];
+				positionzT3 = pointP.z;
+				positionzt3 = positionzP + 0.5 * dz;
+
+				integer iTT3 = neighbors_for_the_internal_node[T_SIDE][0][iT3];
+				if (iTT3 < 0) {
+					iTT3 = neighbors_for_the_internal_node[T_SIDE][1][iT3];
+				}
+				if (iTT3 < 0) {
+					iTT3 = neighbors_for_the_internal_node[T_SIDE][2][iT3];
+				}
+				if (iTT3 < 0) {
+					iTT3 = neighbors_for_the_internal_node[T_SIDE][3][iT3];
+				}
+
+				if ((iTT3 >= 0) && (iTT3 < maxelm)) {
+					// внутренний узел
+					SpeedTT3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT3];
+					//center_cord3D(iTT3,nvtx,pa,pointP,TT_SIDE);
+					pointP = center_coord_loc[iTT3];
+					positionzTT3 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iTT3 >= maxelm) && (iTT3 < maxelm + maxbound)) {
+						SpeedTT3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT3];
+					}
+					else {
+						SpeedTT3 = SpeedT3;
+					}
+					//volume3D(iT3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iT3];
+
+					positionzTT3 = positionzT3 + 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iT3 > -1) {
+					SpeedT3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT3];
+					SpeedTT3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT3]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedT3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT];
+					SpeedTT3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT]; // скорость внутри твёрдого тела
+				}
+				positionzt3 = positionzP + 0.5 * dz;
+				positionzT3 = positionzP + 0.5 * dz;
+				positionzTT3 = positionzP + dz; // этого узла не существует !
+			}
+
+			if ((!bB3) && (iB3 > -1)) {
+				SpeedB3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB3];
+				//center_cord3D(iB3,nvtx,pa,pointP,B_SIDE);
+				pointP = center_coord_loc[iB3];
+				positionzB3 = pointP.z;
+				positionzb3 = positionzP - 0.5 * dz;
+
+				integer iBB3 = neighbors_for_the_internal_node[B_SIDE][0][iB3];
+				if (iBB3 < 0) {
+					iBB3 = neighbors_for_the_internal_node[B_SIDE][1][iB3];
+				}
+				if (iBB3 < 0) {
+					iBB3 = neighbors_for_the_internal_node[B_SIDE][2][iB3];
+				}
+				if (iBB3 < 0) {
+					iBB3 = neighbors_for_the_internal_node[B_SIDE][3][iB3];
+				}
+
+				if ((iBB3 >= 0) && (iBB3 < maxelm)) {
+					// внутренний узел
+					SpeedBB3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB3];
+					//center_cord3D(iBB3,nvtx,pa,pointP,BB_SIDE);
+					pointP = center_coord_loc[iBB3];
+					positionzBB3 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iBB3 >= maxelm) && (iBB3 < maxelm + maxbound)) {
+						SpeedBB3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB3];
+					}
+					else {
+						SpeedBB3 = SpeedB3;
+					}
+					//volume3D(iB3, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iB3];
+
+					positionzBB3 = positionzB3 - 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iB3 > -1) {
+					SpeedB3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB3];
+					SpeedBB3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB3]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedB3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB];
+					SpeedBB3 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB]; // скорость внутри твёрдого тела
+				}
+				positionzb3 = positionzP - 0.5 * dz;
+				positionzB3 = positionzP - 0.5 * dz;
+				positionzBB3 = positionzP - dz; // этого узла не существует !
+			}
+
+			// X - direction
+			if ((!bE4) && (iE4 > -1)) {
+				SpeedE4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE4];
+				//center_cord3D(iE4,nvtx,pa,pointP,E_SIDE);
+				pointP = center_coord_loc[iE4];
+
+				positionxE4 = pointP.x;
+				positionxe4 = positionxP + 0.5 * dx;
+
+				integer iEE4 = neighbors_for_the_internal_node[E_SIDE][0][iE4];
+				if (iEE4 < 0) {
+					iEE4 = neighbors_for_the_internal_node[E_SIDE][1][iE4];
+				}
+				if (iEE4 < 0) {
+					iEE4 = neighbors_for_the_internal_node[E_SIDE][2][iE4];
+				}
+				if (iEE4 < 0) {
+					iEE4 = neighbors_for_the_internal_node[E_SIDE][3][iE4];
+				}
+
+				if ((iEE4 >= 0) && (iEE4 < maxelm)) {
+					// внутренний узел
+					SpeedEE4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE4];
+					//center_cord3D(iEE4,nvtx,pa,pointP,EE_SIDE);
+					pointP = center_coord_loc[iEE4];
+					positionxEE4 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iEE4 >= maxelm) && (iEE4 < maxelm + maxbound)) {
+						SpeedEE4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE4];
+					}
+					else {
+						SpeedEE4 = SpeedE4;
+					}
+					//volume3D(iE4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iE4];
+
+					positionxEE4 = positionxE4 + 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iE4 > -1) {
+					SpeedE4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE4];
+					SpeedEE4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE4];
+				}
+				else {
+					SpeedE4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
+					SpeedEE4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE];
+				}
+				positionxe4 = positionxP + 0.5 * dx;
+				positionxE4 = positionxP + 0.5 * dx;
+				positionxEE4 = positionxP + dx; // этого узла не существует !
+			}
+
+			if ((!bW4) && (iW4 > -1)) {
+				//center_cord3D(iW4,nvtx,pa,pointP,W_SIDE);
+				pointP = center_coord_loc[iW4];
+				positionxW4 = pointP.x;
+				positionxw4 = positionxP - 0.5 * dx;
+				SpeedW4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW4];
+
+				integer iWW4 = neighbors_for_the_internal_node[W_SIDE][0][iW4];
+				if (iWW4 < 0) {
+					iWW4 = neighbors_for_the_internal_node[W_SIDE][1][iW4];
+				}
+				if (iWW4 < 0) {
+					iWW4 = neighbors_for_the_internal_node[W_SIDE][2][iW4];
+				}
+				if (iWW4 < 0) {
+					iWW4 = neighbors_for_the_internal_node[W_SIDE][3][iW4];
+				}
+
+				if ((iWW4 >= 0) && (iWW4 < maxelm)) {
+					// внутренний узел
+					SpeedWW4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW4];
+					//center_cord3D(iWW4,nvtx,pa,pointP,WW_SIDE);
+					pointP = center_coord_loc[iWW4];
+					positionxWW4 = pointP.x;
+				}
+				else
+				{
+					// граничный узел
+					if ((iWW4 >= maxelm) && (iWW4 < maxelm + maxbound)) {
+						SpeedWW4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW4];
+					}
+					else {
+						SpeedWW4 = SpeedW4;
+						//std::cout << "iWW4 =" << iWW4 << " maxelm=" << maxelm << " maxbound=" << maxbound << std::endl;
+						//getchar();
+					}
+					//volume3D(iW4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iW4];
+
+					positionxWW4 = positionxW4 - 0.5 * pointP.x;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iW4 > -1) {
+					SpeedW4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW4]; // Attantion !! Debug
+					SpeedWW4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW4];
+				}
+				else {
+					SpeedW4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW]; // Attantion !! Debug
+					SpeedWW4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW];
+				}
+				//printf("SpeedW4==%e\n",SpeedW4); getchar();
+				positionxw4 = positionxP - 0.5 * dx;
+				positionxW4 = positionxP - 0.5 * dx;
+				positionxWW4 = positionxP - dx; // этого узла не существует !
+			}
+
+			// Y - direction
+			if ((!bN4) && (iN4 > -1)) {
+				SpeedN4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN4];
+				//center_cord3D(iN4,nvtx,pa,pointP,N_SIDE);
+				pointP = center_coord_loc[iN4];
+				positionyN4 = pointP.y;
+				positionyn4 = positionxP + 0.5 * dy;
+
+				integer iNN4 = neighbors_for_the_internal_node[N_SIDE][0][iN4];
+				if (iNN4 < 0) {
+					iNN4 = neighbors_for_the_internal_node[N_SIDE][1][iN4];
+				}
+				if (iNN4 < 0) {
+					iNN4 = neighbors_for_the_internal_node[N_SIDE][2][iN4];
+				}
+				if (iNN4 < 0) {
+					iNN4 = neighbors_for_the_internal_node[N_SIDE][3][iN4];
+				}
+
+				if ((iNN4 >= 0) && (iNN4 < maxelm)) {
+					// внутренний узел
+					SpeedNN4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN4];
+					//center_cord3D(iNN4,nvtx,pa,pointP,NN_SIDE);
+					pointP = center_coord_loc[iNN4];
+					positionyNN4 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iNN4 >= maxelm) && (iNN4 < maxelm + maxbound)) {
+						SpeedNN4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN4];
+					}
+					else {
+						SpeedNN4 = SpeedN4;
+					}
+					//volume3D(iN4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iN4];
+
+					positionyNN4 = positionyN4 + 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iN4 > -1) {
+					SpeedN4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN4];
+					SpeedNN4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN4];
+				}
+				else {
+					SpeedN4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
+					SpeedNN4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
+				}
+				positionyn4 = positionyP + 0.5 * dy;
+				positionyN4 = positionyP + 0.5 * dy;
+				positionyNN4 = positionyP + dy; // этого узла не существует !
+			}
+
+			if ((!bS4) && (iS4 > -1)) {
+				SpeedS4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS4];
+				//center_cord3D(iS4,nvtx,pa,pointP,S_SIDE);
+				pointP = center_coord_loc[iS4];
+				positionyS4 = pointP.y;
+				positionys4 = positionyP - 0.5 * dy;
+
+				integer iSS4 = neighbors_for_the_internal_node[S_SIDE][0][iS4];
+				if (iSS4 < 0) {
+					iSS4 = neighbors_for_the_internal_node[S_SIDE][1][iS4];
+				}
+				if (iSS4 < 0) {
+					iSS4 = neighbors_for_the_internal_node[S_SIDE][2][iS4];
+				}
+				if (iSS4 < 0) {
+					iSS4 = neighbors_for_the_internal_node[S_SIDE][3][iS4];
+				}
+
+				if ((iSS4 >= 0) && (iSS4 < maxelm)) {
+					// внутренний узел
+					SpeedSS4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS4];
+					//center_cord3D(iSS4,nvtx,pa,pointP,SS_SIDE);
+					pointP = center_coord_loc[iSS4];
+					positionySS4 = pointP.y;
+				}
+				else
+				{
+					// граничный узел
+					if ((iSS4 >= maxelm) && (iSS4 < maxelm + maxbound)) {
+						SpeedSS4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS4];
+					}
+					else {
+						SpeedSS4 = SpeedS4;
+					}
+					//volume3D(iS4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iS4];
+
+					positionySS4 = positionyS4 - 0.5 * pointP.y;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iS4 > -1) {
+					SpeedS4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS4]; // ATTANTION !!!!
+					SpeedSS4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS4]; // нулевая скорость внутри твёрдого тела.
+				}
+				else {
+					SpeedS4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // ATTANTION !!!!
+					SpeedSS4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iS]; // нулевая скорость внутри твёрдого тела.
+				}
+				positionys4 = positionyP - 0.5 * dy;
+				positionyS4 = positionyP - 0.5 * dy;
+				positionySS4 = positionyP - dy; // этого узла не существует !
+			}
+
+			// Z - direction
+			if ((!bT4) && (iT4 > -1)) {
+				SpeedT4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT4];
+				//center_cord3D(iT4,nvtx,pa,pointP,T_SIDE);
+				pointP = center_coord_loc[iT4];
+				positionzT4 = pointP.z;
+				positionzt4 = positionzP + 0.5 * dz;
+
+				integer iTT4 = neighbors_for_the_internal_node[T_SIDE][0][iT4];
+				if (iTT4 < 0) {
+					iTT4 = neighbors_for_the_internal_node[T_SIDE][1][iT4];
+				}
+				if (iTT4 < 0) {
+					iTT4 = neighbors_for_the_internal_node[T_SIDE][2][iT4];
+				}
+				if (iTT4 < 0) {
+					iTT4 = neighbors_for_the_internal_node[T_SIDE][3][iT4];
+				}
+
+				if ((iTT4 >= 0) && (iTT4 < maxelm)) {
+					// внутренний узел
+					SpeedTT4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT4];
+					//center_cord3D(iTT4,nvtx,pa,pointP,TT_SIDE);
+					pointP = center_coord_loc[iTT4];
+					positionzTT4 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iTT4 >= maxelm) && (iTT4 < maxelm + maxbound)) {
+						SpeedTT4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT4];
+					}
+					else {
+						SpeedTT4 = SpeedT4;
+					}
+					//volume3D(iT4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iT4];
+
+					positionzTT4 = positionzT4 + 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iT4 > -1) {
+					SpeedT4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT4];
+					SpeedTT4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT4]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedT4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT];
+					SpeedTT4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iT]; // скорость внутри твёрдого тела
+				}
+				positionzt4 = positionzP + 0.5 * dz;
+				positionzT4 = positionzP + 0.5 * dz;
+				positionzTT4 = positionzP + dz; // этого узла не существует !
+			}
+
+			if ((!bB4) && (iB4 > -1)) {
+				SpeedB4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB4];
+				//center_cord3D(iB4,nvtx,pa,pointP,B_SIDE);
+				pointP = center_coord_loc[iB4];
+				positionzB4 = pointP.z;
+				positionzb4 = positionzP - 0.5 * dz;
+
+				integer iBB4 = neighbors_for_the_internal_node[B_SIDE][0][iB4];
+				if (iBB4 < 0) {
+					iBB4 = neighbors_for_the_internal_node[B_SIDE][1][iB4];
+				}
+				if (iBB4 < 0) {
+					iBB4 = neighbors_for_the_internal_node[B_SIDE][2][iB4];
+				}
+				if (iBB4 < 0) {
+					iBB4 = neighbors_for_the_internal_node[B_SIDE][3][iB4];
+				}
+
+				if ((iBB4 >= 0) && (iBB4 < maxelm)) {
+					// внутренний узел
+					SpeedBB4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB4];
+					//center_cord3D(iBB4,nvtx,pa,pointP,BB_SIDE);
+					pointP = center_coord_loc[iBB4];
+					positionzBB4 = pointP.z;
+				}
+				else
+				{
+					// граничный узел
+					if ((iBB4 >= maxelm) && (iBB4 < maxelm + maxbound)) {
+						SpeedBB4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB4];
+					}
+					else {
+						SpeedBB4 = SpeedB4;
+					}
+					//volume3D(iB4, nvtx, pa, pointP.x, pointP.y, pointP.z);
+					pointP = volume_loc[iB4];
+
+					positionzBB4 = positionzB4 - 0.5 * pointP.z;
+				}
+			}
+			else {
+				// это граничный узел
+				if (iB4 > -1) {
+					SpeedB4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB4];
+					SpeedBB4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB4]; // скорость внутри твёрдого тела
+				}
+				else {
+					SpeedB4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB];
+					SpeedBB4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iB]; // скорость внутри твёрдого тела
+				}
+				positionzb4 = positionzP - 0.5 * dz;
+				positionzB4 = positionzP - 0.5 * dz;
+				positionzBB4 = positionzP - dz; // этого узла не существует !
+			}
+
+		}
+
 
 
 		if ((ishconvection >= QUICK) && (ishconvection <= FROMM)) {
@@ -5731,6 +9711,42 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			// Z - direction
 			Speedt = cell_face_value_global(ishconvection, (Ft), SpeedB, SpeedP, SpeedT, SpeedTT);
 			Speedb = cell_face_value_global(ishconvection, (Fb), SpeedBB, SpeedB, SpeedP, SpeedT);
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// X - direction
+				Speede2 = cell_face_value_global(ishconvection, (Fe2), SpeedW2, SpeedP, SpeedE2, SpeedEE2);
+				Speedw2 = cell_face_value_global(ishconvection, (Fw2), SpeedWW2, SpeedW2, SpeedP, SpeedE2);
+				// Y - direction
+				Speedn2 = cell_face_value_global(ishconvection, (Fn2), SpeedS2, SpeedP, SpeedN2, SpeedNN2);
+				Speeds2 = cell_face_value_global(ishconvection, (Fs2), SpeedSS2, SpeedS2, SpeedP, SpeedN2);
+				// Z - direction
+				Speedt2 = cell_face_value_global(ishconvection, (Ft2), SpeedB2, SpeedP, SpeedT2, SpeedTT2);
+				Speedb2 = cell_face_value_global(ishconvection, (Fb2), SpeedBB2, SpeedB2, SpeedP, SpeedT2);
+
+
+				// X - direction
+				Speede3 = cell_face_value_global(ishconvection, (Fe3), SpeedW3, SpeedP, SpeedE3, SpeedEE3);
+				Speedw3 = cell_face_value_global(ishconvection, (Fw3), SpeedWW3, SpeedW3, SpeedP, SpeedE3);
+				// Y - direction
+				Speedn3 = cell_face_value_global(ishconvection, (Fn3), SpeedS3, SpeedP, SpeedN3, SpeedNN3);
+				Speeds3 = cell_face_value_global(ishconvection, (Fs3), SpeedSS3, SpeedS3, SpeedP, SpeedN3);
+				// Z - direction
+				Speedt3 = cell_face_value_global(ishconvection, (Ft3), SpeedB3, SpeedP, SpeedT3, SpeedTT3);
+				Speedb3 = cell_face_value_global(ishconvection, (Fb3), SpeedBB3, SpeedB3, SpeedP, SpeedT3);
+
+
+				// X - direction
+				Speede4 = cell_face_value_global(ishconvection, (Fe4), SpeedW4, SpeedP, SpeedE4, SpeedEE4);
+				Speedw4 = cell_face_value_global(ishconvection, (Fw4), SpeedWW4, SpeedW4, SpeedP, SpeedE4);
+				// Y - direction
+				Speedn4 = cell_face_value_global(ishconvection, (Fn4), SpeedS4, SpeedP, SpeedN4, SpeedNN4);
+				Speeds4 = cell_face_value_global(ishconvection, (Fs4), SpeedSS4, SpeedS4, SpeedP, SpeedN4);
+				// Z - direction
+				Speedt4 = cell_face_value_global(ishconvection, (Ft4), SpeedB4, SpeedP, SpeedT4, SpeedTT4);
+				Speedb4 = cell_face_value_global(ishconvection, (Fb4), SpeedBB4, SpeedB4, SpeedP, SpeedT4);
+
+			}
 
 		}
 
@@ -5810,6 +9826,45 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 				// Z - direction
 				Speedt = workQUICK(dz, 2.0*(positionzT - positionzt), positionzB, positionzP, positionzT, positionzTT, SpeedB, SpeedP, SpeedT, SpeedTT, (Ft));
 				Speedb = workQUICK(2.0*(positionzb - positionzB), dz, positionzBB, positionzB, positionzP, positionzT, SpeedBB, SpeedB, SpeedP, SpeedT, (Fb));
+
+
+				if (b_on_adaptive_local_refinement_mesh) {
+
+					// X - direction
+					Speede2 = workQUICK(dx, 2.0 * (positionxE2 - positionxe2), positionxW2, positionxP, positionxE2, positionxEE2, SpeedW2, SpeedP, SpeedE2, SpeedEE2, (Fe2));
+					Speedw2 = workQUICK(2.0 * (positionxw2 - positionxW2), dx, positionxWW2, positionxW2, positionxP, positionxE2, SpeedWW2, SpeedW2, SpeedP, SpeedE2, (Fw2));
+					// Y - direction
+					Speedn2 = workQUICK(dy, 2.0 * (positionyN2 - positionyn2), positionyS2, positionyP, positionyN2, positionyNN2, SpeedS2, SpeedP, SpeedN2, SpeedNN2, (Fn2));
+					Speeds2 = workQUICK(2.0 * (positionys2 - positionyS2), dy, positionySS2, positionyS2, positionyP, positionyN2, SpeedSS2, SpeedS2, SpeedP, SpeedN2, (Fs2));
+					// Z - direction
+					Speedt2 = workQUICK(dz, 2.0 * (positionzT2 - positionzt2), positionzB2, positionzP, positionzT2, positionzTT2, SpeedB2, SpeedP, SpeedT2, SpeedTT2, (Ft2));
+					Speedb2 = workQUICK(2.0 * (positionzb2 - positionzB2), dz, positionzBB2, positionzB2, positionzP, positionzT2, SpeedBB2, SpeedB2, SpeedP, SpeedT2, (Fb2));
+
+
+					// X - direction
+					Speede3 = workQUICK(dx, 2.0 * (positionxE3 - positionxe3), positionxW3, positionxP, positionxE3, positionxEE3, SpeedW3, SpeedP, SpeedE3, SpeedEE3, (Fe3));
+					Speedw3 = workQUICK(2.0 * (positionxw3 - positionxW3), dx, positionxWW3, positionxW3, positionxP, positionxE3, SpeedWW3, SpeedW3, SpeedP, SpeedE3, (Fw3));
+					// Y - direction
+					Speedn3 = workQUICK(dy, 2.0 * (positionyN3 - positionyn3), positionyS3, positionyP, positionyN3, positionyNN3, SpeedS3, SpeedP, SpeedN3, SpeedNN3, (Fn3));
+					Speeds3 = workQUICK(2.0 * (positionys3 - positionyS3), dy, positionySS3, positionyS3, positionyP, positionyN3, SpeedSS3, SpeedS3, SpeedP, SpeedN3, (Fs3));
+					// Z - direction
+					Speedt3 = workQUICK(dz, 2.0 * (positionzT3 - positionzt3), positionzB3, positionzP, positionzT3, positionzTT3, SpeedB3, SpeedP, SpeedT3, SpeedTT3, (Ft3));
+					Speedb3 = workQUICK(2.0 * (positionzb3 - positionzB3), dz, positionzBB3, positionzB3, positionzP, positionzT3, SpeedBB3, SpeedB3, SpeedP, SpeedT3, (Fb3));
+
+
+					// X - direction
+					Speede4 = workQUICK(dx, 2.0 * (positionxE4 - positionxe4), positionxW4, positionxP, positionxE4, positionxEE4, SpeedW4, SpeedP, SpeedE4, SpeedEE4, (Fe4));
+					Speedw4 = workQUICK(2.0 * (positionxw4 - positionxW4), dx, positionxWW4, positionxW4, positionxP, positionxE4, SpeedWW4, SpeedW4, SpeedP, SpeedE4, (Fw4));
+					// Y - direction
+					Speedn4 = workQUICK(dy, 2.0 * (positionyN4 - positionyn4), positionyS4, positionyP, positionyN4, positionyNN4, SpeedS4, SpeedP, SpeedN4, SpeedNN4, (Fn4));
+					Speeds4 = workQUICK(2.0 * (positionys4 - positionyS4), dy, positionySS4, positionyS4, positionyP, positionyN4, SpeedSS4, SpeedS4, SpeedP, SpeedN4, (Fs4));
+					// Z - direction
+					Speedt4 = workQUICK(dz, 2.0 * (positionzT4 - positionzt4), positionzB4, positionzP, positionzT4, positionzTT4, SpeedB4, SpeedP, SpeedT4, SpeedTT4, (Ft4));
+					Speedb4 = workQUICK(2.0 * (positionzb4 - positionzB4), dz, positionzBB4, positionzB4, positionzP, positionzT4, SpeedBB4, SpeedB4, SpeedP, SpeedT4, (Fb4));
+
+				}
+
+
 			}
 
 			if ((ishconvection > UNEVENQUICK) && (ishconvection <= UNEVEN_CUBISTA)) {
@@ -5830,6 +9885,43 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 				// debug первая итерация особая.
 				//printf("%f, %f, %f, %f, %f, %f\n",Speede,Speedw,Speedn,Speeds,Speedt,Speedb);
 				//getchar();
+
+				if (b_on_adaptive_local_refinement_mesh) {
+
+					// X - direction
+					Speede2 = workKN_VOLKOV(positionxW2, positionxP, positionxE2, positionxEE2, SpeedW2, SpeedP, SpeedE2, SpeedEE2, (Fe2), ishconvection);
+					Speedw2 = workKN_VOLKOV(positionxWW2, positionxW2, positionxP, positionxE2, SpeedWW2, SpeedW2, SpeedP, SpeedE2, (Fw2), ishconvection);
+					// Y - direction
+					Speedn2 = workKN_VOLKOV(positionyS2, positionyP, positionyN2, positionyNN2, SpeedS2, SpeedP, SpeedN2, SpeedNN2, (Fn2), ishconvection);
+					Speeds2 = workKN_VOLKOV(positionySS2, positionyS2, positionyP, positionyN2, SpeedSS2, SpeedS2, SpeedP, SpeedN2, (Fs2), ishconvection);
+					// Z - direction
+					Speedt2 = workKN_VOLKOV(positionzB2, positionzP, positionzT2, positionzTT2, SpeedB2, SpeedP, SpeedT2, SpeedTT2, (Ft2), ishconvection);
+					Speedb2 = workKN_VOLKOV(positionzBB2, positionzB2, positionzP, positionzT2, SpeedBB2, SpeedB2, SpeedP, SpeedT2, (Fb2), ishconvection);
+
+
+					// X - direction
+					Speede3 = workKN_VOLKOV(positionxW3, positionxP, positionxE3, positionxEE3, SpeedW3, SpeedP, SpeedE3, SpeedEE3, (Fe3), ishconvection);
+					Speedw3 = workKN_VOLKOV(positionxWW3, positionxW3, positionxP, positionxE3, SpeedWW3, SpeedW3, SpeedP, SpeedE3, (Fw3), ishconvection);
+					// Y - direction
+					Speedn3 = workKN_VOLKOV(positionyS3, positionyP, positionyN3, positionyNN3, SpeedS3, SpeedP, SpeedN3, SpeedNN3, (Fn3), ishconvection);
+					Speeds3 = workKN_VOLKOV(positionySS3, positionyS3, positionyP, positionyN3, SpeedSS3, SpeedS3, SpeedP, SpeedN3, (Fs3), ishconvection);
+					// Z - direction
+					Speedt3 = workKN_VOLKOV(positionzB3, positionzP, positionzT3, positionzTT3, SpeedB3, SpeedP, SpeedT3, SpeedTT3, (Ft3), ishconvection);
+					Speedb3 = workKN_VOLKOV(positionzBB3, positionzB3, positionzP, positionzT3, SpeedBB3, SpeedB3, SpeedP, SpeedT3, (Fb3), ishconvection);
+
+
+					// X - direction
+					Speede4 = workKN_VOLKOV(positionxW4, positionxP, positionxE4, positionxEE4, SpeedW4, SpeedP, SpeedE4, SpeedEE4, (Fe4), ishconvection);
+					Speedw4 = workKN_VOLKOV(positionxWW4, positionxW4, positionxP, positionxE4, SpeedWW4, SpeedW4, SpeedP, SpeedE4, (Fw4), ishconvection);
+					// Y - direction
+					Speedn4 = workKN_VOLKOV(positionyS4, positionyP, positionyN4, positionyNN4, SpeedS4, SpeedP, SpeedN4, SpeedNN4, (Fn4), ishconvection);
+					Speeds4 = workKN_VOLKOV(positionySS4, positionyS4, positionyP, positionyN4, SpeedSS4, SpeedS4, SpeedP, SpeedN4, (Fs4), ishconvection);
+					// Z - direction
+					Speedt4 = workKN_VOLKOV(positionzB4, positionzP, positionzT4, positionzTT4, SpeedB4, SpeedP, SpeedT4, SpeedTT4, (Ft4), ishconvection);
+					Speedb4 = workKN_VOLKOV(positionzBB4, positionzB4, positionzP, positionzT4, SpeedBB4, SpeedB4, SpeedP, SpeedT4, (Fb4), ishconvection);
+
+				}
+
 			}
 
 		} // endif (ishconvection >= UNEVENQUICK)
@@ -5884,6 +9976,103 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			sumanb += Dt + fmax(+(Ft), 0.0);
 			sumanb += Db + fmax(-(Fb), 0.0);
 			*/
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
+			 // Нужно просто UDS.
+			 // так рекомендуют в интернетах.
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
+
+
+				// 08.05.2017.
+				// Моя наработка:
+				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += De2 + fmax(+(Fe2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dw2 + fmax(-(Fw2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dn2 + fmax(+(Fn2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Ds2 + fmax(-(Fs2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dt2 + fmax(+(Ft2), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Db2 + fmax(-(Fb2), 0.0);
+
+				/*
+				sumanb += De2 + fmax(+(Fe2), 0.0);
+				sumanb += Dw2 + fmax(-(Fw2), 0.0);
+				sumanb += Dn2 + fmax(+(Fn2), 0.0);
+				sumanb += Ds2 + fmax(-(Fs2), 0.0);
+				sumanb += Dt2 + fmax(+(Ft2), 0.0);
+				sumanb += Db2 + fmax(-(Fb2), 0.0);
+				*/
+
+
+				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
+		   // Нужно просто UDS.
+		   // так рекомендуют в интернетах.
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
+
+
+				// 08.05.2017.
+				// Моя наработка:
+				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += De3 + fmax(+(Fe3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dw3 + fmax(-(Fw3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dn3 + fmax(+(Fn3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Ds3 + fmax(-(Fs3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dt3 + fmax(+(Ft3), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Db3 + fmax(-(Fb3), 0.0);
+
+				/*
+				sumanb += De3 + fmax(+(Fe3), 0.0);
+				sumanb += Dw3 + fmax(-(Fw3), 0.0);
+				sumanb += Dn3 + fmax(+(Fn3), 0.0);
+				sumanb += Ds3 + fmax(-(Fs3), 0.0);
+				sumanb += Dt3 + fmax(+(Ft3), 0.0);
+				sumanb += Db3 + fmax(-(Fb3), 0.0);
+				*/
+
+
+				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
+		   // Нужно просто UDS.
+		   // так рекомендуют в интернетах.
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
+
+
+				// 08.05.2017.
+				// Моя наработка:
+				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += De4 + fmax(+(Fe4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dw4 + fmax(-(Fw4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dn4 + fmax(+(Fn4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Ds4 + fmax(-(Fs4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Dt4 + fmax(+(Ft4), 0.0);
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += Db4 + fmax(-(Fb4), 0.0);
+
+                /*
+				sumanb += De4 + fmax(+(Fe4), 0.0);
+				sumanb += Dw4 + fmax(-(Fw4), 0.0);
+				sumanb += Dn4 + fmax(+(Fn4), 0.0);
+				sumanb += Ds4 + fmax(-(Fs4), 0.0);
+				sumanb += Dt4 + fmax(+(Ft4), 0.0);
+				sumanb += Db4 + fmax(-(Fb4), 0.0);
+				*/
+
+			}
+
 		}
 		else {
 
@@ -5998,10 +10187,346 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 				}
 			}
 
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// Вблизи стенки порядок схемы понижается до UDS.
+				if (!bE2) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
+				}
+				else {
+					integer inumber = iE2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 = De2 + fabs(Fe2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 = De2 + fabs(Fe2);
+					}
+				}
+
+				if (!bW2) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
+				}
+				else {
+					integer inumber = iW2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 = Dw2 + fabs(Fw2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 = Dw2 + fabs(Fw2);
+					}
+				}
+
+				if (!bN2) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
+				}
+				else {
+					integer inumber = iN2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 = Dn2 + fabs(Fn2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 = Dn2 + fabs(Fn2);
+					}
+				}
+
+				if (!bS2) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
+				}
+				else {
+					integer inumber = iS2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 = Ds2 + fabs(Fs2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 = Ds2 + fabs(Fs2);
+					}
+				}
+
+				if (!bT2) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
+				}
+				else {
+					integer inumber = iT2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 = Dt2 + fabs(Ft2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 = Dt2 + fabs(Ft2);
+					}
+				}
+
+				if (!bB2) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
+				}
+				else {
+					integer inumber = iB2 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2 = Db2 + fabs(Fb2);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2 = Db2 + fabs(Fb2);
+					}
+				}
+
+
+				// Вблизи стенки порядок схемы понижается до UDS.
+				if (!bE3) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
+				}
+				else {
+					integer inumber = iE3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 = De3 + fabs(Fe3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 = De3 + fabs(Fe3);
+					}
+				}
+
+				if (!bW3) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
+				}
+				else {
+					integer inumber = iW3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 = Dw3 + fabs(Fw3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 = Dw3 + fabs(Fw3);
+					}
+				}
+
+				if (!bN3) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
+				}
+				else {
+					integer inumber = iN3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 = Dn3 + fabs(Fn3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 = Dn3 + fabs(Fn3);
+					}
+				}
+
+				if (!bS3) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
+				}
+				else {
+					integer inumber = iS3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 = Ds3 + fabs(Fs3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 = Ds3 + fabs(Fs3);
+					}
+				}
+
+				if (!bT3) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
+				}
+				else {
+					integer inumber = iT3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 = Dt3 + fabs(Ft3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 = Dt3 + fabs(Ft3);
+					}
+				}
+
+				if (!bB3) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
+				}
+				else {
+					integer inumber = iB3 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3 = Db3 + fabs(Fb3);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3 = Db3 + fabs(Fb3);
+					}
+				}
+
+
+				// Вблизи стенки порядок схемы понижается до UDS.
+				if (!bE4) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
+				}
+				else {
+					integer inumber = iE4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 = De4 + fabs(Fe4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 = De4 + fabs(Fe4);
+					}
+				}
+
+				if (!bW4) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
+				}
+				else {
+					integer inumber = iW4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 = Dw4 + fabs(Fw4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 = Dw4 + fabs(Fw4);
+					}
+				}
+
+				if (!bN4) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
+				}
+				else {
+					integer inumber = iN4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 = Dn4 + fabs(Fn4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 = Dn4 + fabs(Fn4);
+					}
+				}
+
+				if (!bS4) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
+				}
+				else {
+					integer inumber = iS4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 = Ds4 + fabs(Fs4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 = Ds4 + fabs(Fs4);
+					}
+				}
+
+				if (!bT4) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
+				}
+				else {
+					integer inumber = iT4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 = Dt4 + fabs(Ft4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 = Dt4 + fabs(Ft4);
+					}
+				}
+
+				if (!bB4) {
+					// строго внутренняя.
+					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
+				}
+				else {
+					integer inumber = iB4 - maxelm;
+					if (border_neighbor[inumber].MCB == (ls + lw)) {
+						// условие по умолчанию: твёрдая стенка.
+						// усиление влияния нуля на границе, нам же нужно влияние стенки.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = Db4 + fabs(Fb4);
+					}
+					else {
+						// Во всех остальных случаях также снижаем порядок до первого.
+						sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = Db4 + fabs(Fb4);
+					}
+				}
+
+
+
+			}
+
 			// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
 			sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap = sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab;
 
 			//sumanb = sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab;
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2;
+
+				//sumanb += sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at2 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab2;
+
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3;
+
+				//sumanb += sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at3 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab3;
+
+				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap += sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4;
+
+				//sumanb += sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 + sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4;
+
+
+			}
 
 		}
 
@@ -6027,6 +10552,46 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			// Z - direction
 			attrs += -fmax((Ft), 0)*(Speedt - SpeedP) + fmax(-(Ft), 0)*(Speedt - SpeedT);
 			attrs += -fmax(-(Fb), 0)*(Speedb - SpeedP) + fmax((Fb), 0)*(Speedb - SpeedB);
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				// Вклад в правую часть (метод отложенной коррекции):
+				// X - direction
+				attrs += -fmax((Fe2), 0) * (Speede2 - SpeedP) + fmax(-(Fe2), 0) * (Speede2 - SpeedE2);
+				attrs += -fmax(-(Fw2), 0) * (Speedw2 - SpeedP) + fmax((Fw2), 0) * (Speedw2 - SpeedW2);
+				// Y - direction
+				attrs += -fmax((Fn2), 0) * (Speedn2 - SpeedP) + fmax(-(Fn2), 0) * (Speedn2 - SpeedN2);
+				attrs += -fmax(-(Fs2), 0) * (Speeds2 - SpeedP) + fmax((Fs2), 0) * (Speeds2 - SpeedS2);
+				// Z - direction
+				attrs += -fmax((Ft2), 0) * (Speedt2 - SpeedP) + fmax(-(Ft2), 0) * (Speedt2 - SpeedT2);
+				attrs += -fmax(-(Fb2), 0) * (Speedb2 - SpeedP) + fmax((Fb2), 0) * (Speedb2 - SpeedB2);
+
+
+				// Вклад в правую часть (метод отложенной коррекции):
+				// X - direction
+				attrs += -fmax((Fe3), 0) * (Speede3 - SpeedP) + fmax(-(Fe3), 0) * (Speede3 - SpeedE3);
+				attrs += -fmax(-(Fw3), 0) * (Speedw3 - SpeedP) + fmax((Fw3), 0) * (Speedw3 - SpeedW3);
+				// Y - direction
+				attrs += -fmax((Fn3), 0) * (Speedn3 - SpeedP) + fmax(-(Fn3), 0) * (Speedn3 - SpeedN3);
+				attrs += -fmax(-(Fs3), 0) * (Speeds3 - SpeedP) + fmax((Fs3), 0) * (Speeds3 - SpeedS3);
+				// Z - direction
+				attrs += -fmax((Ft3), 0) * (Speedt3 - SpeedP) + fmax(-(Ft3), 0) * (Speedt3 - SpeedT3);
+				attrs += -fmax(-(Fb3), 0) * (Speedb3 - SpeedP) + fmax((Fb3), 0) * (Speedb3 - SpeedB3);
+
+
+				// Вклад в правую часть (метод отложенной коррекции):
+				// X - direction
+				attrs += -fmax((Fe4), 0) * (Speede4 - SpeedP) + fmax(-(Fe4), 0) * (Speede4 - SpeedE4);
+				attrs += -fmax(-(Fw4), 0) * (Speedw4 - SpeedP) + fmax((Fw4), 0) * (Speedw4 - SpeedW4);
+				// Y - direction
+				attrs += -fmax((Fn4), 0) * (Speedn4 - SpeedP) + fmax(-(Fn4), 0) * (Speedn4 - SpeedN4);
+				attrs += -fmax(-(Fs4), 0) * (Speeds4 - SpeedP) + fmax((Fs4), 0) * (Speeds4 - SpeedS4);
+				// Z - direction
+				attrs += -fmax((Ft4), 0) * (Speedt4 - SpeedP) + fmax(-(Ft4), 0) * (Speedt4 - SpeedT4);
+				attrs += -fmax(-(Fb4), 0) * (Speedb4 - SpeedP) + fmax((Fb4), 0) * (Speedb4 - SpeedB4);
+
+			}
+
 		}
 		else {
 			// Неверно.
@@ -6050,6 +10615,69 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			if (!bB) {
 				attrs += -fmax(-(Fb), 0)*(Speedb - SpeedP) + fmax((Fb), 0)*(Speedb - SpeedB);
+			}
+
+			if (b_on_adaptive_local_refinement_mesh) {
+
+				if (!bE2) {
+					attrs += -fmax((Fe2), 0) * (Speede2 - SpeedP) + fmax(-(Fe2), 0) * (Speede2 - SpeedE2);
+				}
+				if (!bW2) {
+					attrs += -fmax(-(Fw2), 0) * (Speedw2 - SpeedP) + fmax((Fw2), 0) * (Speedw2 - SpeedW2);
+				}
+				if (!bN2) {
+					attrs += -fmax((Fn2), 0) * (Speedn2 - SpeedP) + fmax(-(Fn2), 0) * (Speedn2 - SpeedN2);
+				}
+				if (!bS2) {
+					attrs += -fmax(-(Fs2), 0) * (Speeds2 - SpeedP) + fmax((Fs2), 0) * (Speeds2 - SpeedS2);
+				}
+				if (!bT2) {
+					attrs += -fmax((Ft2), 0) * (Speedt2 - SpeedP) + fmax(-(Ft2), 0) * (Speedt2 - SpeedT2);
+				}
+				if (!bB2) {
+					attrs += -fmax(-(Fb2), 0) * (Speedb2 - SpeedP) + fmax((Fb2), 0) * (Speedb2 - SpeedB2);
+				}
+
+
+				if (!bE3) {
+					attrs += -fmax((Fe3), 0) * (Speede3 - SpeedP) + fmax(-(Fe3), 0) * (Speede3 - SpeedE3);
+				}
+				if (!bW3) {
+					attrs += -fmax(-(Fw3), 0) * (Speedw3 - SpeedP) + fmax((Fw3), 0) * (Speedw3 - SpeedW3);
+				}
+				if (!bN3) {
+					attrs += -fmax((Fn3), 0) * (Speedn3 - SpeedP) + fmax(-(Fn3), 0) * (Speedn3 - SpeedN3);
+				}
+				if (!bS3) {
+					attrs += -fmax(-(Fs3), 0) * (Speeds3 - SpeedP) + fmax((Fs3), 0) * (Speeds3 - SpeedS3);
+				}
+				if (!bT3) {
+					attrs += -fmax((Ft3), 0) * (Speedt3 - SpeedP) + fmax(-(Ft3), 0) * (Speedt3 - SpeedT3);
+				}
+				if (!bB3) {
+					attrs += -fmax(-(Fb3), 0) * (Speedb3 - SpeedP) + fmax((Fb3), 0) * (Speedb3 - SpeedB3);
+				}
+
+
+				if (!bE4) {
+					attrs += -fmax((Fe4), 0) * (Speede4 - SpeedP) + fmax(-(Fe4), 0) * (Speede4 - SpeedE4);
+				}
+				if (!bW4) {
+					attrs += -fmax(-(Fw4), 0) * (Speedw4 - SpeedP) + fmax((Fw4), 0) * (Speedw4 - SpeedW4);
+				}
+				if (!bN4) {
+					attrs += -fmax((Fn4), 0) * (Speedn4 - SpeedP) + fmax(-(Fn4), 0) * (Speedn4 - SpeedN4);
+				}
+				if (!bS4) {
+					attrs += -fmax(-(Fs4), 0) * (Speeds4 - SpeedP) + fmax((Fs4), 0) * (Speeds4 - SpeedS4);
+				}
+				if (!bT4) {
+					attrs += -fmax((Ft4), 0) * (Speedt4 - SpeedP) + fmax(-(Ft4), 0) * (Speedt4 - SpeedT4);
+				}
+				if (!bB4) {
+					attrs += -fmax(-(Fb4), 0) * (Speedb4 - SpeedP) + fmax((Fb4), 0) * (Speedb4 - SpeedB4);
+				}
+
 			}
 
 		}
@@ -6367,7 +10995,7 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 	WALL* w,
 	//integer iVar,
 	equation3D_bon* &slb,
-	TOCHKA* pa, integer** nvtx, doublereal** prop_b, doublereal** prop,
+	TOCHKA* pa, int** nvtx, float** prop_b, float** prop,
 	doublereal** potent,
 	//, integer iflowregime
 	doublereal* &distance_to_wall,

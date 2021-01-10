@@ -374,10 +374,10 @@ void calculate_Network_T(TEMPER& t,
 			// Находим количество соседей блока i, в массиве id он имеет номер ic.
 			for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
 				if (t.whot_is_block[j_1] == i) {
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -385,10 +385,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -396,10 +397,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -407,10 +409,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -418,10 +421,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -429,10 +433,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -440,10 +445,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -451,10 +457,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -462,10 +469,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -473,10 +481,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -484,10 +493,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -495,10 +505,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -506,10 +517,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -517,10 +529,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -528,10 +541,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -539,10 +553,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -550,10 +565,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -561,10 +577,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -572,10 +589,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -583,10 +601,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -594,10 +613,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -605,10 +625,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -616,10 +637,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -627,10 +649,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -650,9 +673,9 @@ void calculate_Network_T(TEMPER& t,
 			for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
 				if (t.whot_is_block[j_1] == i) {
 					//стенки 
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[E_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -670,9 +693,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -690,9 +714,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -710,9 +735,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -730,8 +756,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][0] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -746,8 +773,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -762,8 +790,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -778,8 +807,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -794,9 +824,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][0] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][0][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -813,9 +844,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -832,9 +864,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -851,9 +884,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -870,8 +904,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][0] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][0][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -886,8 +921,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -902,8 +938,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -918,8 +955,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -934,9 +972,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[T_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -953,9 +991,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -972,9 +1011,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -991,9 +1031,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1010,8 +1051,8 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[B_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1026,8 +1067,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1042,8 +1084,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1058,8 +1101,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1102,10 +1146,11 @@ void calculate_Network_T(TEMPER& t,
 			for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
 				if (t.whot_is_block[j_1] == i) {
 
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1115,10 +1160,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1128,10 +1174,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1141,10 +1188,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1154,10 +1202,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1167,10 +1215,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1180,10 +1229,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1193,10 +1243,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1206,10 +1257,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1219,10 +1270,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1232,10 +1284,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1245,10 +1298,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1258,10 +1312,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1271,10 +1325,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1284,10 +1339,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1297,10 +1353,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1310,10 +1367,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1323,10 +1381,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1336,10 +1395,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1349,10 +1409,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1362,10 +1423,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1375,10 +1437,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1388,10 +1451,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1401,10 +1465,11 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -1429,9 +1494,9 @@ void calculate_Network_T(TEMPER& t,
 			for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
 				if (t.whot_is_block[j_1] == i) {
 					//стенки 
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[E_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1452,9 +1517,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1475,9 +1541,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1498,9 +1565,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1521,8 +1589,8 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[W_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1540,8 +1608,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1559,8 +1628,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1578,8 +1648,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1597,9 +1668,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[N_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1619,9 +1690,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1641,9 +1713,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1663,9 +1736,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1685,8 +1759,8 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[S_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1704,8 +1778,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1723,8 +1798,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1742,8 +1818,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1761,9 +1838,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[T_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1783,9 +1860,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1805,9 +1883,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1827,9 +1906,10 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -1849,8 +1929,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][0] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1868,8 +1949,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1887,8 +1969,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1906,8 +1989,9 @@ void calculate_Network_T(TEMPER& t,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -1940,10 +2024,10 @@ void calculate_Network_T(TEMPER& t,
 			// Вычисление общей площади контакта у блоков.
 			for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
 				if (t.whot_is_block[j_1] == i) {
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -1959,10 +2043,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -1978,10 +2063,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -1997,10 +2083,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2016,10 +2103,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2035,10 +2123,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr) && 
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2054,10 +2143,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2073,10 +2163,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2092,10 +2183,10 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2111,10 +2202,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2130,10 +2222,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2149,10 +2242,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2168,10 +2262,10 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2187,10 +2281,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2206,10 +2301,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2225,10 +2321,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2244,10 +2341,10 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2263,10 +2360,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2282,10 +2380,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2301,10 +2400,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2320,10 +2420,10 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2339,10 +2439,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2358,10 +2459,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2377,10 +2479,11 @@ void calculate_Network_T(TEMPER& t,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2399,9 +2502,9 @@ void calculate_Network_T(TEMPER& t,
 
 					// Стенки.
 
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[E_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2417,9 +2520,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2435,9 +2539,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2453,9 +2558,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2471,9 +2577,9 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[W_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2489,9 +2595,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2507,9 +2614,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2525,9 +2633,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2543,9 +2652,9 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[N_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2561,9 +2670,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2579,9 +2689,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2597,9 +2708,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2615,9 +2727,9 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[S_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2637,9 +2749,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2659,9 +2772,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2681,9 +2795,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2703,9 +2818,9 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[T_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2721,9 +2836,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2739,9 +2855,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2757,9 +2874,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2775,9 +2893,9 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[B_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2793,9 +2911,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2811,9 +2930,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2829,9 +2949,10 @@ void calculate_Network_T(TEMPER& t,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -2925,6 +3046,17 @@ void calculate_Network_T(TEMPER& t,
 	printf("Assemble matrix Ok.");
 	//system("PAUSE");
 
+	// Хранит тепловые мощности в вт для каждой ячейки от радиационных потоков.
+	//doublereal *rthdsd_radiation_global = new doublereal[t.maxelm];
+	doublereal *rthdsd_radiation_loc = new doublereal[maxelm + lw];
+	doublereal *rthdsd_radiation_loc_relax = new doublereal[maxelm + lw];
+
+	for (integer i = 0; i < maxelm + lw; i++) {
+		rthdsd_radiation_loc_relax[i] = 0.0;
+	}
+
+
+
 	doublereal tmax_old = -1.0e30;
 
 	doublereal* potent_old = new doublereal[maxelm + lw];
@@ -2938,6 +3070,17 @@ void calculate_Network_T(TEMPER& t,
 	// solve SLAU
 	// Seidel method.
 	for ( ;  ; ) {
+
+
+		// Нулевая тепловая мощность от радиационных потоков.
+		//#pragma omp parallel for
+		//				for (integer i = 0; i < t.maxelm; i++) {
+		//				rthdsd_radiation_global[i] = 0.0;
+		//		}
+
+		for (integer i = 0; i < maxelm + lw; i++) {
+			rthdsd_radiation_loc[i] = 0.0;
+		}
 
 		iter++;
 		if (iter > 300000) break;
@@ -2963,13 +3106,39 @@ void calculate_Network_T(TEMPER& t,
 			}
 		}
 		if ((fabs(r2) < 1.0e-2) && (fabs(tmax_old - tmax) < 0.0005)) {
-			//std::cout << "break bPhysics_stop, dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+			std::cout << "break bPhysics_stop, dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+			getchar();
 			break;
 		}
 		if ((fabs(r2) < 1.4e-2) && (fabs(tmax_old - tmax) < 0.0005)) {
-			//std::cout << "break bPhysics_stop, dres<1.3e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+			std::cout << "break bPhysics_stop, dres<1.3e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+			getchar();
 			break;
 		}
+
+
+		bool bvacuum_Prism123 = false;
+		for (integer i237 = 1; i237 < lb; i237++) {
+			if (b[i237].radiation.binternalRadiation) {
+				bvacuum_Prism123 = true;
+			}
+		}
+		if (bvacuum_Prism123) {
+
+			//if (iter > 249) break; // 02.11.2020
+
+			//if ((fabs(r2) < 1.4e-2) && (fabs(tmax_old - tmax) < 0.01))
+			//if ((fabs(tmax_old - tmax) < 0.0005))
+			//{
+			// Сразу досрочный выход из цикла решения но до истинного решения еще далеко.
+			//std::cout << "break bPhysics_stop, NO dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+			//getchar();
+			//break;
+			//}
+		}
+
+
+
 		r1 = r2;
 
 		tmax_old = tmax;
@@ -2985,13 +3154,118 @@ void calculate_Network_T(TEMPER& t,
 		}
 		row_ptr[0] = 0;
 
+		if (bvacuum_Prism123) {
+			// Вычисление лучистых потоков на границе вакуумных промежутков.
+			// Вычисление осреднённых температур в К на границах вакуумных промежутков:
+			for (integer i = 0; i < lb; i++) {
+				update_avg_temperatures(t.potent, b[i]);
+			}
+
+			// Вычисление плотностей радиационных тепловых потоков:
+			for (integer i = 0; i < lb; i++) {
+				calculation_density_radiation_heat_flux(b[i]);
+			}
+		}
+
+		if (0) {
+			/*
+			radiosity_patch_for_vacuum_Prism_Object_(rthdsd_radiation_global, b, lb, t.maxelm, t.whot_is_block);
+
+			for (integer i_4 = 0; i_4 < t.maxelm; i_4++) {
+			rthdsd_radiation_loc[id_reverse[t.whot_is_block[i_4]]] += rthdsd_radiation_global[i_4];
+			}
+
+			for (integer i = 0; i < maxelm + lw; i++) {
+			doublereal alphaR = 1.0;
+			rthdsd_radiation_loc[i] = alphaR*rthdsd_radiation_loc[i] + (1.0 - alphaR)*rthdsd_radiation_loc_relax[i];
+			}
+
+			for (integer i = 0; i < maxelm + lw; i++) {
+			rthdsd_radiation_loc_relax[i] = rthdsd_radiation_loc[i];
+			}
+			*/
+		}
+		else {
+			for (integer i = 0; i < maxelm; i++) {
+				if (b[id[i]].radiation.binternalRadiation) {
+					if ((b[id[i]].radiation.nodelistW != nullptr) &&
+						(b[id[i]].radiation.nodelistE != nullptr) &&
+						(b[id[i]].radiation.nodelistS != nullptr) &&
+						(b[id[i]].radiation.nodelistN != nullptr) &&
+						(b[id[i]].radiation.nodelistB != nullptr) &&
+						(b[id[i]].radiation.nodelistT != nullptr))
+					{
+						for (integer j_1 = 0; j_1 < inumber_neighbour[i]; j_1++) {
+							if (j_1 < inumber_neighbour_only_body[i]) {
+								// блок id[i] к блоку ilink[i][j_1].
+								if ((b[ilink[i][j_1]].g.itypegeom == PRISM) && (!b[ilink[i][j_1]].radiation.binternalRadiation)) {
+									if (fabs(b[id[i]].g.xS - b[ilink[i][j_1]].g.xE) < 1.0e-20) {
+										// W ilink[i][j_1]] ---E bid[i] 
+										rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += -(b[id[i]].radiation.JW - b[id[i]].radiation.JE)*dS[i][j_1];
+									}
+
+									if (fabs(b[id[i]].g.xE - b[ilink[i][j_1]].g.xS) < 1.0e-20) {
+										// E ilink[i][j_1]] ---W bid[i] 
+										rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += (b[id[i]].radiation.JW - b[id[i]].radiation.JE)*dS[i][j_1];
+									}
+
+									if (fabs(b[id[i]].g.yS - b[ilink[i][j_1]].g.yE) < 1.0e-20) {
+										// S ilink[i][j_1]] ---N bid[i] 
+										rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += -(b[id[i]].radiation.JS - b[id[i]].radiation.JN)*dS[i][j_1];
+									}
+
+									if (fabs(b[id[i]].g.yE - b[ilink[i][j_1]].g.yS) < 1.0e-20) {
+										// N ilink[i][j_1]] ---S bid[i] 
+										rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += (b[id[i]].radiation.JS - b[id[i]].radiation.JN)*dS[i][j_1];
+									}
+
+									if (fabs(b[id[i]].g.zS - b[ilink[i][j_1]].g.zE) < 1.0e-20) {
+										// B ilink[i][j_1]] ---T bid[i] 
+										rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += -(b[id[i]].radiation.JB - b[id[i]].radiation.JT)*dS[i][j_1];
+									}
+
+									if (fabs(b[id[i]].g.zE - b[ilink[i][j_1]].g.zS) < 1.0e-20) {
+										// T ilink[i][j_1]] ---B bid[i] 
+										rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += (b[id[i]].radiation.JB - b[id[i]].radiation.JT)*dS[i][j_1];
+									}
+								}
+
+							}
+						}
+					}
+				}
+			}
+
+			for (integer i = 0; i < maxelm + lw; i++) {
+				doublereal alphaR = 1.0;
+				rthdsd_radiation_loc[i] = alphaR*rthdsd_radiation_loc[i] + (1.0 - alphaR)*rthdsd_radiation_loc_relax[i];
+			}
+
+			for (integer i = 0; i < maxelm + lw; i++) {
+				rthdsd_radiation_loc_relax[i] = rthdsd_radiation_loc[i];
+			}
+		}
+
+		for (integer i = 0; i < maxelm + lw; i++) {
+			if (i < maxelm) {
+				// Внутренний блок.
+				if (fabs(rthdsd_radiation_loc[i]) > 1.0e-300) {
+					//std::cout << b[id[i]].name << " " << rthdsd_radiation_loc[i] << " W\n";
+
+				}
+			}
+		}
+		//system("PAUSE");
+
+
 		for (integer i = 0; i < maxelm + lw; i++) {
 			if (i < maxelm) {
 				// Внутренний блок.
 				rthdsd[i] = (b[id[i]].g.xE - b[id[i]].g.xS) *
 					(b[id[i]].g.yE - b[id[i]].g.yS) *
 					(b[id[i]].g.zE - b[id[i]].g.zS) *
-					get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]);
+					get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i])+
+					rthdsd_radiation_loc[i]; // Тепловая мощность в Вт из за излучения, принадлежащая блоку id[i].
 			}
 			else {
 				// стенка.

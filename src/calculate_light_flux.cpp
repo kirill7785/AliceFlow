@@ -127,8 +127,9 @@ void ray_tracing(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1, TEMPER
 
 			// вызов.
 
-			if (t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1 < t.maxelm) {
-				integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[E_SIDE][0] != nullptr)&&
+				(t.neighbors_for_the_internal_node[E_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -161,8 +162,9 @@ void ray_tracing(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1, TEMPER
 		if (permissible758) {
 
 
-			if (t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1 < t.maxelm) {
-				integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[W_SIDE][0] != nullptr)&&
+				(t.neighbors_for_the_internal_node[W_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -191,8 +193,9 @@ void ray_tracing(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1, TEMPER
 		if (permissible758) {
 
 
-			if (t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1 < t.maxelm) {
-				integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[N_SIDE][0] != nullptr) &&
+				(t.neighbors_for_the_internal_node[N_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -222,8 +225,9 @@ void ray_tracing(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1, TEMPER
 		if (permissible758) {
 
 
-			if (t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1 < t.maxelm) {
-				integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[S_SIDE][0] != nullptr)&&
+				(t.neighbors_for_the_internal_node[S_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -252,8 +256,9 @@ void ray_tracing(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1, TEMPER
 
 		if (permissible758) {
 
-			if (t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1 < t.maxelm) {
-				integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[T_SIDE][0] != nullptr)&&
+				(t.neighbors_for_the_internal_node[T_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[T_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -282,8 +287,9 @@ void ray_tracing(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1, TEMPER
 		if (permissible758) {
 
 
-			if (t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1 < t.maxelm) {
-				integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[B_SIDE][0] != nullptr)&&
+				(t.neighbors_for_the_internal_node[B_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -342,9 +348,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 
 			// вызов.
 
-			if ((t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1 > -1)&&
-				(t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[E_SIDE][0] != nullptr) &&
+				(t.neighbors_for_the_internal_node[E_SIDE][0][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[E_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -378,9 +385,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 
 			// вызов.
 
-			if ((t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2 > -1) &&
-				(t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2;
+			if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr) &&
+				(t.neighbors_for_the_internal_node[E_SIDE][1][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[E_SIDE][1][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[E_SIDE][1][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -414,9 +422,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 
 			// вызов.
 
-			if ((t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3 > -1) &&
-				(t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3;
+			if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) &&
+				(t.neighbors_for_the_internal_node[E_SIDE][2][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[E_SIDE][2][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[E_SIDE][2][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -450,9 +459,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 
 			// вызов.
 
-			if ((t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4 > -1) &&
-				(t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4;
+			if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) &&
+				(t.neighbors_for_the_internal_node[E_SIDE][3][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[E_SIDE][3][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[E_SIDE][3][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -485,9 +495,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1 > -1) &&
-				(t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[W_SIDE][0] != nullptr) &&
+				(t.neighbors_for_the_internal_node[W_SIDE][0][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[W_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -517,9 +528,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2 > -1) &&
-				(t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2;
+			if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr) &&
+				(t.neighbors_for_the_internal_node[W_SIDE][1][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[W_SIDE][1][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[W_SIDE][1][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -550,9 +562,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3 > -1) &&
-				(t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3;
+			if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr) && 
+				(t.neighbors_for_the_internal_node[W_SIDE][2][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[W_SIDE][2][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[W_SIDE][2][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -581,9 +594,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4 > -1) &&
-				(t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4;
+			if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+				(t.neighbors_for_the_internal_node[W_SIDE][3][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[W_SIDE][3][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[W_SIDE][3][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -613,41 +627,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1 > -1)&&
-				(t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
-
-				if (visit_ray_traser[i] == false) {
-
-					TOCHKA p2;
-					center_cord3D_ray_tracing(i, t.nvtx, t.pa, p2, 100);
-
-
-					if (distance_Point_to_Segment3(p2, p0, p1, lx, ly, lz, ld2) < size_cell[i])
-					{
-
-						// точка p2 принадлежит отрезку [p0,p1].
-						if (!(((t.whot_is_block[i] == t.whot_is_block[i0]) ||
-							(b[t.whot_is_block[i]].imatid == b[t.whot_is_block[i1]].imatid)))) {
-							permissible758 = false; // не достижима.
-						}
-						else {
-							// Продолжаем сканирование.
-							itop_stack_ray_trayser++;
-							stack_ray_trayser[itop_stack_ray_trayser] = i;
-							visit_ray_traser[i] = true;
-						}
-					}
-				}
-			}
-		}
-
-		if (permissible758) {
-
-
-			if ((t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2 > -1) &&
-				(t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2;
+			if ((t.neighbors_for_the_internal_node[N_SIDE][0] != nullptr) &&
+				(t.neighbors_for_the_internal_node[N_SIDE][0][iP] > -1)&&
+				(t.neighbors_for_the_internal_node[N_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -677,9 +660,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3 > -1) &&
-				(t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3;
+			if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr) && 
+				(t.neighbors_for_the_internal_node[N_SIDE][1][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[N_SIDE][1][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[N_SIDE][1][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -709,9 +693,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4 > -1) &&
-				(t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4;
+			if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) && 
+				(t.neighbors_for_the_internal_node[N_SIDE][2][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[N_SIDE][2][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[N_SIDE][2][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -741,9 +726,43 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1 > -1) &&
-				(t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+			if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+				(t.neighbors_for_the_internal_node[N_SIDE][3][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[N_SIDE][3][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[N_SIDE][3][iP];
+
+				if (visit_ray_traser[i] == false) {
+
+					TOCHKA p2;
+					center_cord3D_ray_tracing(i, t.nvtx, t.pa, p2, 100);
+
+
+					if (distance_Point_to_Segment3(p2, p0, p1, lx, ly, lz, ld2) < size_cell[i])
+					{
+
+						// точка p2 принадлежит отрезку [p0,p1].
+						if (!(((t.whot_is_block[i] == t.whot_is_block[i0]) ||
+							(b[t.whot_is_block[i]].imatid == b[t.whot_is_block[i1]].imatid)))) {
+							permissible758 = false; // не достижима.
+						}
+						else {
+							// Продолжаем сканирование.
+							itop_stack_ray_trayser++;
+							stack_ray_trayser[itop_stack_ray_trayser] = i;
+							visit_ray_traser[i] = true;
+						}
+					}
+				}
+			}
+		}
+
+		if (permissible758) {
+
+
+			if ((t.neighbors_for_the_internal_node[S_SIDE][0] != nullptr) && 
+				(t.neighbors_for_the_internal_node[S_SIDE][0][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[S_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -772,9 +791,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2 > -1) &&
-				(t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2;
+			if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+				(t.neighbors_for_the_internal_node[S_SIDE][1][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[S_SIDE][1][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[S_SIDE][1][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -803,9 +823,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3 > -1) &&
-				(t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3;
+			if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+				(t.neighbors_for_the_internal_node[S_SIDE][2][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[S_SIDE][2][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[S_SIDE][2][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -834,9 +855,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4 > -1) &&
-				(t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4;
+			if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr) && 
+				(t.neighbors_for_the_internal_node[S_SIDE][3][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[S_SIDE][3][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[S_SIDE][3][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -864,40 +886,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 
 		if (permissible758) {
 
-			if ((t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1 > -1)&&
-				(t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-
-				if (visit_ray_traser[i] == false) {
-
-					TOCHKA p2;
-					center_cord3D_ray_tracing(i, t.nvtx, t.pa, p2, 100);
-
-					if (distance_Point_to_Segment3(p2, p0, p1, lx, ly, lz, ld2) < size_cell[i])
-					{
-						// точка p2 принадлежит отрезку [p0,p1].
-						if (!(((t.whot_is_block[i] == t.whot_is_block[i0]) ||
-							(b[t.whot_is_block[i]].imatid == b[t.whot_is_block[i1]].imatid)))) {
-							permissible758 = false; // не достижима.
-						}
-						else {
-							// Продолжаем сканирование.
-							itop_stack_ray_trayser++;
-							stack_ray_trayser[itop_stack_ray_trayser] = i;
-							visit_ray_traser[i] = true;
-
-						}
-					}
-
-				}
-			}
-		}
-
-		if (permissible758) {
-
-			if ((t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2 > -1) &&
-				(t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+			if ((t.neighbors_for_the_internal_node[T_SIDE][0] != nullptr)&&
+				(t.neighbors_for_the_internal_node[T_SIDE][0][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[T_SIDE][0][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[T_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -926,9 +918,10 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 
 		if (permissible758) {
 
-			if ((t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3 > -1) &&
-				(t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+			if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+				(t.neighbors_for_the_internal_node[T_SIDE][1][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[T_SIDE][1][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[T_SIDE][1][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -957,9 +950,42 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 
 		if (permissible758) {
 
-			if ((t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4 > -1) &&
-				(t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4 < t.maxelm)) {
-				integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+			if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+				(t.neighbors_for_the_internal_node[T_SIDE][2][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[T_SIDE][2][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[T_SIDE][2][iP];
+
+				if (visit_ray_traser[i] == false) {
+
+					TOCHKA p2;
+					center_cord3D_ray_tracing(i, t.nvtx, t.pa, p2, 100);
+
+					if (distance_Point_to_Segment3(p2, p0, p1, lx, ly, lz, ld2) < size_cell[i])
+					{
+						// точка p2 принадлежит отрезку [p0,p1].
+						if (!(((t.whot_is_block[i] == t.whot_is_block[i0]) ||
+							(b[t.whot_is_block[i]].imatid == b[t.whot_is_block[i1]].imatid)))) {
+							permissible758 = false; // не достижима.
+						}
+						else {
+							// Продолжаем сканирование.
+							itop_stack_ray_trayser++;
+							stack_ray_trayser[itop_stack_ray_trayser] = i;
+							visit_ray_traser[i] = true;
+
+						}
+					}
+
+				}
+			}
+		}
+
+		if (permissible758) {
+
+			if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+				(t.neighbors_for_the_internal_node[T_SIDE][3][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[T_SIDE][3][iP] < t.maxelm)) {
+				integer i = t.neighbors_for_the_internal_node[T_SIDE][3][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -990,10 +1016,11 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1 > -1)&&
-				(t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1 < t.maxelm)) 
+			if ((t.neighbors_for_the_internal_node[B_SIDE][0] != nullptr) &&
+				(t.neighbors_for_the_internal_node[B_SIDE][0][iP] > -1)&&
+				(t.neighbors_for_the_internal_node[B_SIDE][0][iP] < t.maxelm)) 
 			{
-				integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+				integer i = t.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -1021,10 +1048,11 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2 > -1) &&
-				(t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2 < t.maxelm))
+			if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) &&
+				(t.neighbors_for_the_internal_node[B_SIDE][1][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[B_SIDE][1][iP] < t.maxelm))
 			{
-				integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+				integer i = t.neighbors_for_the_internal_node[B_SIDE][1][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -1052,10 +1080,11 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3 > -1) &&
-				(t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3 < t.maxelm))
+			if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) &&
+				(t.neighbors_for_the_internal_node[B_SIDE][2][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[B_SIDE][2][iP] < t.maxelm))
 			{
-				integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+				integer i = t.neighbors_for_the_internal_node[B_SIDE][2][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -1083,10 +1112,11 @@ void ray_tracing_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer i1,
 		if (permissible758) {
 
 
-			if ((t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4 > -1) &&
-				(t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4 < t.maxelm))
+			if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) &&
+				(t.neighbors_for_the_internal_node[B_SIDE][3][iP] > -1) &&
+				(t.neighbors_for_the_internal_node[B_SIDE][3][iP] < t.maxelm))
 			{
-				integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+				integer i = t.neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 				if (visit_ray_traser[i] == false) {
 
@@ -1148,8 +1178,9 @@ void ray_tracing_fluid_only(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer
 
 		// вызов.
 
-		if (t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[E_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[E_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1171,8 +1202,9 @@ void ray_tracing_fluid_only(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer
 			}
 		}
 
-		if (t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[W_SIDE][0] != nullptr) &&
+			(t.neighbors_for_the_internal_node[W_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1194,8 +1226,9 @@ void ray_tracing_fluid_only(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer
 		}
 
 
-		if (t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[N_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[N_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1219,8 +1252,9 @@ void ray_tracing_fluid_only(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer
 
 
 
-		if (t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[S_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[S_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1242,8 +1276,9 @@ void ray_tracing_fluid_only(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer
 		}
 
 
-		if (t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[T_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[T_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[T_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1266,8 +1301,9 @@ void ray_tracing_fluid_only(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, integer
 
 
 
-		if (t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[B_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[B_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1332,8 +1368,9 @@ void ray_tracing_fluid_only2(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, intege
 			marker_arr[j] = -1;
 		}
 
-		if (t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[E_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[E_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1345,8 +1382,9 @@ void ray_tracing_fluid_only2(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, intege
 			}
 		}
 
-		if (t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[W_SIDE][0] != nullptr) &&
+			(t.neighbors_for_the_internal_node[W_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1360,8 +1398,9 @@ void ray_tracing_fluid_only2(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, intege
 		}
 
 
-		if (t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[N_SIDE][0] != nullptr) &&
+			(t.neighbors_for_the_internal_node[N_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1376,8 +1415,9 @@ void ray_tracing_fluid_only2(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, intege
 
 
 
-		if (t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[S_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[S_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1390,8 +1430,9 @@ void ray_tracing_fluid_only2(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, intege
 		}
 
 
-		if (t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[T_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[T_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[T_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1405,8 +1446,9 @@ void ray_tracing_fluid_only2(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, intege
 
 
 
-		if (t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1 < t.maxelm) {
-			integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[B_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[B_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1493,10 +1535,11 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 
 		// вызов.
 
-		if ((t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1 > -1) &&
-			(t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1 < t.maxelm))
+		if ((t.neighbors_for_the_internal_node[E_SIDE][0] != nullptr)&&
+			(t.neighbors_for_the_internal_node[E_SIDE][0][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[E_SIDE][0][iP] < t.maxelm))
 		{
-			integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+			integer i = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1518,10 +1561,11 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2 > -1) &&
-			(t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2 < t.maxelm))
+		if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr) &&
+			(t.neighbors_for_the_internal_node[E_SIDE][1][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[E_SIDE][1][iP] < t.maxelm))
 		{
-			integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE2;
+			integer i = t.neighbors_for_the_internal_node[E_SIDE][1][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1543,10 +1587,11 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3 > -1) &&
-			(t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3 < t.maxelm))
+		if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) && 
+			(t.neighbors_for_the_internal_node[E_SIDE][2][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[E_SIDE][2][iP] < t.maxelm))
 		{
-			integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE3;
+			integer i = t.neighbors_for_the_internal_node[E_SIDE][2][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1568,10 +1613,11 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4 > -1) &&
-			(t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4 < t.maxelm))
+		if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) && 
+			(t.neighbors_for_the_internal_node[E_SIDE][3][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[E_SIDE][3][iP] < t.maxelm))
 		{
-			integer i = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE4;
+			integer i = t.neighbors_for_the_internal_node[E_SIDE][3][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1594,10 +1640,11 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 		}
 
 
-		if ((t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1>-1) &&
-			(t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1 < t.maxelm))
+		if ((t.neighbors_for_the_internal_node[W_SIDE][0] != nullptr) &&
+			(t.neighbors_for_the_internal_node[W_SIDE][0][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[W_SIDE][0][iP] < t.maxelm))
 		{
-			integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+			integer i = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1618,10 +1665,11 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2>-1) &&
-			(t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2 < t.maxelm))
+		if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr) && 
+			(t.neighbors_for_the_internal_node[W_SIDE][1][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[W_SIDE][1][iP] < t.maxelm))
 		{
-			integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE2;
+			integer i = t.neighbors_for_the_internal_node[W_SIDE][1][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1642,10 +1690,11 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3>-1) &&
-			(t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3 < t.maxelm))
+		if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr) && 
+			(t.neighbors_for_the_internal_node[W_SIDE][2][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[W_SIDE][2][iP] < t.maxelm))
 		{
-			integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE3;
+			integer i = t.neighbors_for_the_internal_node[W_SIDE][2][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1666,10 +1715,11 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4>-1) &&
-			(t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4 < t.maxelm))
+		if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) && 
+			(t.neighbors_for_the_internal_node[W_SIDE][3][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[W_SIDE][3][iP] < t.maxelm))
 		{
-			integer i = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE4;
+			integer i = t.neighbors_for_the_internal_node[W_SIDE][3][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1691,9 +1741,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 		}
 
 
-		if ((t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1 > -1) &&
-			(t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[N_SIDE][0] != nullptr) && 
+			(t.neighbors_for_the_internal_node[N_SIDE][0][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[N_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1715,9 +1766,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2 > -1) &&
-			(t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE2;
+		if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr) && 
+			(t.neighbors_for_the_internal_node[N_SIDE][1][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[N_SIDE][1][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[N_SIDE][1][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1739,9 +1791,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3 > -1) &&
-			(t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE3;
+		if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) && 
+			(t.neighbors_for_the_internal_node[N_SIDE][2][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[N_SIDE][2][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[N_SIDE][2][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1763,9 +1816,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4 > -1) &&
-			(t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE4;
+		if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+			(t.neighbors_for_the_internal_node[N_SIDE][3][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[N_SIDE][3][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[N_SIDE][3][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1788,9 +1842,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 		}
 
 
-		if ((t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1 > -1 )&&
-			(t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[S_SIDE][0] != nullptr )&&
+			(t.neighbors_for_the_internal_node[S_SIDE][0][iP] > -1 )&&
+			(t.neighbors_for_the_internal_node[S_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1811,9 +1866,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2 > -1) &&
-			(t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE2;
+		if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) && 
+			(t.neighbors_for_the_internal_node[S_SIDE][1][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[S_SIDE][1][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[S_SIDE][1][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1834,9 +1890,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3 > -1) &&
-			(t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE3;
+		if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+			(t.neighbors_for_the_internal_node[S_SIDE][2][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[S_SIDE][2][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[S_SIDE][2][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1858,9 +1915,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 		}
 
 
-		if ((t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4 > -1) &&
-			(t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE4;
+		if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr) && 
+			(t.neighbors_for_the_internal_node[S_SIDE][3][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[S_SIDE][3][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[S_SIDE][3][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1881,9 +1939,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1 > -1)&&
-			(t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+		if ((t.neighbors_for_the_internal_node[T_SIDE][0] != nullptr) &&
+			(t.neighbors_for_the_internal_node[T_SIDE][0][iP] > -1)&&
+			(t.neighbors_for_the_internal_node[T_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[T_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1904,9 +1963,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2 > -1) &&
-			(t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+		if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+			(t.neighbors_for_the_internal_node[T_SIDE][1][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[T_SIDE][1][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[T_SIDE][1][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1927,9 +1987,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3 > -1) &&
-			(t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+		if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) && 
+			(t.neighbors_for_the_internal_node[T_SIDE][2][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[T_SIDE][2][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[T_SIDE][2][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1949,9 +2010,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4 > -1) &&
-			(t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+		if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) && 
+			(t.neighbors_for_the_internal_node[T_SIDE][3][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[T_SIDE][3][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[T_SIDE][3][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -1971,32 +2033,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1>-1)&&
-			(t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
-
-			if (visit_ray_traser[i] == false) {
-
-				TOCHKA p2;
-				center_cord3D_ray_tracing(i, t.nvtx, t.pa, p2, 100);
-
-				if (distance_Point_to_Segment3(p2, p0, p1, lx, ly, lz, ld2) < size_cell[i])
-				{
-					// точка p2 принадлежит отрезку [p0,p1].
-
-					// Продолжаем сканирование.
-					itop_stack_ray_trayser++;
-					stack_ray_trayser[itop_stack_ray_trayser] = i;
-					visit_ray_traser[i] = true;
-
-				}
-			}
-		}
-
-
-		if ((t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2>-1) &&
-			(t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+		if ((t.neighbors_for_the_internal_node[B_SIDE][0] != nullptr) && 
+			(t.neighbors_for_the_internal_node[B_SIDE][0][iP] > -1)&&
+			(t.neighbors_for_the_internal_node[B_SIDE][0][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -2017,9 +2057,10 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 		}
 
 
-		if ((t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3>-1) &&
-			(t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+		if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) && 
+			(t.neighbors_for_the_internal_node[B_SIDE][1][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[B_SIDE][1][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[B_SIDE][1][iP];
 
 			if (visit_ray_traser[i] == false) {
 
@@ -2039,9 +2080,34 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 			}
 		}
 
-		if ((t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4>-1) &&
-			(t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4 < t.maxelm)) {
-			integer i = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+
+		if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) && 
+			(t.neighbors_for_the_internal_node[B_SIDE][2][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[B_SIDE][2][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+			if (visit_ray_traser[i] == false) {
+
+				TOCHKA p2;
+				center_cord3D_ray_tracing(i, t.nvtx, t.pa, p2, 100);
+
+				if (distance_Point_to_Segment3(p2, p0, p1, lx, ly, lz, ld2) < size_cell[i])
+				{
+					// точка p2 принадлежит отрезку [p0,p1].
+
+					// Продолжаем сканирование.
+					itop_stack_ray_trayser++;
+					stack_ray_trayser[itop_stack_ray_trayser] = i;
+					visit_ray_traser[i] = true;
+
+				}
+			}
+		}
+
+		if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) && 
+			(t.neighbors_for_the_internal_node[B_SIDE][3][iP] > -1) &&
+			(t.neighbors_for_the_internal_node[B_SIDE][3][iP] < t.maxelm)) {
+			integer i = t.neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 			if (visit_ray_traser[i] == false) {
 

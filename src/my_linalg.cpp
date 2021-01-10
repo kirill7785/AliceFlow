@@ -19,7 +19,7 @@
 // закомментировать #include "my_vienna_alg.cpp"  если она не используется.
 // Задать GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0; Если viennacl 1.7.1 lib не используется.
 const integer GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0;
-//#define AMGCL_INCLUDE_IN_MY_PROJECT 1
+#define AMGCL_INCLUDE_IN_MY_PROJECT 1
 //#include "my_vienna_alg.cpp" // ViennaCL 1.7.1
 #ifdef AMGCL_INCLUDE_IN_MY_PROJECT
 #include "my_amgcl_alg.cpp" // Библиотека Дениса Демидова AMGCL.
@@ -44,12 +44,12 @@ doublereal rterminate_residual_ICCG_Oh2(FLOW floc) {
 		doublereal dl = fmin(dx, fmin(dy, dz));
 		resterm[iP] = 0.1*dl*dl; // O(h!2)
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = floc.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; 
-		iN = floc.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
-		iT = floc.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
-		iW = floc.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
-		iS = floc.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
-		iB = floc.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+		iE = floc.neighbors_for_the_internal_node[E_SIDE][0][iP]; 
+		iN = floc.neighbors_for_the_internal_node[N_SIDE][0][iP];
+		iT = floc.neighbors_for_the_internal_node[T_SIDE][0][iP]; 
+		iW = floc.neighbors_for_the_internal_node[W_SIDE][0][iP];
+		iS = floc.neighbors_for_the_internal_node[S_SIDE][0][iP]; 
+		iB = floc.neighbors_for_the_internal_node[B_SIDE][0][iP];
 		// Если с одной из сторон стоит граница расчётной области
 		// то соответствующая переменная равна true
 		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
@@ -97,12 +97,12 @@ doublereal rterminate_residual_LR1sk_Oh3(FLOW floc) {
 		doublereal dl = fmin(dx, fmin(dy, dz));
 		resterm[iP] = 0.1*dl*dl*dl; // O(h!3)
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = floc.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
-		iN = floc.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
-		iT = floc.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
-		iW = floc.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
-		iS = floc.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
-		iB = floc.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+		iE = floc.neighbors_for_the_internal_node[E_SIDE][0][iP];
+		iN = floc.neighbors_for_the_internal_node[N_SIDE][0][iP]; 
+		iT = floc.neighbors_for_the_internal_node[T_SIDE][0][iP]; 
+		iW = floc.neighbors_for_the_internal_node[W_SIDE][0][iP];
+		iS = floc.neighbors_for_the_internal_node[S_SIDE][0][iP]; 
+		iB = floc.neighbors_for_the_internal_node[B_SIDE][0][iP];
 		// Если с одной из сторон стоит граница расчётной области
 		// то соответствующая переменная равна true
 		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
@@ -157,12 +157,12 @@ doublereal rterminate_residual_LR1sk_temp_Oh3(TEMPER t) {
 		//resterm[iP]=0.1*dl*dl*dl; // O(h!3)
 		resterm[iP] = dl; // O(h)
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; 
-		iN = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
-		iT = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
-		iW = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; 
-		iS = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
-		iB = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+		iE = t.neighbors_for_the_internal_node[E_SIDE][0][iP]; 
+		iN = t.neighbors_for_the_internal_node[N_SIDE][0][iP]; 
+		iT = t.neighbors_for_the_internal_node[T_SIDE][0][iP]; 
+		iW = t.neighbors_for_the_internal_node[W_SIDE][0][iP]; 
+		iS = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
+		iB = t.neighbors_for_the_internal_node[B_SIDE][0][iP];
 		// Если с одной из сторон стоит граница расчётной области
 		// то соответствующая переменная равна true
 		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
@@ -2558,7 +2558,7 @@ void BTrules(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* 
 		default: rURF=1.0; break; // в остальных случаях.
 	}
 	// пороговое значение невязки
-	doublereal eps = 1.0e-40;
+	doublereal eps = 1.0e-36;
 	doublereal ptilda=0.0;
 	doublereal sE=0.0,sW=0.0,sN=0.0,sS=0.0,sT=0.0,sB=0.0,sI=0.0;
 	integer i=0,j=0, kend=4000;//100; // Для целей пост сглаживания должно хватить 40 итераций.
@@ -7919,13 +7919,17 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
     // под X0 понимается вектор поля температур к примеру.
     if (dX0==nullptr) {
 	   dX0=new doublereal[n];
+#pragma omp parallel for private(i)
 	   for (i=0; i<n; i++) {
 		   dx[i]=0.0;
 		   dX0[i]=0.0;
 	   }
     }
     else {
-	   for (i=0; i<n; i++) dx[i]=dX0[i];
+#pragma omp parallel for private(i)
+		for (i = 0; i < n; i++) {
+			dx[i] = dX0[i];
+		}
     }
 
     MatrixCRSByVector(val,col_ind,row_ptr,dx,dax, n); // результат занесён в  dax
@@ -7933,6 +7937,7 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
     	isfinite_vec(n,dax," dax");
 	}
 	
+#pragma omp parallel for private(i)
 	for (i=0; i<n; i++) {
 		ri[i]=dV[i]-dax[i];
 		//roc[i]=ri[i];
@@ -8090,6 +8095,13 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 			if (deltai < epsilon) iflag = 0; // конец вычисления
 			else roim1 = roi;
 		//}
+	}
+
+
+	if (icount >= maxit - 1) {
+		printf("Error !!! problem convergence Bi_CGStabCRS solver...\n");
+		printf("You mast change solver...\n");
+		system("PAUSE");
 	}
 
 	if (icount == 0) {
@@ -10659,7 +10671,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			 else {
 
 				 if (b_on_adaptive_local_refinement_mesh) {
-					 if ((iVar == PAM) && (fabs(dV[i]) < 1.0e-40)) {
+					 if ((iVar == PAM) && (fabs(dV[i]) < 1.0e-36)) {
 						 if ((m.row_ptr[i + 1] - m.row_ptr[i] == 1) && (i == m.col_ind[m.row_ptr[i]])) {
 							 bOk_Dirichlet = true;
 							 inumber_Dirichlet_node++;
@@ -18978,6 +18990,9 @@ if (itype_ilu == ILU_lfil)
 
 } //gmres_internal2_stable
 
+
+
+
   // Детали решают всё. Экспериментально было выяснено, что метод
   // Bi_CGStab_internal1 не сходится должным образом. Это можно объяснить тем
   // что реализация вычислительной процедуры на языке СИ недостаточно правильна.
@@ -18992,7 +19007,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	integer* &ibackregulationgl,
 	doublereal dgx, doublereal dgy, doublereal dgz,
 	SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE,
-	integer* &color, integer dist_max, WALL* &w, integer &lw)
+	integer* &color, integer dist_max, WALL* &w, integer &lw, 
+	int * &whot_is_block)
 {
 
 	
@@ -19057,74 +19073,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 	calculation_main_start_time = clock(); // момент начала счёта.
 
-
-	// настройка параметров РУМБА 0.14 решателя.
-	switch (iVar) {
-	case TEMP:
-		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Temperature);
-		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Temperature;
-		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Temperature;
-		my_amg_manager.nu1 = my_amg_manager.nu1_Temperature;
-		my_amg_manager.nu2 = my_amg_manager.nu2_Temperature;
-		my_amg_manager.memory_size = my_amg_manager.memory_size_Temperature;
-		//my_amg_manager.memory_size = 5.0; // вместо 9.0 даёт понижение используемой ОЗУ на 15.6%.
-		my_amg_manager.ilu2_smoother = my_amg_manager.ilu2_smoother_Temperature;
-		my_amg_manager.icoarseningtype = my_amg_manager.icoarseningTemp; // standart vs RS 2.
-		my_amg_manager.istabilization = my_amg_manager.istabilizationTemp; // Stabilization: 0 - none, 1 - bicgstab + amg (РУМБА), 2 - FGMRes + amg (РУМБА).
-		my_amg_manager.magic = my_amg_manager.F_to_F_Temperature; // magic
-		my_amg_manager.number_interpolation_procedure = my_amg_manager.number_interpolation_procedure_Temperature;
-		my_amg_manager.iCFalgorithm_and_data_structure=my_amg_manager.iCFalgorithm_and_data_structure_Temperature;
-		my_amg_manager.iprint_log = my_amg_manager.iprint_log_Temperature;
-		my_amg_manager.itruncation_interpolation = my_amg_manager.itruncation_interpolation_Temperature;
-		my_amg_manager.truncation_interpolation = my_amg_manager.truncation_interpolation_Temperature;
-		my_amg_manager.gold_const = my_amg_manager.gold_const_Temperature;
-		my_amg_manager.b_gmres = my_amg_manager.b_gmresTemp;
-		my_amg_manager.bMatrixPortrait = my_amg_manager.bTemperatureMatrixPortrait;
-		break;
-	case PAM:
-		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Pressure);
-		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Pressure;
-		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Pressure;
-		my_amg_manager.nu1 = my_amg_manager.nu1_Pressure;
-		my_amg_manager.nu2 = my_amg_manager.nu2_Pressure;
-		my_amg_manager.memory_size = my_amg_manager.memory_size_Pressure;
-		my_amg_manager.ilu2_smoother = my_amg_manager.ilu2_smoother_Pressure;
-		my_amg_manager.icoarseningtype = my_amg_manager.icoarseningPressure; // standart vs RS 2.
-		my_amg_manager.istabilization = my_amg_manager.istabilizationPressure; // Stabilization: 0 - none, 1 - bicgstab + amg (РУМБА), 2 - FGMRes + amg (РУМБА).
-		my_amg_manager.magic = my_amg_manager.F_to_F_Pressure; // magic
-		my_amg_manager.number_interpolation_procedure = my_amg_manager.number_interpolation_procedure_Pressure;
-		my_amg_manager.iCFalgorithm_and_data_structure=my_amg_manager.iCFalgorithm_and_data_structure_Pressure;
-		my_amg_manager.iprint_log = my_amg_manager.iprint_log_Pressure;
-		my_amg_manager.itruncation_interpolation = my_amg_manager.itruncation_interpolation_Pressure;
-		my_amg_manager.truncation_interpolation = my_amg_manager.truncation_interpolation_Pressure;
-		my_amg_manager.gold_const = my_amg_manager.gold_const_Pressure;
-		my_amg_manager.b_gmres = my_amg_manager.b_gmresPressure;
-		my_amg_manager.bMatrixPortrait = my_amg_manager.bPressureMatrixPortrait;
-		break;
-		// 10.10.2019 Для турбулентных характеристик настройка решателя такая же как и для компонент скорости.
-	case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
-	case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
-	case TURBULENT_KINETIK_ENERGY_STD_K_EPS: case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
-		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Speed);
-		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Speed;
-		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Speed;
-		my_amg_manager.nu1 = my_amg_manager.nu1_Speed;
-		my_amg_manager.nu2 = my_amg_manager.nu2_Speed;
-		my_amg_manager.memory_size = my_amg_manager.memory_size_Speed;
-		my_amg_manager.ilu2_smoother = my_amg_manager.ilu2_smoother_Speed;
-		my_amg_manager.icoarseningtype = my_amg_manager.icoarseningSpeed; // standart vs RS 2.
-		my_amg_manager.istabilization = my_amg_manager.istabilizationSpeed; // Stabilization: 0 - none, 1 - bicgstab + amg (РУМБА), 2 - FGMRes + amg (РУМБА).
-		my_amg_manager.magic = my_amg_manager.F_to_F_Speed; // magic
-		my_amg_manager.number_interpolation_procedure = my_amg_manager.number_interpolation_procedure_Speed;
-		my_amg_manager.iCFalgorithm_and_data_structure=my_amg_manager.iCFalgorithm_and_data_structure_Speed;
-		my_amg_manager.iprint_log = my_amg_manager.iprint_log_Speed;
-		my_amg_manager.itruncation_interpolation = my_amg_manager.itruncation_interpolation_Speed;
-		my_amg_manager.truncation_interpolation = my_amg_manager.truncation_interpolation_Speed;
-		my_amg_manager.gold_const = my_amg_manager.gold_const_Speed;
-		my_amg_manager.b_gmres = my_amg_manager.b_gmresSpeed;
-		my_amg_manager.bMatrixPortrait = my_amg_manager.bSpeedMatrixPortrait;
-		break;
-	}
+	set_RUMBA_Classic_AMG_Setting(iVar);
+	
 
 	// Метод Ван Дер Ворста Bi-CGStab
 	// работает для возможно несимметричных вещественных матриц.
@@ -19231,7 +19181,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						// amg1r5 realisation.
-						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully, b, lb, s_loc, ls, w, lw);
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully, b, lb, s_loc, ls, w, lw, whot_is_block);
 					}
 
 					if (!bsolid_static_only) {
@@ -19284,7 +19234,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 					}
 					else {
-						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw);
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw, whot_is_block);
 					}
 
 					if (iVar == PAM) {
@@ -19341,7 +19291,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 					}
 					else {
-						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw);
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw, whot_is_block);
 					}
 #ifdef _OPENMP
 					omp_set_num_threads(1);
@@ -19395,7 +19345,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 						bool worked_successfully = false;
 						const integer iHAVorstModification_id = 1; // BiCGStab  for PAM
-						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw);
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw, whot_is_block);
 
 
 						if (!worked_successfully) {
@@ -19425,7 +19375,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 						bool worked_successfully = false;
 						const integer iHAVorstModification_id = 3; // non linear solver
-						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw);
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw, whot_is_block);
 
 
 					}
@@ -19625,8 +19575,9 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				//}
 				//else 
 				{
-
-					printf("*********Denis Demidov AMGCL...***********\n");
+					if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+						printf("*********Denis Demidov AMGCL...***********\n");
+					}
 					if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
 						const bool bprint_preconditioner_amgcl = false;
 						amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE, w, lw);
@@ -19701,7 +19652,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					
 
 					real_mix_precision ret74 = 0.0;
-					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m,  ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE,w,lw);
+					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m,  ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE,w,lw, whot_is_block);
 
 
 				}
@@ -19736,7 +19687,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					real_mix_precision magic83 = (real_mix_precision)(my_amg_manager.magic);
 
 					real_mix_precision ret74 = 0.0;
-					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE, w, lw);
+					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE, w, lw, whot_is_block);
 				
 				}
 				/*
@@ -19801,7 +19752,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	if (iVar == TURBULENT_KINETIK_ENERGY) {
-		for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
+
+		const integer isize = maxelm + maxbound;
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < isize; i_1++) {
 			dV[i_1] *= 1.0e-6;
 			dX0[i_1] *= 1.0e-6;
 		}

@@ -16,10 +16,10 @@
 // По поводу точности O(h) спорно, может быть и O(h^2). К тому же было выяснено
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
-void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
-								 doublereal* &mf, doublereal* &prop, doublereal* &prop_b,
-	BOUND* &border_neighbor, integer *ilevel_alice) {
+void green_gaussO1(integer iP, doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+								 doublereal* &mf, float* &prop, float* &prop_b,
+	BOUND* &border_neighbor, integer *ilevel_alice, TOCHKA* &volume_loc) {
 
 
 	// Рассчитывать ли скорость на грани с помощью поправки Рхи-Чоу 1983г.
@@ -34,21 +34,24 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	if (b_on_adaptive_local_refinement_mesh) {
 
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
 	bool bE=false, bN=false, bT=false, bW=false, bS=false, bB=false;
@@ -61,38 +64,49 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	if (iB>=maxelm) bB=true;
 
 	bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
-
-	if (iE2 >= maxelm) bE2 = true;
-	if (iN2 >= maxelm) bN2 = true;
-	if (iT2 >= maxelm) bT2 = true;
-	if (iW2 >= maxelm) bW2 = true;
-	if (iS2 >= maxelm) bS2 = true;
-	if (iB2 >= maxelm) bB2 = true;
-
 	bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
-
-	if (iE3 >= maxelm) bE3 = true;
-	if (iN3 >= maxelm) bN3 = true;
-	if (iT3 >= maxelm) bT3 = true;
-	if (iW3 >= maxelm) bW3 = true;
-	if (iS3 >= maxelm) bS3 = true;
-	if (iB3 >= maxelm) bB3 = true;
-
 	bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
 
-	if (iE4 >= maxelm) bE4 = true;
-	if (iN4 >= maxelm) bN4 = true;
-	if (iT4 >= maxelm) bT4 = true;
-	if (iW4 >= maxelm) bW4 = true;
-	if (iS4 >= maxelm) bS4 = true;
-	if (iB4 >= maxelm) bB4 = true;
+	if (b_on_adaptive_local_refinement_mesh) {
+
+		if (iE2 >= maxelm) bE2 = true;
+		if (iN2 >= maxelm) bN2 = true;
+		if (iT2 >= maxelm) bT2 = true;
+		if (iW2 >= maxelm) bW2 = true;
+		if (iS2 >= maxelm) bS2 = true;
+		if (iB2 >= maxelm) bB2 = true;
+
+		
+
+		if (iE3 >= maxelm) bE3 = true;
+		if (iN3 >= maxelm) bN3 = true;
+		if (iT3 >= maxelm) bT3 = true;
+		if (iW3 >= maxelm) bW3 = true;
+		if (iS3 >= maxelm) bS3 = true;
+		if (iB3 >= maxelm) bB3 = true;
+
+		
+
+		if (iE4 >= maxelm) bE4 = true;
+		if (iN4 >= maxelm) bN4 = true;
+		if (iT4 >= maxelm) bT4 = true;
+		if (iW4 >= maxelm) bW4 = true;
+		if (iS4 >= maxelm) bS4 = true;
+		if (iB4 >= maxelm) bB4 = true;
+	}
 
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
-	volume3D(iP, nvtx, pa, dx, dy, dz);
-	dx = fabs(dx);
-	dy = fabs(dy);
-	dz = fabs(dz);
+	//volume3D(iP, nvtx, pa, dx, dy, dz);
+	//dx = fabs(dx);
+	//dy = fabs(dy);
+	//dz = fabs(dz);
+
+	TOCHKA point_loc = volume_loc[iP];
+	dx = point_loc.x;
+	dy = point_loc.y;
+	dz = point_loc.z;
+
 
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
     // т.к. известна нумерация вершин куба, то здесь она используется
@@ -129,91 +143,95 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
 	doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
 
-	// т.к. известна нумерация вершин куба, то здесь она используется
-	// x - direction
-	if (iE2 > -1) {
-		if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
-		if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	}
-	if (iW2 > -1) {
-		if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
-	}
-	// y - direction
-	if (iN2 > -1) {
-		if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
-		if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	}
-	if (iS2 > -1) {
-		if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
-	}
-	// z - direction
-	if (iT2 > -1) {
-		if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
-		if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-	}
-	if (iB2 > -1) {
-		if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
-	}
+	if (b_on_adaptive_local_refinement_mesh) {
 
-	// т.к. известна нумерация вершин куба, то здесь она используется
-	// x - direction
-	if (iE3 > -1) {
-		if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
-		if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	}
-	if (iW3 > -1) {
-		if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
-	}
-	// y - direction
-	if (iN3 > -1) {
-		if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
-		if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	}
-	if (iS3 > -1) {
-		if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
-	}
-	// z - direction
-	if (iT3 > -1) {
-		if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
-		if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-	}
-	if (iB3 > -1) {
-		if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
-	}
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE2 > -1) {
+			if (!bE2) dxe2 = 0.5 * (pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+			if (!bE2) dxe2 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW2 > -1) {
+			if (!bW2) dxw2 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW2) dxw2 -= 0.5 * (pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+		}
+		// y - direction
+		if (iN2 > -1) {
+			if (!bN2) dyn2 = 0.5 * (pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+			if (!bN2) dyn2 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS2 > -1) {
+			if (!bS2) dys2 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS2) dys2 -= 0.5 * (pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+		}
+		// z - direction
+		if (iT2 > -1) {
+			if (!bT2) dzt2 = 0.5 * (pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+			if (!bT2) dzt2 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB2 > -1) {
+			if (!bB2) dzb2 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB2) dzb2 -= 0.5 * (pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+		}
 
-	// т.к. известна нумерация вершин куба, то здесь она используется
-	// x - direction
-	if (iE4 > -1) {
-		if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
-		if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	}
-	if (iW4 > -1) {
-		if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
-	}
-	// y - direction
-	if (iN4 > -1) {
-		if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
-		if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	}
-	if (iS4 > -1) {
-		if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
-	}
-	// z - direction
-	if (iT4 > -1) {
-		if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
-		if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-	}
-	if (iB4 > -1) {
-		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE3 > -1) {
+			if (!bE3) dxe3 = 0.5 * (pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+			if (!bE3) dxe3 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW3 > -1) {
+			if (!bW3) dxw3 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW3) dxw3 -= 0.5 * (pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+		}
+		// y - direction
+		if (iN3 > -1) {
+			if (!bN3) dyn3 = 0.5 * (pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+			if (!bN3) dyn3 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS3 > -1) {
+			if (!bS3) dys3 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS3) dys3 -= 0.5 * (pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+		}
+		// z - direction
+		if (iT3 > -1) {
+			if (!bT3) dzt3 = 0.5 * (pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+			if (!bT3) dzt3 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB3 > -1) {
+			if (!bB3) dzb3 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB3) dzb3 -= 0.5 * (pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+		}
+
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE4 > -1) {
+			if (!bE4) dxe4 = 0.5 * (pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+			if (!bE4) dxe4 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW4 > -1) {
+			if (!bW4) dxw4 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW4) dxw4 -= 0.5 * (pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+		}
+		// y - direction
+		if (iN4 > -1) {
+			if (!bN4) dyn4 = 0.5 * (pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+			if (!bN4) dyn4 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS4 > -1) {
+			if (!bS4) dys4 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS4) dys4 -= 0.5 * (pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+		}
+		// z - direction
+		if (iT4 > -1) {
+			if (!bT4) dzt4 = 0.5 * (pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+			if (!bT4) dzt4 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB4 > -1) {
+			if (!bB4) dzb4 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB4) dzb4 -= 0.5 * (pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+		}
+
 	}
 
 	dxe = fabs(dxe);
@@ -311,7 +329,12 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe = dy_loc * dz_loc;
 			}
@@ -337,7 +360,12 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw = dy_loc * dz_loc;
 			}
@@ -362,7 +390,12 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn = dx_loc * dz_loc;
 			}
@@ -387,7 +420,12 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs = dx_loc * dz_loc;
 			}
@@ -412,7 +450,12 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqt = dx_loc * dy_loc;
 			}
@@ -437,7 +480,12 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb = dx_loc * dy_loc;
 			}
@@ -447,466 +495,559 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	}
 
 	doublereal dSqe2 = 0.0, dSqw2 = 0.0, dSqn2 = 0.0, dSqs2 = 0.0, dSqt2 = 0.0, dSqb2 = 0.0; // площадь грани.
-
-
-
-	if (iE2 > -1) {
-
-		dSqe2 = dy * dz;
-
-		if (bE2) {
-			// граничный узел.
-			dSqe2 = border_neighbor[iE2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
-				dSqe2 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqe2 = dy_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iW2 > -1) {
-		dSqw2 = dy * dz;
-
-		if (bW) {
-			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
-				dSqw2 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqw2 = dy_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iN2 > -1) {
-
-		dSqn2 = dx * dz;
-
-		if (bN2) {
-			// граничный узел.
-			dSqn2 = border_neighbor[iN2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
-				dSqn2 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqn2 = dx_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iS2 > -1) {
-
-		dSqs2 = dx * dz;
-
-		if (bS2) {
-			// граничный узел.
-			dSqs2 = border_neighbor[iS2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
-				dSqs2 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqs2 = dx_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iT2 > -1) {
-
-		dSqt2 = dx * dy;
-
-		if (bT2) {
-			// граничный узел.
-			dSqt2 = border_neighbor[iT2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
-				dSqt2 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqt2 = dx_loc * dy_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iB2 > -1) {
-
-		dSqb2 = dx * dy;
-
-		if (bB2) {
-			// граничный узел.
-			dSqb2 = border_neighbor[iB2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
-				dSqb2 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqb2 = dx_loc * dy_loc;
-			}
-		}
-
-
-	}
-
-
 	doublereal dSqe3 = 0.0, dSqw3 = 0.0, dSqn3 = 0.0, dSqs3 = 0.0, dSqt3 = 0.0, dSqb3 = 0.0; // площадь грани.
-
-
-
-	if (iE3 > -1) {
-
-		dSqe3 = dy * dz;
-
-		if (bE3) {
-			// граничный узел.
-			dSqe3 = border_neighbor[iE3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
-				dSqe3 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqe3 = dy_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iW3 > -1) {
-
-		dSqw3 = dy * dz;
-
-		if (bW3) {
-			// граничный узел.
-			dSqw3 = border_neighbor[iW3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
-				dSqw3 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqw3 = dy_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iN3 > -1) {
-
-		dSqn3 = dx * dz;
-
-		if (bN3) {
-			// граничный узел.
-			dSqn3 = border_neighbor[iN3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
-				dSqn3 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqn3 = dx_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iS3 > -1) {
-
-		dSqs3 = dx * dz;
-
-		if (bS3) {
-			// граничный узел.
-			dSqs3 = border_neighbor[iS3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
-				dSqs3 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqs3 = dx_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iT3 > -1) {
-
-		dSqt3 = dx * dy;
-
-		if (bT3) {
-			// граничный узел.
-			dSqt3 = border_neighbor[iT3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
-				dSqt3 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqt3 = dx_loc * dy_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iB3 > -1) {
-
-		dSqb3 = dx * dy;
-
-		if (bB3) {
-			// граничный узел.
-			dSqb3 = border_neighbor[iB3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
-				dSqb3 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqb3 = dx_loc * dy_loc;
-			}
-		}
-
-
-	}
-
 	doublereal dSqe4 = 0.0, dSqw4 = 0.0, dSqn4 = 0.0, dSqs4 = 0.0, dSqt4 = 0.0, dSqb4 = 0.0; // площадь грани.
 
+	if (b_on_adaptive_local_refinement_mesh) {
 
+		if (iE2 > -1) {
 
-	if (iE4 > -1) {
+			dSqe2 = dy * dz;
 
-		dSqe4 = dy * dz;
-
-		if (bE4) {
-			// граничный узел.
-			dSqe4 = border_neighbor[iE4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
-				dSqe4 = dy * dz;
+			if (bE2) {
+				// граничный узел.
+				dSqe2 = border_neighbor[iE2 - maxelm].dS;
 			}
 			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
+					dSqe2 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-				dSqe4 = dy_loc * dz_loc;
+					point_loc = volume_loc[iE2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqe2 = dy_loc * dz_loc;
+				}
 			}
+
+
 		}
 
 
-	}
+		if (iW2 > -1) {
+			dSqw2 = dy * dz;
 
-
-	if (iW4 > -1) {
-
-		dSqw4 = dy * dz;
-
-		if (bW4) {
-			// граничный узел.
-			dSqw4 = border_neighbor[iW4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
-				dSqw4 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqw4 = dy_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iN4 > -1) {
-
-		dSqn4 = dx * dz;
-
-		if (bN4) {
-			// граничный узел.
-			dSqn4 = border_neighbor[iN4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
-				dSqn4 = dx * dz;
+			if (bW2) {
+				// граничный узел.
+				dSqw2 = border_neighbor[iW2 - maxelm].dS;
 			}
 			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				if (ilevel_alice[iP] >= ilevel_alice[iW2]) {
+					dSqw2 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-				dSqn4 = dx_loc * dz_loc;
+					point_loc = volume_loc[iW2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqw2 = dy_loc * dz_loc;
+				}
 			}
+
+
 		}
 
 
-	}
+		if (iN2 > -1) {
 
+			dSqn2 = dx * dz;
 
-	if (iS4 > -1) {
-
-		dSqs4 = dx * dz;
-
-		if (bS4) {
-			// граничный узел.
-			dSqs4 = border_neighbor[iS4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
-				dSqs4 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqs4 = dx_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iT4 > -1) {
-
-		dSqt4 = dx * dy;
-
-		if (bT4) {
-			// граничный узел.
-			dSqt4 = border_neighbor[iT4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
-				dSqt4 = dx * dy;
+			if (bN2) {
+				// граничный узел.
+				dSqn2 = border_neighbor[iN2 - maxelm].dS;
 			}
 			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
+					dSqn2 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-				dSqt4 = dx_loc * dy_loc;
+					point_loc = volume_loc[iN2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+
+					dSqn2 = dx_loc * dz_loc;
+				}
 			}
+
+
 		}
 
 
-	}
+		if (iS2 > -1) {
 
+			dSqs2 = dx * dz;
 
-	if (iB4 > -1) {
-
-		dSqb4 = dx * dy;
-
-		if (bB4) {
-			// граничный узел.
-			dSqb4 = border_neighbor[iB4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
-				dSqb4 = dx * dy;
+			if (bS2) {
+				// граничный узел.
+				dSqs2 = border_neighbor[iS2 - maxelm].dS;
 			}
 			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
+					dSqs2 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-				dSqb4 = dx_loc * dy_loc;
+					point_loc = volume_loc[iS2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqs2 = dx_loc * dz_loc;
+				}
 			}
+
+
 		}
 
 
+		if (iT2 > -1) {
+
+			dSqt2 = dx * dy;
+
+			if (bT2) {
+				// граничный узел.
+				dSqt2 = border_neighbor[iT2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
+					dSqt2 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iT2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqt2 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB2 > -1) {
+
+			dSqb2 = dx * dy;
+
+			if (bB2) {
+				// граничный узел.
+				dSqb2 = border_neighbor[iB2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
+					dSqb2 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iB2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqb2 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+
+
+		if (iE3 > -1) {
+
+			dSqe3 = dy * dz;
+
+			if (bE3) {
+				// граничный узел.
+				dSqe3 = border_neighbor[iE3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
+					dSqe3 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iE3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqe3 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iW3 > -1) {
+
+			dSqw3 = dy * dz;
+
+			if (bW3) {
+				// граничный узел.
+				dSqw3 = border_neighbor[iW3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
+					dSqw3 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iW3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqw3 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN3 > -1) {
+
+			dSqn3 = dx * dz;
+
+			if (bN3) {
+				// граничный узел.
+				dSqn3 = border_neighbor[iN3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
+					dSqn3 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iN3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqn3 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS3 > -1) {
+
+			dSqs3 = dx * dz;
+
+			if (bS3) {
+				// граничный узел.
+				dSqs3 = border_neighbor[iS3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
+					dSqs3 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iS3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqs3 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT3 > -1) {
+
+			dSqt3 = dx * dy;
+
+			if (bT3) {
+				// граничный узел.
+				dSqt3 = border_neighbor[iT3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
+					dSqt3 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iT3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqt3 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB3 > -1) {
+
+			dSqb3 = dx * dy;
+
+			if (bB3) {
+				// граничный узел.
+				dSqb3 = border_neighbor[iB3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
+					dSqb3 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iB3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqb3 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+		
+
+
+
+		if (iE4 > -1) {
+
+			dSqe4 = dy * dz;
+
+			if (bE4) {
+				// граничный узел.
+				dSqe4 = border_neighbor[iE4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
+					dSqe4 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iE4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqe4 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iW4 > -1) {
+
+			dSqw4 = dy * dz;
+
+			if (bW4) {
+				// граничный узел.
+				dSqw4 = border_neighbor[iW4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
+					dSqw4 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iW4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqw4 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN4 > -1) {
+
+			dSqn4 = dx * dz;
+
+			if (bN4) {
+				// граничный узел.
+				dSqn4 = border_neighbor[iN4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
+					dSqn4 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iN4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+
+					dSqn4 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS4 > -1) {
+
+			dSqs4 = dx * dz;
+
+			if (bS4) {
+				// граничный узел.
+				dSqs4 = border_neighbor[iS4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
+					dSqs4 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iS4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqs4 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT4 > -1) {
+
+			dSqt4 = dx * dy;
+
+			if (bT4) {
+				// граничный узел.
+				dSqt4 = border_neighbor[iT4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
+					dSqt4 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iT4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqt4 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB4 > -1) {
+
+			dSqb4 = dx * dy;
+
+			if (bB4) {
+				// граничный узел.
+				dSqb4 = border_neighbor[iB4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
+					dSqb4 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iB4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqb4 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
 	}
 
 	// 28.04.2019	
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -921,7 +1062,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -936,7 +1077,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -984,61 +1125,65 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			if (!bB) rB = prop[iB]; else rB = prop_b[iB - maxelm];
 		}
 
-		if (iE2 > -1) {
-			if (!bE2) rE2 = prop[iE2]; else rE2 = prop_b[iE2 - maxelm];
-		}
-		if (iN2 > -1) {
-			if (!bN2) rN2 = prop[iN2]; else rN2 = prop_b[iN2 - maxelm];
-		}
-		if (iT2 > -1) {
-			if (!bT2) rT2 = prop[iT2]; else rT2 = prop_b[iT2 - maxelm];
-		}
-		if (iW2 > -1) {
-			if (!bW2) rW2 = prop[iW2]; else rW2 = prop_b[iW2 - maxelm];
-		}
-		if (iS2 > -1) {
-			if (!bS2) rS2 = prop[iS2]; else rS2 = prop_b[iS2 - maxelm];
-		}
-		if (iB2 > -1) {
-			if (!bB2) rB2 = prop[iB2]; else rB2 = prop_b[iB2 - maxelm];
-		}
+		if (b_on_adaptive_local_refinement_mesh) {
 
-		if (iE3 > -1) {
-			if (!bE3) rE3 = prop[iE3]; else rE3 = prop_b[iE3 - maxelm];
-		}
-		if (iN3 > -1) {
-			if (!bN3) rN3 = prop[iN3]; else rN3 = prop_b[iN3 - maxelm];
-		}
-		if (iT3 > -1) {
-			if (!bT3) rT3 = prop[iT3]; else rT3 = prop_b[iT3 - maxelm];
-		}
-		if (iW3 > -1) {
-			if (!bW3) rW3 = prop[iW3]; else rW3 = prop_b[iW3 - maxelm];
-		}
-		if (iS3 > -1) {
-			if (!bS3) rS3 = prop[iS3]; else rS3 = prop_b[iS3 - maxelm];
-		}
-		if (iB3 > -1) {
-			if (!bB3) rB3 = prop[iB3]; else rB3 = prop_b[iB3 - maxelm];
-		}
+			if (iE2 > -1) {
+				if (!bE2) rE2 = prop[iE2]; else rE2 = prop_b[iE2 - maxelm];
+			}
+			if (iN2 > -1) {
+				if (!bN2) rN2 = prop[iN2]; else rN2 = prop_b[iN2 - maxelm];
+			}
+			if (iT2 > -1) {
+				if (!bT2) rT2 = prop[iT2]; else rT2 = prop_b[iT2 - maxelm];
+			}
+			if (iW2 > -1) {
+				if (!bW2) rW2 = prop[iW2]; else rW2 = prop_b[iW2 - maxelm];
+			}
+			if (iS2 > -1) {
+				if (!bS2) rS2 = prop[iS2]; else rS2 = prop_b[iS2 - maxelm];
+			}
+			if (iB2 > -1) {
+				if (!bB2) rB2 = prop[iB2]; else rB2 = prop_b[iB2 - maxelm];
+			}
 
-		if (iE4 > -1) {
-			if (!bE4) rE4 = prop[iE4]; else rE4 = prop_b[iE4 - maxelm];
-		}
-		if (iN4 > -1) {
-			if (!bN4) rN4 = prop[iN4]; else rN4 = prop_b[iN4 - maxelm];
-		}
-		if (iT4 > -1) {
-			if (!bT4) rT4 = prop[iT4]; else rT4 = prop_b[iT4 - maxelm];
-		}
-		if (iW4 > -1) {
-			if (!bW4) rW4 = prop[iW4]; else rW4 = prop_b[iW4 - maxelm];
-		}
-		if (iS4 > -1) {
-			if (!bS4) rS4 = prop[iS4]; else rS4 = prop_b[iS4 - maxelm];
-		}
-		if (iB4 > -1) {
-			if (!bB4) rB4 = prop[iB4]; else rB4 = prop_b[iB4 - maxelm];
+			if (iE3 > -1) {
+				if (!bE3) rE3 = prop[iE3]; else rE3 = prop_b[iE3 - maxelm];
+			}
+			if (iN3 > -1) {
+				if (!bN3) rN3 = prop[iN3]; else rN3 = prop_b[iN3 - maxelm];
+			}
+			if (iT3 > -1) {
+				if (!bT3) rT3 = prop[iT3]; else rT3 = prop_b[iT3 - maxelm];
+			}
+			if (iW3 > -1) {
+				if (!bW3) rW3 = prop[iW3]; else rW3 = prop_b[iW3 - maxelm];
+			}
+			if (iS3 > -1) {
+				if (!bS3) rS3 = prop[iS3]; else rS3 = prop_b[iS3 - maxelm];
+			}
+			if (iB3 > -1) {
+				if (!bB3) rB3 = prop[iB3]; else rB3 = prop_b[iB3 - maxelm];
+			}
+
+			if (iE4 > -1) {
+				if (!bE4) rE4 = prop[iE4]; else rE4 = prop_b[iE4 - maxelm];
+			}
+			if (iN4 > -1) {
+				if (!bN4) rN4 = prop[iN4]; else rN4 = prop_b[iN4 - maxelm];
+			}
+			if (iT4 > -1) {
+				if (!bT4) rT4 = prop[iT4]; else rT4 = prop_b[iT4 - maxelm];
+			}
+			if (iW4 > -1) {
+				if (!bW4) rW4 = prop[iW4]; else rW4 = prop_b[iW4 - maxelm];
+			}
+			if (iS4 > -1) {
+				if (!bS4) rS4 = prop[iS4]; else rS4 = prop_b[iS4 - maxelm];
+			}
+			if (iB4 > -1) {
+				if (!bB4) rB4 = prop[iB4]; else rB4 = prop_b[iB4 - maxelm];
+			}
+
 		}
 	    
 		if (iE > -1) {
@@ -1060,61 +1205,65 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			rhob = rB * rP / (fbplus*rB + (1.0 - fbplus)*rP);
 		}
 
-		if (iE2 > -1) {
-			rhoe2 = rE2 * rP / (feplus2*rE2 + (1.0 - feplus2)*rP); // проверено.
-		}
-		if (iW2 > -1) {
-			rhow2 = rW2 * rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP);
-		}
-		if (iN2 > -1) {
-			rhon2 = rN2 * rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP);
-		}
-		if (iS2 > -1) {
-			rhos2 = rS2 * rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP);
-		}
-		if (iT2 > -1) {
-			rhot2 = rT2 * rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP);
-		}
-		if (iB2 > -1) {
-			rhob2 = rB2 * rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP);
-		}
+		if (b_on_adaptive_local_refinement_mesh) {
 
-		if (iE3 > -1) {
-			rhoe3 = rE3 * rP / (feplus3*rE3 + (1.0 - feplus3)*rP); // проверено.
-		}
-		if (iW3 > -1) {
-			rhow3 = rW3 * rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP);
-		}
-		if (iN3 > -1) {
-			rhon3 = rN3 * rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP);
-		}
-		if (iS3 > -1) {
-			rhos3 = rS3 * rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP);
-		}
-		if (iT3 > -1) {
-			rhot3 = rT3 * rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP);
-		}
-		if (iB3 > -1) {
-			rhob3 = rB3 * rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP);
-		}
+			if (iE2 > -1) {
+				rhoe2 = rE2 * rP / (feplus2 * rE2 + (1.0 - feplus2) * rP); // проверено.
+			}
+			if (iW2 > -1) {
+				rhow2 = rW2 * rP / (fwplus2 * rW2 + (1.0 - fwplus2) * rP);
+			}
+			if (iN2 > -1) {
+				rhon2 = rN2 * rP / (fnplus2 * rN2 + (1.0 - fnplus2) * rP);
+			}
+			if (iS2 > -1) {
+				rhos2 = rS2 * rP / (fsplus2 * rS2 + (1.0 - fsplus2) * rP);
+			}
+			if (iT2 > -1) {
+				rhot2 = rT2 * rP / (ftplus2 * rT2 + (1.0 - ftplus2) * rP);
+			}
+			if (iB2 > -1) {
+				rhob2 = rB2 * rP / (fbplus2 * rB2 + (1.0 - fbplus2) * rP);
+			}
 
-		if (iE4 > -1) {
-			rhoe4 = rE4 * rP / (feplus4*rE4 + (1.0 - feplus4)*rP); // проверено.
-		}
-		if (iW4 > -1) {
-			rhow4 = rW4 * rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP);
-		}
-		if (iN4 > -1) {
-			rhon4 = rN4 * rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP);
-		}
-		if (iS4 > -1) {
-			rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP);
-		}
-		if (iT4 > -1) {
-			rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP);
-		}
-		if (iB4 > -1) {
-			rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP);
+			if (iE3 > -1) {
+				rhoe3 = rE3 * rP / (feplus3 * rE3 + (1.0 - feplus3) * rP); // проверено.
+			}
+			if (iW3 > -1) {
+				rhow3 = rW3 * rP / (fwplus3 * rW3 + (1.0 - fwplus3) * rP);
+			}
+			if (iN3 > -1) {
+				rhon3 = rN3 * rP / (fnplus3 * rN3 + (1.0 - fnplus3) * rP);
+			}
+			if (iS3 > -1) {
+				rhos3 = rS3 * rP / (fsplus3 * rS3 + (1.0 - fsplus3) * rP);
+			}
+			if (iT3 > -1) {
+				rhot3 = rT3 * rP / (ftplus3 * rT3 + (1.0 - ftplus3) * rP);
+			}
+			if (iB3 > -1) {
+				rhob3 = rB3 * rP / (fbplus3 * rB3 + (1.0 - fbplus3) * rP);
+			}
+
+			if (iE4 > -1) {
+				rhoe4 = rE4 * rP / (feplus4 * rE4 + (1.0 - feplus4) * rP); // проверено.
+			}
+			if (iW4 > -1) {
+				rhow4 = rW4 * rP / (fwplus4 * rW4 + (1.0 - fwplus4) * rP);
+			}
+			if (iN4 > -1) {
+				rhon4 = rN4 * rP / (fnplus4 * rN4 + (1.0 - fnplus4) * rP);
+			}
+			if (iS4 > -1) {
+				rhos4 = rS4 * rP / (fsplus4 * rS4 + (1.0 - fsplus4) * rP);
+			}
+			if (iT4 > -1) {
+				rhot4 = rT4 * rP / (ftplus4 * rT4 + (1.0 - ftplus4) * rP);
+			}
+			if (iB4 > -1) {
+				rhob4 = rB4 * rP / (fbplus4 * rB4 + (1.0 - fbplus4) * rP);
+			}
+
 		}
 	}
 
@@ -1153,74 +1302,78 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			else fw = potent[VXCOR][iW];
 		}
 
-		if (iE2 > -1) {
-			if (!bE2) {
-				if (bRCh) {
-					fe2 = mf[E_SIDE] / (rhoe2*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+		if (b_on_adaptive_local_refinement_mesh) {
+
+			if (iE2 > -1) {
+				if (!bE2) {
+					if (bRCh) {
+						fe2 = mf[E_SIDE] / (rhoe2 * dy * dz); // скорость на грани с учётом поправки Рхи-Чоу.
+					}
+					else {
+						fe2 = feplus2 * potent[VXCOR][iE2] + (1.0 - feplus2) * potent[VXCOR][iP];
+					}
 				}
-				else {
-					fe2 = feplus2*potent[VXCOR][iE2] + (1.0 - feplus2)*potent[VXCOR][iP];
-				}
+				else fe2 = potent[VXCOR][iE2];
 			}
-			else fe2 = potent[VXCOR][iE2];
-		}
-		if (iW2 > -1) {
-			if (!bW2) {
-				if (bRCh) {
-					fw2 = mf[W_SIDE] / (rhow2*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+			if (iW2 > -1) {
+				if (!bW2) {
+					if (bRCh) {
+						fw2 = mf[W_SIDE] / (rhow2 * dy * dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+					}
+					else {
+						fw2 = fwplus2 * potent[VXCOR][iW2] + (1.0 - fwplus2) * potent[VXCOR][iP];
+					}
 				}
-				else {
-					fw2 = fwplus2*potent[VXCOR][iW2] + (1.0 - fwplus2)*potent[VXCOR][iP];
-				}
+				else fw2 = potent[VXCOR][iW2];
 			}
-			else fw2 = potent[VXCOR][iW2];
+
+			if (iE3 > -1) {
+				if (!bE3) {
+					if (bRCh) {
+						fe3 = mf[E_SIDE] / (rhoe3 * dy * dz); // скорость на грани с учётом поправки Рхи-Чоу.
+					}
+					else {
+						fe3 = feplus3 * potent[VXCOR][iE3] + (1.0 - feplus3) * potent[VXCOR][iP];
+					}
+				}
+				else fe3 = potent[VXCOR][iE3];
+			}
+			if (iW3 > -1) {
+				if (!bW3) {
+					if (bRCh) {
+						fw3 = mf[W_SIDE] / (rhow3 * dy * dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+					}
+					else {
+						fw3 = fwplus3 * potent[VXCOR][iW3] + (1.0 - fwplus3) * potent[VXCOR][iP];
+					}
+				}
+				else fw3 = potent[VXCOR][iW3];
+			}
+
+			if (iE4 > -1) {
+				if (!bE4) {
+					if (bRCh) {
+						fe4 = mf[E_SIDE] / (rhoe4 * dy * dz); // скорость на грани с учётом поправки Рхи-Чоу.
+					}
+					else {
+						fe4 = feplus4 * potent[VXCOR][iE4] + (1.0 - feplus4) * potent[VXCOR][iP];
+					}
+				}
+				else fe4 = potent[VXCOR][iE4];
+			}
+			if (iW4 > -1) {
+				if (!bW4) {
+					if (bRCh) {
+						fw4 = mf[W_SIDE] / (rhow4 * dy * dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+					}
+					else {
+						fw4 = fwplus4 * potent[VXCOR][iW4] + (1.0 - fwplus4) * potent[VXCOR][iP];
+					}
+				}
+				else fw4 = potent[VXCOR][iW4];
+			}
 		}
 
-		if (iE3 > -1) {
-			if (!bE3) {
-				if (bRCh) {
-					fe3 = mf[E_SIDE] / (rhoe3*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
-				}
-				else {
-					fe3 = feplus3*potent[VXCOR][iE3] + (1.0 - feplus3)*potent[VXCOR][iP];
-				}
-			}
-			else fe3 = potent[VXCOR][iE3];
-		}
-		if (iW3 > -1) {
-			if (!bW3) {
-				if (bRCh) {
-					fw3 = mf[W_SIDE] / (rhow3*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
-				}
-				else {
-					fw3 = fwplus3*potent[VXCOR][iW3] + (1.0 - fwplus3)*potent[VXCOR][iP];
-				}
-			}
-			else fw3 = potent[VXCOR][iW3];
-		}
-
-		if (iE4 > -1) {
-			if (!bE4) {
-				if (bRCh) {
-					fe4 = mf[E_SIDE] / (rhoe4*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
-				}
-				else {
-					fe4 = feplus4*potent[VXCOR][iE4] + (1.0 - feplus4)*potent[VXCOR][iP];
-				}
-			}
-			else fe4 = potent[VXCOR][iE4];
-		}
-		if (iW4 > -1) {
-			if (!bW4) {
-				if (bRCh) {
-					fw4 = mf[W_SIDE] / (rhow4*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
-				}
-				else {
-					fw4 = fwplus4*potent[VXCOR][iW4] + (1.0 - fwplus4)*potent[VXCOR][iP];
-				}
-			}
-			else fw4 = potent[VXCOR][iW4];
-		}
 		// Эти компоненты скорости тоже по идее можно вычислять с помощью монотонизирующей поправки.
 		// Вопрос о правомерности пока остаётся открытым. Дальнейшие компоненты скорости и производные аналогично для VX.
 		if (iN > -1) {
@@ -1236,43 +1389,46 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			if (!bB) fb = fbplus*potent[VXCOR][iB] + (1.0 - fbplus)*potent[VXCOR][iP]; else fb = potent[VXCOR][iB];
 		}
 
-		if (iN2 > -1) {
-			if (!bN2) fn2 = fnplus2*potent[VXCOR][iN2] + (1.0 - fnplus2)*potent[VXCOR][iP]; else fn2 = potent[VXCOR][iN2];
-		}
-		if (iS2 > -1) {
-			if (!bS2) fs2 = fsplus2*potent[VXCOR][iS2] + (1.0 - fsplus2)*potent[VXCOR][iP]; else fs2 = potent[VXCOR][iS2];
-		}
-		if (iT2 > -1) {
-			if (!bT2) ft2 = ftplus2*potent[VXCOR][iT2] + (1.0 - ftplus2)*potent[VXCOR][iP]; else ft2 = potent[VXCOR][iT2];
-		}
-		if (iB2 > -1) {
-			if (!bB2) fb2 = fbplus2*potent[VXCOR][iB2] + (1.0 - fbplus2)*potent[VXCOR][iP]; else fb2 = potent[VXCOR][iB2];
-		}
+		if (b_on_adaptive_local_refinement_mesh) {
 
-		if (iN3 > -1) {
-			if (!bN3) fn3 = fnplus3*potent[VXCOR][iN3] + (1.0 - fnplus3)*potent[VXCOR][iP]; else fn3 = potent[VXCOR][iN3];
-		}
-		if (iS3 > -1) {
-			if (!bS3) fs3 = fsplus3*potent[VXCOR][iS3] + (1.0 - fsplus3)*potent[VXCOR][iP]; else fs3 = potent[VXCOR][iS3];
-		}
-		if (iT3 > -1) {
-			if (!bT3) ft3 = ftplus3*potent[VXCOR][iT3] + (1.0 - ftplus3)*potent[VXCOR][iP]; else ft3 = potent[VXCOR][iT3];
-		}
-		if (iB3 > -1) {
-			if (!bB3) fb3 = fbplus3*potent[VXCOR][iB3] + (1.0 - fbplus3)*potent[VXCOR][iP]; else fb3 = potent[VXCOR][iB3];
-		}
+			if (iN2 > -1) {
+				if (!bN2) fn2 = fnplus2 * potent[VXCOR][iN2] + (1.0 - fnplus2) * potent[VXCOR][iP]; else fn2 = potent[VXCOR][iN2];
+			}
+			if (iS2 > -1) {
+				if (!bS2) fs2 = fsplus2 * potent[VXCOR][iS2] + (1.0 - fsplus2) * potent[VXCOR][iP]; else fs2 = potent[VXCOR][iS2];
+			}
+			if (iT2 > -1) {
+				if (!bT2) ft2 = ftplus2 * potent[VXCOR][iT2] + (1.0 - ftplus2) * potent[VXCOR][iP]; else ft2 = potent[VXCOR][iT2];
+			}
+			if (iB2 > -1) {
+				if (!bB2) fb2 = fbplus2 * potent[VXCOR][iB2] + (1.0 - fbplus2) * potent[VXCOR][iP]; else fb2 = potent[VXCOR][iB2];
+			}
 
-		if (iN4 > -1) {
-			if (!bN4) fn4 = fnplus4*potent[VXCOR][iN4] + (1.0 - fnplus4)*potent[VXCOR][iP]; else fn4 = potent[VXCOR][iN4];
-		}
-		if (iS4 > -1) {
-			if (!bS4) fs4 = fsplus4*potent[VXCOR][iS4] + (1.0 - fsplus4)*potent[VXCOR][iP]; else fs4 = potent[VXCOR][iS4];
-		}
-		if (iT4 > -1) {
-			if (!bT4) ft4 = ftplus4*potent[VXCOR][iT4] + (1.0 - ftplus4)*potent[VXCOR][iP]; else ft4 = potent[VXCOR][iT4];
-		}
-		if (iB4 > -1) {
-			if (!bB4) fb4 = fbplus4*potent[VXCOR][iB4] + (1.0 - fbplus4)*potent[VXCOR][iP]; else fb4 = potent[VXCOR][iB4];
+			if (iN3 > -1) {
+				if (!bN3) fn3 = fnplus3 * potent[VXCOR][iN3] + (1.0 - fnplus3) * potent[VXCOR][iP]; else fn3 = potent[VXCOR][iN3];
+			}
+			if (iS3 > -1) {
+				if (!bS3) fs3 = fsplus3 * potent[VXCOR][iS3] + (1.0 - fsplus3) * potent[VXCOR][iP]; else fs3 = potent[VXCOR][iS3];
+			}
+			if (iT3 > -1) {
+				if (!bT3) ft3 = ftplus3 * potent[VXCOR][iT3] + (1.0 - ftplus3) * potent[VXCOR][iP]; else ft3 = potent[VXCOR][iT3];
+			}
+			if (iB3 > -1) {
+				if (!bB3) fb3 = fbplus3 * potent[VXCOR][iB3] + (1.0 - fbplus3) * potent[VXCOR][iP]; else fb3 = potent[VXCOR][iB3];
+			}
+
+			if (iN4 > -1) {
+				if (!bN4) fn4 = fnplus4 * potent[VXCOR][iN4] + (1.0 - fnplus4) * potent[VXCOR][iP]; else fn4 = potent[VXCOR][iN4];
+			}
+			if (iS4 > -1) {
+				if (!bS4) fs4 = fsplus4 * potent[VXCOR][iS4] + (1.0 - fsplus4) * potent[VXCOR][iP]; else fs4 = potent[VXCOR][iS4];
+			}
+			if (iT4 > -1) {
+				if (!bT4) ft4 = ftplus4 * potent[VXCOR][iT4] + (1.0 - ftplus4) * potent[VXCOR][iP]; else ft4 = potent[VXCOR][iT4];
+			}
+			if (iB4 > -1) {
+				if (!bB4) fb4 = fbplus4 * potent[VXCOR][iB4] + (1.0 - fbplus4) * potent[VXCOR][iP]; else fb4 = potent[VXCOR][iB4];
+			}
 		}
         // градиент VX
 	    //potent[GRADXVX][iP]=(fe-fw)/dx;
@@ -1295,24 +1451,30 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iW > -1) {
 			if (!bW) fw = fwplus*potent[VYCOR][iW] + (1.0 - fwplus)*potent[VYCOR][iP]; else fw = potent[VYCOR][iW];
 		}
-		if (iE2 > -1) {
-			if (!bE2) fe2 = feplus2*potent[VYCOR][iE2] + (1.0 - feplus2)*potent[VYCOR][iP]; else fe2 = potent[VYCOR][iE2];
+
+		if (b_on_adaptive_local_refinement_mesh) {
+
+			if (iE2 > -1) {
+				if (!bE2) fe2 = feplus2 * potent[VYCOR][iE2] + (1.0 - feplus2) * potent[VYCOR][iP]; else fe2 = potent[VYCOR][iE2];
+			}
+			if (iW2 > -1) {
+				if (!bW2) fw2 = fwplus2 * potent[VYCOR][iW2] + (1.0 - fwplus2) * potent[VYCOR][iP]; else fw2 = potent[VYCOR][iW2];
+			}
+			if (iE3 > -1) {
+				if (!bE3) fe3 = feplus3 * potent[VYCOR][iE3] + (1.0 - feplus3) * potent[VYCOR][iP]; else fe3 = potent[VYCOR][iE3];
+			}
+			if (iW3 > -1) {
+				if (!bW3) fw3 = fwplus3 * potent[VYCOR][iW3] + (1.0 - fwplus3) * potent[VYCOR][iP]; else fw3 = potent[VYCOR][iW3];
+			}
+			if (iE4 > -1) {
+				if (!bE4) fe4 = feplus4 * potent[VYCOR][iE4] + (1.0 - feplus4) * potent[VYCOR][iP]; else fe4 = potent[VYCOR][iE4];
+			}
+			if (iW4 > -1) {
+				if (!bW4) fw4 = fwplus4 * potent[VYCOR][iW4] + (1.0 - fwplus4) * potent[VYCOR][iP]; else fw4 = potent[VYCOR][iW4];
+			}
+
 		}
-		if (iW2 > -1) {
-			if (!bW2) fw2 = fwplus2*potent[VYCOR][iW2] + (1.0 - fwplus2)*potent[VYCOR][iP]; else fw2 = potent[VYCOR][iW2];
-		}
-		if (iE3 > -1) {
-			if (!bE3) fe3 = feplus3*potent[VYCOR][iE3] + (1.0 - feplus3)*potent[VYCOR][iP]; else fe3 = potent[VYCOR][iE3];
-		}
-		if (iW3 > -1) {
-			if (!bW3) fw3 = fwplus3*potent[VYCOR][iW3] + (1.0 - fwplus3)*potent[VYCOR][iP]; else fw3 = potent[VYCOR][iW3];
-		}
-		if (iE4 > -1) {
-			if (!bE4) fe4 = feplus4*potent[VYCOR][iE4] + (1.0 - feplus4)*potent[VYCOR][iP]; else fe4 = potent[VYCOR][iE4];
-		}
-		if (iW4 > -1) {
-			if (!bW4) fw4 = fwplus4*potent[VYCOR][iW4] + (1.0 - fwplus4)*potent[VYCOR][iP]; else fw4 = potent[VYCOR][iW4];
-		}
+
 		if (iN > -1) {
 			if (!bN) {
 				if (bRCh) {
@@ -1335,97 +1497,104 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else fs = potent[VYCOR][iS];
 		}
-		if (iN2 > -1) {
-			if (!bN2) {
-				if (bRCh) {
-					fn2 = mf[N_SIDE] / (rhon2*dx*dz);
+
+		if (b_on_adaptive_local_refinement_mesh) {
+
+			if (iN2 > -1) {
+				if (!bN2) {
+					if (bRCh) {
+						fn2 = mf[N_SIDE] / (rhon2 * dx * dz);
+					}
+					else {
+						fn2 = fnplus2 * potent[VYCOR][iN2] + (1.0 - fnplus2) * potent[VYCOR][iP];
+					}
 				}
-				else {
-					fn2 = fnplus2*potent[VYCOR][iN2] + (1.0 - fnplus2)*potent[VYCOR][iP];
-				}
+				else fn2 = potent[VYCOR][iN2];
 			}
-			else fn2 = potent[VYCOR][iN2];
-		}
-		if (iS2 > -1) {
-			if (!bS2) {
-				if (bRCh) {
-					fs2 = mf[S_SIDE] / (rhos2*dx*dz);
+			if (iS2 > -1) {
+				if (!bS2) {
+					if (bRCh) {
+						fs2 = mf[S_SIDE] / (rhos2 * dx * dz);
+					}
+					else {
+						fs2 = fsplus2 * potent[VYCOR][iS2] + (1.0 - fsplus2) * potent[VYCOR][iP];
+					}
 				}
-				else {
-					fs2 = fsplus2*potent[VYCOR][iS2] + (1.0 - fsplus2)*potent[VYCOR][iP];
-				}
+				else fs2 = potent[VYCOR][iS2];
 			}
-			else fs2 = potent[VYCOR][iS2];
-		}
-		if (iN3 > -1) {
-			if (!bN3) {
-				if (bRCh) {
-					fn3 = mf[N_SIDE] / (rhon3*dx*dz);
+			if (iN3 > -1) {
+				if (!bN3) {
+					if (bRCh) {
+						fn3 = mf[N_SIDE] / (rhon3 * dx * dz);
+					}
+					else {
+						fn3 = fnplus3 * potent[VYCOR][iN3] + (1.0 - fnplus3) * potent[VYCOR][iP];
+					}
 				}
-				else {
-					fn3 = fnplus3*potent[VYCOR][iN3] + (1.0 - fnplus3)*potent[VYCOR][iP];
-				}
+				else fn3 = potent[VYCOR][iN3];
 			}
-			else fn3 = potent[VYCOR][iN3];
-		}
-		if (iS3 > -1) {
-			if (!bS3) {
-				if (bRCh) {
-					fs3 = mf[S_SIDE] / (rhos3*dx*dz);
+			if (iS3 > -1) {
+				if (!bS3) {
+					if (bRCh) {
+						fs3 = mf[S_SIDE] / (rhos3 * dx * dz);
+					}
+					else {
+						fs3 = fsplus3 * potent[VYCOR][iS3] + (1.0 - fsplus3) * potent[VYCOR][iP];
+					}
 				}
-				else {
-					fs3 = fsplus3*potent[VYCOR][iS3] + (1.0 - fsplus3)*potent[VYCOR][iP];
-				}
+				else fs3 = potent[VYCOR][iS3];
 			}
-			else fs3 = potent[VYCOR][iS3];
-		}
-		if (iN4 > -1) {
-			if (!bN4) {
-				if (bRCh) {
-					fn4 = mf[N_SIDE] / (rhon4*dx*dz);
+			if (iN4 > -1) {
+				if (!bN4) {
+					if (bRCh) {
+						fn4 = mf[N_SIDE] / (rhon4 * dx * dz);
+					}
+					else {
+						fn4 = fnplus4 * potent[VYCOR][iN4] + (1.0 - fnplus4) * potent[VYCOR][iP];
+					}
 				}
-				else {
-					fn4 = fnplus4*potent[VYCOR][iN4] + (1.0 - fnplus4)*potent[VYCOR][iP];
-				}
+				else fn4 = potent[VYCOR][iN4];
 			}
-			else fn4 = potent[VYCOR][iN4];
-		}
-		if (iS4 > -1) {
-			if (!bS4) {
-				if (bRCh) {
-					fs4 = mf[S_SIDE] / (rhos4*dx*dz);
+			if (iS4 > -1) {
+				if (!bS4) {
+					if (bRCh) {
+						fs4 = mf[S_SIDE] / (rhos4 * dx * dz);
+					}
+					else {
+						fs4 = fsplus4 * potent[VYCOR][iS4] + (1.0 - fsplus4) * potent[VYCOR][iP];
+					}
 				}
-				else {
-					fs4 = fsplus4*potent[VYCOR][iS4] + (1.0 - fsplus4)*potent[VYCOR][iP];
-				}
+				else fs4 = potent[VYCOR][iS4];
 			}
-			else fs4 = potent[VYCOR][iS4];
 		}
+
 		if (iT > -1) {
 			if (!bT) ft = ftplus*potent[VYCOR][iT] + (1.0 - ftplus)*potent[VYCOR][iP]; else ft = potent[VYCOR][iT];
 		}
 		if (iB > -1) {
 			if (!bB) fb = fbplus*potent[VYCOR][iB] + (1.0 - fbplus)*potent[VYCOR][iP]; else fb = potent[VYCOR][iB];
 		}
-		if (iT2 > -1) {
-			if (!bT2) ft2 = ftplus2*potent[VYCOR][iT2] + (1.0 - ftplus2)*potent[VYCOR][iP]; else ft2 = potent[VYCOR][iT2];
+
+		if (b_on_adaptive_local_refinement_mesh) {
+			if (iT2 > -1) {
+				if (!bT2) ft2 = ftplus2 * potent[VYCOR][iT2] + (1.0 - ftplus2) * potent[VYCOR][iP]; else ft2 = potent[VYCOR][iT2];
+			}
+			if (iB2 > -1) {
+				if (!bB2) fb2 = fbplus2 * potent[VYCOR][iB2] + (1.0 - fbplus2) * potent[VYCOR][iP]; else fb2 = potent[VYCOR][iB2];
+			}
+			if (iT3 > -1) {
+				if (!bT3) ft3 = ftplus3 * potent[VYCOR][iT3] + (1.0 - ftplus3) * potent[VYCOR][iP]; else ft3 = potent[VYCOR][iT3];
+			}
+			if (iB3 > -1) {
+				if (!bB3) fb3 = fbplus3 * potent[VYCOR][iB3] + (1.0 - fbplus3) * potent[VYCOR][iP]; else fb3 = potent[VYCOR][iB3];
+			}
+			if (iT4 > -1) {
+				if (!bT4) ft4 = ftplus4 * potent[VYCOR][iT4] + (1.0 - ftplus4) * potent[VYCOR][iP]; else ft4 = potent[VYCOR][iT4];
+			}
+			if (iB4 > -1) {
+				if (!bB4) fb4 = fbplus4 * potent[VYCOR][iB4] + (1.0 - fbplus4) * potent[VYCOR][iP]; else fb4 = potent[VYCOR][iB4];
+			}
 		}
-		if (iB2 > -1) {
-			if (!bB2) fb2 = fbplus2*potent[VYCOR][iB2] + (1.0 - fbplus2)*potent[VYCOR][iP]; else fb2 = potent[VYCOR][iB2];
-		}
-		if (iT3 > -1) {
-			if (!bT3) ft3 = ftplus3*potent[VYCOR][iT3] + (1.0 - ftplus3)*potent[VYCOR][iP]; else ft3 = potent[VYCOR][iT3];
-		}
-		if (iB3 > -1) {
-			if (!bB3) fb3 = fbplus3*potent[VYCOR][iB3] + (1.0 - fbplus3)*potent[VYCOR][iP]; else fb3 = potent[VYCOR][iB3];
-		}
-		if (iT4 > -1) {
-			if (!bT4) ft4 = ftplus4*potent[VYCOR][iT4] + (1.0 - ftplus4)*potent[VYCOR][iP]; else ft4 = potent[VYCOR][iT4];
-		}
-		if (iB4 > -1) {
-			if (!bB4) fb4 = fbplus4*potent[VYCOR][iB4] + (1.0 - fbplus4)*potent[VYCOR][iP]; else fb4 = potent[VYCOR][iB4];
-		}
-		
 		// градиент VY
 
 	    //potent[GRADXVY][iP]=(fe-fw)/dx;
@@ -1453,42 +1622,47 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iS > -1) {
 			if (!bS) fs = fsplus*potent[VZCOR][iS] + (1.0 - fsplus)*potent[VZCOR][iP]; else fs = potent[VZCOR][iS];
 		}
-		if (iE2 > -1) {
-			if (!bE2) fe2 = feplus2*potent[VZCOR][iE2] + (1.0 - feplus2)*potent[VZCOR][iP]; else fe2 = potent[VZCOR][iE2];
+
+		if (b_on_adaptive_local_refinement_mesh) {
+
+			if (iE2 > -1) {
+				if (!bE2) fe2 = feplus2 * potent[VZCOR][iE2] + (1.0 - feplus2) * potent[VZCOR][iP]; else fe2 = potent[VZCOR][iE2];
+			}
+			if (iW2 > -1) {
+				if (!bW2) fw2 = fwplus2 * potent[VZCOR][iW2] + (1.0 - fwplus2) * potent[VZCOR][iP]; else fw2 = potent[VZCOR][iW2];
+			}
+			if (iN2 > -1) {
+				if (!bN2) fn2 = fnplus2 * potent[VZCOR][iN2] + (1.0 - fnplus2) * potent[VZCOR][iP]; else fn2 = potent[VZCOR][iN2];
+			}
+			if (iS2 > -1) {
+				if (!bS2) fs2 = fsplus2 * potent[VZCOR][iS2] + (1.0 - fsplus2) * potent[VZCOR][iP]; else fs2 = potent[VZCOR][iS2];
+			}
+			if (iE3 > -1) {
+				if (!bE3) fe3 = feplus3 * potent[VZCOR][iE3] + (1.0 - feplus3) * potent[VZCOR][iP]; else fe3 = potent[VZCOR][iE3];
+			}
+			if (iW3 > -1) {
+				if (!bW3) fw3 = fwplus3 * potent[VZCOR][iW3] + (1.0 - fwplus3) * potent[VZCOR][iP]; else fw3 = potent[VZCOR][iW3];
+			}
+			if (iN3 > -1) {
+				if (!bN3) fn3 = fnplus3 * potent[VZCOR][iN3] + (1.0 - fnplus3) * potent[VZCOR][iP]; else fn3 = potent[VZCOR][iN3];
+			}
+			if (iS3 > -1) {
+				if (!bS3) fs3 = fsplus3 * potent[VZCOR][iS3] + (1.0 - fsplus3) * potent[VZCOR][iP]; else fs3 = potent[VZCOR][iS3];
+			}
+			if (iE4 > -1) {
+				if (!bE4) fe4 = feplus4 * potent[VZCOR][iE4] + (1.0 - feplus4) * potent[VZCOR][iP]; else fe4 = potent[VZCOR][iE4];
+			}
+			if (iW4 > -1) {
+				if (!bW4) fw4 = fwplus4 * potent[VZCOR][iW4] + (1.0 - fwplus4) * potent[VZCOR][iP]; else fw4 = potent[VZCOR][iW4];
+			}
+			if (iN4 > -1) {
+				if (!bN4) fn4 = fnplus4 * potent[VZCOR][iN4] + (1.0 - fnplus4) * potent[VZCOR][iP]; else fn4 = potent[VZCOR][iN4];
+			}
+			if (iS4 > -1) {
+				if (!bS4) fs4 = fsplus4 * potent[VZCOR][iS4] + (1.0 - fsplus4) * potent[VZCOR][iP]; else fs4 = potent[VZCOR][iS4];
+			}
 		}
-		if (iW2 > -1) {
-			if (!bW2) fw2 = fwplus2*potent[VZCOR][iW2] + (1.0 - fwplus2)*potent[VZCOR][iP]; else fw2 = potent[VZCOR][iW2];
-		}
-		if (iN2 > -1) {
-			if (!bN2) fn2 = fnplus2*potent[VZCOR][iN2] + (1.0 - fnplus2)*potent[VZCOR][iP]; else fn2 = potent[VZCOR][iN2];
-		}
-		if (iS2 > -1) {
-			if (!bS2) fs2 = fsplus2*potent[VZCOR][iS2] + (1.0 - fsplus2)*potent[VZCOR][iP]; else fs2 = potent[VZCOR][iS2];
-		}
-		if (iE3 > -1) {
-			if (!bE3) fe3 = feplus3*potent[VZCOR][iE3] + (1.0 - feplus3)*potent[VZCOR][iP]; else fe3 = potent[VZCOR][iE3];
-		}
-		if (iW3 > -1) {
-			if (!bW3) fw3 = fwplus3*potent[VZCOR][iW3] + (1.0 - fwplus3)*potent[VZCOR][iP]; else fw3 = potent[VZCOR][iW3];
-		}
-		if (iN3 > -1) {
-			if (!bN3) fn3 = fnplus3*potent[VZCOR][iN3] + (1.0 - fnplus3)*potent[VZCOR][iP]; else fn3 = potent[VZCOR][iN3];
-		}
-		if (iS3 > -1) {
-			if (!bS3) fs3 = fsplus3*potent[VZCOR][iS3] + (1.0 - fsplus3)*potent[VZCOR][iP]; else fs3 = potent[VZCOR][iS3];
-		}
-		if (iE4 > -1) {
-			if (!bE4) fe4 = feplus4*potent[VZCOR][iE4] + (1.0 - feplus4)*potent[VZCOR][iP]; else fe4 = potent[VZCOR][iE4];
-		}
-		if (iW4 > -1) {
-			if (!bW4) fw4 = fwplus4*potent[VZCOR][iW4] + (1.0 - fwplus4)*potent[VZCOR][iP]; else fw4 = potent[VZCOR][iW4];
-		}
-		if (iN4 > -1) {
-			if (!bN4) fn4 = fnplus4*potent[VZCOR][iN4] + (1.0 - fnplus4)*potent[VZCOR][iP]; else fn4 = potent[VZCOR][iN4];
-		}
-		if (iS4 > -1) {
-			if (!bS4) fs4 = fsplus4*potent[VZCOR][iS4] + (1.0 - fsplus4)*potent[VZCOR][iP]; else fs4 = potent[VZCOR][iS4];
-		}
+
 		if (iT > -1) {
 			if (!bT) {
 				if (bRCh) {
@@ -1511,71 +1685,75 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else fb = potent[VZCOR][iB];
 		}
-		if (iT2 > -1) {
-			if (!bT2) {
-				if (bRCh) {
-					ft2 = mf[T_SIDE] / (rhot2*dx*dy);
+
+		if (b_on_adaptive_local_refinement_mesh) {
+
+			if (iT2 > -1) {
+				if (!bT2) {
+					if (bRCh) {
+						ft2 = mf[T_SIDE] / (rhot2 * dx * dy);
+					}
+					else {
+						ft2 = ftplus2 * potent[VZCOR][iT2] + (1.0 - ftplus2) * potent[VZCOR][iP];
+					}
 				}
-				else {
-					ft2 = ftplus2*potent[VZCOR][iT2] + (1.0 - ftplus2)*potent[VZCOR][iP];
-				}
+				else ft2 = potent[VZCOR][iT2];
 			}
-			else ft2 = potent[VZCOR][iT2];
-		}
-		if (iB2 > -1) {
-			if (!bB2) {
-				if (bRCh) {
-					fb2 = mf[B_SIDE] / (rhob2*dx*dy);
+			if (iB2 > -1) {
+				if (!bB2) {
+					if (bRCh) {
+						fb2 = mf[B_SIDE] / (rhob2 * dx * dy);
+					}
+					else {
+						fb2 = fbplus2 * potent[VZCOR][iB2] + (1.0 - fbplus2) * potent[VZCOR][iP];
+					}
 				}
-				else {
-					fb2 = fbplus2*potent[VZCOR][iB2] + (1.0 - fbplus2)*potent[VZCOR][iP];
-				}
+				else fb2 = potent[VZCOR][iB2];
 			}
-			else fb2 = potent[VZCOR][iB2];
-		}
-		if (iT3 > -1) {
-			if (!bT3) {
-				if (bRCh) {
-					ft3 = mf[T_SIDE] / (rhot3*dx*dy);
+			if (iT3 > -1) {
+				if (!bT3) {
+					if (bRCh) {
+						ft3 = mf[T_SIDE] / (rhot3 * dx * dy);
+					}
+					else {
+						ft3 = ftplus3 * potent[VZCOR][iT3] + (1.0 - ftplus3) * potent[VZCOR][iP];
+					}
 				}
-				else {
-					ft3 = ftplus3*potent[VZCOR][iT3] + (1.0 - ftplus3)*potent[VZCOR][iP];
-				}
+				else ft3 = potent[VZCOR][iT3];
 			}
-			else ft3 = potent[VZCOR][iT3];
-		}
-		if (iB3 > -1) {
-			if (!bB3) {
-				if (bRCh) {
-					fb3 = mf[B_SIDE] / (rhob3*dx*dy);
+			if (iB3 > -1) {
+				if (!bB3) {
+					if (bRCh) {
+						fb3 = mf[B_SIDE] / (rhob3 * dx * dy);
+					}
+					else {
+						fb3 = fbplus3 * potent[VZCOR][iB3] + (1.0 - fbplus3) * potent[VZCOR][iP];
+					}
 				}
-				else {
-					fb3 = fbplus3*potent[VZCOR][iB3] + (1.0 - fbplus3)*potent[VZCOR][iP];
-				}
+				else fb3 = potent[VZCOR][iB3];
 			}
-			else fb3 = potent[VZCOR][iB3];
-		}
-		if (iT4 > -1) {
-			if (!bT4) {
-				if (bRCh) {
-					ft4 = mf[T_SIDE] / (rhot4*dx*dy);
+			if (iT4 > -1) {
+				if (!bT4) {
+					if (bRCh) {
+						ft4 = mf[T_SIDE] / (rhot4 * dx * dy);
+					}
+					else {
+						ft4 = ftplus4 * potent[VZCOR][iT4] + (1.0 - ftplus4) * potent[VZCOR][iP];
+					}
 				}
-				else {
-					ft4 = ftplus4*potent[VZCOR][iT4] + (1.0 - ftplus4)*potent[VZCOR][iP];
-				}
+				else ft4 = potent[VZCOR][iT4];
 			}
-			else ft4 = potent[VZCOR][iT4];
-		}
-		if (iB4 > -1) {
-			if (!bB4) {
-				if (bRCh) {
-					fb4 = mf[B_SIDE] / (rhob4*dx*dy);
+			if (iB4 > -1) {
+				if (!bB4) {
+					if (bRCh) {
+						fb4 = mf[B_SIDE] / (rhob4 * dx * dy);
+					}
+					else {
+						fb4 = fbplus4 * potent[VZCOR][iB4] + (1.0 - fbplus4) * potent[VZCOR][iP];
+					}
 				}
-				else {
-					fb4 = fbplus4*potent[VZCOR][iB4] + (1.0 - fbplus4)*potent[VZCOR][iP];
-				}
+				else fb4 = potent[VZCOR][iB4];
 			}
-			else fb4 = potent[VZCOR][iB4];
 		}
 
 		// градиент VZ
@@ -1590,7 +1768,6 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (1) {
 
-			
 
 			// По простому: градиент на границе наследуем из ближайшего внутреннего узла.
 			if (iE > -1) {
@@ -1644,825 +1821,825 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 					}
 				}
 			}
+			if (iW > -1) {
+				if (bW) {
 
+					doublereal dspeed = sqrt((potent[VXCOR][iW]) * (potent[VXCOR][iW]) + (potent[VYCOR][iW]) * (potent[VYCOR][iW]) + (potent[VZCOR][iW]) * (potent[VZCOR][iW]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iW] = 0.0;
+						potent[GRADYVX][iW] = 0.0;
+						potent[GRADZVX][iW] = 0.0;
+
+						potent[GRADXVY][iW] = 0.0;
+						potent[GRADYVY][iW] = 0.0;
+						potent[GRADZVY][iW] = 0.0;
+
+						potent[GRADXVZ][iW] = 0.0;
+						potent[GRADYVZ][iW] = 0.0;
+						potent[GRADZVZ][iW] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iW] = potent[GRADXVX][iP];
+						potent[GRADYVX][iW] = potent[GRADYVX][iP];
+						potent[GRADZVX][iW] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iW] = potent[GRADXVY][iP];
+						potent[GRADYVY][iW] = potent[GRADYVY][iP];
+						potent[GRADZVY][iW] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iW] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iW] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iW] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+			if (iN > -1) {
+				if (bN) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iN]) * (potent[VXCOR][iN]) + (potent[VYCOR][iN]) * (potent[VYCOR][iN]) + (potent[VZCOR][iN]) * (potent[VZCOR][iN]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iN] = 0.0;
+						potent[GRADYVX][iN] = 0.0;
+						potent[GRADZVX][iN] = 0.0;
+
+						potent[GRADXVY][iN] = 0.0;
+						potent[GRADYVY][iN] = 0.0;
+						potent[GRADZVY][iN] = 0.0;
+
+						potent[GRADXVZ][iN] = 0.0;
+						potent[GRADYVZ][iN] = 0.0;
+						potent[GRADZVZ][iN] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iN] = potent[GRADXVX][iP];
+						potent[GRADYVX][iN] = potent[GRADYVX][iP];
+						potent[GRADZVX][iN] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iN] = potent[GRADXVY][iP];
+						potent[GRADYVY][iN] = potent[GRADYVY][iP];
+						potent[GRADZVY][iN] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iN] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iN] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iN] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+			if (iS > -1) {
+				if (bS) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iS]) * (potent[VXCOR][iS]) + (potent[VYCOR][iS]) * (potent[VYCOR][iS]) + (potent[VZCOR][iS]) * (potent[VZCOR][iS]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iS] = 0.0;
+						potent[GRADYVX][iS] = 0.0;
+						potent[GRADZVX][iS] = 0.0;
+
+						potent[GRADXVY][iS] = 0.0;
+						potent[GRADYVY][iS] = 0.0;
+						potent[GRADZVY][iS] = 0.0;
+
+						potent[GRADXVZ][iS] = 0.0;
+						potent[GRADYVZ][iS] = 0.0;
+						potent[GRADZVZ][iS] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iS] = potent[GRADXVX][iP];
+						potent[GRADYVX][iS] = potent[GRADYVX][iP];
+						potent[GRADZVX][iS] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iS] = potent[GRADXVY][iP];
+						potent[GRADYVY][iS] = potent[GRADYVY][iP];
+						potent[GRADZVY][iS] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iS] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iS] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iS] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+			if (iT > -1) {
+				if (bT) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iT]) * (potent[VXCOR][iT]) + (potent[VYCOR][iT]) * (potent[VYCOR][iT]) + (potent[VZCOR][iT]) * (potent[VZCOR][iT]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iT] = 0.0;
+						potent[GRADYVX][iT] = 0.0;
+						potent[GRADZVX][iT] = 0.0;
+
+						potent[GRADXVY][iT] = 0.0;
+						potent[GRADYVY][iT] = 0.0;
+						potent[GRADZVY][iT] = 0.0;
+
+						potent[GRADXVZ][iT] = 0.0;
+						potent[GRADYVZ][iT] = 0.0;
+						potent[GRADZVZ][iT] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iT] = potent[GRADXVX][iP];
+						potent[GRADYVX][iT] = potent[GRADYVX][iP];
+						potent[GRADZVX][iT] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iT] = potent[GRADXVY][iP];
+						potent[GRADYVY][iT] = potent[GRADYVY][iP];
+						potent[GRADZVY][iT] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iT] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iT] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iT] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+			if (iB > -1) {
+				if (bB) {
+					doublereal dspeed = sqrt((potent[VXCOR][iB]) * (potent[VXCOR][iB]) + (potent[VYCOR][iB]) * (potent[VYCOR][iB]) + (potent[VZCOR][iB]) * (potent[VZCOR][iB]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iB] = 0.0;
+						potent[GRADYVX][iB] = 0.0;
+						potent[GRADZVX][iB] = 0.0;
+
+						potent[GRADXVY][iB] = 0.0;
+						potent[GRADYVY][iB] = 0.0;
+						potent[GRADZVY][iB] = 0.0;
+
+						potent[GRADXVZ][iB] = 0.0;
+						potent[GRADYVZ][iB] = 0.0;
+						potent[GRADZVZ][iB] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iB] = potent[GRADXVX][iP];
+						potent[GRADYVX][iB] = potent[GRADYVX][iP];
+						potent[GRADZVX][iB] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iB] = potent[GRADXVY][iP];
+						potent[GRADYVY][iB] = potent[GRADYVY][iP];
+						potent[GRADZVY][iB] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iB] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iB] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iB] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+
+			if (b_on_adaptive_local_refinement_mesh) {
+				if (iE2 > -1) {
+					if (bE2) {
+
+						// 10.02.2017
+						// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
+
+						doublereal dspeed = sqrt((potent[VXCOR][iE2]) * (potent[VXCOR][iE2]) + (potent[VYCOR][iE2]) * (potent[VYCOR][iE2]) + (potent[VZCOR][iE2]) * (potent[VZCOR][iE2]));
+
+						if (dspeed < 1.0e-10) {
+							potent[GRADXVX][iE2] = 0.0;
+							potent[GRADYVX][iE2] = 0.0;
+							potent[GRADZVX][iE2] = 0.0;
+
+							potent[GRADXVY][iE2] = 0.0;
+							potent[GRADYVY][iE2] = 0.0;
+							potent[GRADZVY][iE2] = 0.0;
+
+							potent[GRADXVZ][iE2] = 0.0;
+							potent[GRADYVZ][iE2] = 0.0;
+							potent[GRADZVZ][iE2] = 0.0;
+
+
+						}
+						else {
+
+							potent[GRADXVX][iE2] = potent[GRADXVX][iP];
+							potent[GRADYVX][iE2] = potent[GRADYVX][iP];
+							potent[GRADZVX][iE2] = potent[GRADZVX][iP];
+
+							potent[GRADXVY][iE2] = potent[GRADXVY][iP];
+							potent[GRADYVY][iE2] = potent[GRADYVY][iP];
+							potent[GRADZVY][iE2] = potent[GRADZVY][iP];
+
+							potent[GRADXVZ][iE2] = potent[GRADXVZ][iP];
+							potent[GRADYVZ][iE2] = potent[GRADYVZ][iP];
+							potent[GRADZVZ][iE2] = potent[GRADZVZ][iP];
+						}
+					}
+				}
+
+				if (iE3 > -1) {
+					if (bE3) {
+
+						// 10.02.2017
+						// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
+
+						doublereal dspeed = sqrt((potent[VXCOR][iE3]) * (potent[VXCOR][iE3]) + (potent[VYCOR][iE3]) * (potent[VYCOR][iE3]) + (potent[VZCOR][iE3]) * (potent[VZCOR][iE3]));
+
+						if (dspeed < 1.0e-10) {
+							potent[GRADXVX][iE3] = 0.0;
+							potent[GRADYVX][iE3] = 0.0;
+							potent[GRADZVX][iE3] = 0.0;
+
+							potent[GRADXVY][iE3] = 0.0;
+							potent[GRADYVY][iE3] = 0.0;
+							potent[GRADZVY][iE3] = 0.0;
+
+							potent[GRADXVZ][iE3] = 0.0;
+							potent[GRADYVZ][iE3] = 0.0;
+							potent[GRADZVZ][iE3] = 0.0;
+
+
+						}
+						else {
+
+							potent[GRADXVX][iE3] = potent[GRADXVX][iP];
+							potent[GRADYVX][iE3] = potent[GRADYVX][iP];
+							potent[GRADZVX][iE3] = potent[GRADZVX][iP];
+
+							potent[GRADXVY][iE3] = potent[GRADXVY][iP];
+							potent[GRADYVY][iE3] = potent[GRADYVY][iP];
+							potent[GRADZVY][iE3] = potent[GRADZVY][iP];
+
+							potent[GRADXVZ][iE3] = potent[GRADXVZ][iP];
+							potent[GRADYVZ][iE3] = potent[GRADYVZ][iP];
+							potent[GRADZVZ][iE3] = potent[GRADZVZ][iP];
+						}
+					}
+				}
+
+				if (iE4 > -1) {
+					if (bE4) {
+
+						// 10.02.2017
+						// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
+
+						doublereal dspeed = sqrt((potent[VXCOR][iE4]) * (potent[VXCOR][iE4]) + (potent[VYCOR][iE4]) * (potent[VYCOR][iE4]) + (potent[VZCOR][iE4]) * (potent[VZCOR][iE4]));
+
+						if (dspeed < 1.0e-10) {
+							potent[GRADXVX][iE4] = 0.0;
+							potent[GRADYVX][iE4] = 0.0;
+							potent[GRADZVX][iE4] = 0.0;
+
+							potent[GRADXVY][iE4] = 0.0;
+							potent[GRADYVY][iE4] = 0.0;
+							potent[GRADZVY][iE4] = 0.0;
+
+							potent[GRADXVZ][iE4] = 0.0;
+							potent[GRADYVZ][iE4] = 0.0;
+							potent[GRADZVZ][iE4] = 0.0;
+
+
+						}
+						else {
+
+							potent[GRADXVX][iE4] = potent[GRADXVX][iP];
+							potent[GRADYVX][iE4] = potent[GRADYVX][iP];
+							potent[GRADZVX][iE4] = potent[GRADZVX][iP];
+
+							potent[GRADXVY][iE4] = potent[GRADXVY][iP];
+							potent[GRADYVY][iE4] = potent[GRADYVY][iP];
+							potent[GRADZVY][iE4] = potent[GRADZVY][iP];
+
+							potent[GRADXVZ][iE4] = potent[GRADXVZ][iP];
+							potent[GRADYVZ][iE4] = potent[GRADYVZ][iP];
+							potent[GRADZVZ][iE4] = potent[GRADZVZ][iP];
+						}
+					}
+				}
+			
+
+			if (iW2 > -1) {
+				if (bW2) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iW2]) * (potent[VXCOR][iW2]) + (potent[VYCOR][iW2]) * (potent[VYCOR][iW2]) + (potent[VZCOR][iW2]) * (potent[VZCOR][iW2]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iW2] = 0.0;
+						potent[GRADYVX][iW2] = 0.0;
+						potent[GRADZVX][iW2] = 0.0;
+
+						potent[GRADXVY][iW2] = 0.0;
+						potent[GRADYVY][iW2] = 0.0;
+						potent[GRADZVY][iW2] = 0.0;
+
+						potent[GRADXVZ][iW2] = 0.0;
+						potent[GRADYVZ][iW2] = 0.0;
+						potent[GRADZVZ][iW2] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iW2] = potent[GRADXVX][iP];
+						potent[GRADYVX][iW2] = potent[GRADYVX][iP];
+						potent[GRADZVX][iW2] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iW2] = potent[GRADXVY][iP];
+						potent[GRADYVY][iW2] = potent[GRADYVY][iP];
+						potent[GRADZVY][iW2] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iW2] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iW2] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iW2] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+
+			if (iW3 > -1) {
+				if (bW3) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iW3]) * (potent[VXCOR][iW3]) + (potent[VYCOR][iW3]) * (potent[VYCOR][iW3]) + (potent[VZCOR][iW3]) * (potent[VZCOR][iW3]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iW3] = 0.0;
+						potent[GRADYVX][iW3] = 0.0;
+						potent[GRADZVX][iW3] = 0.0;
+
+						potent[GRADXVY][iW3] = 0.0;
+						potent[GRADYVY][iW3] = 0.0;
+						potent[GRADZVY][iW3] = 0.0;
+
+						potent[GRADXVZ][iW3] = 0.0;
+						potent[GRADYVZ][iW3] = 0.0;
+						potent[GRADZVZ][iW3] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iW3] = potent[GRADXVX][iP];
+						potent[GRADYVX][iW3] = potent[GRADYVX][iP];
+						potent[GRADZVX][iW3] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iW3] = potent[GRADXVY][iP];
+						potent[GRADYVY][iW3] = potent[GRADYVY][iP];
+						potent[GRADZVY][iW3] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iW3] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iW3] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iW3] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+
+			if (iW4 > -1) {
+				if (bW4) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iW4]) * (potent[VXCOR][iW4]) + (potent[VYCOR][iW4]) * (potent[VYCOR][iW4]) + (potent[VZCOR][iW4]) * (potent[VZCOR][iW4]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iW4] = 0.0;
+						potent[GRADYVX][iW4] = 0.0;
+						potent[GRADZVX][iW4] = 0.0;
+
+						potent[GRADXVY][iW4] = 0.0;
+						potent[GRADYVY][iW4] = 0.0;
+						potent[GRADZVY][iW4] = 0.0;
+
+						potent[GRADXVZ][iW4] = 0.0;
+						potent[GRADYVZ][iW4] = 0.0;
+						potent[GRADZVZ][iW4] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iW4] = potent[GRADXVX][iP];
+						potent[GRADYVX][iW4] = potent[GRADYVX][iP];
+						potent[GRADZVX][iW4] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iW4] = potent[GRADXVY][iP];
+						potent[GRADYVY][iW4] = potent[GRADYVY][iP];
+						potent[GRADZVY][iW4] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iW4] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iW4] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iW4] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+
+
+			if (iN2 > -1) {
+				if (bN2) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iN2]) * (potent[VXCOR][iN2]) + (potent[VYCOR][iN2]) * (potent[VYCOR][iN2]) + (potent[VZCOR][iN2]) * (potent[VZCOR][iN2]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iN2] = 0.0;
+						potent[GRADYVX][iN2] = 0.0;
+						potent[GRADZVX][iN2] = 0.0;
+
+						potent[GRADXVY][iN2] = 0.0;
+						potent[GRADYVY][iN2] = 0.0;
+						potent[GRADZVY][iN2] = 0.0;
+
+						potent[GRADXVZ][iN2] = 0.0;
+						potent[GRADYVZ][iN2] = 0.0;
+						potent[GRADZVZ][iN2] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iN2] = potent[GRADXVX][iP];
+						potent[GRADYVX][iN2] = potent[GRADYVX][iP];
+						potent[GRADZVX][iN2] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iN2] = potent[GRADXVY][iP];
+						potent[GRADYVY][iN2] = potent[GRADYVY][iP];
+						potent[GRADZVY][iN2] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iN2] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iN2] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iN2] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+
+			if (iN3 > -1) {
+				if (bN3) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iN3]) * (potent[VXCOR][iN3]) + (potent[VYCOR][iN3]) * (potent[VYCOR][iN3]) + (potent[VZCOR][iN3]) * (potent[VZCOR][iN3]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iN3] = 0.0;
+						potent[GRADYVX][iN3] = 0.0;
+						potent[GRADZVX][iN3] = 0.0;
+
+						potent[GRADXVY][iN3] = 0.0;
+						potent[GRADYVY][iN3] = 0.0;
+						potent[GRADZVY][iN3] = 0.0;
+
+						potent[GRADXVZ][iN3] = 0.0;
+						potent[GRADYVZ][iN3] = 0.0;
+						potent[GRADZVZ][iN3] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iN3] = potent[GRADXVX][iP];
+						potent[GRADYVX][iN3] = potent[GRADYVX][iP];
+						potent[GRADZVX][iN3] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iN3] = potent[GRADXVY][iP];
+						potent[GRADYVY][iN3] = potent[GRADYVY][iP];
+						potent[GRADZVY][iN3] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iN3] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iN3] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iN3] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+
+			if (iN4 > -1) {
+				if (bN4) {
+
+					doublereal dspeed = sqrt((potent[VXCOR][iN4]) * (potent[VXCOR][iN4]) + (potent[VYCOR][iN4]) * (potent[VYCOR][iN4]) + (potent[VZCOR][iN4]) * (potent[VZCOR][iN4]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iN4] = 0.0;
+						potent[GRADYVX][iN4] = 0.0;
+						potent[GRADZVX][iN4] = 0.0;
+
+						potent[GRADXVY][iN4] = 0.0;
+						potent[GRADYVY][iN4] = 0.0;
+						potent[GRADZVY][iN4] = 0.0;
+
+						potent[GRADXVZ][iN4] = 0.0;
+						potent[GRADYVZ][iN4] = 0.0;
+						potent[GRADZVZ][iN4] = 0.0;
+					}
+					else {
+
+						potent[GRADXVX][iN4] = potent[GRADXVX][iP];
+						potent[GRADYVX][iN4] = potent[GRADYVX][iP];
+						potent[GRADZVX][iN4] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iN4] = potent[GRADXVY][iP];
+						potent[GRADYVY][iN4] = potent[GRADYVY][iP];
+						potent[GRADZVY][iN4] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iN4] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iN4] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iN4] = potent[GRADZVZ][iP];
+					}
+				}
+			}
 		
 
-		if (iE2 > -1) {
-			if (bE2) {
+			if (iS2 > -1) {
+				if (bS2) {
 
-				// 10.02.2017
-				// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
+					doublereal dspeed = sqrt((potent[VXCOR][iS2]) * (potent[VXCOR][iS2]) + (potent[VYCOR][iS2]) * (potent[VYCOR][iS2]) + (potent[VZCOR][iS2]) * (potent[VZCOR][iS2]));
 
-				doublereal dspeed = sqrt((potent[VXCOR][iE2])*(potent[VXCOR][iE2]) + (potent[VYCOR][iE2])*(potent[VYCOR][iE2]) + (potent[VZCOR][iE2])*(potent[VZCOR][iE2]));
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iS2] = 0.0;
+						potent[GRADYVX][iS2] = 0.0;
+						potent[GRADZVX][iS2] = 0.0;
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iE2] = 0.0;
-					potent[GRADYVX][iE2] = 0.0;
-					potent[GRADZVX][iE2] = 0.0;
+						potent[GRADXVY][iS2] = 0.0;
+						potent[GRADYVY][iS2] = 0.0;
+						potent[GRADZVY][iS2] = 0.0;
 
-					potent[GRADXVY][iE2] = 0.0;
-					potent[GRADYVY][iE2] = 0.0;
-					potent[GRADZVY][iE2] = 0.0;
+						potent[GRADXVZ][iS2] = 0.0;
+						potent[GRADYVZ][iS2] = 0.0;
+						potent[GRADZVZ][iS2] = 0.0;
+					}
+					else {
 
-					potent[GRADXVZ][iE2] = 0.0;
-					potent[GRADYVZ][iE2] = 0.0;
-					potent[GRADZVZ][iE2] = 0.0;
+						potent[GRADXVX][iS2] = potent[GRADXVX][iP];
+						potent[GRADYVX][iS2] = potent[GRADYVX][iP];
+						potent[GRADZVX][iS2] = potent[GRADZVX][iP];
 
-					
-				}
-				else {
+						potent[GRADXVY][iS2] = potent[GRADXVY][iP];
+						potent[GRADYVY][iS2] = potent[GRADYVY][iP];
+						potent[GRADZVY][iS2] = potent[GRADZVY][iP];
 
-					potent[GRADXVX][iE2] = potent[GRADXVX][iP];
-					potent[GRADYVX][iE2] = potent[GRADYVX][iP];
-					potent[GRADZVX][iE2] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iE2] = potent[GRADXVY][iP];
-					potent[GRADYVY][iE2] = potent[GRADYVY][iP];
-					potent[GRADZVY][iE2] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iE2] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iE2] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iE2] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iS2] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iS2] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iS2] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
 
-		if (iE3 > -1) {
-			if (bE3) {
+			if (iS3 > -1) {
+				if (bS3) {
 
-				// 10.02.2017
-				// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
+					doublereal dspeed = sqrt((potent[VXCOR][iS3]) * (potent[VXCOR][iS3]) + (potent[VYCOR][iS3]) * (potent[VYCOR][iS3]) + (potent[VZCOR][iS3]) * (potent[VZCOR][iS3]));
 
-				doublereal dspeed = sqrt((potent[VXCOR][iE3])*(potent[VXCOR][iE3]) + (potent[VYCOR][iE3])*(potent[VYCOR][iE3]) + (potent[VZCOR][iE3])*(potent[VZCOR][iE3]));
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iS3] = 0.0;
+						potent[GRADYVX][iS3] = 0.0;
+						potent[GRADZVX][iS3] = 0.0;
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iE3] = 0.0;
-					potent[GRADYVX][iE3] = 0.0;
-					potent[GRADZVX][iE3] = 0.0;
+						potent[GRADXVY][iS3] = 0.0;
+						potent[GRADYVY][iS3] = 0.0;
+						potent[GRADZVY][iS3] = 0.0;
 
-					potent[GRADXVY][iE3] = 0.0;
-					potent[GRADYVY][iE3] = 0.0;
-					potent[GRADZVY][iE3] = 0.0;
+						potent[GRADXVZ][iS3] = 0.0;
+						potent[GRADYVZ][iS3] = 0.0;
+						potent[GRADZVZ][iS3] = 0.0;
+					}
+					else {
 
-					potent[GRADXVZ][iE3] = 0.0;
-					potent[GRADYVZ][iE3] = 0.0;
-					potent[GRADZVZ][iE3] = 0.0;
+						potent[GRADXVX][iS3] = potent[GRADXVX][iP];
+						potent[GRADYVX][iS3] = potent[GRADYVX][iP];
+						potent[GRADZVX][iS3] = potent[GRADZVX][iP];
 
-					
-				}
-				else {
+						potent[GRADXVY][iS3] = potent[GRADXVY][iP];
+						potent[GRADYVY][iS3] = potent[GRADYVY][iP];
+						potent[GRADZVY][iS3] = potent[GRADZVY][iP];
 
-					potent[GRADXVX][iE3] = potent[GRADXVX][iP];
-					potent[GRADYVX][iE3] = potent[GRADYVX][iP];
-					potent[GRADZVX][iE3] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iE3] = potent[GRADXVY][iP];
-					potent[GRADYVY][iE3] = potent[GRADYVY][iP];
-					potent[GRADZVY][iE3] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iE3] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iE3] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iE3] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iS3] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iS3] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iS3] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
 
-		if (iE4 > -1) {
-			if (bE4) {
+			if (iS4 > -1) {
+				if (bS4) {
 
-				// 10.02.2017
-				// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
+					doublereal dspeed = sqrt((potent[VXCOR][iS4]) * (potent[VXCOR][iS4]) + (potent[VYCOR][iS4]) * (potent[VYCOR][iS4]) + (potent[VZCOR][iS4]) * (potent[VZCOR][iS4]));
 
-				doublereal dspeed = sqrt((potent[VXCOR][iE4])*(potent[VXCOR][iE4]) + (potent[VYCOR][iE4])*(potent[VYCOR][iE4]) + (potent[VZCOR][iE4])*(potent[VZCOR][iE4]));
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iS4] = 0.0;
+						potent[GRADYVX][iS4] = 0.0;
+						potent[GRADZVX][iS4] = 0.0;
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iE4] = 0.0;
-					potent[GRADYVX][iE4] = 0.0;
-					potent[GRADZVX][iE4] = 0.0;
+						potent[GRADXVY][iS4] = 0.0;
+						potent[GRADYVY][iS4] = 0.0;
+						potent[GRADZVY][iS4] = 0.0;
 
-					potent[GRADXVY][iE4] = 0.0;
-					potent[GRADYVY][iE4] = 0.0;
-					potent[GRADZVY][iE4] = 0.0;
+						potent[GRADXVZ][iS4] = 0.0;
+						potent[GRADYVZ][iS4] = 0.0;
+						potent[GRADZVZ][iS4] = 0.0;
+					}
+					else {
 
-					potent[GRADXVZ][iE4] = 0.0;
-					potent[GRADYVZ][iE4] = 0.0;
-					potent[GRADZVZ][iE4] = 0.0;
+						potent[GRADXVX][iS4] = potent[GRADXVX][iP];
+						potent[GRADYVX][iS4] = potent[GRADYVX][iP];
+						potent[GRADZVX][iS4] = potent[GRADZVX][iP];
 
+						potent[GRADXVY][iS4] = potent[GRADXVY][iP];
+						potent[GRADYVY][iS4] = potent[GRADYVY][iP];
+						potent[GRADZVY][iS4] = potent[GRADZVY][iP];
 
-				}
-				else {
-
-					potent[GRADXVX][iE4] = potent[GRADXVX][iP];
-					potent[GRADYVX][iE4] = potent[GRADYVX][iP];
-					potent[GRADZVX][iE4] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iE4] = potent[GRADXVY][iP];
-					potent[GRADYVY][iE4] = potent[GRADYVY][iP];
-					potent[GRADZVY][iE4] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iE4] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iE4] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iE4] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iS4] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iS4] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iS4] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
 
-		if (iW > -1) {
-			if (bW) {
 
-				doublereal dspeed = sqrt((potent[VXCOR][iW])*(potent[VXCOR][iW]) + (potent[VYCOR][iW])*(potent[VYCOR][iW]) + (potent[VZCOR][iW])*(potent[VZCOR][iW]));
+			if (iT2 > -1) {
+				if (bT2) {
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iW] = 0.0;
-					potent[GRADYVX][iW] = 0.0;
-					potent[GRADZVX][iW] = 0.0;
+					doublereal dspeed = sqrt((potent[VXCOR][iT2]) * (potent[VXCOR][iT2]) + (potent[VYCOR][iT2]) * (potent[VYCOR][iT2]) + (potent[VZCOR][iT2]) * (potent[VZCOR][iT2]));
 
-					potent[GRADXVY][iW] = 0.0;
-					potent[GRADYVY][iW] = 0.0;
-					potent[GRADZVY][iW] = 0.0;
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iT2] = 0.0;
+						potent[GRADYVX][iT2] = 0.0;
+						potent[GRADZVX][iT2] = 0.0;
 
-					potent[GRADXVZ][iW] = 0.0;
-					potent[GRADYVZ][iW] = 0.0;
-					potent[GRADZVZ][iW] = 0.0;
-				}
-				else {
+						potent[GRADXVY][iT2] = 0.0;
+						potent[GRADYVY][iT2] = 0.0;
+						potent[GRADZVY][iT2] = 0.0;
 
-					potent[GRADXVX][iW] = potent[GRADXVX][iP];
-					potent[GRADYVX][iW] = potent[GRADYVX][iP];
-					potent[GRADZVX][iW] = potent[GRADZVX][iP];
+						potent[GRADXVZ][iT2] = 0.0;
+						potent[GRADYVZ][iT2] = 0.0;
+						potent[GRADZVZ][iT2] = 0.0;
+					}
+					else {
 
-					potent[GRADXVY][iW] = potent[GRADXVY][iP];
-					potent[GRADYVY][iW] = potent[GRADYVY][iP];
-					potent[GRADZVY][iW] = potent[GRADZVY][iP];
+						potent[GRADXVX][iT2] = potent[GRADXVX][iP];
+						potent[GRADYVX][iT2] = potent[GRADYVX][iP];
+						potent[GRADZVX][iT2] = potent[GRADZVX][iP];
 
-					potent[GRADXVZ][iW] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iW] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iW] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-		
-		if (iW2 > -1) {
-			if (bW2) {
+						potent[GRADXVY][iT2] = potent[GRADXVY][iP];
+						potent[GRADYVY][iT2] = potent[GRADYVY][iP];
+						potent[GRADZVY][iT2] = potent[GRADZVY][iP];
 
-				doublereal dspeed = sqrt((potent[VXCOR][iW2])*(potent[VXCOR][iW2]) + (potent[VYCOR][iW2])*(potent[VYCOR][iW2]) + (potent[VZCOR][iW2])*(potent[VZCOR][iW2]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iW2] = 0.0;
-					potent[GRADYVX][iW2] = 0.0;
-					potent[GRADZVX][iW2] = 0.0;
-
-					potent[GRADXVY][iW2] = 0.0;
-					potent[GRADYVY][iW2] = 0.0;
-					potent[GRADZVY][iW2] = 0.0;
-
-					potent[GRADXVZ][iW2] = 0.0;
-					potent[GRADYVZ][iW2] = 0.0;
-					potent[GRADZVZ][iW2] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iW2] = potent[GRADXVX][iP];
-					potent[GRADYVX][iW2] = potent[GRADYVX][iP];
-					potent[GRADZVX][iW2] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iW2] = potent[GRADXVY][iP];
-					potent[GRADYVY][iW2] = potent[GRADYVY][iP];
-					potent[GRADZVY][iW2] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iW2] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iW2] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iW2] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iT2] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iT2] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iT2] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
 
-		if (iW3 > -1) {
-			if (bW3) {
+			if (iT3 > -1) {
+				if (bT3) {
 
-				doublereal dspeed = sqrt((potent[VXCOR][iW3])*(potent[VXCOR][iW3]) + (potent[VYCOR][iW3])*(potent[VYCOR][iW3]) + (potent[VZCOR][iW3])*(potent[VZCOR][iW3]));
+					doublereal dspeed = sqrt((potent[VXCOR][iT3]) * (potent[VXCOR][iT3]) + (potent[VYCOR][iT3]) * (potent[VYCOR][iT3]) + (potent[VZCOR][iT3]) * (potent[VZCOR][iT3]));
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iW3] = 0.0;
-					potent[GRADYVX][iW3] = 0.0;
-					potent[GRADZVX][iW3] = 0.0;
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iT3] = 0.0;
+						potent[GRADYVX][iT3] = 0.0;
+						potent[GRADZVX][iT3] = 0.0;
 
-					potent[GRADXVY][iW3] = 0.0;
-					potent[GRADYVY][iW3] = 0.0;
-					potent[GRADZVY][iW3] = 0.0;
+						potent[GRADXVY][iT3] = 0.0;
+						potent[GRADYVY][iT3] = 0.0;
+						potent[GRADZVY][iT3] = 0.0;
 
-					potent[GRADXVZ][iW3] = 0.0;
-					potent[GRADYVZ][iW3] = 0.0;
-					potent[GRADZVZ][iW3] = 0.0;
-				}
-				else {
+						potent[GRADXVZ][iT3] = 0.0;
+						potent[GRADYVZ][iT3] = 0.0;
+						potent[GRADZVZ][iT3] = 0.0;
+					}
+					else {
 
-					potent[GRADXVX][iW3] = potent[GRADXVX][iP];
-					potent[GRADYVX][iW3] = potent[GRADYVX][iP];
-					potent[GRADZVX][iW3] = potent[GRADZVX][iP];
+						potent[GRADXVX][iT3] = potent[GRADXVX][iP];
+						potent[GRADYVX][iT3] = potent[GRADYVX][iP];
+						potent[GRADZVX][iT3] = potent[GRADZVX][iP];
 
-					potent[GRADXVY][iW3] = potent[GRADXVY][iP];
-					potent[GRADYVY][iW3] = potent[GRADYVY][iP];
-					potent[GRADZVY][iW3] = potent[GRADZVY][iP];
+						potent[GRADXVY][iT3] = potent[GRADXVY][iP];
+						potent[GRADYVY][iT3] = potent[GRADYVY][iP];
+						potent[GRADZVY][iT3] = potent[GRADZVY][iP];
 
-					potent[GRADXVZ][iW3] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iW3] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iW3] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iW4 > -1) {
-			if (bW4) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iW4])*(potent[VXCOR][iW4]) + (potent[VYCOR][iW4])*(potent[VYCOR][iW4]) + (potent[VZCOR][iW4])*(potent[VZCOR][iW4]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iW4] = 0.0;
-					potent[GRADYVX][iW4] = 0.0;
-					potent[GRADZVX][iW4] = 0.0;
-
-					potent[GRADXVY][iW4] = 0.0;
-					potent[GRADYVY][iW4] = 0.0;
-					potent[GRADZVY][iW4] = 0.0;
-
-					potent[GRADXVZ][iW4] = 0.0;
-					potent[GRADYVZ][iW4] = 0.0;
-					potent[GRADZVZ][iW4] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iW4] = potent[GRADXVX][iP];
-					potent[GRADYVX][iW4] = potent[GRADYVX][iP];
-					potent[GRADZVX][iW4] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iW4] = potent[GRADXVY][iP];
-					potent[GRADYVY][iW4] = potent[GRADYVY][iP];
-					potent[GRADZVY][iW4] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iW4] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iW4] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iW4] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iT3] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iT3] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iT3] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
 
-		if (iN > -1) {
-			if (bN) {
+			if (iT4 > -1) {
+				if (bT4) {
 
-				doublereal dspeed = sqrt((potent[VXCOR][iN])*(potent[VXCOR][iN]) + (potent[VYCOR][iN])*(potent[VYCOR][iN]) + (potent[VZCOR][iN])*(potent[VZCOR][iN]));
+					doublereal dspeed = sqrt((potent[VXCOR][iT4]) * (potent[VXCOR][iT4]) + (potent[VYCOR][iT4]) * (potent[VYCOR][iT4]) + (potent[VZCOR][iT4]) * (potent[VZCOR][iT4]));
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iN] = 0.0;
-					potent[GRADYVX][iN] = 0.0;
-					potent[GRADZVX][iN] = 0.0;
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iT4] = 0.0;
+						potent[GRADYVX][iT4] = 0.0;
+						potent[GRADZVX][iT4] = 0.0;
 
-					potent[GRADXVY][iN] = 0.0;
-					potent[GRADYVY][iN] = 0.0;
-					potent[GRADZVY][iN] = 0.0;
+						potent[GRADXVY][iT4] = 0.0;
+						potent[GRADYVY][iT4] = 0.0;
+						potent[GRADZVY][iT4] = 0.0;
 
-					potent[GRADXVZ][iN] = 0.0;
-					potent[GRADYVZ][iN] = 0.0;
-					potent[GRADZVZ][iN] = 0.0;
-				}
-				else {
+						potent[GRADXVZ][iT4] = 0.0;
+						potent[GRADYVZ][iT4] = 0.0;
+						potent[GRADZVZ][iT4] = 0.0;
+					}
+					else {
 
-					potent[GRADXVX][iN] = potent[GRADXVX][iP];
-					potent[GRADYVX][iN] = potent[GRADYVX][iP];
-					potent[GRADZVX][iN] = potent[GRADZVX][iP];
+						potent[GRADXVX][iT4] = potent[GRADXVX][iP];
+						potent[GRADYVX][iT4] = potent[GRADYVX][iP];
+						potent[GRADZVX][iT4] = potent[GRADZVX][iP];
 
-					potent[GRADXVY][iN] = potent[GRADXVY][iP];
-					potent[GRADYVY][iN] = potent[GRADYVY][iP];
-					potent[GRADZVY][iN] = potent[GRADZVY][iP];
+						potent[GRADXVY][iT4] = potent[GRADXVY][iP];
+						potent[GRADYVY][iT4] = potent[GRADYVY][iP];
+						potent[GRADZVY][iT4] = potent[GRADZVY][iP];
 
-					potent[GRADXVZ][iN] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iN] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iN] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iN2 > -1) {
-			if (bN2) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iN2])*(potent[VXCOR][iN2]) + (potent[VYCOR][iN2])*(potent[VYCOR][iN2]) + (potent[VZCOR][iN2])*(potent[VZCOR][iN2]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iN2] = 0.0;
-					potent[GRADYVX][iN2] = 0.0;
-					potent[GRADZVX][iN2] = 0.0;
-
-					potent[GRADXVY][iN2] = 0.0;
-					potent[GRADYVY][iN2] = 0.0;
-					potent[GRADZVY][iN2] = 0.0;
-
-					potent[GRADXVZ][iN2] = 0.0;
-					potent[GRADYVZ][iN2] = 0.0;
-					potent[GRADZVZ][iN2] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iN2] = potent[GRADXVX][iP];
-					potent[GRADYVX][iN2] = potent[GRADYVX][iP];
-					potent[GRADZVX][iN2] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iN2] = potent[GRADXVY][iP];
-					potent[GRADYVY][iN2] = potent[GRADYVY][iP];
-					potent[GRADZVY][iN2] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iN2] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iN2] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iN2] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iT4] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iT4] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iT4] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
 
-		if (iN3 > -1) {
-			if (bN3) {
 
-				doublereal dspeed = sqrt((potent[VXCOR][iN3])*(potent[VXCOR][iN3]) + (potent[VYCOR][iN3])*(potent[VYCOR][iN3]) + (potent[VZCOR][iN3])*(potent[VZCOR][iN3]));
+			if (iB2 > -1) {
+				if (bB2) {
+					doublereal dspeed = sqrt((potent[VXCOR][iB2]) * (potent[VXCOR][iB2]) + (potent[VYCOR][iB2]) * (potent[VYCOR][iB2]) + (potent[VZCOR][iB2]) * (potent[VZCOR][iB2]));
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iN3] = 0.0;
-					potent[GRADYVX][iN3] = 0.0;
-					potent[GRADZVX][iN3] = 0.0;
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iB2] = 0.0;
+						potent[GRADYVX][iB2] = 0.0;
+						potent[GRADZVX][iB2] = 0.0;
 
-					potent[GRADXVY][iN3] = 0.0;
-					potent[GRADYVY][iN3] = 0.0;
-					potent[GRADZVY][iN3] = 0.0;
+						potent[GRADXVY][iB2] = 0.0;
+						potent[GRADYVY][iB2] = 0.0;
+						potent[GRADZVY][iB2] = 0.0;
 
-					potent[GRADXVZ][iN3] = 0.0;
-					potent[GRADYVZ][iN3] = 0.0;
-					potent[GRADZVZ][iN3] = 0.0;
-				}
-				else {
+						potent[GRADXVZ][iB2] = 0.0;
+						potent[GRADYVZ][iB2] = 0.0;
+						potent[GRADZVZ][iB2] = 0.0;
+					}
+					else {
 
-					potent[GRADXVX][iN3] = potent[GRADXVX][iP];
-					potent[GRADYVX][iN3] = potent[GRADYVX][iP];
-					potent[GRADZVX][iN3] = potent[GRADZVX][iP];
+						potent[GRADXVX][iB2] = potent[GRADXVX][iP];
+						potent[GRADYVX][iB2] = potent[GRADYVX][iP];
+						potent[GRADZVX][iB2] = potent[GRADZVX][iP];
 
-					potent[GRADXVY][iN3] = potent[GRADXVY][iP];
-					potent[GRADYVY][iN3] = potent[GRADYVY][iP];
-					potent[GRADZVY][iN3] = potent[GRADZVY][iP];
+						potent[GRADXVY][iB2] = potent[GRADXVY][iP];
+						potent[GRADYVY][iB2] = potent[GRADYVY][iP];
+						potent[GRADZVY][iB2] = potent[GRADZVY][iP];
 
-					potent[GRADXVZ][iN3] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iN3] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iN3] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iN4 > -1) {
-			if (bN4) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iN4])*(potent[VXCOR][iN4]) + (potent[VYCOR][iN4])*(potent[VYCOR][iN4]) + (potent[VZCOR][iN4])*(potent[VZCOR][iN4]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iN4] = 0.0;
-					potent[GRADYVX][iN4] = 0.0;
-					potent[GRADZVX][iN4] = 0.0;
-
-					potent[GRADXVY][iN4] = 0.0;
-					potent[GRADYVY][iN4] = 0.0;
-					potent[GRADZVY][iN4] = 0.0;
-
-					potent[GRADXVZ][iN4] = 0.0;
-					potent[GRADYVZ][iN4] = 0.0;
-					potent[GRADZVZ][iN4] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iN4] = potent[GRADXVX][iP];
-					potent[GRADYVX][iN4] = potent[GRADYVX][iP];
-					potent[GRADZVX][iN4] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iN4] = potent[GRADXVY][iP];
-					potent[GRADYVY][iN4] = potent[GRADYVY][iP];
-					potent[GRADZVY][iN4] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iN4] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iN4] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iN4] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iB2] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iB2] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iB2] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
 
-		if (iS > -1) {
-			if (bS) {
+			if (iB3 > -1) {
+				if (bB3) {
+					doublereal dspeed = sqrt((potent[VXCOR][iB3]) * (potent[VXCOR][iB3]) + (potent[VYCOR][iB3]) * (potent[VYCOR][iB3]) + (potent[VZCOR][iB3]) * (potent[VZCOR][iB3]));
 
-				doublereal dspeed = sqrt((potent[VXCOR][iS])*(potent[VXCOR][iS]) + (potent[VYCOR][iS])*(potent[VYCOR][iS]) + (potent[VZCOR][iS])*(potent[VZCOR][iS]));
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iB3] = 0.0;
+						potent[GRADYVX][iB3] = 0.0;
+						potent[GRADZVX][iB3] = 0.0;
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iS] = 0.0;
-					potent[GRADYVX][iS] = 0.0;
-					potent[GRADZVX][iS] = 0.0;
+						potent[GRADXVY][iB3] = 0.0;
+						potent[GRADYVY][iB3] = 0.0;
+						potent[GRADZVY][iB3] = 0.0;
 
-					potent[GRADXVY][iS] = 0.0;
-					potent[GRADYVY][iS] = 0.0;
-					potent[GRADZVY][iS] = 0.0;
+						potent[GRADXVZ][iB3] = 0.0;
+						potent[GRADYVZ][iB3] = 0.0;
+						potent[GRADZVZ][iB3] = 0.0;
+					}
+					else {
 
-					potent[GRADXVZ][iS] = 0.0;
-					potent[GRADYVZ][iS] = 0.0;
-					potent[GRADZVZ][iS] = 0.0;
-				}
-				else {
+						potent[GRADXVX][iB3] = potent[GRADXVX][iP];
+						potent[GRADYVX][iB3] = potent[GRADYVX][iP];
+						potent[GRADZVX][iB3] = potent[GRADZVX][iP];
 
-					potent[GRADXVX][iS] = potent[GRADXVX][iP];
-					potent[GRADYVX][iS] = potent[GRADYVX][iP];
-					potent[GRADZVX][iS] = potent[GRADZVX][iP];
+						potent[GRADXVY][iB3] = potent[GRADXVY][iP];
+						potent[GRADYVY][iB3] = potent[GRADYVY][iP];
+						potent[GRADZVY][iB3] = potent[GRADZVY][iP];
 
-					potent[GRADXVY][iS] = potent[GRADXVY][iP];
-					potent[GRADYVY][iS] = potent[GRADYVY][iP];
-					potent[GRADZVY][iS] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iS] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iS] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iS] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iS2 > -1) {
-			if (bS2) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iS2])*(potent[VXCOR][iS2]) + (potent[VYCOR][iS2])*(potent[VYCOR][iS2]) + (potent[VZCOR][iS2])*(potent[VZCOR][iS2]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iS2] = 0.0;
-					potent[GRADYVX][iS2] = 0.0;
-					potent[GRADZVX][iS2] = 0.0;
-
-					potent[GRADXVY][iS2] = 0.0;
-					potent[GRADYVY][iS2] = 0.0;
-					potent[GRADZVY][iS2] = 0.0;
-
-					potent[GRADXVZ][iS2] = 0.0;
-					potent[GRADYVZ][iS2] = 0.0;
-					potent[GRADZVZ][iS2] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iS2] = potent[GRADXVX][iP];
-					potent[GRADYVX][iS2] = potent[GRADYVX][iP];
-					potent[GRADZVX][iS2] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iS2] = potent[GRADXVY][iP];
-					potent[GRADYVY][iS2] = potent[GRADYVY][iP];
-					potent[GRADZVY][iS2] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iS2] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iS2] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iS2] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iB3] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iB3] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iB3] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
 
-		if (iS3 > -1) {
-			if (bS3) {
+			if (iB4 > -1) {
+				if (bB4) {
+					doublereal dspeed = sqrt((potent[VXCOR][iB4]) * (potent[VXCOR][iB4]) + (potent[VYCOR][iB4]) * (potent[VYCOR][iB4]) + (potent[VZCOR][iB4]) * (potent[VZCOR][iB4]));
 
-				doublereal dspeed = sqrt((potent[VXCOR][iS3])*(potent[VXCOR][iS3]) + (potent[VYCOR][iS3])*(potent[VYCOR][iS3]) + (potent[VZCOR][iS3])*(potent[VZCOR][iS3]));
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iB4] = 0.0;
+						potent[GRADYVX][iB4] = 0.0;
+						potent[GRADZVX][iB4] = 0.0;
 
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iS3] = 0.0;
-					potent[GRADYVX][iS3] = 0.0;
-					potent[GRADZVX][iS3] = 0.0;
+						potent[GRADXVY][iB4] = 0.0;
+						potent[GRADYVY][iB4] = 0.0;
+						potent[GRADZVY][iB4] = 0.0;
 
-					potent[GRADXVY][iS3] = 0.0;
-					potent[GRADYVY][iS3] = 0.0;
-					potent[GRADZVY][iS3] = 0.0;
+						potent[GRADXVZ][iB4] = 0.0;
+						potent[GRADYVZ][iB4] = 0.0;
+						potent[GRADZVZ][iB4] = 0.0;
+					}
+					else {
 
-					potent[GRADXVZ][iS3] = 0.0;
-					potent[GRADYVZ][iS3] = 0.0;
-					potent[GRADZVZ][iS3] = 0.0;
-				}
-				else {
+						potent[GRADXVX][iB4] = potent[GRADXVX][iP];
+						potent[GRADYVX][iB4] = potent[GRADYVX][iP];
+						potent[GRADZVX][iB4] = potent[GRADZVX][iP];
 
-					potent[GRADXVX][iS3] = potent[GRADXVX][iP];
-					potent[GRADYVX][iS3] = potent[GRADYVX][iP];
-					potent[GRADZVX][iS3] = potent[GRADZVX][iP];
+						potent[GRADXVY][iB4] = potent[GRADXVY][iP];
+						potent[GRADYVY][iB4] = potent[GRADYVY][iP];
+						potent[GRADZVY][iB4] = potent[GRADZVY][iP];
 
-					potent[GRADXVY][iS3] = potent[GRADXVY][iP];
-					potent[GRADYVY][iS3] = potent[GRADYVY][iP];
-					potent[GRADZVY][iS3] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iS3] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iS3] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iS3] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iS4 > -1) {
-			if (bS4) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iS4])*(potent[VXCOR][iS4]) + (potent[VYCOR][iS4])*(potent[VYCOR][iS4]) + (potent[VZCOR][iS4])*(potent[VZCOR][iS4]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iS4] = 0.0;
-					potent[GRADYVX][iS4] = 0.0;
-					potent[GRADZVX][iS4] = 0.0;
-
-					potent[GRADXVY][iS4] = 0.0;
-					potent[GRADYVY][iS4] = 0.0;
-					potent[GRADZVY][iS4] = 0.0;
-
-					potent[GRADXVZ][iS4] = 0.0;
-					potent[GRADYVZ][iS4] = 0.0;
-					potent[GRADZVZ][iS4] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iS4] = potent[GRADXVX][iP];
-					potent[GRADYVX][iS4] = potent[GRADYVX][iP];
-					potent[GRADZVX][iS4] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iS4] = potent[GRADXVY][iP];
-					potent[GRADYVY][iS4] = potent[GRADYVY][iP];
-					potent[GRADZVY][iS4] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iS4] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iS4] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iS4] = potent[GRADZVZ][iP];
+						potent[GRADXVZ][iB4] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iB4] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iB4] = potent[GRADZVZ][iP];
+					}
 				}
 			}
-		}
-
-		if (iT > -1) {
-			if (bT) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iT])*(potent[VXCOR][iT]) + (potent[VYCOR][iT])*(potent[VYCOR][iT]) + (potent[VZCOR][iT])*(potent[VZCOR][iT]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iT] = 0.0;
-					potent[GRADYVX][iT] = 0.0;
-					potent[GRADZVX][iT] = 0.0;
-
-					potent[GRADXVY][iT] = 0.0;
-					potent[GRADYVY][iT] = 0.0;
-					potent[GRADZVY][iT] = 0.0;
-
-					potent[GRADXVZ][iT] = 0.0;
-					potent[GRADYVZ][iT] = 0.0;
-					potent[GRADZVZ][iT] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iT] = potent[GRADXVX][iP];
-					potent[GRADYVX][iT] = potent[GRADYVX][iP];
-					potent[GRADZVX][iT] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iT] = potent[GRADXVY][iP];
-					potent[GRADYVY][iT] = potent[GRADYVY][iP];
-					potent[GRADZVY][iT] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iT] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iT] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iT] = potent[GRADZVZ][iP];
-				}
+		    
 			}
-		}
-
-		if (iT2 > -1) {
-			if (bT2) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iT2])*(potent[VXCOR][iT2]) + (potent[VYCOR][iT2])*(potent[VYCOR][iT2]) + (potent[VZCOR][iT2])*(potent[VZCOR][iT2]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iT2] = 0.0;
-					potent[GRADYVX][iT2] = 0.0;
-					potent[GRADZVX][iT2] = 0.0;
-
-					potent[GRADXVY][iT2] = 0.0;
-					potent[GRADYVY][iT2] = 0.0;
-					potent[GRADZVY][iT2] = 0.0;
-
-					potent[GRADXVZ][iT2] = 0.0;
-					potent[GRADYVZ][iT2] = 0.0;
-					potent[GRADZVZ][iT2] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iT2] = potent[GRADXVX][iP];
-					potent[GRADYVX][iT2] = potent[GRADYVX][iP];
-					potent[GRADZVX][iT2] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iT2] = potent[GRADXVY][iP];
-					potent[GRADYVY][iT2] = potent[GRADYVY][iP];
-					potent[GRADZVY][iT2] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iT2] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iT2] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iT2] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iT3 > -1) {
-			if (bT3) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iT3])*(potent[VXCOR][iT3]) + (potent[VYCOR][iT3])*(potent[VYCOR][iT3]) + (potent[VZCOR][iT3])*(potent[VZCOR][iT3]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iT3] = 0.0;
-					potent[GRADYVX][iT3] = 0.0;
-					potent[GRADZVX][iT3] = 0.0;
-
-					potent[GRADXVY][iT3] = 0.0;
-					potent[GRADYVY][iT3] = 0.0;
-					potent[GRADZVY][iT3] = 0.0;
-
-					potent[GRADXVZ][iT3] = 0.0;
-					potent[GRADYVZ][iT3] = 0.0;
-					potent[GRADZVZ][iT3] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iT3] = potent[GRADXVX][iP];
-					potent[GRADYVX][iT3] = potent[GRADYVX][iP];
-					potent[GRADZVX][iT3] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iT3] = potent[GRADXVY][iP];
-					potent[GRADYVY][iT3] = potent[GRADYVY][iP];
-					potent[GRADZVY][iT3] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iT3] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iT3] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iT3] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iT4 > -1) {
-			if (bT4) {
-
-				doublereal dspeed = sqrt((potent[VXCOR][iT4])*(potent[VXCOR][iT4]) + (potent[VYCOR][iT4])*(potent[VYCOR][iT4]) + (potent[VZCOR][iT4])*(potent[VZCOR][iT4]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iT4] = 0.0;
-					potent[GRADYVX][iT4] = 0.0;
-					potent[GRADZVX][iT4] = 0.0;
-
-					potent[GRADXVY][iT4] = 0.0;
-					potent[GRADYVY][iT4] = 0.0;
-					potent[GRADZVY][iT4] = 0.0;
-
-					potent[GRADXVZ][iT4] = 0.0;
-					potent[GRADYVZ][iT4] = 0.0;
-					potent[GRADZVZ][iT4] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iT4] = potent[GRADXVX][iP];
-					potent[GRADYVX][iT4] = potent[GRADYVX][iP];
-					potent[GRADZVX][iT4] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iT4] = potent[GRADXVY][iP];
-					potent[GRADYVY][iT4] = potent[GRADYVY][iP];
-					potent[GRADZVY][iT4] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iT4] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iT4] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iT4] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iB > -1) {
-			if (bB) {
-				doublereal dspeed = sqrt((potent[VXCOR][iB])*(potent[VXCOR][iB]) + (potent[VYCOR][iB])*(potent[VYCOR][iB]) + (potent[VZCOR][iB])*(potent[VZCOR][iB]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iB] = 0.0;
-					potent[GRADYVX][iB] = 0.0;
-					potent[GRADZVX][iB] = 0.0;
-
-					potent[GRADXVY][iB] = 0.0;
-					potent[GRADYVY][iB] = 0.0;
-					potent[GRADZVY][iB] = 0.0;
-
-					potent[GRADXVZ][iB] = 0.0;
-					potent[GRADYVZ][iB] = 0.0;
-					potent[GRADZVZ][iB] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iB] = potent[GRADXVX][iP];
-					potent[GRADYVX][iB] = potent[GRADYVX][iP];
-					potent[GRADZVX][iB] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iB] = potent[GRADXVY][iP];
-					potent[GRADYVY][iB] = potent[GRADYVY][iP];
-					potent[GRADZVY][iB] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iB] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iB] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iB] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iB2 > -1) {
-			if (bB2) {
-				doublereal dspeed = sqrt((potent[VXCOR][iB2])*(potent[VXCOR][iB2]) + (potent[VYCOR][iB2])*(potent[VYCOR][iB2]) + (potent[VZCOR][iB2])*(potent[VZCOR][iB2]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iB2] = 0.0;
-					potent[GRADYVX][iB2] = 0.0;
-					potent[GRADZVX][iB2] = 0.0;
-
-					potent[GRADXVY][iB2] = 0.0;
-					potent[GRADYVY][iB2] = 0.0;
-					potent[GRADZVY][iB2] = 0.0;
-
-					potent[GRADXVZ][iB2] = 0.0;
-					potent[GRADYVZ][iB2] = 0.0;
-					potent[GRADZVZ][iB2] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iB2] = potent[GRADXVX][iP];
-					potent[GRADYVX][iB2] = potent[GRADYVX][iP];
-					potent[GRADZVX][iB2] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iB2] = potent[GRADXVY][iP];
-					potent[GRADYVY][iB2] = potent[GRADYVY][iP];
-					potent[GRADZVY][iB2] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iB2] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iB2] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iB2] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iB3 > -1) {
-			if (bB3) {
-				doublereal dspeed = sqrt((potent[VXCOR][iB3])*(potent[VXCOR][iB3]) + (potent[VYCOR][iB3])*(potent[VYCOR][iB3]) + (potent[VZCOR][iB3])*(potent[VZCOR][iB3]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iB3] = 0.0;
-					potent[GRADYVX][iB3] = 0.0;
-					potent[GRADZVX][iB3] = 0.0;
-
-					potent[GRADXVY][iB3] = 0.0;
-					potent[GRADYVY][iB3] = 0.0;
-					potent[GRADZVY][iB3] = 0.0;
-
-					potent[GRADXVZ][iB3] = 0.0;
-					potent[GRADYVZ][iB3] = 0.0;
-					potent[GRADZVZ][iB3] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iB3] = potent[GRADXVX][iP];
-					potent[GRADYVX][iB3] = potent[GRADYVX][iP];
-					potent[GRADZVX][iB3] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iB3] = potent[GRADXVY][iP];
-					potent[GRADYVY][iB3] = potent[GRADYVY][iP];
-					potent[GRADZVY][iB3] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iB3] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iB3] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iB3] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
-		if (iB4 > -1) {
-			if (bB4) {
-				doublereal dspeed = sqrt((potent[VXCOR][iB4])*(potent[VXCOR][iB4]) + (potent[VYCOR][iB4])*(potent[VYCOR][iB4]) + (potent[VZCOR][iB4])*(potent[VZCOR][iB4]));
-
-				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iB4] = 0.0;
-					potent[GRADYVX][iB4] = 0.0;
-					potent[GRADZVX][iB4] = 0.0;
-
-					potent[GRADXVY][iB4] = 0.0;
-					potent[GRADYVY][iB4] = 0.0;
-					potent[GRADZVY][iB4] = 0.0;
-
-					potent[GRADXVZ][iB4] = 0.0;
-					potent[GRADYVZ][iB4] = 0.0;
-					potent[GRADZVZ][iB4] = 0.0;
-				}
-				else {
-
-					potent[GRADXVX][iB4] = potent[GRADXVX][iP];
-					potent[GRADYVX][iB4] = potent[GRADYVX][iP];
-					potent[GRADZVX][iB4] = potent[GRADZVX][iP];
-
-					potent[GRADXVY][iB4] = potent[GRADXVY][iP];
-					potent[GRADYVY][iB4] = potent[GRADYVY][iP];
-					potent[GRADZVY][iB4] = potent[GRADZVY][iP];
-
-					potent[GRADXVZ][iB4] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iB4] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iB4] = potent[GRADZVZ][iP];
-				}
-			}
-		}
-
 		}
 		else
 		{
@@ -2568,9 +2745,9 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_SpallartAllmares(integer iP,
-	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
-	BOUND* &border_neighbor, integer *ilevel_alice) {
+	doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	BOUND* &border_neighbor, integer *ilevel_alice, TOCHKA*& volume_loc) {
 
 
 	// Рассчитывать ли скорость на грани с помощью поправки Рхи-Чоу 1983г.
@@ -2585,20 +2762,23 @@ void green_gauss_SpallartAllmares(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	if (b_on_adaptive_local_refinement_mesh) {
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -2640,10 +2820,15 @@ void green_gauss_SpallartAllmares(integer iP,
 
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-	volume3D(iP, nvtx, pa, dx, dy, dz);
-	dx = fabs(dx);
-	dy = fabs(dy);
-	dz = fabs(dz);
+	//volume3D(iP, nvtx, pa, dx, dy, dz);
+	//dx = fabs(dx);
+	//dy = fabs(dy);
+	//dz = fabs(dz);
+
+	TOCHKA point_loc = volume_loc[iP];
+	dx = point_loc.x;
+	dy = point_loc.y;
+	dz = point_loc.z;
 
 	doublereal dxe = 0.5*dx, dxw = 0.5*dx, dyn = 0.5*dy, dys = 0.5*dy, dzt = 0.5*dz, dzb = 0.5*dz;
 	// т.к. известна нумерация вершин куба, то здесь она используется
@@ -2862,7 +3047,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe = dy_loc * dz_loc;
 			}
@@ -2888,7 +3078,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw = dy_loc * dz_loc;
 			}
@@ -2913,7 +3108,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn = dx_loc * dz_loc;
 			}
@@ -2938,7 +3138,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs = dx_loc * dz_loc;
 			}
@@ -2963,7 +3168,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqt = dx_loc * dy_loc;
 			}
@@ -2988,7 +3198,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb = dx_loc * dy_loc;
 			}
@@ -3016,7 +3231,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe2 = dy_loc * dz_loc;
 			}
@@ -3029,18 +3249,23 @@ void green_gauss_SpallartAllmares(integer iP,
 	if (iW2 > -1) {
 		dSqw2 = dy * dz;
 
-		if (bW) {
+		if (bW2) {
 			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW2 - maxelm].dS;
 		}
 		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+			if (ilevel_alice[iP] >= ilevel_alice[iW2]) {
 				dSqw2 = dy * dz;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw2 = dy_loc * dz_loc;
 			}
@@ -3065,7 +3290,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn2 = dx_loc * dz_loc;
 			}
@@ -3090,7 +3320,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs2 = dx_loc * dz_loc;
 			}
@@ -3115,7 +3350,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqt2 = dx_loc * dy_loc;
 			}
@@ -3140,7 +3380,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb2 = dx_loc * dy_loc;
 			}
@@ -3169,7 +3414,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe3 = dy_loc * dz_loc;
 			}
@@ -3194,7 +3444,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw3 = dy_loc * dz_loc;
 			}
@@ -3219,7 +3474,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn3 = dx_loc * dz_loc;
 			}
@@ -3244,7 +3504,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs3 = dx_loc * dz_loc;
 			}
@@ -3269,7 +3534,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqt3 = dx_loc * dy_loc;
 			}
@@ -3294,7 +3564,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb3 = dx_loc * dy_loc;
 			}
@@ -3322,7 +3597,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE4];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe4 = dy_loc * dz_loc;
 			}
@@ -3347,7 +3627,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW4];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw4 = dy_loc * dz_loc;
 			}
@@ -3372,7 +3657,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN4];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn4 = dx_loc * dz_loc;
 			}
@@ -3397,7 +3687,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS4];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs4 = dx_loc * dz_loc;
 			}
@@ -3422,7 +3717,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT4];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqt4 = dx_loc * dy_loc;
 			}
@@ -3447,7 +3747,12 @@ void green_gauss_SpallartAllmares(integer iP,
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB4];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb4 = dx_loc * dy_loc;
 			}
@@ -3457,7 +3762,7 @@ void green_gauss_SpallartAllmares(integer iP,
 	}
 
 	// 28.04.2019	
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -3472,7 +3777,7 @@ void green_gauss_SpallartAllmares(integer iP,
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -3487,7 +3792,7 @@ void green_gauss_SpallartAllmares(integer iP,
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -4275,8 +4580,8 @@ void green_gauss_SpallartAllmares(integer iP,
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
-	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
 	BOUND* &border_neighbor, integer *ilevel_alice)
 {
 
@@ -4293,20 +4598,25 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+	if (b_on_adaptive_local_refinement_mesh) {
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
+
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -4737,18 +5047,18 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 	if (iW2 > -1) {
 		dSqw2 = dy * dz;
 
-		if (bW) {
+		if (bW2) {
 			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW2 - maxelm].dS;
 		}
 		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+			if (ilevel_alice[iP] >= ilevel_alice[iW2]) {
 				dSqw2 = dy * dz;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
 			}
@@ -5165,7 +5475,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 	}
 
 	// 28.04.2019	
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -5180,7 +5490,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -5195,7 +5505,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -5977,8 +6287,8 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
   // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
   // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
-	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
 	BOUND* &border_neighbor, integer *ilevel_alice)
 {
 
@@ -5995,20 +6305,23 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
-
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+	if (b_on_adaptive_local_refinement_mesh) {
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+				
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+				
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -6439,18 +6752,18 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 	if (iW2 > -1) {
 		dSqw2 = dy * dz;
 
-		if (bW) {
+		if (bW2) {
 			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW2 - maxelm].dS;
 		}
 		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+			if (ilevel_alice[iP] >= ilevel_alice[iW2]) {
 				dSqw2 = dy * dz;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
 			}
@@ -6867,7 +7180,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 	}
 
 	// 28.04.2019	
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -6882,7 +7195,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -6897,7 +7210,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -7679,8 +7992,8 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
   // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
   // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer iP,
-	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
 	BOUND* &border_neighbor, integer *ilevel_alice)
 {
 
@@ -7697,20 +8010,24 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	if (b_on_adaptive_local_refinement_mesh) {
 
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -8141,18 +8458,18 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 	if (iW2 > -1) {
 		dSqw2 = dy * dz;
 
-		if (bW) {
+		if (bW2) {
 			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW2 - maxelm].dS;
 		}
 		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+			if (ilevel_alice[iP] >= ilevel_alice[iW2]) {
 				dSqw2 = dy * dz;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
 			}
@@ -8569,7 +8886,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 	}
 
 	// 28.04.2019	
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -8584,7 +8901,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -8599,7 +8916,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -9384,8 +9701,8 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
-	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
 	BOUND* &border_neighbor, integer *ilevel_alice) {
 
 
@@ -9401,21 +9718,23 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	if (b_on_adaptive_local_refinement_mesh) {
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
 
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
 	bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
@@ -9845,18 +10164,18 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 	if (iW2 > -1) {
 		dSqw2 = dy * dz;
 
-		if (bW) {
+		if (bW2) {
 			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW2 - maxelm].dS;
 		}
 		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+			if (ilevel_alice[iP] >= ilevel_alice[iW2]) {
 				dSqw2 = dy * dz;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
 			}
@@ -10273,7 +10592,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 	}
 
 	// 28.04.2019	
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -10288,7 +10607,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -10303,7 +10622,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -11078,10 +11397,10 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 
 // вычисление градиентов поправки давления с помощью теоремы Грина-Гаусса. 
-void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	                ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+void green_gaussPAM(integer iP, doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	                int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
 					BOUND* &border_neighbor, integer ls, integer lw, WALL* &w, bool bLRfree,
-	                integer *ilevel_alice, integer* ptr) {
+	                integer *ilevel_alice, int* ptr, TOCHKA*& volume_loc) {
 
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты поправки давления для внутренних КО.
@@ -11092,20 +11411,26 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	if (b_on_adaptive_local_refinement_mesh) {
 
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+
+
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -11148,10 +11473,15 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
-	volume3D(iP, nvtx, pa, dx, dy, dz);
-	dx = fabs(dx);
-	dy = fabs(dy);
-	dz = fabs(dz);
+	//volume3D(iP, nvtx, pa, dx, dy, dz);
+	//dx = fabs(dx);
+	//dy = fabs(dy);
+	//dz = fabs(dz);
+
+	TOCHKA point_loc = volume_loc[iP];
+	dx = point_loc.x;
+	dy = point_loc.y;
+	dz = point_loc.z;
 
 	doublereal dxe = 0.5*dx, dxw = 0.5*dx, dyn = 0.5*dy, dys = 0.5*dy, dzt = 0.5*dz, dzb = 0.5*dz;
 	// т.к. известна нумерация вершин куба, то здесь она используется
@@ -11188,91 +11518,94 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
 	doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
 
-	// т.к. известна нумерация вершин куба, то здесь она используется
-	// x - direction
-	if (iE2 > -1) {
-		if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
-		if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	}
-	if (iW2 > -1) {
-		if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
-	}
-	// y - direction
-	if (iN2 > -1) {
-		if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
-		if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	}
-	if (iS2 > -1) {
-		if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
-	}
-	// z - direction
-	if (iT2 > -1) {
-		if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
-		if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-	}
-	if (iB2 > -1) {
-		if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
-	}
+	if (b_on_adaptive_local_refinement_mesh) {
 
-	// т.к. известна нумерация вершин куба, то здесь она используется
-	// x - direction
-	if (iE3 > -1) {
-		if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
-		if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	}
-	if (iW3 > -1) {
-		if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
-	}
-	// y - direction
-	if (iN3 > -1) {
-		if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
-		if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	}
-	if (iS3 > -1) {
-		if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
-	}
-	// z - direction
-	if (iT3 > -1) {
-		if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
-		if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-	}
-	if (iB3 > -1) {
-		if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
-	}
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE2 > -1) {
+			if (!bE2) dxe2 = 0.5 * (pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+			if (!bE2) dxe2 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW2 > -1) {
+			if (!bW2) dxw2 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW2) dxw2 -= 0.5 * (pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+		}
+		// y - direction
+		if (iN2 > -1) {
+			if (!bN2) dyn2 = 0.5 * (pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+			if (!bN2) dyn2 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS2 > -1) {
+			if (!bS2) dys2 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS2) dys2 -= 0.5 * (pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+		}
+		// z - direction
+		if (iT2 > -1) {
+			if (!bT2) dzt2 = 0.5 * (pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+			if (!bT2) dzt2 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB2 > -1) {
+			if (!bB2) dzb2 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB2) dzb2 -= 0.5 * (pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+		}
 
-	// т.к. известна нумерация вершин куба, то здесь она используется
-	// x - direction
-	if (iE4 > -1) {
-		if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
-		if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	}
-	if (iW4 > -1) {
-		if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
-	}
-	// y - direction
-	if (iN4 > -1) {
-		if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
-		if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	}
-	if (iS4 > -1) {
-		if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
-	}
-	// z - direction
-	if (iT4 > -1) {
-		if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
-		if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-	}
-	if (iB4 > -1) {
-		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE3 > -1) {
+			if (!bE3) dxe3 = 0.5 * (pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+			if (!bE3) dxe3 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW3 > -1) {
+			if (!bW3) dxw3 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW3) dxw3 -= 0.5 * (pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+		}
+		// y - direction
+		if (iN3 > -1) {
+			if (!bN3) dyn3 = 0.5 * (pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+			if (!bN3) dyn3 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS3 > -1) {
+			if (!bS3) dys3 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS3) dys3 -= 0.5 * (pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+		}
+		// z - direction
+		if (iT3 > -1) {
+			if (!bT3) dzt3 = 0.5 * (pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+			if (!bT3) dzt3 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB3 > -1) {
+			if (!bB3) dzb3 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB3) dzb3 -= 0.5 * (pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+		}
+
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE4 > -1) {
+			if (!bE4) dxe4 = 0.5 * (pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+			if (!bE4) dxe4 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW4 > -1) {
+			if (!bW4) dxw4 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW4) dxw4 -= 0.5 * (pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+		}
+		// y - direction
+		if (iN4 > -1) {
+			if (!bN4) dyn4 = 0.5 * (pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+			if (!bN4) dyn4 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS4 > -1) {
+			if (!bS4) dys4 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS4) dys4 -= 0.5 * (pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+		}
+		// z - direction
+		if (iT4 > -1) {
+			if (!bT4) dzt4 = 0.5 * (pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+			if (!bT4) dzt4 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB4 > -1) {
+			if (!bB4) dzb4 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB4) dzb4 -= 0.5 * (pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+		}
 	}
 
 	dxe = fabs(dxe);
@@ -11371,7 +11704,12 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe = dy_loc * dz_loc;
 			}
@@ -11397,7 +11735,12 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw = dy_loc * dz_loc;
 			}
@@ -11422,7 +11765,12 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn = dx_loc * dz_loc;
 			}
@@ -11447,7 +11795,12 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs = dx_loc * dz_loc;
 			}
@@ -11472,7 +11825,13 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
+
 
 				dSqt = dx_loc * dy_loc;
 			}
@@ -11497,7 +11856,12 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb = dx_loc * dy_loc;
 			}
@@ -11507,466 +11871,559 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	}
 
 	doublereal dSqe2 = 0.0, dSqw2 = 0.0, dSqn2 = 0.0, dSqs2 = 0.0, dSqt2 = 0.0, dSqb2 = 0.0; // площадь грани.
-	
-
-
-	if (iE2 > -1) {
-
-		dSqe2 = dy * dz;
-
-		if (bE2) {
-			// граничный узел.
-			dSqe2 = border_neighbor[iE2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
-				dSqe2 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqe2 = dy_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iW2 > -1) {
-		dSqw2 = dy * dz;
-
-		if (bW) {
-			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
-				dSqw2 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqw2 = dy_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iN2 > -1) {
-
-		dSqn2 = dx * dz;
-
-		if (bN2) {
-			// граничный узел.
-			dSqn2 = border_neighbor[iN2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
-				dSqn2 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqn2 = dx_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iS2 > -1) {
-
-		dSqs2 = dx * dz;
-
-		if (bS2) {
-			// граничный узел.
-			dSqs2 = border_neighbor[iS2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
-				dSqs2 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqs2 = dx_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iT2 > -1) {
-
-		dSqt2 = dx * dy;
-
-		if (bT2) {
-			// граничный узел.
-			dSqt2 = border_neighbor[iT2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
-				dSqt2 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqt2 = dx_loc * dy_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iB2 > -1) {
-
-		dSqb2 = dx * dy;
-
-		if (bB2) {
-			// граничный узел.
-			dSqb2 = border_neighbor[iB2 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
-				dSqb2 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqb2 = dx_loc * dy_loc;
-			}
-		}
-
-		
-	}
-
-
 	doublereal dSqe3 = 0.0, dSqw3 = 0.0, dSqn3 = 0.0, dSqs3 = 0.0, dSqt3 = 0.0, dSqb3 = 0.0; // площадь грани.
-	
-
-
-	if (iE3 > -1) {
-
-		dSqe3 = dy * dz;
-
-		if (bE3) {
-			// граничный узел.
-			dSqe3 = border_neighbor[iE3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
-				dSqe3 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqe3 = dy_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iW3 > -1) {
-
-		dSqw3 = dy * dz;
-
-		if (bW3) {
-			// граничный узел.
-			dSqw3 = border_neighbor[iW3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
-				dSqw3 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqw3 = dy_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iN3 > -1) {
-
-		dSqn3 = dx * dz;
-
-		if (bN3) {
-			// граничный узел.
-			dSqn3 = border_neighbor[iN3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
-				dSqn3 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqn3 = dx_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iS3 > -1) {
-
-		dSqs3 = dx * dz;
-
-		if (bS3) {
-			// граничный узел.
-			dSqs3 = border_neighbor[iS3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
-				dSqs3 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqs3 = dx_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iT3 > -1) {
-
-		dSqt3 = dx * dy;
-
-		if (bT3) {
-			// граничный узел.
-			dSqt3 = border_neighbor[iT3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
-				dSqt3 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqt3 = dx_loc * dy_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iB3 > -1) {
-
-		dSqb3 = dx * dy;
-
-		if (bB3) {
-			// граничный узел.
-			dSqb3 = border_neighbor[iB3 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
-				dSqb3 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqb3 = dx_loc * dy_loc;
-			}
-		}
-
-		
-	}
-
 	doublereal dSqe4 = 0.0, dSqw4 = 0.0, dSqn4 = 0.0, dSqs4 = 0.0, dSqt4 = 0.0, dSqb4 = 0.0; // площадь грани.
-	
 
 
-	if (iE4 > -1) {
+	if (b_on_adaptive_local_refinement_mesh) {
 
-		dSqe4 = dy * dz;
+		if (iE2 > -1) {
 
-		if (bE4) {
-			// граничный узел.
-			dSqe4 = border_neighbor[iE4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
-				dSqe4 = dy * dz;
+			dSqe2 = dy * dz;
+
+			if (bE2) {
+				// граничный узел.
+				dSqe2 = border_neighbor[iE2 - maxelm].dS;
 			}
 			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
+					dSqe2 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-				dSqe4 = dy_loc * dz_loc;
+					point_loc = volume_loc[iE2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqe2 = dy_loc * dz_loc;
+				}
 			}
+
+
 		}
 
-		
-	}
 
+		if (iW2 > -1) {
+			dSqw2 = dy * dz;
 
-	if (iW4 > -1) {
-
-		dSqw4 = dy * dz;
-
-		if (bW4) {
-			// граничный узел.
-			dSqw4 = border_neighbor[iW4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
-				dSqw4 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqw4 = dy_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iN4 > -1) {
-
-		dSqn4 = dx * dz;
-
-		if (bN4) {
-			// граничный узел.
-			dSqn4 = border_neighbor[iN4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
-				dSqn4 = dx * dz;
+			if (bW2) {
+				// граничный узел.
+				dSqw2 = border_neighbor[iW2 - maxelm].dS;
 			}
 			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
+					dSqw2 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-				dSqn4 = dx_loc * dz_loc;
+					point_loc = volume_loc[iW2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqw2 = dy_loc * dz_loc;
+				}
 			}
+
+
 		}
 
-		
-	}
 
+		if (iN2 > -1) {
 
-	if (iS4 > -1) {
+			dSqn2 = dx * dz;
 
-		dSqs4 = dx * dz;
-
-		if (bS4) {
-			// граничный узел.
-			dSqs4 = border_neighbor[iS4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
-				dSqs4 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqs4 = dx_loc * dz_loc;
-			}
-		}
-
-		
-	}
-
-
-	if (iT4 > -1) {
-
-		dSqt4 = dx * dy;
-
-		if (bT4) {
-			// граничный узел.
-			dSqt4 = border_neighbor[iT4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
-				dSqt4 = dx * dy;
+			if (bN2) {
+				// граничный узел.
+				dSqn2 = border_neighbor[iN2 - maxelm].dS;
 			}
 			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
+					dSqn2 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-				dSqt4 = dx_loc * dy_loc;
+					point_loc = volume_loc[iN2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqn2 = dx_loc * dz_loc;
+				}
 			}
+
+
 		}
 
-		
-	}
 
+		if (iS2 > -1) {
 
-	if (iB4 > -1) {
+			dSqs2 = dx * dz;
 
-		dSqb4 = dx * dy;
-
-		if (bB4) {
-			// граничный узел.
-			dSqb4 = border_neighbor[iB4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
-				dSqb4 = dx * dy;
+			if (bS2) {
+				// граничный узел.
+				dSqs2 = border_neighbor[iS2 - maxelm].dS;
 			}
 			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
+					dSqs2 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-				dSqb4 = dx_loc * dy_loc;
+					point_loc = volume_loc[iS2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqs2 = dx_loc * dz_loc;
+				}
 			}
+
+
 		}
 
-		
+
+		if (iT2 > -1) {
+
+			dSqt2 = dx * dy;
+
+			if (bT2) {
+				// граничный узел.
+				dSqt2 = border_neighbor[iT2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
+					dSqt2 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iT2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqt2 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB2 > -1) {
+
+			dSqb2 = dx * dy;
+
+			if (bB2) {
+				// граничный узел.
+				dSqb2 = border_neighbor[iB2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
+					dSqb2 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iB2];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqb2 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+
+
+
+
+		if (iE3 > -1) {
+
+			dSqe3 = dy * dz;
+
+			if (bE3) {
+				// граничный узел.
+				dSqe3 = border_neighbor[iE3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
+					dSqe3 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iE3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqe3 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iW3 > -1) {
+
+			dSqw3 = dy * dz;
+
+			if (bW3) {
+				// граничный узел.
+				dSqw3 = border_neighbor[iW3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
+					dSqw3 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iW3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqw3 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN3 > -1) {
+
+			dSqn3 = dx * dz;
+
+			if (bN3) {
+				// граничный узел.
+				dSqn3 = border_neighbor[iN3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
+					dSqn3 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iN3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqn3 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS3 > -1) {
+
+			dSqs3 = dx * dz;
+
+			if (bS3) {
+				// граничный узел.
+				dSqs3 = border_neighbor[iS3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
+					dSqs3 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iS3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqs3 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT3 > -1) {
+
+			dSqt3 = dx * dy;
+
+			if (bT3) {
+				// граничный узел.
+				dSqt3 = border_neighbor[iT3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
+					dSqt3 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iT3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqt3 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB3 > -1) {
+
+			dSqb3 = dx * dy;
+
+			if (bB3) {
+				// граничный узел.
+				dSqb3 = border_neighbor[iB3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
+					dSqb3 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iB3];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqb3 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+
+
+		if (iE4 > -1) {
+
+			dSqe4 = dy * dz;
+
+			if (bE4) {
+				// граничный узел.
+				dSqe4 = border_neighbor[iE4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
+					dSqe4 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iE4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqe4 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iW4 > -1) {
+
+			dSqw4 = dy * dz;
+
+			if (bW4) {
+				// граничный узел.
+				dSqw4 = border_neighbor[iW4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
+					dSqw4 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iW4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqw4 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN4 > -1) {
+
+			dSqn4 = dx * dz;
+
+			if (bN4) {
+				// граничный узел.
+				dSqn4 = border_neighbor[iN4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
+					dSqn4 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iN4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqn4 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS4 > -1) {
+
+			dSqs4 = dx * dz;
+
+			if (bS4) {
+				// граничный узел.
+				dSqs4 = border_neighbor[iS4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
+					dSqs4 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iS4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqs4 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT4 > -1) {
+
+			dSqt4 = dx * dy;
+
+			if (bT4) {
+				// граничный узел.
+				dSqt4 = border_neighbor[iT4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
+					dSqt4 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iT4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqt4 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB4 > -1) {
+
+			dSqb4 = dx * dy;
+
+			if (bB4) {
+				// граничный узел.
+				dSqb4 = border_neighbor[iB4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
+					dSqb4 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iB4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqb4 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
 	}
 
 	// 28.04.2019	
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -11981,7 +12438,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -11996,7 +12453,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -12675,150 +13132,153 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					}
 				}
 
-				if (iE2 > -1) {
-					if (bE2) {
-						potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
-					}
-				}
+				if (b_on_adaptive_local_refinement_mesh) {
 
-				if (iW2 > -1) {
-					if (bW2) {
-						potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
+					if (iE2 > -1) {
+						if (bE2) {
+							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iN2 > -1) {
-					if (bN2) {
-						potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
-						potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
+					if (iW2 > -1) {
+						if (bW2) {
+							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iS2 > -1) {
-					if (bS2) {
-						// до 10.02.2017 был косяк
-						potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
-						potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
+					if (iN2 > -1) {
+						if (bN2) {
+							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+							potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iT2 > -1) {
-					if (bT2) {
-						potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
-						potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
+					if (iS2 > -1) {
+						if (bS2) {
+							// до 10.02.2017 был косяк
+							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+							potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iB2 > -1) {
-					if (bB2) {
-						potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
-						potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
+					if (iT2 > -1) {
+						if (bT2) {
+							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+							potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
+						}
 					}
-				}
 
-				if (iE3 > -1) {
-					if (bE3) {
-						potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
+					if (iB2 > -1) {
+						if (bB2) {
+							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+							potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
+						}
 					}
-				}
 
-				if (iW3 > -1) {
-					if (bW3) {
-						potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
+					if (iE3 > -1) {
+						if (bE3) {
+							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iN3 > -1) {
-					if (bN3) {
-						potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
-						potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
+					if (iW3 > -1) {
+						if (bW3) {
+							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iS3 > -1) {
-					if (bS3) {
-						// до 10.02.2017 был косяк
-						potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
-						potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
+					if (iN3 > -1) {
+						if (bN3) {
+							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+							potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iT3 > -1) {
-					if (bT3) {
-						potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
-						potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
+					if (iS3 > -1) {
+						if (bS3) {
+							// до 10.02.2017 был косяк
+							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+							potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iB3 > -1) {
-					if (bB3) {
-						potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
-						potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
+					if (iT3 > -1) {
+						if (bT3) {
+							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+							potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
+						}
 					}
-				}
 
-				if (iE4 > -1) {
-					if (bE4) {
-						potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
+					if (iB3 > -1) {
+						if (bB3) {
+							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+							potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
+						}
 					}
-				}
 
-				if (iW4 > -1) {
-					if (bW4) {
-						potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
+					if (iE4 > -1) {
+						if (bE4) {
+							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iN4 > -1) {
-					if (bN4) {
-						potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
-						potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
+					if (iW4 > -1) {
+						if (bW4) {
+							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iS4 > -1) {
-					if (bS4) {
-						// до 10.02.2017 был косяк
-						potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
-						potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
+					if (iN4 > -1) {
+						if (bN4) {
+							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+							potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iT4 > -1) {
-					if (bT4) {
-						potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
-						potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
+					if (iS4 > -1) {
+						if (bS4) {
+							// до 10.02.2017 был косяк
+							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+							potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iB4 > -1) {
-					if (bB4) {
-						potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
-						potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
+					if (iT4 > -1) {
+						if (bT4) {
+							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+							potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
+						}
+					}
+
+					if (iB4 > -1) {
+						if (bB4) {
+							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+							potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
+						}
 					}
 				}
 
@@ -12933,300 +13393,302 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					}
 				}
 
-				if (iE2 > -1) {
-					if (bE2) {
-						integer inumber = iE2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iE2] = 0.0;
-						}
-						else {
-							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
-						}
+				if (b_on_adaptive_local_refinement_mesh) {
 
-						// Тангенциальные компоненты.
-						potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
+					if (iE2 > -1) {
+						if (bE2) {
+							integer inumber = iE2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iE2] = 0.0;
+							}
+							else {
+								potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+							}
+
+							// Тангенциальные компоненты.
+							potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iW2 > -1) {
+						if (bW2) {
+							integer inumber = iW2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iW2] = 0.0;
+							}
+							else {
+								potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iN2 > -1) {
+						if (bN2) {
+							integer inumber = iN2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iN2] = 0.0;
+							}
+							else {
+								potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iS2 > -1) {
+						if (bS2) {
+							integer inumber = iS2 - maxelm;
+
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iS2] = 0.0;
+							}
+							else {
+								potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+							}
+
+							// Тангенциальные компоненты.
+							// до 10.02.2017 был косяк
+							potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iT2 > -1) {
+						if (bT2) {
+							integer inumber = iT2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iT2] = 0.0;
+							}
+							else {
+								potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+							}
+
+							// Тангенциальные компоненты.						
+							potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
+						}
+					}
+
+					if (iB2 > -1) {
+						if (bB2) {
+							integer inumber = iB2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iB2] = 0.0;
+							}
+							else {
+								potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
+						}
+					}
+
+					if (iE3 > -1) {
+						if (bE3) {
+							integer inumber = iE3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iE3] = 0.0;
+							}
+							else {
+								potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+							}
+
+							// Тангенциальные компоненты.
+							potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iW3 > -1) {
+						if (bW3) {
+							integer inumber = iW3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iW3] = 0.0;
+							}
+							else {
+								potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iN3 > -1) {
+						if (bN3) {
+							integer inumber = iN3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iN3] = 0.0;
+							}
+							else {
+								potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iS3 > -1) {
+						if (bS3) {
+							integer inumber = iS3 - maxelm;
+
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iS3] = 0.0;
+							}
+							else {
+								potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+							}
+
+							// Тангенциальные компоненты.
+							// до 10.02.2017 был косяк
+							potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iT3 > -1) {
+						if (bT3) {
+							integer inumber = iT3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iT3] = 0.0;
+							}
+							else {
+								potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+							}
+
+							// Тангенциальные компоненты.						
+							potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
+						}
+					}
+
+					if (iB3 > -1) {
+						if (bB3) {
+							integer inumber = iB3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iB3] = 0.0;
+							}
+							else {
+								potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
+						}
+					}
+
+					if (iE4 > -1) {
+						if (bE4) {
+							integer inumber = iE4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iE4] = 0.0;
+							}
+							else {
+								potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+							}
+
+							// Тангенциальные компоненты.
+							potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iW4 > -1) {
+						if (bW4) {
+							integer inumber = iW4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iW4] = 0.0;
+							}
+							else {
+								potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iN4 > -1) {
+						if (bN4) {
+							integer inumber = iN4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iN4] = 0.0;
+							}
+							else {
+								potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iS4 > -1) {
+						if (bS4) {
+							integer inumber = iS4 - maxelm;
+
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iS4] = 0.0;
+							}
+							else {
+								potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+							}
+
+							// Тангенциальные компоненты.
+							// до 10.02.2017 был косяк
+							potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
+						}
+					}
+
+					if (iT4 > -1) {
+						if (bT4) {
+							integer inumber = iT4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iT4] = 0.0;
+							}
+							else {
+								potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+							}
+
+							// Тангенциальные компоненты.						
+							potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
+						}
+					}
+
+					if (iB4 > -1) {
+						if (bB4) {
+							integer inumber = iB4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iB4] = 0.0;
+							}
+							else {
+								potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+							}
+
+							// Тангенциальные компоненты.					
+							potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
+						}
 					}
 				}
-
-				if (iW2 > -1) {
-					if (bW2) {
-						integer inumber = iW2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iW2] = 0.0;
-						}
-						else {
-							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iN2 > -1) {
-					if (bN2) {
-						integer inumber = iN2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iN2] = 0.0;
-						}
-						else {
-							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iS2 > -1) {
-					if (bS2) {
-						integer inumber = iS2 - maxelm;
-
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iS2] = 0.0;
-						}
-						else {
-							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
-						}
-
-						// Тангенциальные компоненты.
-						// до 10.02.2017 был косяк
-						potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iT2 > -1) {
-					if (bT2) {
-						integer inumber = iT2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iT2] = 0.0;
-						}
-						else {
-							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
-						}
-
-						// Тангенциальные компоненты.						
-						potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
-					}
-				}
-
-				if (iB2 > -1) {
-					if (bB2) {
-						integer inumber = iB2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iB2] = 0.0;
-						}
-						else {
-							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
-					}
-				}
-
-				if (iE3 > -1) {
-					if (bE3) {
-						integer inumber = iE3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iE3] = 0.0;
-						}
-						else {
-							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
-						}
-
-						// Тангенциальные компоненты.
-						potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iW3 > -1) {
-					if (bW3) {
-						integer inumber = iW3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iW3] = 0.0;
-						}
-						else {
-							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iN3 > -1) {
-					if (bN3) {
-						integer inumber = iN3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iN3] = 0.0;
-						}
-						else {
-							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iS3 > -1) {
-					if (bS3) {
-						integer inumber = iS3 - maxelm;
-
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iS3] = 0.0;
-						}
-						else {
-							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
-						}
-
-						// Тангенциальные компоненты.
-						// до 10.02.2017 был косяк
-						potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iT3 > -1) {
-					if (bT3) {
-						integer inumber = iT3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iT3] = 0.0;
-						}
-						else {
-							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
-						}
-
-						// Тангенциальные компоненты.						
-						potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
-					}
-				}
-
-				if (iB3 > -1) {
-					if (bB3) {
-						integer inumber = iB3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iB3] = 0.0;
-						}
-						else {
-							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
-					}
-				}
-
-				if (iE4 > -1) {
-					if (bE4) {
-						integer inumber = iE4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iE4] = 0.0;
-						}
-						else {
-							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
-						}
-
-						// Тангенциальные компоненты.
-						potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iW4 > -1) {
-					if (bW4) {
-						integer inumber = iW4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iW4] = 0.0;
-						}
-						else {
-							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iN4 > -1) {
-					if (bN4) {
-						integer inumber = iN4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iN4] = 0.0;
-						}
-						else {
-							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iS4 > -1) {
-					if (bS4) {
-						integer inumber = iS4 - maxelm;
-
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iS4] = 0.0;
-						}
-						else {
-							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
-						}
-
-						// Тангенциальные компоненты.
-						// до 10.02.2017 был косяк
-						potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
-					}
-				}
-
-				if (iT4 > -1) {
-					if (bT4) {
-						integer inumber = iT4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iT4] = 0.0;
-						}
-						else {
-							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
-						}
-
-						// Тангенциальные компоненты.						
-						potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
-					}
-				}
-
-				if (iB4 > -1) {
-					if (bB4) {
-						integer inumber = iB4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iB4] = 0.0;
-						}
-						else {
-							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
-						}
-
-						// Тангенциальные компоненты.					
-						potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
-					}
-				}
-
 
 			}
 			else {
@@ -13360,391 +13822,394 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					}
 				}
 
-				if (iE2 > -1) {
-					if (bE2) {
-						integer inumber = iE2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
-						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
-						}
-						else {
-							potent[GRADXPAM][iE2] = 0.0;
-						}
+				if (b_on_adaptive_local_refinement_mesh) {
 
-						//potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+					if (iE2 > -1) {
+						if (bE2) {
+							integer inumber = iE2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+							}
+							else {
+								potent[GRADXPAM][iE2] = 0.0;
+							}
 
-						potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
+							//potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+
+							potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iW2 > -1) {
-					if (bW2) {
-						integer inumber = iW2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
-						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADXPAM][iW2] = 0.0;
-						}
+					if (iW2 > -1) {
+						if (bW2) {
+							integer inumber = iW2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADXPAM][iW2] = 0.0;
+							}
 
-						//potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+							//potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
 
-						potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
+							potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iN2 > -1) {
-					if (bN2) {
+					if (iN2 > -1) {
+						if (bN2) {
 
-						integer inumber = iN2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+							integer inumber = iN2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADYPAM][iN2] = 0.0;
+							}
+
+							//potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
+
+							potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADYPAM][iN2] = 0.0;
-						}
-
-						//potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
-
-						potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
 					}
-				}
 
-				if (iS2 > -1) {
-					if (bS2) {
+					if (iS2 > -1) {
+						if (bS2) {
 
-						integer inumber = iS2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+							integer inumber = iS2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADYPAM][iS2] = 0.0;
+							}
+
+							//potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+
+							potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADYPAM][iS2] = 0.0;
-						}
-
-						//potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
-
-						potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
 					}
-				}
 
-				if (iT2 > -1) {
-					if (bT2) {
+					if (iT2 > -1) {
+						if (bT2) {
 
-						integer inumber = iT2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+							integer inumber = iT2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADZPAM][iT2] = 0.0;
+							}
+
+							//potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+
+							potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADZPAM][iT2] = 0.0;
-						}
-
-						//potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
-
-						potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
 					}
-				}
 
-				if (iB2 > -1) {
-					if (bB2) {
+					if (iB2 > -1) {
+						if (bB2) {
 
-						integer inumber = iB2 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+							integer inumber = iB2 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADZPAM][iB2] = 0.0;
+							}
+
+							//potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+
+							potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADZPAM][iB2] = 0.0;
-						}
-
-						//potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
-
-						potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
 					}
-				}
 
 
-				if (iE3 > -1) {
-					if (bE3) {
-						integer inumber = iE3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+					if (iE3 > -1) {
+						if (bE3) {
+							integer inumber = iE3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+							}
+							else {
+								potent[GRADXPAM][iE3] = 0.0;
+							}
+
+							//potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+
+							potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
-						}
-						else {
-							potent[GRADXPAM][iE3] = 0.0;
-						}
-
-						//potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
-
-						potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
 					}
-				}
 
-				if (iW3 > -1) {
-					if (bW3) {
-						integer inumber = iW3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
-						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADXPAM][iW3] = 0.0;
-						}
+					if (iW3 > -1) {
+						if (bW3) {
+							integer inumber = iW3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADXPAM][iW3] = 0.0;
+							}
 
-						//potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+							//potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
 
-						potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
+							potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iN3 > -1) {
-					if (bN3) {
+					if (iN3 > -1) {
+						if (bN3) {
 
-						integer inumber = iN3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+							integer inumber = iN3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADYPAM][iN3] = 0.0;
+							}
+
+							//potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+
+							potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADYPAM][iN3] = 0.0;
-						}
-
-						//potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
-
-						potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
 					}
-				}
 
-				if (iS3 > -1) {
-					if (bS3) {
+					if (iS3 > -1) {
+						if (bS3) {
 
-						integer inumber = iS3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+							integer inumber = iS3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADYPAM][iS3] = 0.0;
+							}
+
+							//potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+
+							potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADYPAM][iS3] = 0.0;
-						}
-
-						//potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
-
-						potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
 					}
-				}
 
-				if (iT3 > -1) {
-					if (bT3) {
+					if (iT3 > -1) {
+						if (bT3) {
 
-						integer inumber = iT3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+							integer inumber = iT3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADZPAM][iT3] = 0.0;
+							}
+
+							//potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+
+							potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADZPAM][iT3] = 0.0;
-						}
-
-						//potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
-
-						potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
 					}
-				}
 
-				if (iB3 > -1) {
-					if (bB3) {
+					if (iB3 > -1) {
+						if (bB3) {
 
-						integer inumber = iB3 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+							integer inumber = iB3 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADZPAM][iB3] = 0.0;
+							}
+
+							//potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+
+							potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADZPAM][iB3] = 0.0;
-						}
-
-						//potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
-
-						potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
 					}
-				}
 
-				if (iE4 > -1) {
-					if (bE4) {
-						integer inumber = iE4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
-						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
-						}
-						else {
-							potent[GRADXPAM][iE4] = 0.0;
-						}
+					if (iE4 > -1) {
+						if (bE4) {
+							integer inumber = iE4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+							}
+							else {
+								potent[GRADXPAM][iE4] = 0.0;
+							}
 
-						//potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+							//potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
 
-						potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
+							potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iW4 > -1) {
-					if (bW4) {
-						integer inumber = iW4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
-						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADXPAM][iW4] = 0.0;
-						}
+					if (iW4 > -1) {
+						if (bW4) {
+							integer inumber = iW4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADXPAM][iW4] = 0.0;
+							}
 
-						//potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+							//potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
 
-						potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
-						potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
+							potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
+							potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
+						}
 					}
-				}
 
-				if (iN4 > -1) {
-					if (bN4) {
+					if (iN4 > -1) {
+						if (bN4) {
 
-						integer inumber = iN4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+							integer inumber = iN4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADYPAM][iN4] = 0.0;
+							}
+
+							//potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+
+							potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADYPAM][iN4] = 0.0;
-						}
-
-						//potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
-
-						potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
 					}
-				}
 
-				if (iS4 > -1) {
-					if (bS4) {
+					if (iS4 > -1) {
+						if (bS4) {
 
-						integer inumber = iS4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+							integer inumber = iS4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADYPAM][iS4] = 0.0;
+							}
+
+							//potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+
+							potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
+							potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADYPAM][iS4] = 0.0;
-						}
-
-						//potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
-
-						potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
-						potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
 					}
-				}
 
-				if (iT4 > -1) {
-					if (bT4) {
+					if (iT4 > -1) {
+						if (bT4) {
 
-						integer inumber = iT4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+							integer inumber = iT4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADZPAM][iT4] = 0.0;
+							}
+
+							//potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+
+							potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADZPAM][iT4] = 0.0;
-						}
-
-						//potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
-
-						potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
 					}
-				}
 
-				if (iB4 > -1) {
-					if (bB4) {
+					if (iB4 > -1) {
+						if (bB4) {
 
-						integer inumber = iB4 - maxelm;
-						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
-							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+							integer inumber = iB4 - maxelm;
+							if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
+								potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+							}
+							else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
+								potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+							}
+							else {
+								// производная от давления по нормали равна нулю, таковы граничные условия.
+								potent[GRADZPAM][iB4] = 0.0;
+							}
+
+							//potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+
+							potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
+							potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
 						}
-						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
-							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
-						}
-						else {
-							// производная от давления по нормали равна нулю, таковы граничные условия.
-							potent[GRADZPAM][iB4] = 0.0;
-						}
-
-						//potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
-
-						potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
-						potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
 					}
 				}
 
@@ -13909,8 +14374,8 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 // 13 апреля 2015 года.
 // вычисление градиентов Температуры с помощью теоремы Грина-Гаусса. 
-void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+void green_gaussTemperature(integer iP, doublereal* &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
 					BOUND* &border_neighbor, doublereal* &Tx, doublereal* &Ty, doublereal* &Tz,
 	integer *ilevel_alice) {
 
@@ -13925,21 +14390,23 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP]; 
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
-
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
-
+	if (b_on_adaptive_local_refinement_mesh) {
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+		
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+		
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
 	bool bE=false, bN=false, bT=false, bW=false, bS=false, bB=false;
@@ -14368,18 +14835,18 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 	if (iW2 > -1) {
 		dSqw2 = dy * dz;
 
-		if (bW) {
+		if (bW2) {
 			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW2 - maxelm].dS;
 		}
 		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+			if (ilevel_alice[iP] >= ilevel_alice[iW2]) {
 				dSqw2 = dy * dz;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
 			}
@@ -14796,7 +15263,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 	}
 
 	// 28.04.2019
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -14811,7 +15278,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -14826,7 +15293,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -15223,7 +15690,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 // Минимаксное сглаживание градиента поправки давления.
 // по моему это весьма неудачная идея.
-void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, integer maxbound) {
+void green_gaussPAMminmax(doublereal** &potent, int*** &neighbors_for_the_internal_node, integer maxelm, integer maxbound) {
 	
 
 	doublereal** minmaxlimitergrad=new doublereal*[3];
@@ -15235,7 +15702,7 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &neighbors_for
 	   // iP - номер внутреннего контрольного объёма
 	   // iP изменяется от 0 до maxelm-1.
 	   integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	   iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	   iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP]; iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 	   // минимаксное ограничение против появления ложных максимумов.
 	   minmaxlimitergrad[VELOCITY_X_COMPONENT][iP]=fmax(fmin(fmax(potent[GRADXPAM][iE],potent[GRADXPAM][iW]),potent[GRADXPAM][iP]),fmin(potent[GRADXPAM][iE],potent[GRADXPAM][iW]));
@@ -15248,7 +15715,7 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &neighbors_for
 		// iP - номер внутреннего контрольного объёма
 	    // iP изменяется от 0 до maxelm-1.
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[E_SIDE][0][iP]; iN=neighbors_for_the_internal_node[N_SIDE][0][iP]; iT=neighbors_for_the_internal_node[T_SIDE][0][iP]; iW=neighbors_for_the_internal_node[W_SIDE][0][iP]; iS=neighbors_for_the_internal_node[S_SIDE][0][iP]; iB=neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 		// Если с одной из сторон стоит граница расчётной области
 	    // то соответствующая переменная равна true
@@ -15324,10 +15791,10 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &neighbors_for
 
 // вычисление градиентов давления с помощью теоремы Грина-Гаусса. 
 // begin 21 июня 2012 года.
-void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+void green_gaussPRESS(integer iP, doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
 					BOUND* &border_neighbor, integer ls, integer lw, WALL* &w, bool bLRfree,
-	integer *ilevel_alice, integer* ptr) {
+	integer *ilevel_alice, int* ptr, TOCHKA* & volume_loc) {
 
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты давления для внутренних КО.
@@ -15338,20 +15805,24 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	if (b_on_adaptive_local_refinement_mesh) {
 
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -15393,10 +15864,15 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
-	volume3D(iP, nvtx, pa, dx, dy, dz);
-	dx = fabs(dx);
-	dy = fabs(dy);
-	dz = fabs(dz);
+	//volume3D(iP, nvtx, pa, dx, dy, dz);
+	//dx = fabs(dx);
+	//dy = fabs(dy);
+	//dz = fabs(dz);
+
+	TOCHKA point_loc = volume_loc[iP];
+	dx = point_loc.x;
+	dy = point_loc.y;
+	dz = point_loc.z;
 
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
     // т.к. известна нумерация вершин куба, то здесь она используется
@@ -15614,7 +16090,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe = dy_loc * dz_loc;
 			}
@@ -15640,7 +16121,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw = dy_loc * dz_loc;
 			}
@@ -15665,7 +16151,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn = dx_loc * dz_loc;
 			}
@@ -15690,7 +16181,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs = dx_loc * dz_loc;
 			}
@@ -15715,7 +16211,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqt = dx_loc * dy_loc;
 			}
@@ -15740,7 +16241,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb = dx_loc * dy_loc;
 			}
@@ -15750,8 +16256,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	}
 
 	doublereal dSqe2 = 0.0, dSqw2 = 0.0, dSqn2 = 0.0, dSqs2 = 0.0, dSqt2 = 0.0, dSqb2 = 0.0; // площадь грани.
+	doublereal dSqe3 = 0.0, dSqw3 = 0.0, dSqn3 = 0.0, dSqs3 = 0.0, dSqt3 = 0.0, dSqb3 = 0.0; // площадь грани.
+	doublereal dSqe4 = 0.0, dSqw4 = 0.0, dSqn4 = 0.0, dSqs4 = 0.0, dSqt4 = 0.0, dSqb4 = 0.0; // площадь грани.
 
-
+	if (b_on_adaptive_local_refinement_mesh) {
 
 	if (iE2 > -1) {
 
@@ -15768,7 +16276,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe2 = dy_loc * dz_loc;
 			}
@@ -15781,18 +16294,23 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	if (iW2 > -1) {
 		dSqw2 = dy * dz;
 
-		if (bW) {
+		if (bW2) {
 			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW2 - maxelm].dS;
 		}
 		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
 				dSqw2 = dy * dz;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw2 = dy_loc * dz_loc;
 			}
@@ -15817,7 +16335,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn2 = dx_loc * dz_loc;
 			}
@@ -15842,7 +16365,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs2 = dx_loc * dz_loc;
 			}
@@ -15867,7 +16395,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqt2 = dx_loc * dy_loc;
 			}
@@ -15892,7 +16425,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB2];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb2 = dx_loc * dy_loc;
 			}
@@ -15902,9 +16440,9 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	}
 
 
-	doublereal dSqe3 = 0.0, dSqw3 = 0.0, dSqn3 = 0.0, dSqs3 = 0.0, dSqt3 = 0.0, dSqb3 = 0.0; // площадь грани.
+	
 
-
+	
 
 	if (iE3 > -1) {
 
@@ -15921,7 +16459,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iE3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqe3 = dy_loc * dz_loc;
 			}
@@ -15946,7 +16489,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iW3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqw3 = dy_loc * dz_loc;
 			}
@@ -15971,7 +16519,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iN3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqn3 = dx_loc * dz_loc;
 			}
@@ -15996,7 +16549,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iS3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqs3 = dx_loc * dz_loc;
 			}
@@ -16021,7 +16579,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iT3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqt3 = dx_loc * dy_loc;
 			}
@@ -16046,7 +16609,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				//volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				point_loc = volume_loc[iB3];
+				dx_loc = point_loc.x;
+				dy_loc = point_loc.y;
+				dz_loc = point_loc.z;
 
 				dSqb3 = dx_loc * dy_loc;
 			}
@@ -16055,162 +16623,192 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 	}
 
-	doublereal dSqe4 = 0.0, dSqw4 = 0.0, dSqn4 = 0.0, dSqs4 = 0.0, dSqt4 = 0.0, dSqb4 = 0.0; // площадь грани.
-
-
-
-	if (iE4 > -1) {
-
-		dSqe4 = dy * dz;
-
-		if (bE4) {
-			// граничный узел.
-			dSqe4 = border_neighbor[iE4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
-				dSqe4 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqe4 = dy_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iW4 > -1) {
-
-		dSqw4 = dy * dz;
-
-		if (bW4) {
-			// граничный узел.
-			dSqw4 = border_neighbor[iW4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
-				dSqw4 = dy * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqw4 = dy_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iN4 > -1) {
-
-		dSqn4 = dx * dz;
-
-		if (bN4) {
-			// граничный узел.
-			dSqn4 = border_neighbor[iN4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
-				dSqn4 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqn4 = dx_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iS4 > -1) {
-
-		dSqs4 = dx * dz;
-
-		if (bS4) {
-			// граничный узел.
-			dSqs4 = border_neighbor[iS4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
-				dSqs4 = dx * dz;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqs4 = dx_loc * dz_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iT4 > -1) {
-
-		dSqt4 = dx * dy;
-
-		if (bT4) {
-			// граничный узел.
-			dSqt4 = border_neighbor[iT4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
-				dSqt4 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqt4 = dx_loc * dy_loc;
-			}
-		}
-
-
-	}
-
-
-	if (iB4 > -1) {
-
-		dSqb4 = dx * dy;
-
-		if (bB4) {
-			// граничный узел.
-			dSqb4 = border_neighbor[iB4 - maxelm].dS;
-		}
-		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
-				dSqb4 = dx * dy;
-			}
-			else {
-				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
-				dSqb4 = dx_loc * dy_loc;
-			}
-		}
-
-
-	}
+	
 
 	
+
+		if (iE4 > -1) {
+
+			dSqe4 = dy * dz;
+
+			if (bE4) {
+				// граничный узел.
+				dSqe4 = border_neighbor[iE4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
+					dSqe4 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iE4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqe4 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iW4 > -1) {
+
+			dSqw4 = dy * dz;
+
+			if (bW4) {
+				// граничный узел.
+				dSqw4 = border_neighbor[iW4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
+					dSqw4 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iW4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqw4 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN4 > -1) {
+
+			dSqn4 = dx * dz;
+
+			if (bN4) {
+				// граничный узел.
+				dSqn4 = border_neighbor[iN4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
+					dSqn4 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iN4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqn4 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS4 > -1) {
+
+			dSqs4 = dx * dz;
+
+			if (bS4) {
+				// граничный узел.
+				dSqs4 = border_neighbor[iS4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
+					dSqs4 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iS4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqs4 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT4 > -1) {
+
+			dSqt4 = dx * dy;
+
+			if (bT4) {
+				// граничный узел.
+				dSqt4 = border_neighbor[iT4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
+					dSqt4 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iT4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqt4 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB4 > -1) {
+
+			dSqb4 = dx * dy;
+
+			if (bB4) {
+				// граничный узел.
+				dSqb4 = border_neighbor[iB4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
+					dSqb4 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
+					//volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					point_loc = volume_loc[iB4];
+					dx_loc = point_loc.x;
+					dy_loc = point_loc.y;
+					dz_loc = point_loc.z;
+
+					dSqb4 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+	}
+	
 	// 28.04.2019
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -16225,7 +16823,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -16240,7 +16838,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
@@ -17664,8 +18262,8 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 // и на границах с помощью квадратичной интерполяции.
 // Поскольку интерполяция квадратичная то точность данной формулы O(h^2).
 // данная функция реализована 15 мая 2012 года.
-void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond) {
+void green_gaussO2(integer iP, doublereal** &potent, int** &nvtx, TOCHKA* &pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond) {
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты скоростей для внутренних КО.
 	// если bbond   то будут вычислены значения в граничных КО, иначе только во внутренних.
@@ -17675,7 +18273,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP]; iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -17793,19 +18391,19 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iW, nvtx, pa, pb,W_SIDE);
-			center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb,WW_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[W_SIDE][0][iW], nvtx, pa, pbb,WW_SIDE);
 					
-			potent[GRADXVX][iE] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADXVX][iW], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVX][iE] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADYVX][iW], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVX][iE] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADZVX][iW], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVX][iE] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADXVX][iW], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVX][iE] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADYVX][iW], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVX][iE] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADZVX][iW], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 
-			potent[GRADXVY][iE] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADXVY][iW], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVY][iE] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADYVY][iW], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVY][iE] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADZVY][iW], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVY][iE] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADXVY][iW], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVY][iE] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADYVY][iW], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVY][iE] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADZVY][iW], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 
-			potent[GRADXVZ][iE] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADXVZ][iW], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVZ][iE] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADYVZ][iW], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVZ][iE] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADZVZ][iW], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVZ][iE] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADXVZ][iW], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVZ][iE] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADYVZ][iW], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVZ][iE] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[W_SIDE][0][iW]], potent[GRADZVZ][iW], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 		}
 
 		if (bW) {
@@ -17815,19 +18413,19 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			TOCHKA pp, pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iE, nvtx, pa, pb,E_SIDE);
-			center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb,EE_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[E_SIDE][0][iE], nvtx, pa, pbb,EE_SIDE);
 
-			potent[GRADXVX][iW] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADXVX][iE], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVX][iW] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADYVX][iE], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVX][iW] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADZVX][iE], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVX][iW] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADXVX][iE], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVX][iW] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADYVX][iE], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVX][iW] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADZVX][iE], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 
-			potent[GRADXVY][iW] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADXVY][iE], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVY][iW] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADYVY][iE], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVY][iW] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADZVY][iE], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVY][iW] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADXVY][iE], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVY][iW] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADYVY][iE], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVY][iW] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADZVY][iE], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 
-			potent[GRADXVZ][iW] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADXVZ][iE], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVZ][iW] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADYVZ][iE], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVZ][iW] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADZVZ][iE], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVZ][iW] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADXVZ][iE], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVZ][iW] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADYVZ][iE], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVZ][iW] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[E_SIDE][0][iE]], potent[GRADZVZ][iE], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 		}
 
 		if (bN) {
@@ -17837,19 +18435,19 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iS, nvtx, pa, pb,S_SIDE);
-			center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb,SS_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[S_SIDE][0][iS], nvtx, pa, pbb,SS_SIDE);
 
-			potent[GRADXVX][iN] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADXVX][iS], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVX][iN] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADYVX][iS], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVX][iN] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADZVX][iS], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVX][iN] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADXVX][iS], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVX][iN] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADYVX][iS], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVX][iN] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADZVX][iS], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 
-			potent[GRADXVY][iN] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADXVY][iS], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVY][iN] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADYVY][iS], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVY][iN] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADZVY][iS], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVY][iN] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADXVY][iS], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVY][iN] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADYVY][iS], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVY][iN] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADZVY][iS], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 
-			potent[GRADXVZ][iN] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADXVZ][iS], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVZ][iN] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADYVZ][iS], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVZ][iN] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADZVZ][iS], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVZ][iN] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADXVZ][iS], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVZ][iN] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADYVZ][iS], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVZ][iN] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[S_SIDE][0][iS]], potent[GRADZVZ][iS], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 		}
 
 		if (bS) {
@@ -17859,19 +18457,19 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp, 100);
 		    center_cord3D(iN, nvtx, pa, pb, N_SIDE);
-			center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[N_SIDE][0][iN], nvtx, pa, pbb, NN_SIDE);
 
-			potent[GRADXVX][iS] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADXVX][iN], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVX][iS] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADYVX][iN], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVX][iS] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADZVX][iN], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVX][iS] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADXVX][iN], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVX][iS] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADYVX][iN], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVX][iS] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADZVX][iN], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 
-			potent[GRADXVY][iS] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADXVY][iN], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVY][iS] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADYVY][iN], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVY][iS] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADZVY][iN], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVY][iS] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADXVY][iN], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVY][iS] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADYVY][iN], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVY][iS] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADZVY][iN], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 
-			potent[GRADXVZ][iS] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADXVZ][iN], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVZ][iS] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADYVZ][iN], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVZ][iS] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADZVZ][iN], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVZ][iS] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADXVZ][iN], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVZ][iS] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADYVZ][iN], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVZ][iS] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[N_SIDE][0][iN]], potent[GRADZVZ][iN], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 		}
 
 		if (bT) {
@@ -17881,19 +18479,19 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iB, nvtx, pa, pb,B_SIDE);
-			center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb,BB_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[B_SIDE][0][iB], nvtx, pa, pbb,BB_SIDE);
 					
-			potent[GRADXVX][iT] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADXVX][iB], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVX][iT] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADYVX][iB], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVX][iT] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADZVX][iB], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVX][iT] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADXVX][iB], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVX][iT] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADYVX][iB], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVX][iT] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADZVX][iB], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 
-			potent[GRADXVY][iT] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADXVY][iB], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVY][iT] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADYVY][iB], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVY][iT] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADZVY][iB], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVY][iT] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADXVY][iB], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVY][iT] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADYVY][iB], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVY][iT] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADZVY][iB], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 
-			potent[GRADXVZ][iT] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADXVZ][iB], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVZ][iT] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADYVZ][iB], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVZ][iT] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADZVZ][iB], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVZ][iT] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADXVZ][iB], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVZ][iT] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADYVZ][iB], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVZ][iT] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[B_SIDE][0][iB]], potent[GRADZVZ][iB], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 		}
 
 		if (bB) {
@@ -17903,28 +18501,28 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iT, nvtx, pa, pb,T_SIDE);
-			center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[T_SIDE][0][iT], nvtx, pa, pbb, TT_SIDE);
 
 
-			potent[GRADXVX][iB] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADXVX][iT], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVX][iB] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADYVX][iT], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVX][iB] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADZVX][iT], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVX][iB] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADXVX][iT], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVX][iB] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADYVX][iT], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVX][iB] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADZVX][iT], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 
-			potent[GRADXVY][iB] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADXVY][iT], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVY][iB] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADYVY][iT], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVY][iB] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADZVY][iT], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVY][iB] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADXVY][iT], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVY][iB] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADYVY][iT], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVY][iB] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADZVY][iT], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 
-			potent[GRADXVZ][iB] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADXVZ][iT], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVZ][iB] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADYVZ][iT], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVZ][iB] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADZVZ][iT], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVZ][iB] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADXVZ][iT], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVZ][iB] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADYVZ][iT], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVZ][iB] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[T_SIDE][0][iT]], potent[GRADZVZ][iT], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 		}
 	}
 
 } // green_gaussO2
 
 // нахождение производных от скорости первого или второго порядка точности.
-void green_gauss(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* pa,
-	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond, FLOW &f,
+void green_gauss(integer iP, doublereal** &potent, int** &nvtx, TOCHKA* pa,
+	int*** &neighbors_for_the_internal_node, integer maxelm, bool bbond, FLOW &f,
 	BOUND* &border_neighbor, integer *ilevel_alice) {
 
 	// если bsecondorder==true то производные будут вычисляться со вторым порядком точности.
@@ -17936,7 +18534,7 @@ void green_gauss(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* pa,
 	}
 	else {
 		// первый порядок точности.
-		green_gaussO1(iP, potent, nvtx, pa, neighbors_for_the_internal_node, maxelm, bbond, f.mf[iP], f.prop[RHO], f.prop_b[RHO], border_neighbor, ilevel_alice);
+		green_gaussO1(iP, potent, nvtx, pa, neighbors_for_the_internal_node, maxelm, bbond, f.mf[iP], f.prop[RHO], f.prop_b[RHO], border_neighbor, ilevel_alice, f.volume);
 	}
 
 } // green_gauss
@@ -17950,8 +18548,8 @@ void green_gauss(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* pa,
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_Stress(integer iP,
-	doublereal**& potent, integer**& nvtx, TOCHKA*& pa,
-	ALICE_PARTITION**& neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	doublereal**& potent, int**& nvtx, TOCHKA*& pa,
+	int***& neighbors_for_the_internal_node, integer maxelm, bool bbond,
 	BOUND*& border_neighbor, integer* ilevel_alice, integer iDATA, integer iTARGET, LINE_DIRECTIONAL iDIRECTIONAL)
 {
 
@@ -17971,20 +18569,24 @@ void green_gauss_Stress(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	if (b_on_adaptive_local_refinement_mesh) {
 
-	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+
+		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+		iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+
+		iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+	}
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -18415,18 +19017,18 @@ void green_gauss_Stress(integer iP,
 	if (iW2 > -1) {
 		dSqw2 = dy * dz;
 
-		if (bW) {
+		if (bW2) {
 			// граничный узел.
-			dSqw2 = border_neighbor[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW2 - maxelm].dS;
 		}
 		else {
-			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+			if (ilevel_alice[iP] >= ilevel_alice[iW2]) {
 				dSqw2 = dy * dz;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
-				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
 			}
@@ -18843,7 +19445,7 @@ void green_gauss_Stress(integer iP,
 	}
 
 	// 28.04.2019	
-	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
@@ -18858,7 +19460,7 @@ void green_gauss_Stress(integer iP,
 		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
 	}
 
-	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
@@ -18873,7 +19475,7 @@ void green_gauss_Stress(integer iP,
 		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
 	}
 
-	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-36) {
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);

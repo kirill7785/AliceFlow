@@ -642,8 +642,10 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 
 		calculation_main_start_time = clock(); // момент начала счёта.
 
-		printf("apply ilu%lld smoother for number ", my_amg_manager.lfil);
-		printf("%2lld level %3d ", ilevel, (int)(n/(maxelm_plus_maxbound)));
+		if (!(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)) {
+			printf("apply ilu%lld smoother for number ", my_amg_manager.lfil);
+			printf("%2lld level %3d ", ilevel, (int)(n / (maxelm_plus_maxbound)));
+		}
 
 		// Важно выделить память с запасом, т.к. одна и таже память используется 
 		// и для компонент скорости и для поправки давления.
@@ -1048,7 +1050,9 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 		}
 
 		calculation_main_end_time = clock(); // момент окончания счёта.
-		printf("%6d \n", calculation_main_end_time - calculation_main_start_time);
+		if (!(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)) {
+			printf("%6d \n", calculation_main_end_time - calculation_main_start_time);
+		}
     }
 
 } // equation3DtoCRSRUMBA1_amg1r5
@@ -7577,6 +7581,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 			residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 			R0_0 = norma(residual_fine[0], n_a[0]);
 			Rprev_0 = R0_0;
+			
 
 			// smother
 			integer iter = 0;

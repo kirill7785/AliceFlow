@@ -305,7 +305,23 @@ void report_temperature(integer flow_interior,
 					fprintf(fp, "object_name temperature, °C   power, W\n");
 				}
 				for (integer i = 0; i < lb; i++) {
-					doublereal Vol = fabs((b[i].g.xE - b[i].g.xS)*(b[i].g.yE - b[i].g.yS)*(b[i].g.zE - b[i].g.zS));
+					doublereal Vol = 0.0;
+					if (b[i].g.itypegeom == PRISM) {
+						// Объем прямой прямоугольной призмы.
+						Vol = fabs((b[i].g.xE - b[i].g.xS)*(b[i].g.yE - b[i].g.yS)*(b[i].g.zE - b[i].g.zS));
+					}
+					if (b[i].g.itypegeom == POLYGON) {
+						// Объём полигона
+						Vol= Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+					}
+					if (b[i].g.itypegeom == CYLINDER) {
+						// Объём цилиндра.
+						Vol = 3.1415926535*fabs(b[i].g.Hcyl)*(b[i].g.R_out_cyl*b[i].g.R_out_cyl - b[i].g.R_in_cyl*b[i].g.R_in_cyl);
+					}
+					if (b[i].g.itypegeom == CAD_STL) {
+						// Объём CAD_STL геометрии
+						Vol = b[i].g.volume_CAD_STL();
+					}
 					if (i == 0) {
 						// cabinet (кабинет).
 						if (tmaxreportblock[0] < -1.0e26) {
@@ -1812,13 +1828,15 @@ void piecewise_const_timestep_law(doublereal &EndTime, integer &iN, doublereal* 
 // Термоциклирование для SquareWave2 цикла 24.07.2016
 // tau1 может быть сделано равным нулю. В этом случае
 // multiplyer==m1 игнорируется. 11.01.2020 
-void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &timestep_sequence, doublereal* &poweron_multiplier_sequence)
+void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &timestep_sequence,
+	doublereal* &poweron_multiplier_sequence, doublereal* &poweron_multiplier_sequence0, doublereal* &poweron_multiplier_sequence1)
 {
 	if (EndTime > 0.0) {
 		doublereal time = 0.0;
 		integer ig = 1;
 		integer i = 0, j = 0;
 		bool bost = false;
+		doublereal t_otsechka = glTSL.n_cycle*(2 * glTSL.tau1 + glTSL.tau2) + (glTSL.n_cycle - 1)*glTSL.tau_pause;
 		doublereal t_pause_gl = glTSL.T_all - glTSL.n_cycle*(2*glTSL.tau1+glTSL.tau2+glTSL.tau_pause);
 		if (t_pause_gl <= 0.0) {
 			printf("error in parameters Square Wave 2 time step law.\n");
@@ -1897,6 +1915,9 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 		iN = i; // примерно на один шаг вышли за границы EndTime.
 		timestep_sequence = new doublereal[iN];
 		poweron_multiplier_sequence = new doublereal[iN];
+		poweron_multiplier_sequence0 = new doublereal[iN];
+		poweron_multiplier_sequence1 = new doublereal[iN];
+
 		time = 0.0;
 		ig = 1;
 		i = 0;
@@ -1912,22 +1933,30 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 						time += glTSL.tau1 / 10.0;
 						timestep_sequence[i - 1] = glTSL.tau1 / 10.0;
 						poweron_multiplier_sequence[i - 1] = glTSL.m1; // мощность включена частично.
+						poweron_multiplier_sequence0[i - 1] = 1.0;
+						poweron_multiplier_sequence1[i - 1] = 1.0;
 					}
 					else if (/*(kmod >= 10) && */(kmod <= 19)) {
 						time += glTSL.tau2 / 10.0;
 						timestep_sequence[i - 1] = glTSL.tau2 / 10.0;
 						poweron_multiplier_sequence[i - 1] = 1.0; // мощность включена на полную. 
+						poweron_multiplier_sequence0[i - 1] = 1.0;
+						poweron_multiplier_sequence1[i - 1] = 1.0;
 					}
 					else if (/*(kmod >= 20) &&*/ (kmod <= 29)) {
 						time += glTSL.tau1 / 10.0;
 						timestep_sequence[i - 1] = glTSL.tau1 / 10.0;
 						poweron_multiplier_sequence[i - 1] = glTSL.m1; // мощность включена частично.
+						poweron_multiplier_sequence0[i - 1] = 1.0;
+						poweron_multiplier_sequence1[i - 1] = 1.0;
 					}
 					else //if ((kmod >= 30) && (kmod <= 39)) {
 					{
 						time += glTSL.tau_pause / 10.0;
 						timestep_sequence[i - 1] = glTSL.tau_pause / 10.0;
-						poweron_multiplier_sequence[i - 1] = 0.0; // мощность выключена.
+						poweron_multiplier_sequence[i - 1] = glTSL.off_multiplyer;// 0.0; // мощность выключена.
+						poweron_multiplier_sequence0[i - 1] = 0.0;
+						poweron_multiplier_sequence1[i - 1] = 1.0;
 					}
 				}
 				else {
@@ -1938,11 +1967,15 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 						time += glTSL.tau2 / 10.0;
 						timestep_sequence[i - 1] = glTSL.tau2 / 10.0;
 						poweron_multiplier_sequence[i - 1] = 1.0; // мощность включена полностью.
+						poweron_multiplier_sequence0[i - 1] = 1.0;
+						poweron_multiplier_sequence1[i - 1] = 1.0;
 					}
 					else {
 						time += glTSL.tau_pause / 10.0;
 						timestep_sequence[i - 1] = glTSL.tau_pause / 10.0;
-						poweron_multiplier_sequence[i - 1] = 0.0; // мощность выключена.
+						poweron_multiplier_sequence[i - 1] = glTSL.off_multiplyer; //0.0; // мощность выключена.
+						poweron_multiplier_sequence0[i - 1] = 0.0;
+						poweron_multiplier_sequence1[i - 1] = 1.0;
 					}
 				}
 			}
@@ -1963,7 +1996,9 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 				time += t_pause_gl / 30.0;
 				bost = true;
 				timestep_sequence[i - 1] = t_pause_gl / 30.0;
-				poweron_multiplier_sequence[i - 1] = 0.0; // мощность выключена.
+				poweron_multiplier_sequence[i - 1] = glTSL.off_multiplyer; // 0.0; // мощность выключена.
+				poweron_multiplier_sequence0[i - 1] = 0.0;
+				poweron_multiplier_sequence1[i - 1] = 0.0;
 
 			}
 			
@@ -1978,12 +2013,21 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 					 time += glTSL.tau1 / 10.0;
 					 timestep_sequence[i - 1] = glTSL.tau1 / 10.0;
 					 poweron_multiplier_sequence[i - 1] = glTSL.m1; // мощность включена частично.
+					 poweron_multiplier_sequence0[i - 1] = 1.0;
+					 poweron_multiplier_sequence1[i - 1] = 1.0;
 				 }
 				 else {
 					 // tau1 равен нулю. Прямоугольный импульс.
 					 time += glTSL.tau2 / 10.0;
 					 timestep_sequence[i - 1] = glTSL.tau2 / 10.0;
 					 poweron_multiplier_sequence[i - 1] = 1.0; // мощность включена полностью.
+					 poweron_multiplier_sequence0[i - 1] = 1.0;
+					 poweron_multiplier_sequence1[i - 1] = 1.0;
+				 }
+				 for (integer i_7 = 0; i_7 < 40; i_7++) {
+					 // конец суток
+					 // Подрезаем последнее glTSL.tau_pause из 10 шагов.
+					 poweron_multiplier_sequence1[i - 1 - i_7] = 0.0;
 				 }
 			 }			
 		}
@@ -2100,7 +2144,7 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 			printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 			if (ir > il) {
 				// если узел t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
-				integer icP = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+				integer icP = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -2110,7 +2154,7 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 			}
 			else if (ir < il) {
 				// если узел t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
-				integer icP = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+				integer icP = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -2216,7 +2260,7 @@ void calculate_color_for_temperature_old(integer* &color, TEMPER t) {
 			printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 			if (ir > il) {
 				// если узел t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
-				integer icP = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+				integer icP = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -2226,7 +2270,7 @@ void calculate_color_for_temperature_old(integer* &color, TEMPER t) {
 			}
 			else if (ir < il) {
 				// если узел t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
-				integer icP = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+				integer icP = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -2395,7 +2439,13 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	integer iN=0; // количество шагов по времени
 	doublereal* timestep_sequence=nullptr; // последовательность шагов по времени.
 	// информация о подаче мощности на каждом временном шаге
-	doublereal* poweron_multiplier_sequence=nullptr; // (множитель который вызывает отличие от постоянной).
+	doublereal* poweron_multiplier_sequence=nullptr; // (множитель который вызывает отличие от постоянной тепловой мощности).
+	// Используется только в законе square vawe1 а также в законе square vawe2. В рамках закона square vawe 2 задает закок square vawe1 что используется например для источника тепла от Солнца.
+	doublereal* poweron_multiplier_sequence0 = nullptr;
+	// Если блок имеет закон hot_cold а мы использует закон square vawe2 то у блока у которого стоит hot cold режим
+	// тепловая мощность выключается к концу шестого включения за сутки. Данный график зависимости тепловой мощности от времени 
+	// используется для источника от Солнца.
+	doublereal* poweron_multiplier_sequence1 = nullptr; // (множитель который вызывает отличие от постоянной тепловой мощности).
     doublereal StartTime=0.0, EndTime=globalEndTimeUnsteadyTemperatureCalculation; // длительность 
 	doublereal TimeStepIncrement=1.0e-7; // начальный шаг по времени 1мкс. (используется в постоянном шаге по времени.)
 	doublereal Initial_Time_Step=1e-7; // т.к. греется по экспоненте.
@@ -2424,12 +2474,12 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	// Термоциклирование для режима SQUARE_WAVE.
 	if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE) {
 		Initial_Time_Step = glTSL.tau / 10.0;
-		square_wave_timestep(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
+		square_wave_timestep(EndTime, iN, timestep_sequence, poweron_multiplier_sequence0);
 	}
     // Термоциклирование для режима SQUARE_WAVE2.
 	if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2) {
 		Initial_Time_Step = glTSL.tau1 / 10.0;
-		square_wave_timestep_APPARAT(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
+		square_wave_timestep_APPARAT(EndTime, iN, timestep_sequence, poweron_multiplier_sequence, poweron_multiplier_sequence0, poweron_multiplier_sequence1);
 	}
 	// Двойной логарифмический шаг по времени: нагрев-остывание.
 	if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::HOT_COLD) {
@@ -2735,8 +2785,27 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 					tauparamold = timestep_sequence[j - 1];
 				}
 
+				doublereal poweron_multiplier_sequence_loc = 1.0;
+				doublereal poweron_multiplier_sequence_loc0 = 1.0;
+
+				if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE) {
+					poweron_multiplier_sequence_loc = poweron_multiplier_sequence0[j];
+					poweron_multiplier_sequence_loc0 = poweron_multiplier_sequence0[j];
+				}
+				else if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2) {
+					poweron_multiplier_sequence_loc = poweron_multiplier_sequence[j];
+					poweron_multiplier_sequence_loc0 = poweron_multiplier_sequence0[j];
+				}
+				else {
+					poweron_multiplier_sequence_loc = poweron_multiplier_sequence[j];
+					poweron_multiplier_sequence_loc0 = poweron_multiplier_sequence[j];
+				}
+
 				bool btimedep = true; // нестационарный солвер
 				if (bTemperature) {
+
+					
+
 					if (bsecond_T_solver) {
 						
 							solve_Thermal(t, fglobal, matlist,
@@ -2746,7 +2815,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 							// для нестационарного температурного моделирования 10.11.2018
 							btimedep, timestep_sequence[j],
 							toldtimestep, tnewtimestep, maxelm_global_ret,
-							poweron_multiplier_sequence[j], bAVLrealesation, t_for_Mechanical);
+							poweron_multiplier_sequence_loc, poweron_multiplier_sequence_loc0, bAVLrealesation, t_for_Mechanical);
 					}
 					else {
 						integer dist_max = 3;
@@ -2762,7 +2831,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 							btimedep, matlist,
 							j, bprintmessage,
 							gtdps, ltdp,
-							poweron_multiplier_sequence[j],
+							poweron_multiplier_sequence_loc, poweron_multiplier_sequence_loc0,
 							my_memory_bicgstab,
 							nullptr, // скорость с предыдущего временного слоя.
 							nullptr, lu, my_union, color, dist_max); // массовый поток через границу с предыдущего временного слоя.
@@ -2904,7 +2973,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						}
 
 						// Формируем отчёт о температуре каждого объекта из которой состоит модель:
-						report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], operatingtemperature);
+						report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence_loc, operatingtemperature);
 
 					}
 					else {
@@ -2918,7 +2987,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						for (integer i = 0; i < maxelm_global_ret; i++) toldtimestep[i] = tnewtimestep[i]; // copy
 
 						// Формируем отчёт о температуре каждого объекта из которой состоит модель:
-						report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], operatingtemperature);
+						report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence_loc, operatingtemperature);
 
 
 					}
@@ -3036,12 +3105,24 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 				if (bMechanical) {
 					// Вызов солвера Static Structural.
-					solve_Structural(t, w, lw, true, operatingtemperature, b, lb, lu,
-						btimedep, timestep_sequence[j], uoldtimestep, uolddoubletimestep, poweron_multiplier_sequence[j],matlist,
-						t_for_Mechanical);
+					//Сложного поведения с одновременным использованием poweron_multiplier_sequence и poweron_multiplier_sequence0 не предусмотрено.
+					if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE) {
+						solve_Structural(t, w, lw, true, operatingtemperature, b, lb, lu,
+							btimedep, timestep_sequence[j], uoldtimestep, uolddoubletimestep,  poweron_multiplier_sequence0[j], matlist,
+							t_for_Mechanical);
+
+						report_mechanical_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence0[j], operatingtemperature);
+					}
+					else {
+						solve_Structural(t, w, lw, true, operatingtemperature, b, lb, lu,
+							btimedep, timestep_sequence[j], uoldtimestep, uolddoubletimestep,  poweron_multiplier_sequence[j], matlist,
+							t_for_Mechanical);
+
+						report_mechanical_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], operatingtemperature);
+					}
 				
 					
-					report_mechanical_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], operatingtemperature);
+					
 					
 				}
 
@@ -3170,6 +3251,14 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	}
 	if (poweron_multiplier_sequence!=nullptr) {
 		delete[] poweron_multiplier_sequence;
+	}
+
+	if (poweron_multiplier_sequence0 != nullptr) {
+		delete[] poweron_multiplier_sequence0;
+	}
+
+	if (poweron_multiplier_sequence1 != nullptr) {
+		delete[] poweron_multiplier_sequence1;
 	}
 
 	if (bTemperature) {
@@ -3302,6 +3391,27 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 } // unsteady_temperature_calculation
 
 
+// Версия classic_aglomerative_amg6 на основе версии
+// classic_aglomerative_amg4. 
+// Setup и Solution фазы отделены друг от друга.
+// Теперь в classic_aglomerative_amg6 содержится только вызов 
+// setup и solution фаз. См. отдельные функции для подробностей.
+// В версии classic_aglomerative_amg4 разделение Setup и Solution фаз
+// произведено не было.
+bool classic_aglomerative_amg7(Ak2& Amat,
+	integer nsizeA, // количество ячеек выделенное извне для хранилища матриц А	
+	integer nnz, // number of non zero elements
+	integer n, // dimension of vectors x and b.	
+	doublereal*& x, //solution (решение) 
+	doublereal*& b, // rthdsd (правая часть).
+	real_mix_precision& ret74,
+	integer iVar,
+	bool bmemory_savings,
+	BLOCK*& my_body, integer& lb, integer maxelm_out,
+	int*& whot_is_block
+);
+
+
   // 24.06.2020 - начало разработки.
   // Графовый метод решения стационарного уравнения теплопередачи.
   // 27.06.2020 Поддерживается АЛИС.
@@ -3311,6 +3421,36 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 	WALL*& w, integer& lw,
 	SOURCE* &s, integer& ls, TPROP* &matlist)
 {
+
+	//system("PAUSE");
+
+	// Сетка построена добавлять сеточные линии больше не нужно,
+	// допуски ненужны.
+	if (shorter_hash_X != nullptr) {
+		delete[] shorter_hash_X;
+		shorter_hash_X = nullptr;
+	}
+	if (shorter_hash_Y != nullptr) {
+		delete[] shorter_hash_Y;
+		shorter_hash_Y = nullptr;
+	}
+	if (shorter_hash_Z != nullptr) {
+		delete[] shorter_hash_Z;
+		shorter_hash_Z = nullptr;
+	}
+	if (bshorter_hash_X != nullptr) {
+		delete[] bshorter_hash_X;
+		bshorter_hash_X = nullptr;
+	}
+	if (bshorter_hash_Y != nullptr) {
+		delete[] bshorter_hash_Y;
+		bshorter_hash_Y = nullptr;
+	}
+	if (bshorter_hash_Z != nullptr) {
+		delete[] bshorter_hash_Z;
+		bshorter_hash_Z = nullptr;
+	}
+
 
 	bool b_first_start_matrix_print = true;
 
@@ -3417,10 +3557,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 				integer j_1 = number_control_volume_list[i][j_7];
 				if (t.whot_is_block[j_1] == i)
 				{
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3428,10 +3568,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3439,10 +3580,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3450,10 +3592,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3461,10 +3604,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3472,10 +3615,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3483,10 +3627,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3494,10 +3639,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3505,10 +3651,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3516,10 +3662,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3527,10 +3674,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3538,10 +3686,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3549,10 +3698,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3560,10 +3709,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3571,10 +3721,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3582,10 +3733,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3593,10 +3745,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3604,10 +3756,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3615,10 +3768,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3626,10 +3780,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3637,10 +3792,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3648,10 +3803,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3659,10 +3815,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3670,10 +3827,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -3696,9 +3854,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 				integer j_1 = number_control_volume_list[i][j_7];
 				if (t.whot_is_block[j_1] == i) {
 					//стенки 
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[E_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3716,9 +3874,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3736,9 +3895,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3756,9 +3916,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3776,8 +3937,8 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[W_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -3792,8 +3953,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -3808,8 +3970,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -3824,8 +3987,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -3840,9 +4004,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[N_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3859,9 +4023,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3878,9 +4043,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3897,9 +4063,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3916,8 +4083,8 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[S_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -3932,8 +4099,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -3948,8 +4116,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -3964,8 +4133,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr)
+						&& (t.neighbors_for_the_internal_node[S_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -3980,9 +4150,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[T_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -3999,9 +4169,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4018,9 +4189,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4037,9 +4209,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4056,8 +4229,8 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[B_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4072,8 +4245,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] >= t.maxelm)) {
+
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4088,8 +4263,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] >= t.maxelm)) {
+
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4104,8 +4281,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4151,10 +4329,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 				integer j_1 = number_control_volume_list[i][j_7];
 				if (t.whot_is_block[j_1] == i) {
 
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][0] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4164,10 +4343,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4177,10 +4357,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4190,10 +4371,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4203,10 +4385,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4216,10 +4398,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4229,10 +4412,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4242,10 +4426,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4255,10 +4440,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4268,10 +4453,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4281,10 +4467,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4294,10 +4481,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4307,10 +4495,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4320,10 +4508,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4333,10 +4522,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4346,10 +4536,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4359,10 +4550,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4372,10 +4563,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4385,10 +4577,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4398,10 +4591,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4411,10 +4605,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4424,10 +4618,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4437,10 +4632,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4450,10 +4646,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						if (hash[t.whot_is_block[i_1]] == false) {
 							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
@@ -4481,9 +4678,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 				integer j_1 = number_control_volume_list[i][j_7];
 				if (t.whot_is_block[j_1] == i) {
 					//стенки 
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[E_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4504,9 +4701,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] >= t.maxelm)) {
+
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4527,9 +4726,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4550,9 +4750,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4573,8 +4774,8 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[W_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4592,8 +4793,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4611,8 +4813,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4630,8 +4833,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4649,9 +4853,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[N_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4671,9 +4875,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4693,9 +4898,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4715,9 +4921,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4737,8 +4944,8 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[S_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4756,8 +4963,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4775,8 +4983,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4794,8 +5003,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4813,9 +5023,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[T_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4835,9 +5045,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4857,9 +5068,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4879,9 +5091,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -4901,8 +5114,8 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+					if (t.neighbors_for_the_internal_node[B_SIDE][0][j_1] >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4920,8 +5133,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] >= t.maxelm)) {
+
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4939,8 +5154,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4958,8 +5174,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							}
 						}
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] >= t.maxelm)) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
@@ -4996,10 +5213,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 				integer j_1 = number_control_volume_list[i][j_7];
 
 				if (t.whot_is_block[j_1] == i) {
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5015,10 +5232,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5034,10 +5252,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5053,10 +5272,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5072,10 +5292,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5091,10 +5311,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5110,10 +5331,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5129,10 +5351,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5148,10 +5371,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5167,10 +5390,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5186,10 +5410,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5205,10 +5430,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5224,10 +5450,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5243,10 +5469,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5262,10 +5489,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5281,10 +5509,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5300,10 +5529,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5319,10 +5548,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5338,10 +5568,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5357,10 +5588,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5376,10 +5608,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][0][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][0][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5395,10 +5627,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5414,10 +5647,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr) && 
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5433,10 +5667,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
 						}
 					}
-					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
-						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] < t.maxelm))
 					{
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -5455,9 +5690,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 
 					// Стенки.
 
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[E_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5473,9 +5708,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5491,9 +5727,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[E_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5509,9 +5746,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][3] != nullptr) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5527,9 +5765,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[W_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5545,9 +5783,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[W_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5563,9 +5802,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[W_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5581,9 +5821,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[W_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[W_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5599,9 +5840,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[N_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5617,9 +5858,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5635,9 +5877,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5653,9 +5896,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[N_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[N_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5671,9 +5915,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[S_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5693,9 +5937,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[S_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5715,9 +5960,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[S_SIDE][2] != nullptr) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5737,9 +5983,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[S_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[S_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5759,9 +6006,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[T_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5777,9 +6024,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5795,9 +6043,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5813,9 +6062,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[T_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[T_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5831,9 +6081,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
+					if (t.neighbors_for_the_internal_node[B_SIDE][0][j_1] >= t.maxelm) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][0][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5849,9 +6099,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[B_SIDE][1] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][1][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][1][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5867,9 +6118,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[B_SIDE][2] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][2][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][2][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5885,9 +6137,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 					}
-					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
+					if ((t.neighbors_for_the_internal_node[B_SIDE][3] != nullptr)&&
+						(t.neighbors_for_the_internal_node[B_SIDE][3][j_1] >= t.maxelm)) {
 						// граничный узел
-						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][3][j_1];
 						integer inumber = i_1 - t.maxelm;
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
@@ -5916,6 +6169,28 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 
 
 	delete[] icount_internal_nodes;
+
+	float* volume_elm = new float[t.maxelm];
+	for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
+		doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+		volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
+		volume_elm[i_1] = hx * hy * hz;
+	}
+
+	if (!b_on_adaptive_local_refinement_mesh) {
+
+		// Эти данные нужны при расчёте массы модели при завершении расчёта.
+		// Удалять нельзя.
+		/*
+		delete t.pa;
+		t.pa = nullptr;
+		for (integer i_1 = 0; i_1 < 8; i_1++) {
+			delete[] t.nvtx[i_1];
+		}
+		delete[] t.nvtx;
+		t.nvtx = nullptr;
+		*/
+	}
 
 	for (integer i_1 = 0; i_1 < lb; i_1++) {
 		delete[] number_control_volume_list[i_1];
@@ -5947,7 +6222,13 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 	integer iN = 0; // количество шагов по времени
 	doublereal* timestep_sequence = nullptr; // последовательность шагов по времени.
 											 // информация о подаче мощности на каждом временном шаге
-	doublereal* poweron_multiplier_sequence = nullptr; // (множитель который вызывает отличие от постоянной).
+	doublereal* poweron_multiplier_sequence = nullptr; // (множитель который вызывает отличие от постоянной тепловой мощности).
+	// Используется только в законе square vawe1 а также в законе square vawe2. В рамках закона square vawe 2 задает закок square vawe1 что используется например для источника тепла от Солнца.
+	doublereal* poweron_multiplier_sequence0 = nullptr; // (множитель который вызывает отличие от постоянной тепловой мощности).
+	// Если блок имеет закон hot_cold а мы использует закон square vawe2 то у блока у которого стоит hot cold режим
+	// тепловая мощность выключается к концу шестого включения за сутки. Данный график зависимости тепловой мощности от времени 
+	// используется для источника от Солнца.
+	doublereal* poweron_multiplier_sequence1 = nullptr; // (множитель который вызывает отличие от постоянной тепловой мощности).
 	doublereal StartTime = 0.0, EndTime = globalEndTimeUnsteadyTemperatureCalculation; // длительность 
 	doublereal TimeStepIncrement = 1.0e-7; // начальный шаг по времени 1мкс. (используется в постоянном шаге по времени.)
 	doublereal Initial_Time_Step = 1e-7; // т.к. греется по экспоненте.
@@ -5973,12 +6254,12 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 	}
 	if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE) {
 		Initial_Time_Step = glTSL.tau / 10.0;
-		square_wave_timestep(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
+		square_wave_timestep(EndTime, iN, timestep_sequence, poweron_multiplier_sequence0);
 	}
 	// Термоциклирование для АППАРАТ.
 	if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2) {
 		Initial_Time_Step = glTSL.tau1 / 10.0;
-		square_wave_timestep_APPARAT(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
+		square_wave_timestep_APPARAT(EndTime, iN, timestep_sequence, poweron_multiplier_sequence, poweron_multiplier_sequence0, poweron_multiplier_sequence1);
 	}
 	// Двойной логарифмический шаг по времени: нагрев-остывание.
 	if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::HOT_COLD) {
@@ -6212,10 +6493,33 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 
 
-
-						rthdsd[i] = Vol * poweron_multiplier_sequence[j] *
-							get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
-							(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+						if (b[id[i]].ipower_time_depend == POWER_TIME_DEPEND::CONST_POWER) {
+							rthdsd[i] = Vol * 1.0 *
+								get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+								(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+						}
+						else if ((glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2) && (b[id[i]].ipower_time_depend == POWER_TIME_DEPEND::HOT_COLD)) {
+							rthdsd[i] = Vol * poweron_multiplier_sequence1[j] *
+								get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+								(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+						}
+						else if (b[id[i]].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+							doublereal mult = 1.0;
+							if (poweron_multiplier_sequence0 == nullptr) {
+								mult = 1.0;
+							}
+							else {
+								mult = poweron_multiplier_sequence0[j];
+							}
+							rthdsd[i] = Vol * mult *
+								get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+								(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+						}
+						else {
+							rthdsd[i] = Vol * poweron_multiplier_sequence[j] *
+								get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+								(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+						}
 					}
 					else {
 						// стенка.
@@ -6268,6 +6572,15 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 				//printf("Assemble matrix Ok.");
 				//system("PAUSE");
 
+				// Хранит тепловые мощности в вт для каждой ячейки от радиационных потоков.
+				//doublereal *rthdsd_radiation_global = new doublereal[t.maxelm];
+				doublereal *rthdsd_radiation_loc = new doublereal[maxelm+lw];
+				doublereal *rthdsd_radiation_loc_relax = new doublereal[maxelm + lw];
+
+				for (integer i = 0; i < maxelm + lw; i++) {
+					rthdsd_radiation_loc_relax[i] = 0.0;
+				}
+
 				doublereal tmax_old = -1.0e30;
 
 				doublereal* potent_old = new doublereal[maxelm + lw];
@@ -6280,6 +6593,18 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 				// solve SLAU
 				// Seidel method.
 				for ( ; ; ) { // бесконечный цикл.
+
+				 
+
+					// Нулевая тепловая мощность от радиационных потоков.
+//#pragma omp parallel for
+	//				for (integer i = 0; i < t.maxelm; i++) {
+		//				rthdsd_radiation_global[i] = 0.0;
+			//		}
+
+					for (integer i = 0; i < maxelm + lw; i++) {
+						rthdsd_radiation_loc[i] = 0.0;
+					}
 
 					iter++;
 
@@ -6316,6 +6641,63 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						//std::cout << "break bPhysics_stop, dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
 						break;
 					}
+
+					// 06.11.2020
+					if (lb > 10000) {
+						if (/*(fabs(r2) < 1.4e-2) &&*/ (fabs(tmax_old - tmax) < 0.0005)) {
+							//std::cout << "break bPhysics_stop, dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+							break;
+						}
+					}
+
+					// Внимание ! лучше отказаться от break. Но если и делать break то после не менее 16000 итерации на временном слое.
+					// Проверено 03.11.2020.
+					// Ни в коем случае не уменьшать менее 16000. Этот параметр можно только увеличивать.
+					// 02.11.2020
+					//
+					// Ни в коем случае никаких break !!! Они разрушают физику.
+					//
+					//if (lb > 10000) 
+					{
+						// Очень большая расчётная модель.
+						std::cout << fabs(r2) << " r2=" << r2 << " " << fabs(tmax_old - tmax) << "  iter=" << iter << std::endl;
+					}
+					//if (iter % 30 == 0) getchar();
+
+					bool bvacuum_Prism123 = false;
+					for (integer i237 = 1; i237 < lb; i237++) {
+						if (b[i237].radiation.binternalRadiation) {
+							bvacuum_Prism123 = true;
+						}
+					}
+					if (bvacuum_Prism123) {
+						
+						//if (iter > 249) break; // 02.11.2020
+
+						//if ((fabs(r2) < 1.4e-2) && (fabs(tmax_old - tmax) < 0.01))
+						if ( (fabs(tmax_old - tmax) < 0.0005))
+						{
+							//std::cout << "break bPhysics_stop, dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+							break;
+						}
+					}
+					if (0&&(iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7)) {
+
+						// Только в случае РУМБА v.0.14 решателя.
+						// Если включить то на Метеоре получаем неверный график.
+						// Нельзя так рано прекращать итерирование.
+
+						// Даже если с материалом марки rochacell-hf-51 то тоже выход из цикла в случае
+						// если температура на шаге по времени установилась.
+						if ((fabs(tmax_old - tmax) < 0.0005))
+						{
+							//std::cout << "break bPhysics_stop, dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+							break;
+						}
+					}
+
+					
+
 					r1 = r2;
 					tmax_old = tmax;
 
@@ -6329,6 +6711,109 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						row_ptr[i] = nnz;
 					}
 					row_ptr[0] = 0;
+
+					if (bvacuum_Prism123) {
+						// Вычисление лучистых потоков на границе вакуумных промежутков.
+						// Вычисление осреднённых температур в К на границах вакуумных промежутков:
+						for (integer i = 0; i < lb; i++) {
+							update_avg_temperatures(t.potent, b[i]);
+						}
+
+						// Вычисление плотностей радиационных тепловых потоков:
+						for (integer i = 0; i < lb; i++) {
+							calculation_density_radiation_heat_flux(b[i]);
+						}
+					}
+
+					if (0) {
+						/*
+						radiosity_patch_for_vacuum_Prism_Object_(rthdsd_radiation_global, b, lb, t.maxelm, t.whot_is_block);
+
+						for (integer i_4 = 0; i_4 < t.maxelm; i_4++) {
+							rthdsd_radiation_loc[id_reverse[t.whot_is_block[i_4]]] += rthdsd_radiation_global[i_4];
+						}
+
+						for (integer i = 0; i < maxelm + lw; i++) {
+							doublereal alphaR = 1.0;
+							rthdsd_radiation_loc[i] = alphaR*rthdsd_radiation_loc[i] + (1.0 - alphaR)*rthdsd_radiation_loc_relax[i];
+						}
+
+						for (integer i = 0; i < maxelm + lw; i++) {
+							rthdsd_radiation_loc_relax[i] = rthdsd_radiation_loc[i];
+						}
+						*/
+					}
+					else {
+						for (integer i = 0; i < maxelm; i++) {
+							if (b[id[i]].radiation.binternalRadiation) {
+								if ((b[id[i]].radiation.nodelistW != nullptr) &&
+									(b[id[i]].radiation.nodelistE != nullptr) &&
+									(b[id[i]].radiation.nodelistS != nullptr) &&
+									(b[id[i]].radiation.nodelistN != nullptr) &&
+									(b[id[i]].radiation.nodelistB != nullptr) &&
+									(b[id[i]].radiation.nodelistT != nullptr))
+								{
+									for (integer j_1 = 0; j_1 < inumber_neighbour[i]; j_1++) {
+										if (j_1 < inumber_neighbour_only_body[i]) {
+											// блок id[i] к блоку ilink[i][j_1].
+											if ((b[ilink[i][j_1]].g.itypegeom == PRISM)&&(!b[ilink[i][j_1]].radiation.binternalRadiation)) {
+												if (fabs(b[id[i]].g.xS - b[ilink[i][j_1]].g.xE) < 1.0e-20) {
+													// W ilink[i][j_1]] ---E bid[i] 
+													rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]]+= -(b[id[i]].radiation.JW - b[id[i]].radiation.JE)*dS[i][j_1];
+												}
+
+												if (fabs(b[id[i]].g.xE - b[ilink[i][j_1]].g.xS) < 1.0e-20) {
+													// E ilink[i][j_1]] ---W bid[i] 
+													rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += (b[id[i]].radiation.JW - b[id[i]].radiation.JE)*dS[i][j_1];
+												}
+
+												if (fabs(b[id[i]].g.yS - b[ilink[i][j_1]].g.yE) < 1.0e-20) {
+													// S ilink[i][j_1]] ---N bid[i] 
+													rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += -(b[id[i]].radiation.JS - b[id[i]].radiation.JN)*dS[i][j_1];
+												}
+
+												if (fabs(b[id[i]].g.yE - b[ilink[i][j_1]].g.yS) < 1.0e-20) {
+													// N ilink[i][j_1]] ---S bid[i] 
+													rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += (b[id[i]].radiation.JS - b[id[i]].radiation.JN)*dS[i][j_1];
+												}
+
+												if (fabs(b[id[i]].g.zS - b[ilink[i][j_1]].g.zE) < 1.0e-20) {
+													// B ilink[i][j_1]] ---T bid[i] 
+													rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += -(b[id[i]].radiation.JB - b[id[i]].radiation.JT)*dS[i][j_1];
+												}
+
+												if (fabs(b[id[i]].g.zE - b[ilink[i][j_1]].g.zS) < 1.0e-20) {
+													// T ilink[i][j_1]] ---B bid[i] 
+													rthdsd_radiation_loc[id_reverse[ilink[i][j_1]]] += (b[id[i]].radiation.JB - b[id[i]].radiation.JT)*dS[i][j_1];
+												}
+											}
+											
+										}
+									}
+								}
+							}
+						}
+
+						for (integer i = 0; i < maxelm + lw; i++) {
+							doublereal alphaR = 1.0;
+							rthdsd_radiation_loc[i] = alphaR*rthdsd_radiation_loc[i] + (1.0 - alphaR)*rthdsd_radiation_loc_relax[i];
+						}
+
+						for (integer i = 0; i < maxelm + lw; i++) {
+							rthdsd_radiation_loc_relax[i] = rthdsd_radiation_loc[i];
+						}
+					}
+
+					for (integer i = 0; i < maxelm + lw; i++) {
+						if (i < maxelm) {
+							// Внутренний блок.
+							if (fabs(rthdsd_radiation_loc[i]) > 1.0e-300) {
+								//std::cout << b[id[i]].name << " " << rthdsd_radiation_loc[i] << " W\n";
+
+							}
+						}
+					}
+					//system("PAUSE");
 
 					for (integer i = 0; i < maxelm + lw; i++) {
 						if (i < maxelm) {
@@ -6366,9 +6851,37 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 
 							}
 
-							rthdsd[i] = Vol *poweron_multiplier_sequence[j] *
-								get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
-								(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+							if (b[id[i]].ipower_time_depend == POWER_TIME_DEPEND::CONST_POWER) {
+								rthdsd[i] = Vol * 1.0 *
+									get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+									rthdsd_radiation_loc[i] + // Тепловая мощность в Вт из за излучения, принадлежащая блоку id[i].
+									(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+							}
+							else if ((glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2) && (b[id[i]].ipower_time_depend == POWER_TIME_DEPEND::HOT_COLD)) {
+								rthdsd[i] = Vol *poweron_multiplier_sequence1[j] *
+									get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+									rthdsd_radiation_loc[i] + // Тепловая мощность в Вт из за излучения, принадлежащая блоку id[i].
+									(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+							}
+							else if (b[id[i]].ipower_time_depend == POWER_TIME_DEPEND::SQUARE_WAVE) {
+								doublereal mult = 1.0;
+								if (poweron_multiplier_sequence0 == nullptr) {
+									mult = 1.0;
+								}
+								else {
+									mult = poweron_multiplier_sequence0[j];
+								}
+								rthdsd[i] = Vol * mult *
+									get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+									rthdsd_radiation_loc[i] + // Тепловая мощность в Вт из за излучения, принадлежащая блоку id[i].
+									(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+							}
+							else {
+								rthdsd[i] = Vol *poweron_multiplier_sequence[j] *
+									get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+									rthdsd_radiation_loc[i] + // Тепловая мощность в Вт из за излучения, принадлежащая блоку id[i].
+									(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+							}
 						}
 						else {
 							// стенка.
@@ -6697,7 +7210,32 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 										lam = get_lam(matlist[b[ilink[i][j_1]].imatid].n_lam, matlist[b[ilink[i][j_1]].imatid].temp_lam, matlist[b[ilink[i][j_1]].imatid].arr_lam, potent[i]);
 
 									}
-									lambda_G = 2.0 * lambda_G * lam / (lambda_G + lam);
+									
+									if ((b[ilink[i][j_1]].g.itypegeom==PRISM)&&(b[id[i]].g.itypegeom == PRISM)) {
+										// 05,11,2020
+										doublereal diametr1 = sqrt((b[ilink[i][j_1]].g.xE - b[ilink[i][j_1]].g.xS)*(b[ilink[i][j_1]].g.xE - b[ilink[i][j_1]].g.xS) +
+											(b[ilink[i][j_1]].g.yE - b[ilink[i][j_1]].g.yS)*(b[ilink[i][j_1]].g.yE - b[ilink[i][j_1]].g.yS) +
+											(b[ilink[i][j_1]].g.zE - b[ilink[i][j_1]].g.zS)*(b[ilink[i][j_1]].g.zE - b[ilink[i][j_1]].g.zS));
+										doublereal diametr2 = sqrt((b[id[i]].g.xE - b[id[i]].g.xS)*(b[id[i]].g.xE - b[id[i]].g.xS) +
+											(b[id[i]].g.yE - b[id[i]].g.yS)*(b[id[i]].g.yE - b[id[i]].g.yS) +
+											(b[id[i]].g.zE - b[id[i]].g.zS)*(b[id[i]].g.zE - b[id[i]].g.zS));
+
+										if (diametr1 < diametr2) {
+											doublereal fgplus = diametr1 / (diametr1+ diametr2);
+											// diametr1 lam ilink[i][j_1] он меньше
+											lambda_G = lambda_G * lam / ((1.0 - fgplus)*lambda_G + fgplus*lam);
+
+										}
+										else {
+											doublereal fgplus = diametr2 / (diametr1 + diametr2);
+											// Зеркально наоборот. Определяющим является геометрический только фактор.
+											lambda_G = lambda_G * lam / ((fgplus)*lambda_G + (1.0-fgplus)*lam);
+										}
+									}
+									else {
+										// Грань ровно посередине
+										lambda_G = 2.0 * lambda_G * lam / (lambda_G + lam);
+									}
 									if (ortho_k1 && ortho_k2) {// плата к плате.
 															   // учет ортотропности коэффициента теплопроводности.
 										lambda_G *= 2.0 * ortho_m1 * ortho_m2 / (ortho_m1 + ortho_m2);
@@ -6901,7 +7439,7 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 									// Условие Стефана - Больцмана.
 									//printf("nonlinear:  potent[ic]=%e  potent[i]=%e Tamb=%e\n", potent[ic], potent[i], w[id[i]].Tamb);
 									//printf("lambda_G=%e distance=%e w[id[i]].emissivity=%e\n", lambda_G, distance, w[id[i]].emissivity);
-									//getchar();
+									
 									//if (potent[i] > w[id[i]].Tamb) знак минус, охлаждение.
 									//if (potent[i] < w[id[i]].Tamb) знак плюс, подогрев.
 									{
@@ -6909,7 +7447,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 											(273.15 + potent[i]) * (273.15 + potent[i]) * (273.15 + potent[i]) -
 											(273.15 + w[id[i]].Tamb) * (273.15 + w[id[i]].Tamb) * (273.15 + w[id[i]].Tamb) *
 											(273.15 + w[id[i]].Tamb)));
+										//printf("rthdsd = %e\n", rthdsd[i]);
 									}
+									//getchar();
 									
 								}
 
@@ -6957,6 +7497,13 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 							// Было (0.2 проверено) 0.1
 							// 0.7 Проверено подходит для нестационарных расчётов.
 							alpha = 0.78;// 0.7;//0.01; 0.1-BSK-Dmitrii работает; 0.8; 0.98;
+							// Для большой задачи одна пятая полотна АФАР даёт сходимость 
+							// именно коэффициент нижней релаксации 0.01. При этом alphaA надо оставить
+							// равным alphaA=0.9;
+							alpha = 0.01;
+							if (bvacuum_Prism123) {
+								alpha = 0.58;// 0.2;//0.58
+							}
 						}
 
 						// нижняя релаксация введённая в матрицу СЛАУ.
@@ -6968,6 +7515,10 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						if ((b_Newton_Richman) || (b_Stefan_Bolcman)) {
 							// Было 0.4
 							doublereal alphaA = 0.9; // 0.01; нижняя релаксация.
+							//alphaA = 0.65;// 0.2;// 0.1 Не требуется, не улучшает сходимость. 17.11.2020 Портит кривую.
+							if (bvacuum_Prism123) {
+								//alphaA = 0.8;
+							}
 							for (integer i_1 = 0; i_1 < maxelm; i_1++) {
 								// Это нужно чтобы сошелся солвер решения СЛАУ.
 								rthdsd[i_1] += (1 - alphaA) * (val[row_ptr[i_1]] / alphaA) * potent_old[i_1];
@@ -6985,13 +7536,36 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						amgcl_networkT_solver(val, col_ind, row_ptr, n, rthdsd, potent, false);
 #else
 						bool worked_successfully;
-						amg_loc_memory_networkT(val, col_ind, row_ptr, n, nnz,
-							rthdsd, potent, 1.0, true, 0, worked_successfully,
-							b, lb, ls, maxelm,false); // false - решаем до сходимости.
-						//Bi_CGStabCRS(n, val, col_ind, row_ptr, rthdsd, potent, 2000);
+						if (1) {
+
+							if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7)) {
+
+								classic_aglomerative_amg6_for_NetworkT(val, col_ind, row_ptr, n, nnz, rthdsd, potent, b,  lb);
+
+							}
+							else {
+							   // amg1r5
+
+							    // Стабильный метод Руге и Штубена, работает с alphaA=0.9. 12.12.2020
+
+								
+								//Bi_CGStabCRS(n, val, col_ind, row_ptr, rthdsd, potent, 2000);
+
+								amg_loc_memory_networkT(val, col_ind, row_ptr, n, nnz,
+										rthdsd, potent, 1.0, true, 0, worked_successfully,
+										b, lb, ls, maxelm, false); // false - решаем до сходимости.
+
+								
+							}
+						}
+						else {
+							Bi_CGStabCRS(n, val, col_ind, row_ptr, rthdsd, potent, 2000);
+						}
 #endif
 
 						for (integer i25 = 0; i25 < n; i25++) {
+							// Не влияет не надо делать до maxelm.
+						//for (integer i25 = 0; i25 < maxelm; i25++) {
 							potent[i25] = potent_old[i25] + alpha * (potent[i25] - potent_old[i25]);
 							//if (potent[i25] < t.operatingtemperature) potent[i25] = t.operatingtemperature;
 						}
@@ -7006,6 +7580,32 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 					}
 					//getchar();
 
+
+					// Для вычисления тепловых потоков, вызванных излучением необходимо
+					// поддерживать актуальным вектор t.potent во внутреннем цикле.
+					for (integer i = 0; i < maxelm + lw; i++) {
+						if (potent[i] < -273.15) {
+							potent[i] = -273.15; // Идентифицируем абсолютный ноль.
+						}
+					}
+
+
+					// Обновление глобальной температуры не обязательно и 
+					// очень сильно замедляет быстродействие.
+					// Откажемся от него 06.11.2020
+					if (bvacuum_Prism123) {
+						// Сохранение температуры на сетке.
+						for (integer i = 0; i < t.maxelm; i++) {
+							if (block_is_active[t.whot_is_block[i]]) {
+								t.potent[i] = potent[id_reverse[t.whot_is_block[i]]];
+							}
+						}
+						for (integer i = 0; i < t.maxbound; i++) {
+							// Копируем температуру из ближайшего внутреннего узла.
+							t.potent[t.maxelm + i] = t.potent[t.border_neighbor[i].iI];
+						}
+					}
+
 				}
 
 				delete[] val;
@@ -7014,6 +7614,11 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 
 
 				delete[] potent_old;
+
+				// Правая часть от лучистых потоков.
+				//delete[] rthdsd_radiation_global;
+				delete[] rthdsd_radiation_loc;
+				delete[] rthdsd_radiation_loc_relax;
 
 				/*
 				Завершение решения СЛАУ на временном шаге:
@@ -7153,8 +7758,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 					t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-					volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
-					Pdiss += t.Sc[i47] * dx*dy*dz;
+					//volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
+					//Pdiss += t.Sc[i47] * dx*dy*dz;
+					Pdiss += t.Sc[i47] * volume_elm[i47];
 				}
 
 				printf("Pdiss=%e\n", Pdiss); // мощность рассеиваемая в тепло и определяемая лишь по плоским источникам.
@@ -7164,7 +7770,7 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 					printf("Pdiss_virtual:=1.0; RT==DeltaT==(Tmax-Tamb)/1.0;\n");
 					printf("Please, press any key to continue...\n");
 					//getchar();
-					system("pause");
+					//system("pause");
 				}
 				//getchar();
 
@@ -7203,7 +7809,7 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 						}
 					}
 				}
-				printf("complete is: %3.0f %% \n", (doublereal)(100.0*(j + 1) / iN)); // показывает сколько процентов выполнено.
+				printf("complete is: %3.0f %% Tmax=%e residual=%e\n", (doublereal)(100.0*(j + 1) / iN), tmax_old, r2); // показывает сколько процентов выполнено.
 			}
 
 			fclose(fpcurvedata); // закрытие файла для записи кривой прогрева.
@@ -7220,6 +7826,12 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 	}
 	if (poweron_multiplier_sequence != nullptr) {
 		delete[] poweron_multiplier_sequence;
+	}
+	if (poweron_multiplier_sequence0 != nullptr) {
+		delete[] poweron_multiplier_sequence0;
+	}
+	if (poweron_multiplier_sequence1 != nullptr) {
+		delete[] poweron_multiplier_sequence1;
 	}
 
 	if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::LINEAR) {
@@ -7545,7 +8157,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 				if (ir > il) {
 					// если узел fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					integer icP = fglobal[0].neighbors_for_the_internal_node[E_SIDE][0][iP];
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -7555,7 +8167,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				}
 				else if (ir < il) {
 					// если узел fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					integer icP = fglobal[0].neighbors_for_the_internal_node[W_SIDE][0][iP];
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -9319,7 +9931,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				  bfirst_start, nullptr, nullptr, nullptr, nullptr, tauparam,
 				  btimedep, dgx, dgy, dgz, matlist,
 				  inumiter, consolemessage, RCh,bVeryStable,
-				  nullptr,rsumanbstuff,bhighorder,bdeltapfinish, 1.0, 
+				  nullptr,rsumanbstuff,bhighorder,bdeltapfinish, 1.0, 1.0, 
 				  my_memory_bicgstab, rthdsdt, rfluent_res_temp, lu, my_union, color_solid, dist_max_solid);
 			
 			// последний параметр равный единице означает что мощность подаётся !
@@ -9383,6 +9995,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 
 // нестационарный cfd решатель:
+// Заработал нестационарный cfd решатель 25.12.2020.
+// Анимация полей скорость -давление к нему на OpenGL 26.12.2020.
 void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin, 
 	                        doublereal dgx, doublereal dgy, doublereal dgz,
 							doublereal* continity_start, 
@@ -9395,10 +10009,20 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 	                        integer lu, UNION* &my_union, integer inx, doublereal* &xpos)
 {
 
+	
+	
+
+	bool bTemperature = true;
+	if (eqin.itemper == 0) {
+		// Чистая гидродинамика.
+		bTemperature = false;
+	}
+	bool bMechanical = false;
 
 	integer* color = nullptr;
 	
-	if ((!b_on_adaptive_local_refinement_mesh) && (number_cores() == 2) && (my_amg_manager.lfil < 3)) {
+	// 0 - Параллельная декомпозиция не работает 25,12,2020
+	if (0&&(!b_on_adaptive_local_refinement_mesh) && (number_cores() == 2) && (my_amg_manager.lfil < 3)) {
 		// Работает только для структурированной сетки.
 		integer isize = 0;
 		//if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
@@ -9496,7 +10120,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 				if (ir > il) {
 					// если узел fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					integer icP = fglobal[0].neighbors_for_the_internal_node[E_SIDE][0][iP];
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -9506,7 +10130,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				}
 				else if (ir < il) {
 					// если узел fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					integer icP = fglobal[0].neighbors_for_the_internal_node[W_SIDE][0][iP];
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -9521,18 +10145,20 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 		//getchar();
 	}
 
+	doublereal Tamb = t.operatingtemperature; // комнатная температура
 
 	integer* color_solid = nullptr;
 	integer dist_max_solid = 3;
-	calculate_color_for_temperature(color_solid, t,inx,xpos);
-
+	if (0) {
+		calculate_color_for_temperature(color_solid, t, inx, xpos);
+	}
 
 	// Множитель RCh для поправки Рхи-Чоу обязательно должен быть равен 1.0 иначе возникают шахматные осцилляции.
 	// То что в некоторых литературных источниках рекомендуется выставлять множитель для поправки Рхи-Чоу равный 0.1
 	// (это домножение уменьшает вклад поправки Рхи-Чоу в 10 раз) не обосновано теоретически:
 	// см. Самарский Вабищевич и Гаврилов Андрей.
 	doublereal RCh = 1.0; // 1.0; 0.1;
-						  //RCh = my_amg_manager.F_to_F_Stress;//debug
+	//RCh = my_amg_manager.F_to_F_Stress;//debug
 
 	if (0) {
 		xyplot(fglobal, flow_interior, t);
@@ -9653,6 +10279,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 						// температура:
 						doublereal* toldtimestep = new doublereal[t.maxelm + t.maxbound]; // поле температур на предыдущем временном слое
+
+#pragma omp parallel for
 						for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) {
 							toldtimestep[i1] = t.potent[i1]; // copy инициализация
 						}
@@ -9666,7 +10294,11 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						
 						// инициализация:
 						for (integer i2 = 0; i2 < 3; i2++) {
-							for (integer i3 = 0; i3 < (fglobal[iflow].maxelm + fglobal[iflow].maxbound); i3++) {
+
+							integer isize_loc = (fglobal[iflow].maxelm + fglobal[iflow].maxbound);
+
+#pragma omp parallel for
+							for (integer i3 = 0; i3 < isize_loc; i3++) {
 								// iflow - номер FLUID INTERIOR,
 								// i2 - VX, VY, VZ - одна из трёх компонент скорости,
 								// i3 - соответствующий номер контрольного объёма (внутренний
@@ -9716,12 +10348,13 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								   // При считывании из файла avtosave.txt эта величина также должна считываться.
 								   // пока здесь реализовано вычисление стартующее с нулевого значения (поле жидкости полностью неподвижно).
 								   // выделение памяти:
-						doublereal** mfoldtimestep = new doublereal*[fglobal[iflow].maxelm];							
+						doublereal** mfoldtimestep = new doublereal*[fglobal[iflow].maxelm];
 						for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
 							mfoldtimestep[i2] = new doublereal[6];
 						}
 						
 						// инициализация:
+#pragma omp parallel for
 						for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
 							for (integer i3 = 0; i3 < 6; i3++) {
 								mfoldtimestep[i2][i3] = fglobal[iflow].mf[i2][i3]; // copy инициализация
@@ -9841,7 +10474,11 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							}
 						}
 						for (integer i = 0; i<3; i++) {
-							for (integer j = 0; j<fglobal[iflow].maxelm + fglobal[iflow].maxbound; j++) {
+
+							integer isize_loc = fglobal[iflow].maxelm + fglobal[iflow].maxbound;
+
+#pragma omp parallel for
+							for (integer j = 0; j < isize_loc; j++) {
 								switch (i) {
 								case VELOCITY_X_COMPONENT: SpeedCorOld[VELOCITY_X_COMPONENT][j] = fglobal[iflow].potent[VXCOR][j];
 									break;
@@ -9853,11 +10490,13 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							}
 						}
 
+						// Поток теплоносителя на грани ячейки с предыдущей итерации.
 						doublereal **mfold = new doublereal*[fglobal[iflow].maxelm];
 						for (integer i = 0; i<fglobal[iflow].maxelm; i++) {
 							mfold[i] = new doublereal[6];
 						}
 
+#pragma omp parallel for
 						for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
 							for (integer j = 0; j < 6; j++) {
 								mfold[i][j] = fglobal[iflow].mf[i][j]; // начальный поток.
@@ -9901,9 +10540,12 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						}
 
 						// инициализация.
+#pragma omp parallel for
 						for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
 							for (integer j = 0; j < 6; j++) {
+								// На предыдущей итерации.
 								mfold[i][j] = fglobal[iflow].mf[i][j]; // начальный поток.
+								// На предыдущем шаге по времени.
 								mfoldtimestep[i][j]= fglobal[iflow].mf[i][j]; // начальный поток.
 							}
 						}
@@ -9921,18 +10563,245 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						}
 						SpeedCorOld = nullptr;
 
+						// Турбулентные характеристики потока.
+						fglobal[iflow].turbulent_parameters_old_time_step = new doublereal * [iNUMBER_FUNCTION_TURBULENT_OLD_TIME_STEP];
+						for (integer i = 0; i < iNUMBER_FUNCTION_TURBULENT_OLD_TIME_STEP; i++) {
+							fglobal[iflow].turbulent_parameters_old_time_step[i] = new doublereal[fglobal[iflow].maxelm];
+						}
+						for (integer i = 0; i < iNUMBER_FUNCTION_TURBULENT_OLD_TIME_STEP; i++) {
+							for (integer i60 = 0; i60 < fglobal[iflow].maxelm; i60++) {
+								switch (i) {
+								case TURBULENT_KINETIK_ENERGY_MENTER_SST_OLD_TIME_STEP:	
+									fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_KINETIK_ENERGY_MENTER_SST_OLD_TIME_STEP][i60] = fglobal[iflow].potent[TURBULENT_KINETIK_ENERGY][i60];
+										break;
+								case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_OLD_TIME_STEP:
+									fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_OLD_TIME_STEP][i60] = fglobal[iflow].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][i60];
+									break;
+								case TURBULENT_NUSHA_OLD_TIME_STEP:
+									fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_NUSHA_OLD_TIME_STEP][i60] = fglobal[iflow].potent[NUSHA][i60];
+									break;
+								}
+							}
+						}
 
-						// Задание шагов по времени и информации о подаваемой мощности.
 						integer iN = 0; // количество шагов по времени
 						doublereal* timestep_sequence = nullptr; // последовательность шагов по времени.
-						// информация о подаче мощности на каждом временном шаге
-						doublereal* poweron_multiplier_sequence = nullptr; // (множитель который вызывает отличие от постоянной).
-						doublereal StartTime = 0.0, EndTime = 17.0; // длительность (в с).
-						doublereal TimeStepIncrement = 0.5; // начальный шаг по времени 1с. (используется в постоянном шаге по времени.)
+																 // информация о подаче мощности на каждом временном шаге
+						doublereal* poweron_multiplier_sequence = nullptr; // (множитель который вызывает отличие от постоянной тепловой мощности).
+						// Используется только в законе square vawe1 а также в законе square vawe2. В рамках закона square vawe 2 задает закок square vawe1 что используется например для источника тепла от Солнца.
+						doublereal* poweron_multiplier_sequence0 = nullptr; // (множитель который вызывает отличие от постоянной тепловой мощности).
+						// Если блок имеет закон hot_cold а мы использует закон square vawe2 то у блока у которого стоит hot cold режим
+						// тепловая мощность выключается к концу шестого включения за сутки. Данный график зависимости тепловой мощности от времени 
+						// используется для источника от Солнца.
+						doublereal* poweron_multiplier_sequence1 = nullptr; // (множитель который вызывает отличие от постоянной тепловой мощности).
+						doublereal StartTime = 0.0, EndTime = globalEndTimeUnsteadyTemperatureCalculation; // длительность 
+						doublereal TimeStepIncrement = 1.0e-7; // начальный шаг по времени 1мкс. (используется в постоянном шаге по времени.)
+
+						// Используется 40 шагов равномерного шага по времени.
+						//doublereal TimeStepIncrement = 0.025 * globalEndTimeUnsteadyTemperatureCalculation; // (используется в постоянном шаге по времени.)
 						// постоянный шаг по времени:
-						uniform_timestep_seq(StartTime, EndTime, TimeStepIncrement, iN, timestep_sequence, poweron_multiplier_sequence);
-						// переменный линейный шаг по времени:
-						//linear_timestep_seq(StartTime, EndTime, 1e-4, 1.5, iN, timestep_sequence, poweron_multiplier_sequence);
+						//uniform_timestep_seq(StartTime, EndTime, TimeStepIncrement, iN, timestep_sequence, poweron_multiplier_sequence);
+
+						doublereal Initial_Time_Step = 1e-7; // т.к. греется по экспоненте.
+						doublereal Factor_a = 0.4; // фактор увеличения шага по времени
+						Factor_a = glTSL.Factor_a_for_Linear;
+						doublereal** evdokimova_report = nullptr;
+						if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::LINEAR) {
+							// Задание шагов по времени и информации о подаваемой мощности.
+							// постоянный шаг по времени:
+							//--->//uniform_timestep_seq(StartTime, EndTime, TimeStepIncrement, iN, timestep_sequence, poweron_multiplier_sequence);
+							// переменный линейный шаг по времени (в соответствии с геометрической прогрессией):
+							linear_timestep_seq(StartTime, EndTime, Initial_Time_Step, Factor_a, iN, timestep_sequence, poweron_multiplier_sequence);
+							// во второй модификации присутствует также и участок остывания.
+							//linear_timestep_seq2(StartTime, EndTime, Initial_Time_Step, Factor_a, iN, timestep_sequence, poweron_multiplier_sequence);
+
+							// Кривые из статьи: Тепловой анализ полупроводниковых структур. Евдокимова Н.Л., Ежов В.С., Минин В.Ф.
+							evdokimova_report = new doublereal * [iN + 1];
+							for (integer i = 0; i < iN + 1; i++) {
+								// время, температура канала, тепловое сопротивление канала, теплоёмкость, отношения dC/dRt и C/Rt.
+								// time, Tch, Rtch, C=Tch/Rt, dC/dRt, C/Rt (и так для каждой из трёх температур канала Tch);
+								evdokimova_report[i] = new doublereal[18];
+							}
+						}
+						if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE) {
+							Initial_Time_Step = glTSL.tau / 10.0;
+							square_wave_timestep(EndTime, iN, timestep_sequence, poweron_multiplier_sequence0);
+						}
+						// Термоциклирование для АППАРАТ.
+						if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2) {
+							Initial_Time_Step = glTSL.tau1 / 10.0;
+							square_wave_timestep_APPARAT(EndTime, iN, timestep_sequence, poweron_multiplier_sequence, poweron_multiplier_sequence0, poweron_multiplier_sequence1);
+						}
+						// Двойной логарифмический шаг по времени: нагрев-остывание.
+						if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::HOT_COLD) {
+							// 18.11.2017
+							linear_timestep_seq_hot_cold(StartTime, EndTime, Initial_Time_Step, Factor_a, iN, timestep_sequence, poweron_multiplier_sequence, glTSL.on_time_double_linear);
+						}
+						if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::PIECEWISE_CONSTANT) {
+							// Таблично заданный закон изменения шагов по времени piecewise constant
+							// 20.12.2019
+							Initial_Time_Step = glTSL.table_law_piecewise_constant[0].timestep;
+							piecewise_const_timestep_law(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
+						}
+
+						if ((iN > 0) && (animation_sequence_functions_openGL == nullptr)) {
+
+							if (eqin.itemper == 0) {
+								// Чистая гидродинамика.
+								// 0 - модуль скорости, 1 - Давление.
+								iNUMBER_ANIMATION_FUNCTIONS = 2;
+							}
+							else {
+								// Гидродинамика и теплопередача.
+								// 0 - модуль скорости, 1 - Давление.
+								// 2 - Температура.
+								iNUMBER_ANIMATION_FUNCTIONS = 3;
+							}
+							iNUMBER_ANIMATION_CADERS = iN+1;
+							iCURENT_ANIMATION_CADER = 0;
+							iCURENT_ANIMATION_FUNCTION = 0;
+							n_render = t.maxelm;
+							iCFD_animation = 1;
+
+							animation_sequence_functions_openGL = new doublereal * *[iNUMBER_ANIMATION_FUNCTIONS]; // Пока только вектор скорости.
+							for (int i62 = 0; i62 < iNUMBER_ANIMATION_FUNCTIONS; i62++) {
+								animation_sequence_functions_openGL[i62] = new doublereal * [iNUMBER_ANIMATION_CADERS];
+								for (int i61 = 0; i61 < iNUMBER_ANIMATION_CADERS; i61++) {
+									animation_sequence_functions_openGL[i62][i61] = new doublereal[t.maxelm];									
+								}
+								switch (i62) {
+								case 0: // Модуль скорости
+									for (int i60 = 0; i60 < t.maxelm; i60++) {
+										// Первый кадр
+										int j60 = t.ptr[0][i60];
+										if ((t.ptr[1][i60]>-1)&&(j60 > -1) && (j60 < fglobal[iflow].maxelm)) {
+											animation_sequence_functions_openGL[i62][0][i60] = sqrt(fglobal[iflow].potent[VXCOR][j60] * fglobal[iflow].potent[VXCOR][j60] +
+												fglobal[iflow].potent[VYCOR][j60] * fglobal[iflow].potent[VYCOR][j60] +
+												fglobal[iflow].potent[VZCOR][j60] * fglobal[iflow].potent[VZCOR][j60]);
+										}
+										else {
+											animation_sequence_functions_openGL[i62][0][i60] = 0.0; // Твёрдое тело.
+										}
+									}
+									break;
+								case 1: // Давление
+									for (int i60 = 0; i60 < t.maxelm; i60++) {
+										// Первый кадр
+										int j60 = t.ptr[0][i60];
+										if ((t.ptr[1][i60] > -1) && (j60 > -1) && (j60 < fglobal[iflow].maxelm)) {
+											animation_sequence_functions_openGL[i62][0][i60] = sqrt(fglobal[iflow].potent[PRESS][j60]);
+										}
+										else {
+											animation_sequence_functions_openGL[i62][0][i60] = 0.0; // Твёрдое тело.
+										}
+									}
+									break;
+								case 2: // Температура
+									for (int i60 = 0; i60 < t.maxelm; i60++) {
+										// Первый кадр
+										animation_sequence_functions_openGL[i62][0][i60] = t.potent[i60]; // Поле температур в нулевом кадре.
+									}
+									break;
+								}
+							}
+
+						}
+
+						FILE* fpcurvedata = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+
+
+						FILE* fpKras = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+
+#ifdef MINGW_COMPILLER
+						int err23 = 0;
+						fpKras = fopen64("inputKras.txt", "w");
+						if (fpKras == NULL) err23 = 1;
+#else
+						errno_t err23 = 0;
+						err23 = fopen_s(&fpKras, "inputKras.txt", "w");
+#endif
+
+
+						FILE* fpKras_max = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+
+#ifdef MINGW_COMPILLER
+						int  err23_max = 0;
+						fpKras_max = fopen64("inputKras_max.txt", "w");
+						if (fpKras_max == NULL) err23_max = 1;
+#else
+						errno_t err23_max = 0;
+						err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "w");
+#endif
+
+						FILE* fpKras_min = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+
+#ifdef MINGW_COMPILLER
+						int err23_min = 0;
+						fpKras_min = fopen64("inputKras_min.txt", "w");
+						if (fpKras_min == NULL) err23_min = 1;
+#else
+						errno_t err23_min = 0;
+						err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "w");
+#endif
+
+						if ((err23) != 0) {
+							printf("Create File heating_curves.txt Error\n");
+							//getchar();
+							system("pause");
+							exit(0);
+						}
+						else {
+							if (fpKras != NULL) {
+								if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::LINEAR) {
+									// Linear
+									fprintf(fpKras, "1 \n");
+									fprintf(fpKras, "0 \n");
+								}
+								else {
+									// Square Wave and Square Wave 2.
+									fprintf(fpKras, "0 \n");
+									fprintf(fpKras, "0 \n");
+								}
+								fprintf(fpKras, "Evalution maximum temperature in default interior \n");
+								fprintf(fpKras, "time[s] maximum_temperature[C] \n");
+								if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE) {
+									// Только если square wave.
+									if (fpKras_max != NULL) {
+										fprintf(fpKras_max, "0 \n");
+										fprintf(fpKras_max, "0 \n");
+										fprintf(fpKras_max, "Evalution maximum temperature in default interior \n");
+										fprintf(fpKras_max, "time[s] maximum_temperature[C] \n");
+									}
+									if (fpKras_min != NULL) {
+										fprintf(fpKras_min, "0 \n");
+										fprintf(fpKras_min, "0 \n");
+										fprintf(fpKras_min, "Evalution minimum temperature in default interior \n");
+										fprintf(fpKras_min, "time[s] maximum_temperature[C] \n");
+									}
+								}
+								if (fpKras_max != NULL) {
+									fclose(fpKras_max);
+								}
+								if (fpKras_min != NULL) {
+									fclose(fpKras_min);
+								}
+							}
+#ifdef MINGW_COMPILLER
+							int err = 0;
+							fpcurvedata = fopen64("heating_curves.txt", "w");
+							if (fpcurvedata == NULL) err = 1;
+#else
+							errno_t err;
+							err = fopen_s(&fpcurvedata, "heating_curves.txt", "w");
+#endif
+
+							if ((err) != 0) {
+								printf("Create File heating_curves.txt Error\n");
+								//getchar();
+								system("pause");
+								exit(0);
+							}
+							else {
 
 #if doubleintprecision == 1
 						printf("number of time step iN=%lld\n", iN);
@@ -9947,14 +10816,92 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							// Ошибка в задании шагов по времени.
 							printf("error in setting the time steps...\n");
 							printf("please press any key to exit...\n");
+							if (fpcurvedata != NULL) {
+								fprintf(fpcurvedata, "Error in setting the time steps...");
+							}
 							//getchar();
 							system("pause");
+							if (fpcurvedata != NULL) {
+								fclose(fpcurvedata);
+							}
+							if (fpKras != NULL) {
+								fclose(fpKras);
+							}
 							exit(0);
+						}
+
+
+						if (bTemperature) {
+							fprintf(fpcurvedata, " Heating Curves data\n");
+							// время в секундах, максимальная температура во всей расчётной области (внутренние + граничные узлы), 
+							// максимальная температура определённая только по строго внутренним КО.
+							fprintf(fpcurvedata, "time [s], temperature all interior [°C], RT all interior [°C/W], temperature only internal nodes [°C], RT internal nodes [°C/W], filtr temperature [°C], RT filtr [°C/W]\n");
+							fprintf(fpcurvedata, "%+.16f %+.16f %+.16f %+.16f  %+.16f %+.16f %+.16f\n", StartTime, Tamb, 0.0, Tamb, 0.0, Tamb, 0.0); // начальное состояние из которого стартует разогрев.
+							if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::LINEAR) {
+								// Linear.
+								evdokimova_report[0][0] = StartTime; evdokimova_report[0][1] = Tamb; evdokimova_report[0][2] = 0.0;
+								evdokimova_report[0][6] = StartTime; evdokimova_report[0][7] = Tamb;  evdokimova_report[0][8] = 0.0;
+								evdokimova_report[0][12] = StartTime; evdokimova_report[0][13] = Tamb; evdokimova_report[0][14] = 0.0;
+							}
+							fprintf(fpKras, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+						}
+						else {
+							// нулевое перемещение.
+							fprintf(fpKras, "%+.16f %+.16f\n", 0.9e-7, 0.0);
+						}
+
+#ifdef MINGW_COMPILLER
+						fpKras_max = fopen64("inputKras_max.txt", "a");
+#else
+						err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "a");
+#endif
+						if (bTemperature) {
+							if ((err23_max == 0) && (fpKras_max != NULL)) {
+								fprintf(fpKras_max, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+								fclose(fpKras_max);
+							}
+						}
+						else {
+							if ((err23_max == 0) && (fpKras_max != NULL)) {
+								fprintf(fpKras_max, "%+.16f %+.16f\n", 0.9e-7, 0.0);
+								fclose(fpKras_max);
+							}
+						}
+
+#ifdef MINGW_COMPILLER
+						fpKras_min = fopen64("inputKras_min.txt", "a");
+#else
+						err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "a");
+#endif
+						if (bTemperature) {
+							if ((err23_min == 0) && (fpKras_min != NULL)) {
+								fprintf(fpKras_min, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+								fclose(fpKras_min);
+							}
+						}
+						else {
+							if ((err23_min == 0) && (fpKras_min != NULL)) {
+								fprintf(fpKras_min, "%+.16f %+.16f\n", 0.9e-7, 0.0);
+								fclose(fpKras_min);
+							}
 						}
 
 						doublereal phisicaltime = StartTime;
 						bool btimedep = true; // нестационарный солвер
 						integer i_gl = 0;
+
+
+						// Формируем отчёт о температуре каждого объекта из которой состоит модель:
+			            // Начальное распределение поля температур.
+						if (bTemperature) {
+							//if (!bsecond_T_solver)
+							{
+								// Второй температурный солвер пишет результат вычисления в t.potent
+								// поэтому может быть применён report_temperature_for_unsteady_modeling и для
+								// вычисления на основе второго температурного солвера.
+								report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, 1.0, t.operatingtemperature);
+							}
+						}
 
 
 						// Запоминаем скорректированную скорость с предыдущей итерации.
@@ -9991,6 +10938,15 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									// стационарный решатель на данном шаге по времени:
 									bool bfirst = true;
 									integer iend = 40; // число итераций.
+
+									if (number_iteration_SIMPLE_algorithm > 0) {
+										// 22.09.2019
+										// Количество итераций SIMPLE алгоритма заданные 
+										// пользователем через графический интерфейс.
+										iend = number_iteration_SIMPLE_algorithm;
+									}
+
+
 									QuickMemVorst my_memory_bicgstab;
 									my_memory_bicgstab.ballocCRScfd = false; // выделяем память.
 									my_memory_bicgstab.bsignalfreeCRScfd = false; // не уничтожаем память ещё рано.
@@ -10953,7 +11909,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										bool breturn = false;
 										//exporttecplotxy360( nve, maxelm, ncell, nvtx, nvtxcell, x, y, potent, rhie_chow);
 										// экспорт результата вычисления в программу tecplot360:
-										if (1 && ((i + 1) % 10 == 0)) {
+										if (0 && ((i + 1) % 10 == 0)) {
 											// 25.03.2019
 											// экспорт результата вычисления в программу tecplot360:
 											if (!b_on_adaptive_local_refinement_mesh) {
@@ -10966,7 +11922,9 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											//getchar(); // debug avtosave
 											breturn = true;
 										}
-										if ((i + 1) % 20 == 0) {
+
+										// avtosave не работает им нельзя пользоваться.
+										/*if (0&&((i + 1) % 20 == 0)) {
 											// автосохранение
 #if doubleintprecision == 1
 											printf("avtosave...iter=%lld \n", i + 1);
@@ -10977,7 +11935,9 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											inumber_iteration_SIMPLE[iflow] = i;
 											avtosave(fglobal, t, flow_interior, inumber_iteration_SIMPLE, continity_start);
 											breturn = true;
-										}
+										}*/
+
+										
 
 										if (breturn) printf("\n");
 
@@ -10994,6 +11954,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											start_average_continity = rfluentres.res_no_balance;
 										}
 
+										/*
 										if ((i>20) && (rfluentres.res_no_balance / start_average_continity < 1.0e-12)) {
 											// Во Fluent вроде считают до значений невязки 1.0Е-3 и они считают
 											// что решение точно получено по крайней мере для достаточно больших моделей 
@@ -11026,6 +11987,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 											}
 										}
+										*/
 
 										// 28.07.2016
 										// exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint);
@@ -11034,6 +11996,182 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									} // конец одной итерации алгоритма SIMPLE
 
 									
+
+									for (integer i = 0; i < iNUMBER_FUNCTION_TURBULENT_OLD_TIME_STEP; i++) {
+										for (integer i60 = 0; i60 < fglobal[iflow].maxelm; i60++) {
+											switch (i) {
+											case TURBULENT_KINETIK_ENERGY_MENTER_SST_OLD_TIME_STEP:
+												fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_KINETIK_ENERGY_MENTER_SST_OLD_TIME_STEP][i60] = fglobal[iflow].potent[TURBULENT_KINETIK_ENERGY][i60];
+												break;
+											case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_OLD_TIME_STEP:
+												fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_OLD_TIME_STEP][i60] = fglobal[iflow].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][i60];
+												break;
+											case TURBULENT_NUSHA_OLD_TIME_STEP:
+												fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_NUSHA_OLD_TIME_STEP][i60] = fglobal[iflow].potent[NUSHA][i60];
+												break;
+											}
+										}
+									}
+
+									// Модуль скорости и давление, а также температура.
+#pragma omp parallel for
+									for (int i60 = 0; i60 < t.maxelm; i60++) {
+										// Первый кадр
+										int j60 = t.ptr[0][i60];
+										if ((t.ptr[1][i60] > -1) && (j60 > -1) && (j60 < fglobal[iflow].maxelm)) {
+											animation_sequence_functions_openGL[0][j + 1][i60] = sqrt(fglobal[iflow].potent[VXCOR][j60] * fglobal[iflow].potent[VXCOR][j60] +
+												fglobal[iflow].potent[VYCOR][j60] * fglobal[iflow].potent[VYCOR][j60] +
+												fglobal[iflow].potent[VZCOR][j60] * fglobal[iflow].potent[VZCOR][j60]); // Модуль скорости.
+
+											animation_sequence_functions_openGL[1][j + 1][i60] = sqrt(fglobal[iflow].potent[PRESS][j60]);// Давление, Па.
+										}
+										else {
+											animation_sequence_functions_openGL[0][j + 1][i60] = 0.0; // Твёрдое тело. Модуль скорости, м/с.
+											animation_sequence_functions_openGL[1][j + 1][i60] = 0.0; // Твёрдое тело. Давление, Па.
+										}
+									}
+									if (eqin.itemper == 1) {
+										// Температура.
+#pragma omp parallel for
+										for (int i60 = 0; i60 < t.maxelm; i60++) {
+											animation_sequence_functions_openGL[2][j + 1][i60] = t.potent[i60]; // Поле температур в нулевом кадре.
+										}
+									}
+
+									// Формируем отчёт о температуре каждого объекта из которой состоит модель:
+									report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], t.operatingtemperature);
+
+									doublereal tmaxi = -1.0e10; // максимальная температура для внутренних КО.
+
+
+									doublereal tmaxavg = -273.15;
+									doublereal* nullpointer = nullptr;
+									if (bTemperature) {
+										
+											//if (!b_on_adaptive_local_refinement_mesh) {
+
+												// Фильтрация вызывает сбой, я отказываюсь от неё 9.01.2017.
+												// Фильтрация работает только на обычной прямоугольной 
+												// структурированной  сетке.
+												/*
+												doublereal* tempfiltr = new doublereal[t.maxelm + t.maxbound];
+												double_average_potent(t.potent, tempfiltr,
+													t.maxelm, t.maxbound, t.neighbors_for_the_internal_node,
+													t.nvtx, t.pa, nullpointer,
+													SIMPSON_FILTR, t.border_neighbor, 0); // VOLUME_AVERAGE_FILTR
+
+												for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, tempfiltr[i]);
+												if (!b_on_adaptive_local_refinement_mesh) {
+													xyplot_temp(t, tempfiltr);
+												}
+												if (tempfiltr != nullptr) {
+													delete[] tempfiltr; // освобождение памяти.
+													tempfiltr = nullptr;
+												}
+												*/
+												//for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
+											//}
+											//else {
+											for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
+											//}
+										
+									}
+									doublereal Pdiss = 0.0; // Мощность рассеиваемая в тепло.
+									doublereal tmaxall = tmaxi; // максимальная температура для всех КО внутренних и граничных.
+									if (bTemperature) {
+										
+											integer ifindloc = 0; // позиция на сетке где найдена максимальная температура.
+											for (integer i = 0; i < t.maxelm; i++) {
+												//tmaxi=fmax(tmaxi,t.potent[i]);
+												if (t.potent[i] > tmaxi) {
+													tmaxi = t.potent[i];
+													ifindloc = i; // запоминаем позицию максимума.
+												}
+											}
+
+											for (integer i = t.maxelm; i < t.maxelm + t.maxbound; i++) tmaxall = fmax(tmaxall, t.potent[i]);
+
+
+											for (integer isource = 0; isource < ls; isource++) {
+												Pdiss += s[isource].power;
+											}
+											//for (integer iblock = 0; iblock < lb; iblock++) {
+												//Pdiss += b[iblock].Sc*fabs(b[iblock].g.xE - b[iblock].g.xS)*fabs(b[iblock].g.yE - b[iblock].g.yS)*fabs(b[iblock].g.zE - b[iblock].g.zS);
+											//}
+										
+									}
+
+									// 19 november 2016.
+				// Обновление мощности тепловыделения во всех внутренних узлах.
+									if (bTemperature) {
+										
+											for (integer i47 = 0; i47 < t.maxelm; i47++) {
+												// Скорость в том что значение не вычисляется как раньше а просто хранится.
+												integer ib = t.whot_is_block[i47];
+												t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
+												// вычисление размеров текущего контрольного объёма:
+												doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+												volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
+												Pdiss += t.Sc[i47] * dx * dy * dz;
+											}
+										
+										printf("Pdiss=%e\n", Pdiss); // мощность рассеиваемая в тепло и определяемая лишь по плоским источникам.
+										if (fabs(Pdiss) < 1.0e-30) {
+											Pdiss = 1.0; // будем печатать вместо RT перегрев.
+											printf("Warning !!! Pdissipation Energy is equal zero (calculation source object).\n");
+											printf("Pdiss_virtual:=1.0; RT==DeltaT==(Tmax-Tamb)/1.0;\n");
+											printf("Please, press any key to continue...\n");
+											//getchar();
+											system("pause");
+										}
+									}
+									//getchar();
+
+									if (bTemperature) {
+										fprintf(fpcurvedata, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n", phisicaltime, tmaxall, (tmaxall - Tamb) / Pdiss, tmaxi, (tmaxi - Tamb) / Pdiss, tmaxavg, (tmaxavg - Tamb) / Pdiss);
+										if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::LINEAR) {
+											// Linear.
+											if (evdokimova_report != nullptr) {
+												evdokimova_report[j + 1][0] = phisicaltime; evdokimova_report[j + 1][1] = tmaxall; evdokimova_report[j + 1][2] = (tmaxall - Tamb) / Pdiss;
+												evdokimova_report[j + 1][6] = phisicaltime; evdokimova_report[j + 1][7] = tmaxi;  evdokimova_report[j + 1][8] = (tmaxi - Tamb) / Pdiss;
+												evdokimova_report[j + 1][12] = phisicaltime; evdokimova_report[j + 1][13] = tmaxavg; evdokimova_report[j + 1][14] = (tmaxavg - Tamb) / Pdiss;
+											}
+										}
+										fprintf(fpKras, "%+.16f %+.16f\n", phisicaltime, tmaxi); // tmaxall
+									}
+
+									if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE) {
+										// Только если square wave.
+										if ((j + 1 - 10) % 20 == 0) {
+#ifdef MINGW_COMPILLER
+											fpKras_max = fopen64("inputKras_max.txt", "a");
+#else
+											err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "a");
+#endif
+											if ((err23_max == 0) && (fpKras_max != NULL)) {
+
+												if (bTemperature) {
+													fprintf(fpKras_max, "%+.16f %+.16f\n", phisicaltime, tmaxi);
+												}
+												fclose(fpKras_max);
+											}
+										}
+										if ((j + 1) % 20 == 0) {
+#ifdef MINGW_COMPILLER
+											fpKras_min = fopen64("inputKras_min.txt", "a");
+#else
+											err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "a");
+#endif
+											if ((err23_min == 0) && (fpKras_min != NULL)) {
+												if (bTemperature) {
+													fprintf(fpKras_min, "%+.16f %+.16f\n", phisicaltime, tmaxi);
+												}												
+												fclose(fpKras_min);
+											}
+										}
+									}
+									printf("complete is: %3.0f %% \n", (doublereal)(100.0 * (j + 1) / iN)); // показывает сколько процентов выполнено.
+
 									for (integer i = 0; i < 3; i++) {
 										if (rhie_chow[i] != nullptr) {
 											delete[] rhie_chow[i];
@@ -11074,13 +12212,19 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							*/
 
 							// запоминаем поле температур:
-							for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) {
+							integer isize_loc1 = t.maxelm + t.maxbound;
+
+#pragma omp parallel for
+							for (integer i1 = 0; i1 < isize_loc1; i1++) {
 								toldtimestep[i1] = t.potent[i1]; // copy end time step
 							}
 
 							// запоминаем поле скорости:
 							
-								for (integer i3 = 0; i3 < (fglobal[iflow].maxelm + fglobal[iflow].maxbound); i3++) {
+							isize_loc1 = (fglobal[iflow].maxelm + fglobal[iflow].maxbound);
+
+#pragma omp parallel for
+								for (integer i3 = 0; i3 < isize_loc1; i3++) {
 									// i1 - номер FLUID INTERIOR,
 									// i2 - VX, VY, VZ - одна из трёх компонент скорости,
 									// i3 - соответствующий номер контрольного объёма 
@@ -11091,6 +12235,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							
 
 							// запоминаем конвективный поток через границы КО:
+#pragma omp parallel for
 							for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
 									for (integer i3 = 0; i3 < 6; i3++) {
 										mfoldtimestep[i2][i3] = fglobal[iflow].mf[i2][i3]; // copy end time step
@@ -11098,7 +12243,9 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								}
 							
 
-							if (1) {
+							if (0) {
+								// операции с файлом очень медленные.
+
 								printf("phisicaltime ==%f\n", phisicaltime);
 								// экспорт результата вычисления в программу tecplot360:
 								//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
@@ -11121,6 +12268,83 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 						}  // конец одного шага по времени.
 
+
+						unsigned int calculation_main_end_time = clock();
+						unsigned int calculation_main_seach_time = calculation_main_end_time - calculation_main_start_time_global_Depend;
+
+						// Общее время вычисления.
+						int im = 0, is = 0, ims = 0;
+						im = (int)(calculation_main_seach_time / 60000); // минуты
+						is = (int)((calculation_main_seach_time - 60000 * im) / 1000); // секунды
+						ims = (int)((calculation_main_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
+
+						printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
+
+
+						if (1) {
+
+							pa_opengl = new TOCHKA[t.maxelm];
+							pa_render = new TOCHKA[t.maxelm];
+							n_render = t.maxelm;
+							for (int i = 0; i < t.maxelm; i++) {
+								pa_opengl[i].x = t.database.x[i];
+								pa_opengl[i].y = t.database.y[i];
+								pa_opengl[i].z = t.database.z[i];
+
+								pa_render[i].x = halfScreenWidth + scale_all * t.database.x[i];
+								pa_render[i].y = halfScreenHeight + scale_all * t.database.y[i];
+								pa_render[i].z = -abbys + scale_all * t.database.z[i];
+							}
+
+
+							doublereal dmin = 1.0e30;
+							doublereal dmax = -1.0e30;
+
+							//iCURENT_FUNC_openGL == 0;
+							for (int i37 = 0; i37 < t.maxelm; i37++) {
+								if (animation_sequence_functions_openGL[iCURENT_ANIMATION_FUNCTION][iCURENT_ANIMATION_CADER][i37] > dmax) {
+									dmax = animation_sequence_functions_openGL[iCURENT_ANIMATION_FUNCTION][iCURENT_ANIMATION_CADER][i37];
+								}
+								if (animation_sequence_functions_openGL[iCURENT_ANIMATION_FUNCTION][iCURENT_ANIMATION_CADER][i37] < dmin) {
+									dmin = animation_sequence_functions_openGL[iCURENT_ANIMATION_FUNCTION][iCURENT_ANIMATION_CADER][i37];
+								}
+							}
+
+							minimum_val_for_render_pic = dmin;
+							maximum_val_for_render_pic = dmax;
+
+							DrawZbufferColor( t.ncell, t.maxelm, t.database.nvtxcell);
+							delete[] pa_opengl;
+							delete[] pa_render;
+							n_render = -1;
+							
+							if (animation_sequence_functions_openGL != nullptr) {
+								for (int i_42 = 0; i_42 < iNUMBER_ANIMATION_FUNCTIONS; i_42++) {
+									for (int j42 = 0; j42 < iNUMBER_ANIMATION_CADERS; j42++) {
+										// Удаляем аниммационные кадры.
+										delete[]  animation_sequence_functions_openGL[i_42][j42];
+									}
+
+									delete[] animation_sequence_functions_openGL[i_42];
+								}
+								delete[] animation_sequence_functions_openGL;
+							}
+							animation_sequence_functions_openGL = nullptr;
+							iNUMBER_ANIMATION_FUNCTIONS = -1;
+							iNUMBER_ANIMATION_CADERS = -1;
+							iCURENT_ANIMATION_CADER = 0;
+							iCURENT_ANIMATION_FUNCTION = 0;
+							iCFD_animation = 0;
+
+						}
+
+
+												
+								
+						delete[] fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_KINETIK_ENERGY_MENTER_SST_OLD_TIME_STEP];
+						delete[] fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_OLD_TIME_STEP];
+						delete[] fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_NUSHA_OLD_TIME_STEP];
+						
 
 						for (integer i = 0; i < 3; i++) {
 							if (SpeedCorOldinternal[i] != nullptr) {
@@ -11176,6 +12400,10 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						}
 						toldtimestep = nullptr;
 
+						fclose(fpKras);
+						
+						fclose(fpcurvedata);
+
 						fclose(fpcont); // закрытие файла для записи невязки.
 						// экспорт результата расчёта в программу tecplot360
 						//exporttecplotxy360_3D( f.maxelm, f.ncell, f.nvtx, f.nvtxcell, f.pa, f.potent, rhie_chow);
@@ -11195,6 +12423,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 			}
 		}
 	}
+}
+}
 
 	delete[] color;
 	delete[] color_solid;

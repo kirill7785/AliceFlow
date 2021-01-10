@@ -286,6 +286,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 	bool* &flag,	
 	bool* &F_false_C_true, // C/F разбиение.
 	Ak1* &P, // оператор интерполяции.
+	int * &whot_is_block,
 	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit
 ) {
 
@@ -497,6 +498,8 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		}
 		equation3DtoCRSRUMBA1(milu2[0], true, Amat, 1, n_a[0], row_ptr_start, row_ptr_end, 0, 0);
 	}
+
+	
 
 	// 14 сентября 2015 понедельник четвёртый уровень вложенности.
 	// Уровни вложенности с первого по седьмой сразу. 12.07.2016.
@@ -935,7 +938,8 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 
 
 	// maxlevel==201
-	for (integer i_17 = 1; i_17 <= maxlevel - 1; i_17++) {
+	for (integer i_17 = 1; i_17 <= maxlevel - 1; i_17++)
+	{
 		// 05.06.2017
 		integer i_17_prev = i_17 - 1;
 
@@ -1008,7 +1012,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 	doublerealT dres_previos = 1.0e37;
 	integer icount_bad_convergence_Vcycles = 0;
 	integer i_count_stagnation = 0;
-	doublerealT res0start = 1.0e-40;
+	doublerealT res0start = 1.0e-36;
 	bool bfirst_divergence = true;
 
 	residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
@@ -1146,8 +1150,8 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		if (iVar == PAM) tolerance *= 1e-14;
 		if (iVar == TEMP) tolerance *= 1e-6;
 		if (iVar == TOTALDEFORMATIONVAR) tolerance = 1.0e-17;
-		doublereal minx_gl = 1.0e40;
-		doublereal maxx_gl = -1.0e40;
+		doublereal minx_gl = 1.0e36;
+		doublereal maxx_gl = -1.0e36;
 		//for (integer iprohod = 0; iprohod < 20; iprohod++) {
 		//while ((iflag_cont == 1) && ((dres>tolerance) || ((iVar != TEMP) && (icount_V_cycle<5)))) {
 		///	while ((iflag_cont == 1) && ((dres>tolerance) )) {
@@ -1341,7 +1345,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 								}
 							}
 
-							radiosity_patch_for_vacuum_Prism_Object_(rthdsd_loc123, my_body, lb, maxelm_out);
+							radiosity_patch_for_vacuum_Prism_Object_(rthdsd_loc123, my_body, lb, maxelm_out, whot_is_block);
 #pragma omp parallel for
 							for (integer i23 = 0; i23 < n_a[0]; i23++) {
 								x_old[i23 + 1] = x_temper[i23];
@@ -1743,6 +1747,10 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 			doublerealT R0_0 = 0.0;
 			doublerealT Rprev_0 = 0.0, Rnext_0 = 0.0;
 			if (process_flow_logic) {
+
+				//printf("process_flow_logic \n");
+				//getchar();
+
 				// calculate initial residual.
 				//residualq<doublereal>(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
 				residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
@@ -1777,6 +1785,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 
 			}
 			else {
+				
+
+
 				// smoother
 				for (integer iter = 0; iter < nu1; iter++) {
 					//seidel(Amat, 1, nnz_a[0], x, b, flag, n_a[0]);
@@ -1831,22 +1842,25 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				if (((iVar == TEMP) && (my_amg_manager.istabilization == 3))) {
 					//  Сходимость достигнута - досрочный выход из решения нелинейной задачи.
 					if ((fabs(minx - minx_gl) < 2.0e-3) && (fabs(maxx - maxx_gl) < 2.0e-3)) {
-						std::cout <<  "Solution nonlinear problem converged succsefull. Ok..." << std::endl;
+						if (bprint_mesage_diagnostic) {
+							std::cout << "Solution nonlinear problem converged succsefull. Ok..." << std::endl;
+						}
 						break;
 					}
 				}
 
 				minx_gl = minx;
 				maxx_gl = maxx;
-
-				if (iiter < 10) {
-					std::cout << iiter << "   " << dres << " rho=" << dres / rho << " min=" << minx << " max=" << maxx << "\n";
-				}
-				else if (iiter < 100) {
-					std::cout << iiter << "  " << dres << " rho=" << dres / rho << " min=" << minx << " max=" << maxx << "\n";
-				}
-				else {
-					std::cout << iiter << " " << dres << " rho=" << dres / rho << " min=" << minx << " max=" << maxx << "\n";
+				if (bprint_mesage_diagnostic) {
+					if (iiter < 10) {
+						std::cout << iiter << "   " << dres << " rho=" << dres / rho << " min=" << minx << " max=" << maxx << "\n";
+					}
+					else if (iiter < 100) {
+						std::cout << iiter << "  " << dres << " rho=" << dres / rho << " min=" << minx << " max=" << maxx << "\n";
+					}
+					else {
+						std::cout << iiter << " " << dres << " rho=" << dres / rho << " min=" << minx << " max=" << maxx << "\n";
+					}
 				}
 
 				if (!((iVar == TEMP) && (my_amg_manager.istabilization == 3))) {
@@ -1984,7 +1998,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 					i_signal_break_pam_opening++;
 					if (i_signal_break_pam_opening > i_limit_signal_pam_break_opening) {
 
-						std::cout <<  "iter = " << iiter << std::endl;
+						if (bprint_mesage_diagnostic) {
+							std::cout << "iter = " << iiter << std::endl;
+						}
 
 						// Обратное копирование и выход и алгоритма.
 #pragma omp parallel for
@@ -2633,7 +2649,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 			if (iVar == PAM) {
 				if (i_signal_break_pam_opening75 > i_limit_signal_pam_break_opening75) {
 					// досрочный выход из цикла.
-					std::cout <<  "icount PAM=" << icount75 << "\n";
+					if (bprint_mesage_diagnostic) {
+						std::cout << "icount PAM=" << icount75 << "\n";
+					}
 
 					break;
 				}
@@ -2651,7 +2669,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 			// Успешное условие окончания вычислительного процесса следуя алгоритму FGMRES Ю.Саада.
 			if (0 && ((NormaV_for_gmres(ri75, n75) / norma_b) <= 0.1 * dterminatedTResudual)) {
 				iflag75 = 0; // конец вычисления
-				std::cout << "dosrochnji vjhod"<< std::endl;
+				if (bprint_mesage_diagnostic) {
+					std::cout << "dosrochnji vjhod" << std::endl;
+				}
 				icount_V_cycle = icount75; // количество итераций в BiCGStabP для лога.
 				break;
 			}
@@ -2845,7 +2865,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 
 		const integer maxit = 2000;
 
-		if ((resid = norm_r / normb) <= dterminatedTResudual) {
+		resid = norm_r / normb;
+
+		if (0&&((resid) <= dterminatedTResudual)) {
 			//tol = resid;
 			//maxit = 0;
 			//return 0;
@@ -2905,6 +2927,10 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 			   //doublereal delta = 1.0e-3;// DOPOLNENIE
 
 		integer i_copy;
+
+		//if ((bnonlinear) && (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)) {
+			//maxit = 5; // 5 не подходит, надо решать до сходимости.
+		//}
 
 		while (j <= maxit) {
 
@@ -3036,16 +3062,28 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				// т.к. иначе это приводит к развалу решения.
 				//if (fabs(s[i] - s[i + 1]) < 1.0e-37) s[i + 1] = 1.05*s[i];
 
-				std::cout << j << " " << fabs(s[i + 1]) / normb <<" \n";
-				//std::cout << j <<" "<< beta*fabs(s[i + 1]) << " \n";
-				//getchar();
+				if (bprint_mesage_diagnostic) {
+					std::cout << j << " " << fabs(s[i + 1]) / normb << " \n";
+					//std::cout << j <<" "<< beta*fabs(s[i + 1]) << " \n";
+					//getchar();
+				}
 
 				resid = fabs(s[i + 1]) / normb;
 				//resid = beta*fabs(s[i + 1]);
 
-				if ((resid) < dterminatedTResudual) {
-					std::cout << "dosrochnji vjhod" << std::endl;
-					//getchar();				
+				if (((((i > 4)&&((iVar==VELOCITY_X_COMPONENT)|| (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)))||
+					((iVar != VELOCITY_X_COMPONENT) && (iVar != VELOCITY_Y_COMPONENT) && (iVar != VELOCITY_Z_COMPONENT)))||
+					((iVar==TEMP)&&(((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)&&(i > 4))||
+						(steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY))))
+					&&((resid) < dterminatedTResudual)) {
+
+
+					if (bprint_mesage_diagnostic)
+					{
+						std::cout << "dosrochnji vjhod" << std::endl;
+						std::cout << "resid=" << resid << " dterminatedTResudual=" << dterminatedTResudual;
+						//getchar();				
+					}
 					Update(dx, i, n75, H, s, Z);
 					//tol = resid;
 					//maxit = j;
@@ -3263,7 +3301,7 @@ LABEL_FGMRES_CONTINUE:
 
 	identiti = true;
 	for (integer i47 = 1; i47 <= n_a[0]; i47++) {
-		if (fabs(x[i47] - x_best_search_init[i47]) > 1e-5) {
+		if (fabs(x[i47] - x_best_search_init[i47]) > 1.0e-5) {
 			identiti = false;
 		}
 	}
@@ -3281,10 +3319,12 @@ LABEL_FGMRES_CONTINUE:
 	// Метка к которой мы приходим если значение невязки превысило 1.0e7.
 FULL_DIVERGENCE_DETECTED:
 
-	std::cout << "number of negative diagonals: ibsp_length=" << ibsp_length << std::endl;
+	if (bprint_mesage_diagnostic) {
+		std::cout << "number of negative diagonals: ibsp_length=" << ibsp_length << std::endl;
+	}
 
 	// диагностическое сообщение какую переменную мы решаем.
-	if (bprint_mesage_diagnostic) {
+	/*if (bprint_mesage_diagnostic) {
 		switch (iVar) {
 		case PAM: std::cout << "PAM" << std::endl;  break;
 		case VELOCITY_X_COMPONENT:  std::cout << "VELOCITY_X_COMPONENT"<< std::endl; break;
@@ -3299,8 +3339,9 @@ FULL_DIVERGENCE_DETECTED:
 		case TOTALDEFORMATIONVAR: std::cout << "Stress system"<< std::endl; break;
 		}
 	}
-	else {
+	else {*/
 
+	if (bprint_mesage_diagnostic) {
 		//switch (iVar) {
 		// Радиатор водяного охлаждения 3л/мин ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
@@ -3320,21 +3361,21 @@ FULL_DIVERGENCE_DETECTED:
 		switch (iVar) {
 			// Радиатор водяного охлаждения 3л/мин ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
-		case PAM: std::cout << "PAM level="<<ilevel<<"  CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<" n_a[ilevel - 2]="<<n_a[ilevel - 2]<<" n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl;  break;
-		case VELOCITY_X_COMPONENT:  std::cout << "VELOCITY_X_COMPONENT level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
-		case VELOCITY_Y_COMPONENT:  std::cout << "VELOCITY_Y_COMPONENT level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
-		case VELOCITY_Z_COMPONENT:  std::cout << "VELOCITY_Z_COMPONENT level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
-		case NUSHA:  std::cout << "NUSHA level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
-		case TURBULENT_KINETIK_ENERGY:  std::cout << "TURBULENT_KINETIK_ENERGY level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
-		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  std::cout << "TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
-		case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  std::cout << " TURBULENT_KINETIK_ENERGY_STD_K_EPS level = "<<ilevel<<" CopA = "<<dr_grid_complexity<<" CopP = "<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV = "<<icount_V_cycle<<" res0 = "<<dres_initial<<"  n_a[ilevel - 2] ="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1] = "<<n_a[ilevel - 1]<<" n_a[ilevel] = "<< n_a[ilevel]<<std::endl; break;
-		case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  std::cout << "TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS level = "<<ilevel<<" CopA = "<<dr_grid_complexity<<" CopP = "<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV = "<<icount_V_cycle<<" res0 ="<<dres_initial<<"  n_a[ilevel - 2] = "<<n_a[ilevel - 2]<<"  n_a[ilevel - 1] = "<<n_a[ilevel - 1]<<" n_a[ilevel] = "<< n_a[ilevel]<<std::endl;  break;
-		case TEMP:  std::cout << "TEMP level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
-		case TOTALDEFORMATIONVAR:  std::cout << "Stress system  level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
+		case PAM: std::cout << "PAM level=" << ilevel << "  CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << " n_a[ilevel - 2]=" << n_a[ilevel - 2] << " n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl;  break;
+		case VELOCITY_X_COMPONENT:  std::cout << "VELOCITY_X_COMPONENT level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
+		case VELOCITY_Y_COMPONENT:  std::cout << "VELOCITY_Y_COMPONENT level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
+		case VELOCITY_Z_COMPONENT:  std::cout << "VELOCITY_Z_COMPONENT level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
+		case NUSHA:  std::cout << "NUSHA level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
+		case TURBULENT_KINETIK_ENERGY:  std::cout << "TURBULENT_KINETIK_ENERGY level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
+		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  std::cout << "TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
+		case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  std::cout << " TURBULENT_KINETIK_ENERGY_STD_K_EPS level = " << ilevel << " CopA = " << dr_grid_complexity << " CopP = " << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV = " << icount_V_cycle << " res0 = " << dres_initial << "  n_a[ilevel - 2] =" << n_a[ilevel - 2] << "  n_a[ilevel - 1] = " << n_a[ilevel - 1] << " n_a[ilevel] = " << n_a[ilevel] << std::endl; break;
+		case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  std::cout << "TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS level = " << ilevel << " CopA = " << dr_grid_complexity << " CopP = " << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV = " << icount_V_cycle << " res0 =" << dres_initial << "  n_a[ilevel - 2] = " << n_a[ilevel - 2] << "  n_a[ilevel - 1] = " << n_a[ilevel - 1] << " n_a[ilevel] = " << n_a[ilevel] << std::endl;  break;
+		case TEMP:  std::cout << "TEMP level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
+		case TOTALDEFORMATIONVAR:  std::cout << "Stress system  level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
 		}
 
-
 	}
+	//}
 
 
 	// free
@@ -5691,7 +5732,99 @@ void my_realloc_memory(myARRT* &x, integer n) {
 	}
 }
 
+// Визуализирует портрет матрицы с помощью графической библиотеки OpenGL.
+int PortraitPrint(Ak2 &Amat, integer iadd, integer nnz, integer n) {
 
+	SCREEN_WIDTH = 500;
+	SCREEN_HEIGHT = 500;
+
+	GLFWwindow* window;
+
+	/* Initialize the library */
+	if (!glfwInit())
+		return -1;
+
+	/* Create a windowed mode window and its OpenGL context */
+	window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "AliceFlow_v0_49", NULL, NULL);
+
+
+	glfwSetKeyCallback(window, keyCallback);
+	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
+
+	int screenWidth, screenHeight;
+	glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
+
+	if (!window)
+	{
+		glfwTerminate();
+		return -1;
+	}
+
+	/* Make the window's context current */
+	glfwMakeContextCurrent(window);
+
+
+	glViewport(0.0f, 0.0f, screenWidth, screenHeight); // specifies the part of the window to which OpenGL will draw (in pixels), convert from
+	// normalised to pixels
+	glMatrixMode(GL_PROJECTION); // projection matrix defines the properties of the camera that views the objects in the world coordinate frame.
+	// Here you typically set the zoom factor, aspect ratio and the near and far clipping planes
+	glLoadIdentity(); // replace the current matrix with the identity matrix and starts us a fresh because matrix transforms such as glOrtho and
+	// glRotate cumulate, besically puts us at (0, 0, 0)
+	glOrtho(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, 0, 1); // essentially set coordinate system
+	glMatrixMode(GL_MODELVIEW); // (default matrix mode) modelview matrix defines how objects are transformed (meaning translation, rotation
+	// and scaling) in your world
+
+	glLoadIdentity(); // same as above comment 
+
+	GLfloat halfScreenWidth = SCREEN_WIDTH / 2;
+	GLfloat halfScreenHeight = SCREEN_HEIGHT / 2;
+
+
+
+	/* Loop until the user closes the window */
+	while (!glfwWindowShouldClose(window))
+	{
+
+		//glClearColor(0.7f, 1.0f, 0.7f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		/* Render OpenGL here */
+
+		glPushMatrix();
+		//glColor3d(1, 1, 1);
+		glTranslatef(halfScreenWidth, halfScreenHeight, -500);
+		glRotatef(rotationX, 1, 0, 0);
+		glRotatef(rotationY, 0, 1, 0);
+		glTranslatef(-halfScreenWidth, -halfScreenHeight, 500);
+
+		//glPointSize(10);
+		/*сообщаем что нужно рисовать точку или точки*/
+		glBegin(GL_POINTS);
+		/*передам коордианты что нарисовать точку в координатах X=0 и Y=0*/
+		glColor3f(1.0, 1.0, 1.0);
+
+		for (integer i58 = 1 + iadd; i58 <= nnz + iadd; i58++) {
+			//fprintf(fp_portrait, "%d %d\n", Amat.i[i58], Amat.j[i58]);
+
+			//glVertex3f(0.5, 0.5, 0);
+			glVertex2f(500.0 * Amat.i[i58] / (1.0 * n), 500.0 - 500.0 * Amat.j[i58] / (1.0 * n));
+		}
+		/*сообщаем что завершили рисовать точку или точки*/
+		glEnd();
+
+		glPopMatrix();
+
+		/* Swap front and back buffers */
+		glfwSwapBuffers(window);
+
+		/* Poll for and process events */
+		glfwPollEvents();
+	}
+
+	glfwTerminate();
+
+	return 0;
+}
 
 // 29.07.2018 - xx.xx.xxxx Версия 6 на основе версии 4.
 // 24.04.2020 Выделил алгоритм селектора(C/F разбиения) в отдельную функцию.
@@ -6479,8 +6612,12 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		} // ilevel == 1
 
 
+		
+
 		if (my_amg_manager.bMatrixPortrait) {
 			// Печать портрета матрицы.
+
+			PortraitPrint(Amat, iadd, nnz_a[ilevel - 1], n_a[ilevel - 1]);
 
 			FILE* fp_portrait = NULL;
 			
@@ -9367,7 +9504,8 @@ bool classic_aglomerative_amg6(Ak2& Amat,
 	real_mix_precision& ret74,
 	integer iVar,
 	bool bmemory_savings,
-	BLOCK*& my_body, integer& lb, integer maxelm_out
+	BLOCK*& my_body, integer& lb, integer maxelm_out,
+	int * &whot_is_block
 ) {
 
 	amg_precond_param amg_pp;
@@ -9419,6 +9557,7 @@ bool classic_aglomerative_amg6(Ak2& Amat,
 	// Фаза решения может вызываться многократно,
 	// требуется обновлять правую часть СЛАУ.
 	// Матрица СЛАУ не должна меняться.
+	
 	bool ret_value = false;
 	ret_value = solution_phase<doublerealT>(Amat,
 		nsizeA, // количество ячеек выделенное извне для хранилища матриц А	
@@ -9438,9 +9577,10 @@ bool classic_aglomerative_amg6(Ak2& Amat,
 		i_bsp_LIMIT,
 		flag,
 		F_false_C_true, P,
+		whot_is_block,
 		imyinit);
 
-
+	
 	
 	if (P != nullptr) {
 		//delete[] P;
@@ -9466,6 +9606,203 @@ bool classic_aglomerative_amg6(Ak2& Amat,
 
 	return ret_value;
 } // classic_aglomerative_amg6
+
+
+// Передает пользовательские настройки решающему алгоритму РУМБА 0.14
+void set_RUMBA_Classic_AMG_Setting(integer iVar)
+{
+	// настройка параметров РУМБА 0.14 решателя.
+	switch (iVar) {
+	case TEMP:
+		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Temperature);
+		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Temperature;
+		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Temperature;
+		my_amg_manager.nu1 = my_amg_manager.nu1_Temperature;
+		my_amg_manager.nu2 = my_amg_manager.nu2_Temperature;
+		my_amg_manager.memory_size = my_amg_manager.memory_size_Temperature;
+		//my_amg_manager.memory_size = 5.0; // вместо 9.0 даёт понижение используемой ОЗУ на 15.6%.
+		my_amg_manager.ilu2_smoother = my_amg_manager.ilu2_smoother_Temperature;
+		my_amg_manager.icoarseningtype = my_amg_manager.icoarseningTemp; // standart vs RS 2.
+		my_amg_manager.istabilization = my_amg_manager.istabilizationTemp; // Stabilization: 0 - none, 1 - bicgstab + amg (РУМБА), 2 - FGMRes + amg (РУМБА).
+		my_amg_manager.magic = my_amg_manager.F_to_F_Temperature; // magic
+		my_amg_manager.number_interpolation_procedure = my_amg_manager.number_interpolation_procedure_Temperature;
+		my_amg_manager.iCFalgorithm_and_data_structure = my_amg_manager.iCFalgorithm_and_data_structure_Temperature;
+		my_amg_manager.iprint_log = my_amg_manager.iprint_log_Temperature;
+		my_amg_manager.itruncation_interpolation = my_amg_manager.itruncation_interpolation_Temperature;
+		my_amg_manager.truncation_interpolation = my_amg_manager.truncation_interpolation_Temperature;
+		my_amg_manager.gold_const = my_amg_manager.gold_const_Temperature;
+		my_amg_manager.b_gmres = my_amg_manager.b_gmresTemp;
+		my_amg_manager.bMatrixPortrait = my_amg_manager.bTemperatureMatrixPortrait;
+		break;
+	case PAM:
+		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Pressure);
+		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Pressure;
+		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Pressure;
+		my_amg_manager.nu1 = my_amg_manager.nu1_Pressure;
+		my_amg_manager.nu2 = my_amg_manager.nu2_Pressure;
+		my_amg_manager.memory_size = my_amg_manager.memory_size_Pressure;
+		my_amg_manager.ilu2_smoother = my_amg_manager.ilu2_smoother_Pressure;
+		my_amg_manager.icoarseningtype = my_amg_manager.icoarseningPressure; // standart vs RS 2.
+		my_amg_manager.istabilization = my_amg_manager.istabilizationPressure; // Stabilization: 0 - none, 1 - bicgstab + amg (РУМБА), 2 - FGMRes + amg (РУМБА).
+		my_amg_manager.magic = my_amg_manager.F_to_F_Pressure; // magic
+		my_amg_manager.number_interpolation_procedure = my_amg_manager.number_interpolation_procedure_Pressure;
+		my_amg_manager.iCFalgorithm_and_data_structure = my_amg_manager.iCFalgorithm_and_data_structure_Pressure;
+		my_amg_manager.iprint_log = my_amg_manager.iprint_log_Pressure;
+		my_amg_manager.itruncation_interpolation = my_amg_manager.itruncation_interpolation_Pressure;
+		my_amg_manager.truncation_interpolation = my_amg_manager.truncation_interpolation_Pressure;
+		my_amg_manager.gold_const = my_amg_manager.gold_const_Pressure;
+		my_amg_manager.b_gmres = my_amg_manager.b_gmresPressure;
+		my_amg_manager.bMatrixPortrait = my_amg_manager.bPressureMatrixPortrait;
+		break;
+		// 10.10.2019 Для турбулентных характеристик настройка решателя такая же как и для компонент скорости.
+	case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
+	case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
+	case TURBULENT_KINETIK_ENERGY_STD_K_EPS: case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
+		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Speed);
+		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Speed;
+		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Speed;
+		my_amg_manager.nu1 = my_amg_manager.nu1_Speed;
+		my_amg_manager.nu2 = my_amg_manager.nu2_Speed;
+		my_amg_manager.memory_size = my_amg_manager.memory_size_Speed;
+		my_amg_manager.ilu2_smoother = my_amg_manager.ilu2_smoother_Speed;
+		my_amg_manager.icoarseningtype = my_amg_manager.icoarseningSpeed; // standart vs RS 2.
+		my_amg_manager.istabilization = my_amg_manager.istabilizationSpeed; // Stabilization: 0 - none, 1 - bicgstab + amg (РУМБА), 2 - FGMRes + amg (РУМБА).
+		my_amg_manager.magic = my_amg_manager.F_to_F_Speed; // magic
+		my_amg_manager.number_interpolation_procedure = my_amg_manager.number_interpolation_procedure_Speed;
+		my_amg_manager.iCFalgorithm_and_data_structure = my_amg_manager.iCFalgorithm_and_data_structure_Speed;
+		my_amg_manager.iprint_log = my_amg_manager.iprint_log_Speed;
+		my_amg_manager.itruncation_interpolation = my_amg_manager.itruncation_interpolation_Speed;
+		my_amg_manager.truncation_interpolation = my_amg_manager.truncation_interpolation_Speed;
+		my_amg_manager.gold_const = my_amg_manager.gold_const_Speed;
+		my_amg_manager.b_gmres = my_amg_manager.b_gmresSpeed;
+		my_amg_manager.bMatrixPortrait = my_amg_manager.bSpeedMatrixPortrait;
+		break;
+	default :
+		std::cout << "set_RUMBA_Classic_AMG_Setting unknown iVar\n";
+		system("pause");
+		break;
+	}
+}// set_RUMBA_Classic_AMG_Setting
+
+
+bool classic_aglomerative_amg6_for_NetworkT(doublereal*& val, integer*& col_ind, integer*& row_ptr,
+	integer n, integer nnz, doublereal*& rthdsd, doublereal* & potent, BLOCK* &b, integer &lb	
+) {
+
+	set_RUMBA_Classic_AMG_Setting(TEMP);
+
+	// 0 - Убираем подробную печать лога на консоль.
+	my_amg_manager.iprint_log = 0;
+
+
+	// РУМБА v.0.14
+
+							// Свой собственный многосеточный метод, работает с alphaA строго меньше 0.9.
+							// работает с alphaA=0.1, но очень медленно. 
+
+	integer nsizeA = 13 * nnz;//13 слишком много, можно ужимать.
+	Ak2 Amat;
+	Amat.i = (integer_mix_precision*)malloc(nsizeA * sizeof(integer_mix_precision));
+	Amat.j = (integer_mix_precision*)malloc(nsizeA * sizeof(integer_mix_precision));
+	Amat.aij = (real_mix_precision*)malloc(nsizeA * sizeof(real_mix_precision)); ;
+	Amat.abs_aij = (real_mix_precision*)malloc(nsizeA * sizeof(real_mix_precision));
+
+	doublereal* x_copy = nullptr;
+	x_copy = (doublereal*)malloc((n + 1) * sizeof(doublereal));
+
+	doublereal* rthdsd_amg = nullptr;
+	rthdsd_amg = (doublereal*)malloc((n + 1) * sizeof(doublereal));
+
+	for (integer i47 = 1; i47 <= n; i47++) {
+		x_copy[i47] = potent[i47 - 1];
+		//x_copy[i47] = 0.001*(rand() % 100); // Случайное число от нуля до 0.1
+		rthdsd_amg[i47] = rthdsd[i47 - 1];
+	}
+
+
+
+	for (integer i_78 = 0; i_78 < n; i_78++) {
+		// Первая всегда диагональ.
+		for (integer i_79 = row_ptr[i_78]; i_79 < row_ptr[i_78 + 1]; i_79++) {
+			if (col_ind[i_79] == i_78) {
+				integer diagonal = row_ptr[i_78] + 1;
+				Amat.aij[diagonal] = val[i_79];
+				if (val[i_79] <= 0.0) {
+					std::cout << "diag aij=" << val[i_79] << " i=" << i_79 << std::endl;
+				}
+				Amat.abs_aij[diagonal] = fabs(val[i_79]);
+				Amat.j[diagonal] = col_ind[i_79] + 1; //  индексация столбца начинается с единицы
+			}
+		}
+
+		integer post = row_ptr[i_78] + 1 + 1;
+		for (integer i_79 = row_ptr[i_78]; i_79 < row_ptr[i_78 + 1]; i_79++) {
+			if (col_ind[i_79] != i_78) {
+				Amat.aij[post] = val[i_79];
+				if (val[i_79] >= 0.0) {
+					std::cout << "aij=" << val[i_79] << " i=" << i_79 << std::endl;
+				}
+				Amat.abs_aij[post] = fabs(val[i_79]);
+				Amat.j[post] = col_ind[i_79] + 1; //  индексация столбца начинается с единицы
+				post++;
+			}
+		}
+
+		for (integer i_79 = row_ptr[i_78]; i_79 < row_ptr[i_78 + 1]; i_79++) {
+			Amat.i[i_79 + 1] = i_78 + 1; // номер строки который начинается с единиуцы.
+		}
+	}
+
+	// Инициализация нулём.
+	for (integer i_78 = nnz + 1; i_78 < nsizeA - 1; i_78++) {
+
+		Amat.i[i_78] = 0;
+		Amat.j[i_78] = 0;
+		Amat.aij[i_78] = 0.0;
+		Amat.abs_aij[i_78] = 0.0;
+
+	}
+
+
+	for (integer i_78 = 1; i_78 <= nnz; i_78++) {
+		//std::cout << "i=" << Amat.i[i_78] << " j=" << Amat.j[i_78] << " aij=" << Amat.aij[i_78] << " abs_aij=" << Amat.abs_aij[i_78] << std::endl;
+		// Проверка на корректность.
+		if ((Amat.i[i_78] < 1) || (Amat.i[i_78] > n) || (Amat.j[i_78] < 1) || (Amat.j[i_78] > n)) {
+			system("PAUSE");
+		}
+	}
+
+
+	//system("PAUSE");
+
+
+	real_mix_precision ret74 = 0.0;
+	bool bmemory_savings = false;
+	int* whot_is_block_out = nullptr;
+
+	// Везде нумерация начинается с единицы
+	classic_aglomerative_amg6<real_mix_precision>(Amat, nsizeA, nnz, n, x_copy, rthdsd_amg,
+		ret74, TEMP, bmemory_savings, b, lb, -1, whot_is_block_out);
+
+
+	for (integer i47 = 1; i47 <= n; i47++) {
+		potent[i47 - 1] = x_copy[i47];
+		rthdsd[i47 - 1] = rthdsd_amg[i47];
+	}
+
+	free(Amat.i);
+	free(Amat.j);
+	free(Amat.aij);
+	free(Amat.abs_aij);
+	free(x_copy);
+	free(rthdsd_amg);
+
+	//getchar();
+
+	
+
+	return true;
+}
 
 // Специальная нелинейная версия amg1r5 алгоритма.
 #include "amg1r5_nonlinear.cpp"

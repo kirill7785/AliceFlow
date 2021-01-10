@@ -923,17 +923,138 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 			system("PAUSE");
 		}
 
-		if (1&&(1.00005*sl[i].ap< sl[i].ab+ sl[i].at+ sl[i].ae+ sl[i].aw+ sl[i].an+ sl[i].as+
-			sl[i].ab2 + sl[i].at2 + sl[i].ae2 + sl[i].aw2 + sl[i].an2 + sl[i].as2 + 
-				sl[i].ab3 + sl[i].at3 + sl[i].ae3 + sl[i].aw3 + sl[i].an3 + sl[i].as3 + 
-					sl[i].ab4 + sl[i].at4 + sl[i].ae4 + sl[i].aw4 + sl[i].an4 + sl[i].as4))
-		{
-			printf("bad diagonal preobladanie in string %lld ap=%e sum_anb=%e \n", i, sl[i].ap,
-				sl[i].ab + sl[i].at + sl[i].ae + sl[i].aw + sl[i].an + sl[i].as +
+		if (b_on_adaptive_local_refinement_mesh) {
+
+			if (1 && (1.00005 * sl[i].ap < sl[i].ab + sl[i].at + sl[i].ae + sl[i].aw + sl[i].an + sl[i].as +
 				sl[i].ab2 + sl[i].at2 + sl[i].ae2 + sl[i].aw2 + sl[i].an2 + sl[i].as2 +
 				sl[i].ab3 + sl[i].at3 + sl[i].ae3 + sl[i].aw3 + sl[i].an3 + sl[i].as3 +
-				sl[i].ab4 + sl[i].at4 + sl[i].ae4 + sl[i].aw4 + sl[i].an4 + sl[i].as4);
-			system("PAUSE");
+				sl[i].ab4 + sl[i].at4 + sl[i].ae4 + sl[i].aw4 + sl[i].an4 + sl[i].as4))
+			{
+				printf("bad diagonal preobladanie in string %lld ap=%e sum_anb=%e \n", i, sl[i].ap,
+					sl[i].ab + sl[i].at + sl[i].ae + sl[i].aw + sl[i].an + sl[i].as +
+					sl[i].ab2 + sl[i].at2 + sl[i].ae2 + sl[i].aw2 + sl[i].an2 + sl[i].as2 +
+					sl[i].ab3 + sl[i].at3 + sl[i].ae3 + sl[i].aw3 + sl[i].an3 + sl[i].as3 +
+					sl[i].ab4 + sl[i].at4 + sl[i].ae4 + sl[i].aw4 + sl[i].an4 + sl[i].as4);
+
+				switch (iVar) {
+				case TEMP: printf("TEMP iVar\n");
+					break;
+				case VELOCITY_X_COMPONENT: 
+					printf("VELOCITY_X_COMPONENT iVar\n");
+					break;
+				case VELOCITY_Y_COMPONENT:
+					printf("VELOCITY_Y_COMPONENT iVar\n");
+					break;
+				case VELOCITY_Z_COMPONENT:
+					printf("VELOCITY_Z_COMPONENT iVar\n");
+					break;
+				case PAM :
+					printf("PAM iVar\n");
+					break;
+				}
+				system("PAUSE");
+			}
+
+			if ((sl[i].iB2 > -1) && (fabs(sl[i].ab2) > nonzeroEPS)) (nna)++;
+			if (sl[i].ab2 < -nonzeroEPS) {
+				printf("bad ab2 in string %lld %e\n", i, -sl[i].ab2);
+			}
+			if ((sl[i].iE2 > -1) && (fabs(sl[i].ae2) > nonzeroEPS)) (nna)++;
+			if (sl[i].ae2 < -nonzeroEPS) {
+				printf("bad ae2 in string %lld %e\n", i, -sl[i].ae2);
+			}
+			if ((sl[i].iN2 > -1) && (fabs(sl[i].an2) > nonzeroEPS)) (nna)++;
+			if (sl[i].an2 < -nonzeroEPS) {
+				printf("bad an2 in string %lld %e\n", i, -sl[i].an2);
+			}
+			if ((sl[i].iS2 > -1) && (fabs(sl[i].as2) > nonzeroEPS)) (nna)++;
+			if (sl[i].as2 < -nonzeroEPS) {
+				printf("bad as2 in string %lld %e\n", i, -sl[i].as2);
+			}
+			if ((sl[i].iT2 > -1) && (fabs(sl[i].at2) > nonzeroEPS)) (nna)++;
+			if (sl[i].at2 < -nonzeroEPS) {
+				printf("bad at2 in string %lld %e\n", i, -sl[i].at2);
+			}
+			if ((sl[i].iW2 > -1) && (fabs(sl[i].aw2) > nonzeroEPS)) (nna)++;
+			if (sl[i].aw2 < -nonzeroEPS) {
+				printf("bad aw2 in string %lld %e\n", i, -sl[i].aw2);
+			}
+
+			if ((sl[i].iB3 > -1) && (fabs(sl[i].ab3) > nonzeroEPS)) (nna)++;
+			if (sl[i].ab3 < -nonzeroEPS) {
+				printf("bad ab3 in string %lld %e\n", i, -sl[i].ab3);
+			}
+			if ((sl[i].iE3 > -1) && (fabs(sl[i].ae3) > nonzeroEPS)) (nna)++;
+			if (sl[i].ae3 < -nonzeroEPS) {
+				printf("bad ae3 in string %lld %e\n", i, -sl[i].ae3);
+			}
+			if ((sl[i].iN3 > -1) && (fabs(sl[i].an3) > nonzeroEPS)) (nna)++;
+			if (sl[i].an3 < -nonzeroEPS) {
+				printf("bad an3 in string %lld %e\n", i, -sl[i].an3);
+			}
+			if ((sl[i].iS3 > -1) && (fabs(sl[i].as3) > nonzeroEPS)) (nna)++;
+			if (sl[i].as3 < -nonzeroEPS) {
+				printf("bad as3 in string %lld %e\n", i, -sl[i].as3);
+			}
+			if ((sl[i].iT3 > -1) && (fabs(sl[i].at3) > nonzeroEPS)) (nna)++;
+			if (sl[i].at3 < -nonzeroEPS) {
+				printf("bad at3 in string %lld %e\n", i, -sl[i].at3);
+			}
+			if ((sl[i].iW3 > -1) && (fabs(sl[i].aw3) > nonzeroEPS)) (nna)++;
+			if (sl[i].aw3 < -nonzeroEPS) {
+				printf("bad aw3 in string %lld %e\n", i, -sl[i].aw3);
+			}
+
+			if ((sl[i].iB4 > -1) && (fabs(sl[i].ab4) > nonzeroEPS)) (nna)++;
+			if (sl[i].ab4 < -nonzeroEPS) {
+				printf("bad ab4 in string %lld %e\n", i, -sl[i].ab4);
+			}
+			if ((sl[i].iE4 > -1) && (fabs(sl[i].ae4) > nonzeroEPS)) (nna)++;
+			if (sl[i].ae4 < -nonzeroEPS) {
+				printf("bad ae4 in string %lld %e\n", i, -sl[i].ae4);
+			}
+			if ((sl[i].iN4 > -1) && (fabs(sl[i].an4) > nonzeroEPS)) (nna)++;
+			if (sl[i].an4 < -nonzeroEPS) {
+				printf("bad an4 in string %lld %e\n", i, -sl[i].an4);
+			}
+			if ((sl[i].iS4 > -1) && (fabs(sl[i].as4) > nonzeroEPS)) (nna)++;
+			if (sl[i].as4 < -nonzeroEPS) {
+				printf("bad as4 in string %lld %e\n", i, -sl[i].as4);
+			}
+			if ((sl[i].iT4 > -1) && (fabs(sl[i].at4) > nonzeroEPS)) (nna)++;
+			if (sl[i].at4 < -nonzeroEPS) {
+				printf("bad at4 in string %lld %e\n", i, -sl[i].at4);
+			}
+			if ((sl[i].iW4 > -1) && (fabs(sl[i].aw4) > nonzeroEPS)) (nna)++;
+			if (sl[i].aw4 < -nonzeroEPS) {
+				printf("bad aw4 in string %lld %e\n", i, -sl[i].aw4);
+			}
+
+		}
+		else {
+			if (1 && (1.00005 * sl[i].ap < sl[i].ab + sl[i].at + sl[i].ae + sl[i].aw + sl[i].an + sl[i].as))
+			{
+				printf("bad diagonal preobladanie in string %lld ap=%e sum_anb=%e \n", i, sl[i].ap,
+					sl[i].ab + sl[i].at + sl[i].ae + sl[i].aw + sl[i].an + sl[i].as);
+
+				switch (iVar) {
+				case TEMP: printf("TEMP iVar\n");
+					break;
+				case VELOCITY_X_COMPONENT:
+					printf("VELOCITY_X_COMPONENT iVar\n");
+					break;
+				case VELOCITY_Y_COMPONENT:
+					printf("VELOCITY_Y_COMPONENT iVar\n");
+					break;
+				case VELOCITY_Z_COMPONENT:
+					printf("VELOCITY_Z_COMPONENT iVar\n");
+					break;
+				case PAM:
+					printf("PAM iVar\n");
+					break;
+				}
+				system("PAUSE");
+			}
 		}
 
 		if ((sl[i].iB > -1) && (fabs(sl[i].ab) > nonzeroEPS)) (nna)++;
@@ -959,81 +1080,6 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		if ((sl[i].iW > -1) && (fabs(sl[i].aw) > nonzeroEPS)) (nna)++;
 		if (sl[i].aw < -nonzeroEPS) {
 			printf("bad aw in string %lld %e\n", i, -sl[i].aw);
-		}
-
-		if ((sl[i].iB2 > -1) && (fabs(sl[i].ab2) > nonzeroEPS)) (nna)++;
-		if (sl[i].ab2 < -nonzeroEPS) {
-			printf("bad ab2 in string %lld %e\n", i, -sl[i].ab2);
-		}
-		if ((sl[i].iE2 > -1) && (fabs(sl[i].ae2) > nonzeroEPS)) (nna)++;
-		if (sl[i].ae2 < -nonzeroEPS) {
-			printf("bad ae2 in string %lld %e\n", i, -sl[i].ae2);
-		}
-		if ((sl[i].iN2 > -1) && (fabs(sl[i].an2) > nonzeroEPS)) (nna)++;
-		if (sl[i].an2 < -nonzeroEPS) {
-			printf("bad an2 in string %lld %e\n", i, -sl[i].an2);
-		}
-		if ((sl[i].iS2 > -1) && (fabs(sl[i].as2) > nonzeroEPS)) (nna)++;
-		if (sl[i].as2 < -nonzeroEPS) {
-			printf("bad as2 in string %lld %e\n", i, -sl[i].as2);
-		}
-		if ((sl[i].iT2 > -1) && (fabs(sl[i].at2) > nonzeroEPS)) (nna)++;
-		if (sl[i].at2 < -nonzeroEPS) {
-			printf("bad at2 in string %lld %e\n", i, -sl[i].at2);
-		}
-		if ((sl[i].iW2 > -1) && (fabs(sl[i].aw2) > nonzeroEPS)) (nna)++;
-		if (sl[i].aw2 < -nonzeroEPS) {
-			printf("bad aw2 in string %lld %e\n", i, -sl[i].aw2);
-		}
-
-		if ((sl[i].iB3 > -1) && (fabs(sl[i].ab3) > nonzeroEPS)) (nna)++;
-		if (sl[i].ab3 < -nonzeroEPS) {
-			printf("bad ab3 in string %lld %e\n", i, -sl[i].ab3);
-		}
-		if ((sl[i].iE3 > -1) && (fabs(sl[i].ae3) > nonzeroEPS)) (nna)++;
-		if (sl[i].ae3 < -nonzeroEPS) {
-			printf("bad ae3 in string %lld %e\n", i, -sl[i].ae3);
-		}
-		if ((sl[i].iN3 > -1) && (fabs(sl[i].an3) > nonzeroEPS)) (nna)++;
-		if (sl[i].an3 < -nonzeroEPS) {
-			printf("bad an3 in string %lld %e\n", i, -sl[i].an3);
-		}
-		if ((sl[i].iS3 > -1) && (fabs(sl[i].as3) > nonzeroEPS)) (nna)++;
-		if (sl[i].as3 < -nonzeroEPS) {
-			printf("bad as3 in string %lld %e\n", i, -sl[i].as3);
-		}
-		if ((sl[i].iT3 > -1) && (fabs(sl[i].at3) > nonzeroEPS)) (nna)++;
-		if (sl[i].at3 < -nonzeroEPS) {
-			printf("bad at3 in string %lld %e\n", i, -sl[i].at3);
-		}
-		if ((sl[i].iW3 > -1) && (fabs(sl[i].aw3) > nonzeroEPS)) (nna)++;
-		if (sl[i].aw3 < -nonzeroEPS) {
-			printf("bad aw3 in string %lld %e\n", i, -sl[i].aw3);
-		}
-
-		if ((sl[i].iB4 > -1) && (fabs(sl[i].ab4) > nonzeroEPS)) (nna)++;
-		if (sl[i].ab4 < -nonzeroEPS) {
-			printf("bad ab4 in string %lld %e\n", i, -sl[i].ab4);
-		}
-		if ((sl[i].iE4 > -1) && (fabs(sl[i].ae4) > nonzeroEPS)) (nna)++;
-		if (sl[i].ae4 < -nonzeroEPS) {
-			printf("bad ae4 in string %lld %e\n", i, -sl[i].ae4);
-		}
-		if ((sl[i].iN4 > -1) && (fabs(sl[i].an4) > nonzeroEPS)) (nna)++;
-		if (sl[i].an4 < -nonzeroEPS) {
-			printf("bad an4 in string %lld %e\n", i, -sl[i].an4);
-		}
-		if ((sl[i].iS4 > -1) && (fabs(sl[i].as4) > nonzeroEPS)) (nna)++;
-		if (sl[i].as4 < -nonzeroEPS) {
-			printf("bad as4 in string %lld %e\n", i, -sl[i].as4);
-		}
-		if ((sl[i].iT4 > -1) && (fabs(sl[i].at4) > nonzeroEPS)) (nna)++;
-		if (sl[i].at4 < -nonzeroEPS) {
-			printf("bad at4 in string %lld %e\n", i, -sl[i].at4);
-		}
-		if ((sl[i].iW4 > -1) && (fabs(sl[i].aw4) > nonzeroEPS)) (nna)++;
-		if (sl[i].aw4 < -nonzeroEPS) {
-			printf("bad aw4 in string %lld %e\n", i, -sl[i].aw4);
 		}
 
 	}
@@ -1084,7 +1130,9 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 
 	// Прочитать матрицу:
-	std::cout << "Reading matrix..." << std::endl;
+	if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+		std::cout << "Reading matrix..." << std::endl;
+	}
 	
 	//integer* row_jumper = new integer[nnu + 1];
 	//integer* col_buffer = new integer[nna];
@@ -1144,8 +1192,10 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	//alpharelax = 0.99999;
 
-	printf("alpharelax=%e\n", alpharelax);
-	//system("PAUSE");
+	if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+		printf("alpharelax=%e\n", alpharelax);
+		//system("PAUSE");
+	}
 
 	
 
@@ -1163,7 +1213,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 			col_buffer[nna] = static_cast<indextype> (sl[i].iP);
 			if (/*(bSIMPLErun_now_for_natural_convection==false)&&*/(iVar == TEMP)) {
 				
-				if (bSIMPLErun_now_for_natural_convection) {
+				if ((bmyconvective7248)||(bSIMPLErun_now_for_natural_convection)) {
 					// Натуральная конвекция.
 					//rhs[i] += (1 - alpharelax) * sl[i].ap * dX0[i] / alpharelax;
 					elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
@@ -1396,7 +1446,9 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	printf("Matrix load succsefull...\n");
+	if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+		printf("Matrix load succsefull...\n");
+	}
 
 	int n = static_cast<indextype>(nnu);
 	
@@ -1410,79 +1462,111 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	case 0: // Ruge - Stueben (аналог amg1r5)
 		amgcl_params_sets(prm, "precond.coarsening.type", "ruge_stuben");
 		amgcl_params_setf(prm, "precond.coarsening.eps_strong", 0.9f);
-		printf("precond.coarsening.type==ruge_stuben.  precond.coarsening.eps_strong=0.9f\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.coarsening.type==ruge_stuben.  precond.coarsening.eps_strong=0.9f\n");
+		}
 		//{type = ruge_stuben, eps_strong = 0.9}
 		break;
 	case 1: // smoothed aggregation
 		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
 		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
-		printf("precond.coarsening.type==smoothed_aggregation. precond.coarsening.aggr.eps_strong=1e-3f.\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.coarsening.type==smoothed_aggregation. precond.coarsening.aggr.eps_strong=1e-3f.\n");
+		}
 		break;
 	default: // smoothed aggregation
 		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
 		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
-		printf("precond.coarsening.type==smoothed_aggregation. precond.coarsening.aggr.eps_strong=1e-3f.\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.coarsening.type==smoothed_aggregation. precond.coarsening.aggr.eps_strong=1e-3f.\n");
+		}
 		break;
 	}
 	
 	switch (my_amg_manager.amgcl_smoother) {
 	case 0: // spai0
 		amgcl_params_sets(prm, "precond.relax.type", "spai0");
-		printf("precond.relax.type==spai0. \n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==spai0. \n");
+		}
 		break;
 	case 1: // ilu0
 		amgcl_params_sets(prm, "precond.relax.type", "ilu0");
-		printf("precond.relax.type==ilu0. \n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==ilu0. \n");
+		}
 		break;
 	case 2: // gauss_seidel
 		amgcl_params_sets(prm, "precond.relax.type", "gauss_seidel");
-		printf("precond.relax.type==gauss_seidel\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==gauss_seidel\n");
+		}
 		break;
 	case 3: // damped_jacobi
 		amgcl_params_sets(prm, "precond.relax.type", "damped_jacobi");
 		amgcl_params_setf(prm, "precond.relax.damping", 0.8f);
-		printf("precond.relax.type==damped_jacobi. precond.relax.damping=0.8f\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==damped_jacobi. precond.relax.damping=0.8f\n");
+		}
 		break;
 	case 4: // spai1
 		amgcl_params_sets(prm, "precond.relax.type", "spai1");
-		printf("precond.relax.type==spai1.\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==spai1.\n");
+		}
 		break;
 	case 5: // chebyshev
 		amgcl_params_sets(prm, "precond.relax.type", "chebyshev");
-		printf("precond.relax.type==chebyshev.\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==chebyshev.\n");
+		}
 		break;
 	case 6: // ilu1
 		amgcl_params_sets(prm, "precond.relax.type", "iluk");
 		amgcl_params_seti(prm, "precond.relax.k", 1);
-		printf("precond.relax.type==ilu(k==1).\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==ilu(k==1).\n");
+		}
 		break;
 	case 7: // ilu2
 		amgcl_params_sets(prm, "precond.relax.type", "iluk");
 		amgcl_params_seti(prm, "precond.relax.k", 2);
-		printf("precond.relax.type==ilu(k==2).\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==ilu(k==2).\n");
+		}
 		break;
 	case 8: // ilu4
 		amgcl_params_sets(prm, "precond.relax.type", "iluk");
 		amgcl_params_seti(prm, "precond.relax.k", 4);
-		printf("precond.relax.type==ilu(k==4).\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==ilu(k==4).\n");
+		}
 		break;
 	case 9: // ilu6
 		amgcl_params_sets(prm, "precond.relax.type", "iluk");
 		amgcl_params_seti(prm, "precond.relax.k", 6);
-		printf("precond.relax.type==ilu(k==6).\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==ilu(k==6).\n");
+		}
 		break;
 	case 10: // ilu8
 		amgcl_params_sets(prm, "precond.relax.type", "iluk");
 		amgcl_params_seti(prm, "precond.relax.k", 8);
-		printf("precond.relax.type==ilu(k==8).\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==ilu(k==8).\n");
+		}
 		break;
 	case 11: // ilu10
 		amgcl_params_sets(prm, "precond.relax.type", "iluk");
 		amgcl_params_seti(prm, "precond.relax.k", 10);
-		printf("precond.relax.type==ilu(k==10).\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==ilu(k==10).\n");
+		}
 		break;
 	default:	amgcl_params_sets(prm, "precond.relax.type", "spai0");
-		printf("precond.relax.type==spai0. \n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("precond.relax.type==spai0. \n");
+		}
 		break;
 	}
 	//amgcl_params_sets(prm, "solver.type", "bicgstabl");
@@ -1490,15 +1574,21 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	switch (my_amg_manager.amgcl_iterator) {
 	case AMGCL_ITERATOR_ALG::BiCGStab: // BiCGStab
 		amgcl_params_sets(prm, "solver.type", "bicgstab");
-		printf("solver.type==bicgstab.\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("solver.type==bicgstab.\n");
+		}
 		break;
 	case AMGCL_ITERATOR_ALG::FGMRes: // FGMRes
 		amgcl_params_sets(prm, "solver.type", "fgmres");
-		printf("solver.type==fgmres.\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("solver.type==fgmres.\n");
+		}
 		break;
 	default:
 		amgcl_params_sets(prm, "solver.type", "bicgstab");
-		printf("solver.type=bicgstab.\n");
+		if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+			printf("solver.type=bicgstab.\n");
+		}
 		break;
 	}
 	
@@ -1630,17 +1720,19 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 
-	printf("Setup phase start...\n");
+	if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+		printf("Setup phase start...\n");
 
-	//****
-	if (bprint_preconditioner) {
-		amgclHandle amg_precond = amgcl_precond_create(
-			n, row_jumper.data(), col_buffer.data(), elements.data(), prm
-		);
-		amgcl_precond_report(amg_precond);//печать samg предобуславливателя.
-		amgcl_precond_destroy(amg_precond);
+		//****
+		if (bprint_preconditioner) {
+			amgclHandle amg_precond = amgcl_precond_create(
+				n, row_jumper.data(), col_buffer.data(), elements.data(), prm
+			);
+			amgcl_precond_report(amg_precond);//печать samg предобуславливателя.
+			amgcl_precond_destroy(amg_precond);
+		}
+		//*****
 	}
-	//*****
 
 	amgclHandle solver = amgcl_solver_create(
 		n, row_jumper.data(), col_buffer.data(), elements.data(), prm
@@ -1650,7 +1742,9 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	
 	amgcl_params_destroy(prm);
 
-	printf("Solution phase start...\n");
+	if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+		printf("Solution phase start...\n");
+	}
 
 	
 	std::vector<double> x(n, 0);
@@ -1671,8 +1765,10 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		//rhs.data(), x.data()
 	//);
 
-	std::cout << "Iterations: " << cnv.iterations << std::endl
-		<< "Error:      " << cnv.residual << std::endl;
+	if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY) {
+		std::cout << "Iterations: " << cnv.iterations << std::endl
+			<< "Error:      " << cnv.residual << std::endl;
+	}
 
 	if (cnv.residual < 0.1) {
 
