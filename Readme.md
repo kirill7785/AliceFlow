@@ -100,7 +100,7 @@ export PATH = "$ HOME / src: $ PATH".
 AliceMesh_v0_45.exe interface program running under Windows OS. You can use, for example, VMWare. Program interface
 AliceMesh_v0_45.exe is not demanding on PC resources. used only to create a model for calculation.
 
-## Primers
+## Examples
 
 Water cooling module
 
