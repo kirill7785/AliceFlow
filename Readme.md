@@ -24,7 +24,7 @@ More effective priorite queue on Fibonacci Heap for RS coarsening.
 * Bussinesk Approach. Congruate heat transfer for Natural convection.
 * User freandly GUI on Embarcadero® Delphi XE8 Version 22.0.19027.8951.
 * A graph method for solving the heat equation in a nonstationary setting. The nonlinear Stefan-Boltzmann boundary condition and the model of the gap (s) with heat exchange by radiation between the gap boundaries are supported. SLAE is solved by two algebraic multigrid methods to choose from: amg1r5 or Rumba.v.0.14.
-* Graphic renderer in FWGL OpenGL in C ++ built into the program code. Visualization of calculation results in 3D, animation of non-stationary CFD calculation results.
+* Graphic renderer in GLFW OpenGL in C ++ built into the program code. Visualization of calculation results in 3D, animation of non-stationary CFD calculation results.
 
 
 ## System requirements:
