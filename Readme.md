@@ -35,6 +35,7 @@ More effective priorite queue on Fibonacci Heap for RS coarsening.
 * 1.4. nvidia cusp library 0.5.1
 * 1.5. compile with option /bigobj
 * 1.6. openmp off option is worked
+* 1.7. GLFW OpenGL graphics library
 2. variant b)
 * 2.1. OS Windows x64
 * 2.2. compiller: Visual Studio 2017 (or 2019) community
@@ -42,9 +43,11 @@ More effective priorite queue on Fibonacci Heap for RS coarsening.
 * 2.4. amgcl 10.01.2021 library
 * 2.5. compile with option /bigobj
 * 2.6. openmp on or off option is worked.
+* 2.7. GLFW OpenGL graphics library
 3. variant c)
 * 3.1. GNU g++ (g++ 9.1) compiller is supported. $ g++ -o AliceFlow_v0_48.exe AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt
 * 3.2. with amgcl library 4.08.2019.
+* 3.3. GLFW OpenGL graphics library
 
 4. For the exe to work, the console solver program needs to download and install the 64 bit version -
 microsoft redistributable package x64 VC_redist.x64.exe if you use Microsoft Visual Studio C++ compiller.
@@ -57,7 +60,7 @@ https://www.paraview.org/download/
 
 ## Quick compilation mini Guide
 
-(Deprecated. The program is assembled by the Microsoft Visual Studio 2019 compiler with the written FWGL OpenGL graphics library).
+(Deprecated. The program is assembled by the Microsoft Visual Studio 2019 compiler with the written GLFW OpenGL graphics library).
 
 ### Windows
 
