@@ -127,10 +127,6 @@ AliceMesh_v0_45.exe не требовательна к ресурсам ПК т.
 Сущность технологии построения локально-адаптивных сеток заключается в следующем. Начальная сетка является декартовой, и все ее ячейки являются прямоугольными параллелепипедами. Затем в соответствии с заданными критериями выделяются подобласти с особенностями геометрии или решения, и в этих подобластях строится более мелкая, по сравнению с исходной, сетка. Мы считаем для определенности, что выделяемая особенность задается какой- либо поверхностью. Если расчетная ячейка лежит в зоне влияния выделенной особенности, например, пересекается поверхностью, то такая ячейка делится на 8 равных ячеек. Далее, если необходимо, ячейки делятся еще раз, и так до достижения необходимой точности. Криволинейная граница аппроксимируется ступеньками. Ячейки начальной сетки называются ячейками уровня 0, ячейки, получаемые измельчением уровня 0, называются ячейками уровня 1 и т.д.
 При генерации сеток необходимо накладывать дополнительное ограничение: в окрестности каждой ячейки не должно быть ячеек, которые отличаются от неё по размерам более чем в два раза. 
 
-![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picALICE.png)
-
-![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/module.png)
-
 [![Watch the video](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picFET3.png)](https://yadi.sk/i/Fd9L_d3bAiLD7w)
 
 Обтекание куба на основе схем высокой разрешающей способности
@@ -180,12 +176,6 @@ nvidia CUSP 0.5.1 smoothed aggregation amg memory usage comparison:
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picPaper.png)
 
 # собственный визуализатор на fwgl OpenGL (render)
-
-![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201217-WA0001.jpeg)
-
-![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201217-WA0007.jpeg)
-
-![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201217-WA0009.jpeg)
 
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201218-WA0000.jpeg)
 
