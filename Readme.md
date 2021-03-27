@@ -118,9 +118,6 @@ Since the summer of 2016, Adaptive Locally Refinement Meshes (ALICE) are used in
 When building the grid in this program, we suppose that it consists of rectangular parallelepipeds with possible local refinement, dictated by the conditions. The essence of the technology of building local adaptive grids is as follows. The initial grid is Cartesian, and all its cells are rectangular parallelepipeds. Then, in accordance with specified criteria, subregions with features of the geometry or solution are distinguished, and in these subregions a smaller grid is built. For definiteness, we consider that the distinguished feature is given by some surface. If the calculated cell lies in the zone of influence of the selected feature, (for example, it intersects the surface) then such a cell is divided into 8 equal cells. Further, if necessary, the cells are divided again, and so on until the required accuracy is achieved. The curvilinear boundary is approximated by steps. Cells of the initial grid are called as level 0 cells, cells obtained by the level 0 grinding are called as level 1 cells, etc.
 When generating grids, it is necessary to impose the following additional restriction: in the neighborhood of each cell, there should not be cells that differ from it in size more than twice.
 
-![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picALICE.png)
-
-![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/module.png)
 
 [![Watch the video](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picFET3.png)](https://yadi.sk/i/Fd9L_d3bAiLD7w)
 
@@ -171,12 +168,6 @@ nvidia CUSP 0.5.1 smoothed aggregation amg memory usage comparison:
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picPaper.png)
 
 # custom visualizer (render)
-
-![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201217-WA0001.jpeg)
-
-![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201217-WA0007.jpeg)
-
-![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201217-WA0009.jpeg)
 
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201218-WA0000.jpeg)
 
