@@ -47,4 +47,13 @@ object Formpiecewiseconstant: TFormpiecewiseconstant
       'time (s);'
       'time duration (s);')
   end
+  object ButtonClear: TButton
+    Left = 328
+    Top = 1
+    Width = 75
+    Height = 25
+    Caption = 'Clear'
+    TabOrder = 2
+    OnClick = ButtonClearClick
+  end
 end

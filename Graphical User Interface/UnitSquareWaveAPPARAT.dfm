@@ -340,6 +340,13 @@ object FormAPPARAT_Square_Wave: TFormAPPARAT_Square_Wave
         0893000000C88D3009000080DC0893000000C88D3009000080DCFE1F8E21C808
         87F0FCC40000000049454E44AE426082}
     end
+    object Label8: TLabel
+      Left = 440
+      Top = 223
+      Width = 63
+      Height = 13
+      Caption = 'off multiplyer'
+    end
     object Editmultiplyer: TEdit
       Left = 68
       Top = 223
@@ -403,10 +410,18 @@ object FormAPPARAT_Square_Wave: TFormAPPARAT_Square_Wave
       Height = 21
       TabOrder = 6
     end
+    object Editoff_multiplyer: TEdit
+      Left = 509
+      Top = 220
+      Width = 100
+      Height = 21
+      TabOrder = 7
+      Text = '0'
+    end
   end
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message
-    Left = 536
-    Top = 248
+    Left = 544
+    Top = 272
   end
 end

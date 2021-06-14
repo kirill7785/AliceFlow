@@ -54,7 +54,12 @@ uses
   UnitPatternDelete in 'UnitPatternDelete.pas' {FormPattern},
   UnitTextNameSourcePattern in 'UnitTextNameSourcePattern.pas' {FormTextNameSourcePattern},
   UnitSplash in 'UnitSplash.pas' {SplashForm},
-  UnitViewFactors in 'UnitViewFactors.pas' {FormViewFactors};
+  UnitViewFactors in 'UnitViewFactors.pas' {FormViewFactors},
+  Unit_debug in 'Unit_debug.pas' {Form_debug_panel},
+  UnitPlaneSelect in 'UnitPlaneSelect.pas' {FormSelectPlaneRotation},
+  UnitResidual_Langtry_Menter in 'UnitResidual_Langtry_Menter.pas' {FormResidual_Langtry_Menter},
+  UnitResidual_Langtry_Menter_Temp in 'UnitResidual_Langtry_Menter_Temp.pas' {FormResidual_Lagtry_Menter_Temp},
+  UnitOptimetric in 'UnitOptimetric.pas' {FormOptimetric};
 
 {$R *.res}
 
@@ -118,6 +123,11 @@ begin
   Application.CreateForm(TFormPattern, FormPattern);
   Application.CreateForm(TFormTextNameSourcePattern, FormTextNameSourcePattern);
   Application.CreateForm(TFormViewFactors, FormViewFactors);
+  Application.CreateForm(TForm_debug_panel, Form_debug_panel);
+  Application.CreateForm(TFormSelectPlaneRotation, FormSelectPlaneRotation);
+  Application.CreateForm(TFormResidual_Langtry_Menter, FormResidual_Langtry_Menter);
+  Application.CreateForm(TFormResidual_Lagtry_Menter_Temp, FormResidual_Lagtry_Menter_Temp);
+  Application.CreateForm(TFormOptimetric, FormOptimetric);
   //Application.CreateForm(TSplashForm, SplashForm);
 
   SplashForm.Hide;

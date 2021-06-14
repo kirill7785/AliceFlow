@@ -1,17 +1,18 @@
 object Formresidual: TFormresidual
   Left = 192
   Top = 124
-  AutoSize = True
   Caption = 'residual'
   ClientHeight = 561
   ClientWidth = 769
   Color = clMoneyGreen
+  CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
   object cht1: TChart

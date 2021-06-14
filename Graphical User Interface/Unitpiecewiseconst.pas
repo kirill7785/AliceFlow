@@ -12,6 +12,8 @@ type
     Label2: TLabel;
     Label3: TLabel;
     ComboBoxpiecewiseconst: TComboBox;
+    ButtonClear: TButton;
+    procedure ButtonClearClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -24,5 +26,11 @@ var
 implementation
 
 {$R *.dfm}
+
+// ќчистка меню редактировани€ piecewise constant шагов по времени.
+procedure TFormpiecewiseconstant.ButtonClearClick(Sender: TObject);
+begin
+   Memopiecewiseconst.Clear;
+end;
 
 end.

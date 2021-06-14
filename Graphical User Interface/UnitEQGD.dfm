@@ -6,6 +6,7 @@ object EGDForm: TEGDForm
   ClientHeight = 449
   ClientWidth = 241
   Color = clMoneyGreen
+  CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -73,7 +74,9 @@ object EGDForm: TEGDForm
             'Smagorinsky Model (LES)'
             'RNG (LES)'
             'Spalart - Allmares (RANS) [1992]'
-            'K-Omega SST (RANS) [1993]')
+            'K-Omega SST (RANS) [1993]'
+            'K-epsilon (RANS) [2001]'
+            'Transitional SST gamma-ReTheta-SST (RANS) [2009]')
         end
         object BEditTurb: TButton
           Left = 104

@@ -25,23 +25,15 @@ type
   TForm_amg_manager = class(TForm)
     Panel1: TPanel;
     Label1: TLabel;
-    ComboBoxmaximumreducedlevels: TComboBox;
     Label2: TLabel;
-    ComboBoxinterpolation: TComboBox;
     Label3: TLabel;
-    ComboBoxnFinnest: TComboBox;
     Label4: TLabel;
     Label5: TLabel;
-    ComboBoxnumberpresmothers: TComboBox;
-    ComboBoxnumberpostsweeps: TComboBox;
     Label6: TLabel;
-    ComboBoxmemorysize: TComboBox;
     Buttondefault: TButton;
     Label7: TLabel;
     Label8: TLabel;
-    Editthreshold: TEdit;
     Labelmagic: TLabel;
-    EditmagicT: TEdit;
     Label9: TLabel;
     Label10: TLabel;
     Label11: TLabel;
@@ -49,61 +41,17 @@ type
     Label14: TLabel;
     Label15: TLabel;
     Label16: TLabel;
-    EditthresholdSpeed: TEdit;
-    EditthresholdPressure: TEdit;
-    ComboBoxmaximumreducedlevelsSpeed: TComboBox;
-    ComboBoxmaximumreducedlevelsPressure: TComboBox;
-    ComboBoxnFinnestSpeed: TComboBox;
-    ComboBoxnFinnestPressure: TComboBox;
-    ComboBoxnumberpresmothersSpeed: TComboBox;
-    ComboBoxnumberpresmothersPressure: TComboBox;
-    ComboBoxnumberpostsweepsSpeed: TComboBox;
-    ComboBoxnumberpostsweepsPressure: TComboBox;
-    ComboBoxmemorysizeSpeed: TComboBox;
-    ComboBoxmemorysizePressure: TComboBox;
     ApplicationEvents1: TApplicationEvents;
-    ComboBoxsmoothertypeTemperature: TComboBox;
-    ComboBoxsmoothertypeSpeed: TComboBox;
-    ComboBoxsmoothertypePressure: TComboBox;
     Label17: TLabel;
-    ComboBoxcoarseningTemp: TComboBox;
-    ComboBoxcoarseningSpeed: TComboBox;
-    ComboBoxcoarseningPressure: TComboBox;
     Label18: TLabel;
-    ComboBoxStabilizationTemp: TComboBox;
-    ComboBoxStabilizationSpeed: TComboBox;
-    ComboBoxStabilizationPressure: TComboBox;
     Label19: TLabel;
-    EditmagicSpeed: TEdit;
-    EditmagicPressure: TEdit;
     Label20: TLabel;
-    Edit_truncation_T: TEdit;
-    Edit_truncation_Speed: TEdit;
-    Edit_truncation_Pressure: TEdit;
-    CheckBoxtruncationT: TCheckBox;
-    CheckBoxtruncationSpeed: TCheckBox;
-    CheckBoxtruncationPressure: TCheckBox;
-    ComboBoxInterpolationSpeed: TComboBox;
-    ComboBoxinterpolationPressure: TComboBox;
     Label21: TLabel;
     CheckBoxprintlogTemperature: TCheckBox;
     CheckBoxprintlogSpeed: TCheckBox;
     CheckBoxprintlogPressure: TCheckBox;
     Label26: TLabel;
-    EditthresholdStress: TEdit;
     LabelStress: TLabel;
-    ComboBoxmaximumreducedlevelsStress: TComboBox;
-    ComboBoxnFinnestStress: TComboBox;
-    ComboBoxnumberpresmoothersStress: TComboBox;
-    ComboBoxnumberpostsweepsStress: TComboBox;
-    ComboBoxmemorysizeStress: TComboBox;
-    ComboBoxinterpollationStress: TComboBox;
-    CheckBoxtruncationStress: TCheckBox;
-    Edittruncation_Stress: TEdit;
-    EditmagicStress: TEdit;
-    ComboBoxsmoothertypeStress: TComboBox;
-    ComboBoxcoarseningStress: TComboBox;
-    ComboBoxstabilizationStress: TComboBox;
     CheckBoxprintlogStress: TCheckBox;
     GroupBox1: TGroupBox;
     ComboBoxCFalgorithmandDataStruct_Temperature: TComboBox;
@@ -118,12 +66,77 @@ type
     ComboBoxSort: TComboBox;
     CheckBoxDiagonalDominant: TCheckBox;
     CheckBoxStrongTranspose: TCheckBox;
+    PanelTemperature1: TPanel;
+    Editthreshold: TEdit;
+    ComboBoxmaximumreducedlevels: TComboBox;
+    ComboBoxnFinnest: TComboBox;
+    ComboBoxnumberpresmothers: TComboBox;
+    ComboBoxnumberpostsweeps: TComboBox;
+    ComboBoxmemorysize: TComboBox;
+    ComboBoxinterpolation: TComboBox;
+    PanelSpeed1: TPanel;
+    EditthresholdSpeed: TEdit;
+    ComboBoxmaximumreducedlevelsSpeed: TComboBox;
+    ComboBoxnFinnestSpeed: TComboBox;
+    ComboBoxnumberpresmothersSpeed: TComboBox;
+    ComboBoxnumberpostsweepsSpeed: TComboBox;
+    ComboBoxmemorysizeSpeed: TComboBox;
+    ComboBoxInterpolationSpeed: TComboBox;
+    PanelPressure1: TPanel;
+    EditthresholdPressure: TEdit;
+    ComboBoxmaximumreducedlevelsPressure: TComboBox;
+    ComboBoxnFinnestPressure: TComboBox;
+    ComboBoxnumberpresmothersPressure: TComboBox;
+    ComboBoxnumberpostsweepsPressure: TComboBox;
+    ComboBoxmemorysizePressure: TComboBox;
+    ComboBoxinterpolationPressure: TComboBox;
+    PanelStress1: TPanel;
+    EditthresholdStress: TEdit;
+    ComboBoxmaximumreducedlevelsStress: TComboBox;
+    ComboBoxnFinnestStress: TComboBox;
+    ComboBoxnumberpresmoothersStress: TComboBox;
+    ComboBoxnumberpostsweepsStress: TComboBox;
+    ComboBoxmemorysizeStress: TComboBox;
+    ComboBoxinterpollationStress: TComboBox;
+    PanelTemperature2: TPanel;
+    CheckBoxtruncationT: TCheckBox;
+    Edit_truncation_T: TEdit;
+    EditmagicT: TEdit;
+    ComboBoxsmoothertypeTemperature: TComboBox;
+    ComboBoxcoarseningTemp: TComboBox;
+    ComboBoxStabilizationTemp: TComboBox;
+    PanelSpeed2: TPanel;
+    CheckBoxtruncationSpeed: TCheckBox;
+    Edit_truncation_Speed: TEdit;
+    EditmagicSpeed: TEdit;
+    ComboBoxsmoothertypeSpeed: TComboBox;
+    ComboBoxcoarseningSpeed: TComboBox;
+    ComboBoxStabilizationSpeed: TComboBox;
+    PanelPressure2: TPanel;
+    CheckBoxtruncationPressure: TCheckBox;
+    Edit_truncation_Pressure: TEdit;
+    EditmagicPressure: TEdit;
+    ComboBoxsmoothertypePressure: TComboBox;
+    ComboBoxcoarseningPressure: TComboBox;
+    ComboBoxStabilizationPressure: TComboBox;
+    PanelStress2: TPanel;
+    CheckBoxtruncationStress: TCheckBox;
+    Edittruncation_Stress: TEdit;
+    EditmagicStress: TEdit;
+    ComboBoxsmoothertypeStress: TComboBox;
+    ComboBoxcoarseningStress: TComboBox;
+    ComboBoxstabilizationStress: TComboBox;
     procedure ButtondefaultClick(Sender: TObject);
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
     procedure CheckBoxtruncationTClick(Sender: TObject);
     procedure CheckBoxtruncationSpeedClick(Sender: TObject);
     procedure CheckBoxtruncationPressureClick(Sender: TObject);
     procedure Edittruncation_StressClick(Sender: TObject);
+    procedure CheckBoxtruncationStressClick(Sender: TObject);
+    procedure ComboBoxcoarseningTempChange(Sender: TObject);
+    procedure ComboBoxcoarseningSpeedChange(Sender: TObject);
+    procedure ComboBoxcoarseningPressureChange(Sender: TObject);
+    procedure ComboBoxcoarseningStressChange(Sender: TObject);
   private
     { Private declarations }
   public
@@ -421,6 +434,39 @@ begin
    end;
 end;
 
+procedure TForm_amg_manager.CheckBoxtruncationStressClick(Sender: TObject);
+var
+   s1 : String;
+   i : Integer;
+begin
+   if (CheckBoxtruncationStress.Checked) then
+   begin
+      Edittruncation_Stress.Visible:=false;
+   end
+   else
+   begin
+      Edittruncation_Stress.Visible:=true;
+      if (FormatSettings.DecimalSeparator=',') then
+      begin
+         s1:=Edittruncation_Stress.Text;
+         for i := 1 to length(s1) do
+         begin
+            if (s1[i]=',') then s1[i]:='.';
+         end;
+         Edittruncation_Stress.Text:=s1;
+      end;
+      if (FormatSettings.DecimalSeparator='.') then
+      begin
+         s1:=Edittruncation_Stress.Text;
+         for i := 1 to length(s1) do
+         begin
+            if (s1[i]='.') then s1[i]:=',';
+         end;
+         Edittruncation_Stress.Text:=s1;
+      end;
+   end;
+end;
+
 // truncation interpolation for Temperature click.
 procedure TForm_amg_manager.CheckBoxtruncationTClick(Sender: TObject);
 var
@@ -452,6 +498,121 @@ begin
          end;
          Edit_truncation_T.Text:=s1;
       end;
+   end;
+end;
+
+
+
+
+procedure TForm_amg_manager.ComboBoxcoarseningPressureChange(Sender: TObject);
+begin
+    if ((ComboBoxcoarseningPressure.ItemIndex=8)or(ComboBoxcoarseningPressure.ItemIndex=9)) then
+   begin
+      // PMIS, HMIS
+      CheckBoxtruncationPressure.Checked:=false; // ѕримен€ем усечение интерпол€ции при PMIS или HMIS.
+      // threshold зависит от номера уровн€ и эта зависимость задана программистом.
+      EditthresholdPressure.Visible:=false; // creator depend
+      if (ComboBoxcoarseningPressure.ItemIndex=8) then
+      begin
+         // PMIS
+         // »спользуетс€ собственна€ специальна€ процедура интерпол€ции определенна€ программистом.
+         //ComboBoxinterpolationPressure.Visible:=true;//false; // creator depend
+      end
+      else
+      begin
+        // ComboBoxinterpolationPressure.Visible:=true;
+      end;
+      // в HMIS на первом уровне выбор процедуры интекрпол€ции всЄ же используетс€.
+   end
+   else
+   begin
+      EditthresholdPressure.Visible:=true;
+     // ComboBoxinterpolationPressure.Visible:=true;
+   end;
+end;
+
+procedure TForm_amg_manager.ComboBoxcoarseningSpeedChange(Sender: TObject);
+begin
+    if ((ComboBoxcoarseningSpeed.ItemIndex=8)or(ComboBoxcoarseningSpeed.ItemIndex=9)) then
+   begin
+      // PMIS, HMIS
+      CheckBoxtruncationSpeed.Checked:=false; // ѕримен€ем усечение интерпол€ции при PMIS или HMIS.
+      // threshold зависит от номера уровн€ и эта зависимость задана программистом.
+      EditthresholdSpeed.Visible:=false; // creator depend
+      if (ComboBoxcoarseningSpeed.ItemIndex=8) then
+      begin
+         // PMIS
+         // »спользуетс€ собственна€ специальна€ процедура интерпол€ции определенна€ программистом.
+        // ComboBoxinterpolationSpeed.Visible:=true;//false; // creator depend
+      end
+      else
+      begin
+         //ComboBoxinterpolationSpeed.Visible:=true;
+      end;
+      // в HMIS на первом уровне выбор процедуры интекрпол€ции всЄ же используетс€.
+   end
+   else
+   begin
+      EditthresholdSpeed.Visible:=true;
+      //ComboBoxinterpolationSpeed.Visible:=true;
+   end;
+end;
+
+procedure TForm_amg_manager.ComboBoxcoarseningStressChange(Sender: TObject);
+begin
+   if ((ComboBoxcoarseningStress.ItemIndex=8)or(ComboBoxcoarseningStress.ItemIndex=9)) then
+   begin
+      // PMIS, HMIS
+      CheckBoxtruncationStress.Checked:=false; // ѕримен€ем усечение интерпол€ции при PMIS или HMIS.
+      // threshold зависит от номера уровн€ и эта зависимость задана программистом.
+      EditthresholdStress.Visible:=false; // creator depend
+      if (ComboBoxcoarseningStress.ItemIndex=8) then
+      begin
+         // PMIS
+         // »спользуетс€ собственна€ специальна€ процедура интерпол€ции определенна€ программистом.
+       //  ComboBoxinterpollationStress.Visible:=true;//false; // creator depend
+      end
+      else
+      begin
+         // HMIS
+        // ComboBoxinterpollationStress.Visible:=true;
+      end;
+      // в HMIS на первом уровне выбор процедуры интекрпол€ции всЄ же используетс€.
+   end
+   else
+   begin
+      EditthresholdStress.Visible:=true;
+     // ComboBoxinterpollationStress.Visible:=true;
+   end;
+end;
+
+procedure TForm_amg_manager.ComboBoxcoarseningTempChange(Sender: TObject);
+begin
+   // Temperature
+   if ((ComboBoxcoarseningTemp.ItemIndex=8)or(ComboBoxcoarseningTemp.ItemIndex=9)) then
+   begin
+      // PMIS, HMIS
+      ComboBoxmemorysize.ItemIndex:=0;// size ierarhion 4A
+      CheckBoxtruncationT.Checked:=false; // ѕримен€ем усечение интерпол€ции при PMIS или HMIS.
+      // threshold зависит от номера уровн€ и эта зависимость задана программистом.
+      Editthreshold.Visible:=false; // creator depend
+      if (ComboBoxcoarseningTemp.ItemIndex=8) then
+      begin
+         // PMIS
+         // »спользуетс€ собственна€ специальна€ процедура интерпол€ции определенна€ программистом.
+        // ComboBoxinterpolation.Visible:=true;//false; // creator depend
+      end
+      else
+      begin
+         // HMIS
+        // ComboBoxinterpolation.Visible:=true;
+      end;
+      // в HMIS на первом уровне выбор процедуры интекрпол€ции всЄ же используетс€.
+   end
+   else
+   begin
+      Editthreshold.Visible:=true;
+     // ComboBoxinterpolation.Visible:=true;
    end;
 end;
 

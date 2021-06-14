@@ -2,7 +2,7 @@ object FormSetting: TFormSetting
   Left = 192
   Top = 124
   AutoSize = True
-  ClientHeight = 529
+  ClientHeight = 545
   ClientWidth = 186
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
@@ -28,7 +28,7 @@ object FormSetting: TFormSetting
     Left = 2
     Top = 359
     Width = 184
-    Height = 170
+    Height = 186
     Color = clMoneyGreen
     ParentBackground = False
     TabOrder = 1
@@ -47,8 +47,8 @@ object FormSetting: TFormSetting
       Caption = 'FLOW'
     end
     object Label2: TLabel
-      Left = 16
-      Top = 112
+      Left = 15
+      Top = 139
       Width = 62
       Height = 13
       Caption = 'Temperature'
@@ -66,8 +66,8 @@ object FormSetting: TFormSetting
         'SIMPLEC 1984')
     end
     object ComboBoxFlowScheme: TComboBox
-      Left = 16
-      Top = 80
+      Left = 15
+      Top = 112
       Width = 161
       Height = 21
       ItemIndex = 0
@@ -92,8 +92,8 @@ object FormSetting: TFormSetting
         'CUBISTA')
     end
     object ComboBoxSchemeTemperature: TComboBox
-      Left = 16
-      Top = 136
+      Left = 11
+      Top = 158
       Width = 161
       Height = 21
       ItemIndex = 0
@@ -116,6 +116,23 @@ object FormSetting: TFormSetting
         'SUPER_C'
         'ISNAS'
         'CUBISTA')
+    end
+    object ComboBoxFlowSchemePrefix: TComboBox
+      Left = 15
+      Top = 78
+      Width = 157
+      Height = 21
+      ItemIndex = 1
+      TabOrder = 3
+      Text = 'Upwind'
+      Items.Strings = (
+        'Central Differences'
+        'Upwind'
+        'COMB'
+        'POLY (S. Patankar)'
+        'EXP'
+        'BULG'
+        'POW')
     end
   end
   object PanelSolverSetting2: TPanel

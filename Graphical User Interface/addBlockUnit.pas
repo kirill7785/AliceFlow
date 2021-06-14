@@ -482,6 +482,44 @@ begin
                   mult_lam_x:=1.0;
                   mult_lam_y:=1.0;
                   mult_lam_z:=1.0;
+
+                  // Stress
+                  n_Poisson_ratio:=1;
+                  SetLength(temp_Poisson_ratio,n_Poisson_ratio);
+                  SetLength(arr_Poisson_ratio,n_Poisson_ratio);
+                  temp_Poisson_ratio[0]:=20.0;
+                  arr_Poisson_ratio[0]:=0.334;
+                  n_Young_Module:=1;
+                  SetLength(temp_Young_Module,n_Young_Module);
+                  SetLength(arr_Young_Module,n_Young_Module);
+                  temp_Young_Module[0]:=20.0;
+                  arr_Young_Module[0]:=69.0;  // GPa aluminium
+                  n_Linear_expansion_coefficient:=1;
+                  SetLength(temp_Linear_expansion_coefficient, n_Linear_expansion_coefficient);
+                  SetLength(arr_Linear_expansion_coefficient, n_Linear_expansion_coefficient);
+                  temp_Linear_expansion_coefficient[0]:=20.0;
+                  arr_Linear_expansion_coefficient[0]:=23.0;
+
+                  mult_Linear_expansion_coefficient_x:=1.0;
+                  mult_Linear_expansion_coefficient_y:=1.0;
+                  mult_Linear_expansion_coefficient_z:=1.0;
+                  mult_Young_Module_x:=1.0;
+                  mult_Young_Module_y:=1.0;
+                  mult_Young_Module_z:=1.0;
+                  mult_Poisson_ratio_xy:=1.0;
+                  mult_Poisson_ratio_xz:=1.0;
+                  mult_Poisson_ratio_yz:=1.0;
+                  mult_Poisson_ratio_yx:=1.0;
+                  mult_Poisson_ratio_zx:=1.0;
+                  mult_Poisson_ratio_zy:=1.0;
+                  bShearModuleActive:=false;
+                  FormUserDefinedSolidMat.CheckBoxShearModulus.Checked:=false;
+                  FormUserDefinedSolidMat.CheckBoxShearModulusClick(Sender);
+                  ShearModuleGxy:=arr_Young_Module[0]/(2.0*(1.0+arr_Poisson_ratio[0]));
+                  ShearModuleGyz:=arr_Young_Module[0]/(2.0*(1.0+arr_Poisson_ratio[0]));
+                  ShearModuleGxz:=arr_Young_Module[0]/(2.0*(1.0+arr_Poisson_ratio[0]));
+
+
                   // следующие два значения не используются
                   mu:=1.7894e-5; // воздух
                   beta_t:=0.003331; // воздух
@@ -514,6 +552,44 @@ begin
                   mult_lam_x:=1.0;
                   mult_lam_y:=1.0;
                   mult_lam_z:=1.0;
+
+                  // Stress
+                  n_Poisson_ratio:=1;
+                  SetLength(temp_Poisson_ratio,n_Poisson_ratio);
+                  SetLength(arr_Poisson_ratio,n_Poisson_ratio);
+                  temp_Poisson_ratio[0]:=20.0;
+                  arr_Poisson_ratio[0]:=0.49;  // air
+                  n_Young_Module:=1;
+                  SetLength(temp_Young_Module,n_Young_Module);
+                  SetLength(arr_Young_Module,n_Young_Module);
+                  temp_Young_Module[0]:=20.0;
+                  arr_Young_Module[0]:=1.42e-4; // GPa air
+                  n_Linear_expansion_coefficient:=1;
+                  SetLength(temp_Linear_expansion_coefficient, n_Linear_expansion_coefficient);
+                  SetLength(arr_Linear_expansion_coefficient, n_Linear_expansion_coefficient);
+                  temp_Linear_expansion_coefficient[0]:=20.0;
+                  arr_Linear_expansion_coefficient[0]:=3.331e+3; // air
+
+                  mult_Linear_expansion_coefficient_x:=1.0;
+                  mult_Linear_expansion_coefficient_y:=1.0;
+                  mult_Linear_expansion_coefficient_z:=1.0;
+                  mult_Young_Module_x:=1.0;
+                  mult_Young_Module_y:=1.0;
+                  mult_Young_Module_z:=1.0;
+                  mult_Poisson_ratio_xy:=1.0;
+                  mult_Poisson_ratio_xz:=1.0;
+                  mult_Poisson_ratio_yz:=1.0;
+                  mult_Poisson_ratio_yx:=1.0;
+                  mult_Poisson_ratio_zx:=1.0;
+                  mult_Poisson_ratio_zy:=1.0;
+                  bShearModuleActive:=false;
+                  FormUserDefinedSolidMat.CheckBoxShearModulus.Checked:=false;
+                  FormUserDefinedSolidMat.CheckBoxShearModulusClick(Sender);
+                  ShearModuleGxy:=arr_Young_Module[0]/(2.0*(1.0+arr_Poisson_ratio[0]));
+                  ShearModuleGyz:=arr_Young_Module[0]/(2.0*(1.0+arr_Poisson_ratio[0]));
+                  ShearModuleGxz:=arr_Young_Module[0]/(2.0*(1.0+arr_Poisson_ratio[0]));
+
+
                   mu:=1.7894e-5; // коэффициент динамической вязкости
                   beta_t:=0.003331; // коэффициент линейного температурного расширения
                   namemat:='air';
@@ -651,9 +727,48 @@ begin
          begin
             // инициализация:
             FormUserDefinedSolidMat.EMatName.Text:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
-            FormUserDefinedSolidMat.EditPoissonRatio.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].Poisson_ratio);
-            FormUserDefinedSolidMat.EditYoungModule.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].Young_Module);
-            FormUserDefinedSolidMat.EditLinearExpansionKoefficient.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].Linear_expansion_coefficient);
+            //FormUserDefinedSolidMat.EditPoissonRatio.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].Poisson_ratio);
+            if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].n_Poisson_ratio=1) then
+            begin
+               // Constant properties.
+               FormUserDefinedSolidMat.ComboBoxPoissonratio.ItemIndex:=0;
+               FormUserDefinedSolidMat.ComboBoxPoissonratioClick(Sender);
+               FormUserDefinedSolidMat.EditPoissonRatio.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].arr_Poisson_ratio[0]);
+            end
+             else
+            begin
+               // Piecewise Poissonratio properties.
+               FormUserDefinedSolidMat.ComboBoxPoissonratio.ItemIndex:=1;
+               FormUserDefinedSolidMat.ComboBoxPoissonratioClick(Sender);
+            end;
+            //FormUserDefinedSolidMat.EditYoungModule.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].Young_Module);
+             if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].n_Young_Module=1) then
+            begin
+               // Constant properties.
+               FormUserDefinedSolidMat.ComboBoxYoungModule.ItemIndex:=0;
+               FormUserDefinedSolidMat.ComboBoxYoungModuleClick(Sender);
+               FormUserDefinedSolidMat.EditYoungModule.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].arr_Young_Module[0]);
+            end
+             else
+            begin
+               // Piecewise EditYoungModule properties.
+               FormUserDefinedSolidMat.ComboBoxYoungModule.ItemIndex:=1;
+               FormUserDefinedSolidMat.ComboBoxYoungModuleClick(Sender);
+            end;
+            //FormUserDefinedSolidMat.EditLinearExpansionKoefficient.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].Linear_expansion_coefficient);
+            if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].n_Linear_expansion_coefficient=1) then
+            begin
+               // Constant properties.
+               FormUserDefinedSolidMat.ComboBoxlinearExpansion.ItemIndex:=0;
+               FormUserDefinedSolidMat.ComboBoxlinearExpansionChange(Sender);
+               FormUserDefinedSolidMat.EditLinearExpansionKoefficient.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].arr_Linear_expansion_coefficient[0]);
+            end
+             else
+            begin
+               // Piecewise linear properties.
+               FormUserDefinedSolidMat.ComboBoxlinearExpansion.ItemIndex:=1;
+               FormUserDefinedSolidMat.ComboBoxlinearExpansionChange(Sender);
+            end;
             FormUserDefinedSolidMat.Erho.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].rho);
             //FormUserDefinedSolidMat.ECp.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].cp);
             if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].n_cp=1) then
@@ -688,6 +803,35 @@ begin
             FormUserDefinedSolidMat.Editmultx.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_lam_x);
             FormUserDefinedSolidMat.Editmulty.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_lam_y);
             FormUserDefinedSolidMat.Editmultz.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_lam_z);
+
+            FormUserDefinedSolidMat.EditbetaX.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Linear_expansion_coefficient_x);
+            FormUserDefinedSolidMat.EditbetaY.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Linear_expansion_coefficient_y);
+            FormUserDefinedSolidMat.EditbetaZ.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Linear_expansion_coefficient_z);
+
+            FormUserDefinedSolidMat.EditEx.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Young_Module_x);
+            FormUserDefinedSolidMat.EditEy.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Young_Module_y);
+            FormUserDefinedSolidMat.EditEz.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Young_Module_z);
+
+            FormUserDefinedSolidMat.Editnuxy.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Poisson_ratio_xy);
+            FormUserDefinedSolidMat.Editnuxz.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Poisson_ratio_xz);
+            FormUserDefinedSolidMat.Editnuyz.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mult_Poisson_ratio_yz);
+
+            
+            if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].bShearModuleActive) then
+            begin
+               FormUserDefinedSolidMat.CheckBoxShearModulus.Checked:=true;
+            end
+             else
+            begin
+               FormUserDefinedSolidMat.CheckBoxShearModulus.Checked:=false;
+            end;
+
+            FormUserDefinedSolidMat.CheckBoxShearModulusClick(Sender);
+
+            FormUserDefinedSolidMat.EditGxy.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].ShearModuleGxy);
+            FormUserDefinedSolidMat.EditGyz.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].ShearModuleGyz);
+            FormUserDefinedSolidMat.EditGxz.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].ShearModuleGxz);
+
          end;
          if (Laplas.bREALESEversion) then
          begin
@@ -700,9 +844,9 @@ begin
 
 
             // Не задаём свойства механических материалов.
-            FormUserDefinedSolidMat.GroupBoxThermalStress.Visible:=false;
-            FormUserDefinedSolidMat.PanelSOLID.Width:=287;
-            FormUserDefinedSolidMat.Width:=290;
+            //FormUserDefinedSolidMat.GroupBoxThermalStress.Visible:=false;
+            //FormUserDefinedSolidMat.PanelSOLID.Width:=287;
+            //FormUserDefinedSolidMat.Width:=290;
 
          end;
 
@@ -1115,7 +1259,8 @@ procedure TAddBlockForm.ButtonTransientClick(Sender: TObject);
 begin
     // 2 - это полигон. Мы не можем задаваать мощность тепловыделения
     // внутри полигона.
-    if (Laplas.body[Laplas.itek].igeometry_type<>2) then
+    // 24.10.2020 Мощность внутри полигона можно задавать.
+    //if (Laplas.body[Laplas.itek].igeometry_type<>2) then
     begin
        if (Laplas.body[Laplas.itek].n_power=1) then
        begin
@@ -1146,11 +1291,11 @@ begin
        FormTransientPowerSetting.ShowModal;
        //labelpowerinfo.Caption:=FloatToStr(Laplas.body[Laplas.itek].arr_power[0])+' W';
     end
-    else
-    begin
-       ShowMessage('Can not power define in polygon. 26.01.2018');
-       Laplas.MainMemo.Lines.Add('Can not power define in polygon. 26.01.2018');
-    end;
+    //else
+    //begin
+      // ShowMessage('Can not power define in polygon. 26.01.2018');
+      // Laplas.MainMemo.Lines.Add('Can not power define in polygon. 26.01.2018');
+    //end;
 end;
 
 // Смена типа геометрии.

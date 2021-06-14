@@ -31,6 +31,7 @@ type
     ComboBoxStaticStructuralSolverSetting: TComboBox;
     GroupBoxNumberProcessors: TGroupBox;
     ComboBoxNumberProcessors: TComboBox;
+    ComboBoxFlowSchemePrefix: TComboBox;
     procedure Button_amg_managerClick(Sender: TObject);
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
     procedure ComboBoxSolverSettingChange(Sender: TObject);
@@ -78,9 +79,67 @@ begin
           // amg1r5 Ruge and Stueben.
           Formamg1r5Parameters.ShowModal;
        end
-       else
+       else if (ComboBoxSolverSetting.ItemIndex=7) then
        begin
           // Вызов настроек РУМБА 0.14
+
+          if (Laplas.egddata.itemper=0) then
+          begin
+             // Уравнение теплопередачи не решается.
+             Form_amg_manager.PanelTemperature1.Visible:=false;
+             Form_amg_manager.PanelTemperature2.Visible:=false;
+             Form_amg_manager.CheckBoxprintlogTemperature.Visible:=false;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.Visible:=false;
+             Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Visible:=false;
+          end
+          else
+          begin
+             // Уравнение теплопередачи решается.
+             Form_amg_manager.PanelTemperature1.Visible:=true;
+             Form_amg_manager.PanelTemperature2.Visible:=true;
+             Form_amg_manager.CheckBoxprintlogTemperature.Visible:=true;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.Visible:=true;
+             Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Visible:=true;
+          end;
+
+          if (Laplas.egddata.myflmod[0].iflow=1) then
+          begin
+             // cfd is active
+             Form_amg_manager.PanelSpeed1.Visible:=true;
+             Form_amg_manager.PanelPressure1.Visible:=true;
+             Form_amg_manager.PanelSpeed2.Visible:=true;
+             Form_amg_manager.PanelPressure2.Visible:=true;
+             Form_amg_manager.CheckBoxprintlogSpeed.Visible:=true;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.Visible:=true;
+             Form_amg_manager.CheckBoxSpeedMatrixPortrait.Visible:=true;
+             Form_amg_manager.CheckBoxprintlogPressure.Visible:=true;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.Visible:=true;
+             Form_amg_manager.CheckBoxPressureMatrixPortrait.Visible:=true;
+          end
+            else
+          begin
+             // cfd not active
+             Form_amg_manager.PanelSpeed1.Visible:=false;
+             Form_amg_manager.PanelPressure1.Visible:=false;
+             Form_amg_manager.PanelSpeed2.Visible:=false;
+             Form_amg_manager.PanelPressure2.Visible:=false;
+             Form_amg_manager.CheckBoxprintlogSpeed.Visible:=false;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.Visible:=false;
+             Form_amg_manager.CheckBoxSpeedMatrixPortrait.Visible:=false;
+             Form_amg_manager.CheckBoxprintlogPressure.Visible:=false;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.Visible:=false;
+             Form_amg_manager.CheckBoxPressureMatrixPortrait.Visible:=false;
+          end;
+          if (Laplas.egddata.iStaticStructural=0) then
+          begin
+             // Mechanical not active.
+             Form_amg_manager.PanelStress1.Visible:=false;
+             Form_amg_manager.PanelStress2.Visible:=false;
+             Form_amg_manager.CheckBoxprintlogStress.Visible:=false;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.Visible:=false;
+             Form_amg_manager.CheckBoxStressMatrixPortrait.Visible:=false;
+
+          end;
           Form_amg_manager.ShowModal;
        end;
     end;
@@ -90,6 +149,31 @@ begin
         if (ComboBoxStaticStructuralSolverSetting.ItemIndex=2) then
         begin
            // Вызов настроек РУМБА 0.14
+           // cfd not active
+           Form_amg_manager.PanelSpeed1.Visible:=false;
+           Form_amg_manager.PanelPressure1.Visible:=false;
+           Form_amg_manager.PanelSpeed2.Visible:=false;
+           Form_amg_manager.PanelPressure2.Visible:=false;
+           Form_amg_manager.CheckBoxprintlogSpeed.Visible:=false;
+           Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.Visible:=false;
+           Form_amg_manager.CheckBoxSpeedMatrixPortrait.Visible:=false;
+           Form_amg_manager.CheckBoxprintlogPressure.Visible:=false;
+           Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.Visible:=false;
+           Form_amg_manager.CheckBoxPressureMatrixPortrait.Visible:=false;
+
+
+           // 18,09,2020 Температура МКЭ задаётся в настройках температуры для amg РУМБА.
+            if (Laplas.egddata.iStaticStructural=0) then
+          begin
+             // Mechanical not active.
+             Form_amg_manager.PanelStress1.Visible:=false;
+             Form_amg_manager.PanelStress2.Visible:=false;
+             Form_amg_manager.CheckBoxprintlogStress.Visible:=false;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.Visible:=false;
+             Form_amg_manager.CheckBoxStressMatrixPortrait.Visible:=false;
+
+          end;
+
            Form_amg_manager.ShowModal;
         end;
 
@@ -117,6 +201,75 @@ begin
        begin
           // amg1r5 Ruge and Stueben.
           Formamg1r5Parameters.ShowModal;
+       end
+       else  if (ComboBoxSolverSetting.ItemIndex=7) then
+       begin
+          // Вызов настроек РУМБА v.0.14 алгебраического многосеточного метода.
+
+          // cfd not active
+           Form_amg_manager.PanelSpeed1.Visible:=false;
+           Form_amg_manager.PanelPressure1.Visible:=false;
+           Form_amg_manager.PanelSpeed2.Visible:=false;
+           Form_amg_manager.PanelPressure2.Visible:=false;
+           Form_amg_manager.CheckBoxprintlogSpeed.Visible:=false;
+           Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.Visible:=false;
+           Form_amg_manager.CheckBoxSpeedMatrixPortrait.Visible:=false;
+           Form_amg_manager.CheckBoxprintlogPressure.Visible:=false;
+           Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.Visible:=false;
+           Form_amg_manager.CheckBoxPressureMatrixPortrait.Visible:=false;
+
+              // Mechanical not active.
+             Form_amg_manager.PanelStress1.Visible:=false;
+             Form_amg_manager.PanelStress2.Visible:=false;
+             Form_amg_manager.CheckBoxprintlogStress.Visible:=false;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.Visible:=false;
+             Form_amg_manager.CheckBoxStressMatrixPortrait.Visible:=false;
+
+             // Уравнение теплопередачи решается.
+             Form_amg_manager.PanelTemperature1.Visible:=true;
+             Form_amg_manager.PanelTemperature2.Visible:=true;
+             Form_amg_manager.CheckBoxprintlogTemperature.Visible:=true;
+             Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.Visible:=true;
+             Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Visible:=true;
+
+           Form_amg_manager.ShowModal;
+       end;
+    end;
+     if (Laplas.egddata.iStaticStructural=1) then
+     begin
+       if (ComboBoxSolverSetting.ItemIndex=5) then
+       begin
+          // AMGCL Denis Demidov BiCGStab + samg
+          FormAMGCLParameters.ShowModal;
+       end
+       else  if (ComboBoxSolverSetting.ItemIndex=1) then
+       begin
+          // amg1r5 Ruge and Stueben.
+          Formamg1r5Parameters.ShowModal;
+       end
+       else
+       begin
+          // Вызов настроек РУМБА 0.14
+          // cfd not active
+          Form_amg_manager.PanelSpeed1.Visible:=false;
+          Form_amg_manager.PanelPressure1.Visible:=false;
+          Form_amg_manager.PanelSpeed2.Visible:=false;
+          Form_amg_manager.PanelPressure2.Visible:=false;
+          Form_amg_manager.CheckBoxprintlogSpeed.Visible:=false;
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.Visible:=false;
+          Form_amg_manager.CheckBoxSpeedMatrixPortrait.Visible:=false;
+          Form_amg_manager.CheckBoxprintlogPressure.Visible:=false;
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.Visible:=false;
+          Form_amg_manager.CheckBoxPressureMatrixPortrait.Visible:=false;
+
+          // Mechanical is active.
+          Form_amg_manager.PanelStress1.Visible:=true;
+          Form_amg_manager.PanelStress2.Visible:=true;
+          Form_amg_manager.CheckBoxprintlogStress.Visible:=true;
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.Visible:=true;
+          Form_amg_manager.CheckBoxStressMatrixPortrait.Visible:=true;
+
+          Form_amg_manager.ShowModal;
        end;
     end;
 end;

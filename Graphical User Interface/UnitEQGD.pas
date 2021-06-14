@@ -559,6 +559,11 @@ begin
             // Standart K-Epsilon (RANS) [2001]
             BEditTurb.Visible:=false;
          end;
+     6: begin
+           // Модель Ментора и Лангтрии
+           // ламинарно турбулентного перехода  [2009]
+           BEditTurb.Visible:=false;
+         end;
    end;
 end;
 

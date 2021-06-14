@@ -332,6 +332,8 @@ begin
          // внутри Prism Object.
          Laplas.body[Laplas.itek].binternalRadiation:=0;
        end;
+       // Закрываем экранную форму после успешного ввода.
+       Close;
     end
      else
     begin

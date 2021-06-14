@@ -5,6 +5,7 @@ object Laplas: TLaplas
   ClientHeight = 655
   ClientWidth = 1024
   Color = clMoneyGreen
+  CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -35,8 +36,8 @@ object Laplas: TLaplas
     ParentFont = False
     TabOrder = 0
     object Bzoomp: TSpeedButton
-      Left = 184
-      Top = 24
+      Left = 186
+      Top = 36
       Width = 23
       Height = 22
       Glyph.Data = {
@@ -56,8 +57,8 @@ object Laplas: TLaplas
       OnClick = BzoompClick
     end
     object Bzoomm: TSpeedButton
-      Left = 184
-      Top = 56
+      Left = 185
+      Top = 64
       Width = 23
       Height = 22
       Glyph.Data = {
@@ -2166,6 +2167,15 @@ object Laplas: TLaplas
       TabOrder = 12
       OnClick = RedoSourceforPatternClick
     end
+    object BitBtn1: TBitBtn
+      Left = 176
+      Top = 5
+      Width = 32
+      Height = 25
+      Caption = 'off'
+      TabOrder = 13
+      OnClick = BitBtn1Click
+    end
   end
   object MainImageList: TImageList
     Left = 128
@@ -2498,6 +2508,10 @@ object Laplas: TLaplas
         Caption = 'Variables'
         OnClick = Variables1Click
       end
+      object XYPlot2: TMenuItem
+        Caption = 'XYPlot'
+        OnClick = XYPlot2Click
+      end
     end
     object Solve1: TMenuItem
       Caption = 'Solve'
@@ -2512,6 +2526,10 @@ object Laplas: TLaplas
       object Initialization1: TMenuItem
         Caption = 'Initialization'
         OnClick = Initialization1Click
+      end
+      object Runoptimization1: TMenuItem
+        Caption = 'Run optimization'
+        OnClick = Runoptimization1Click
       end
     end
     object Post1: TMenuItem
@@ -2580,6 +2598,13 @@ object Laplas: TLaplas
         OnClick = Scaletofit1Click
       end
     end
+    object Debug1: TMenuItem
+      Caption = 'Debug'
+      object Parameters1: TMenuItem
+        Caption = 'Parameters'
+        OnClick = Parameters1Click
+      end
+    end
   end
   object OpenDialog1: TOpenDialog
     Left = 184
@@ -2587,12 +2612,12 @@ object Laplas: TLaplas
   end
   object OpenDialog2: TOpenDialog
     Filter = 'Tecplot Files (.PLT)|*.PLT|All Files|*.*'
-    Left = 224
+    Left = 248
     Top = 480
   end
   object SaveDialog1: TSaveDialog
     Filter = 'Text Files (*.txt)|*.txt'
-    Left = 280
+    Left = 312
     Top = 480
   end
 end

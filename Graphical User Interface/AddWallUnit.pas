@@ -462,6 +462,15 @@ begin
    begin
       ReadyPaint;
    end;
+
+   if (bOk and (RadioGroup1.ItemIndex=2)) then
+   begin
+      // Мы уже задали геометрию и находимся на вкладке
+      // задания граничных условий.
+      // В случае успешного ввода можно закрыть экранную форму.
+      Close;
+   end;
+
 end;
 
 procedure TAddWallForm.RadioGroupPlaneClick(Sender: TObject);

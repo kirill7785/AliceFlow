@@ -19,7 +19,6 @@ object Form_amg_manager: TForm_amg_manager
     Top = 0
     Width = 494
     Height = 585
-    AutoSize = True
     Color = clMoneyGreen
     ParentBackground = False
     TabOrder = 0
@@ -108,8 +107,8 @@ object Form_amg_manager: TForm_amg_manager
       Caption = '( 4 .. 6 )'
     end
     object Label13: TLabel
-      Left = 109
-      Top = 303
+      Left = 43
+      Top = 319
       Width = 60
       Height = 13
       Caption = '(0.35 .. 0.4)'
@@ -191,885 +190,14 @@ object Form_amg_manager: TForm_amg_manager
       Height = 13
       Caption = '16. Matrix portrait'
     end
-    object ComboBoxmaximumreducedlevels: TComboBox
-      Left = 164
-      Top = 66
-      Width = 66
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 0
-      Text = '0'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-        '9'
-        '10'
-        '11'
-        '12'
-        '13'
-        '14'
-        '15'
-        '16'
-        '17'
-        '18'
-        '19'
-        '20')
-    end
-    object ComboBoxinterpolation: TComboBox
-      Left = 164
-      Top = 201
-      Width = 66
-      Height = 21
-      ItemIndex = 3
-      TabOrder = 1
-      Text = '4.  for a long time usage (lite 1)'
-      Items.Strings = (
-        '1. JACOBI distance 2 interpolation'
-        '2. J.W.RUGE and K.STUBEN [1987] p.30 (102) AMG1R5'
-        '3'
-        '4.  for a long time usage (lite 1)'
-        '5.  lite version 4'
-        '6.  square lite version 4')
-    end
-    object ComboBoxnFinnest: TComboBox
-      Left = 164
-      Top = 93
-      Width = 66
-      Height = 21
-      ItemIndex = 1
-      TabOrder = 2
-      Text = '2'
-      Items.Strings = (
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnumberpresmothers: TComboBox
-      Left = 164
-      Top = 120
-      Width = 66
-      Height = 21
-      ItemIndex = 1
-      TabOrder = 3
-      Text = '1'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnumberpostsweeps: TComboBox
-      Left = 164
-      Top = 147
-      Width = 66
-      Height = 21
-      ItemIndex = 2
-      TabOrder = 4
-      Text = '2'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxmemorysize: TComboBox
-      Left = 164
-      Top = 174
-      Width = 66
-      Height = 21
-      ItemIndex = 5
-      TabOrder = 5
-      Text = '9'
-      Items.Strings = (
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-        '9'
-        '10'
-        '11'
-        '12'
-        '13'
-        '14'
-        '15'
-        '16'
-        '17'
-        '18'
-        '19'
-        '20'
-        '21'
-        '22'
-        '23'
-        '24'
-        '25'
-        '26'
-        '27'
-        '28'
-        '29'
-        '30'
-        '31'
-        '32'
-        '33'
-        '34'
-        '35'
-        '36'
-        '37'
-        '38'
-        '39'
-        '40'
-        '41'
-        '42'
-        '43'
-        '44'
-        '45'
-        '46'
-        '47'
-        '48'
-        '49'
-        '50'
-        '51'
-        '52'
-        '53'
-        '54'
-        '55'
-        '56'
-        '57'
-        '58'
-        '59'
-        '60'
-        '61'
-        '62'
-        '63'
-        '64'
-        '65'
-        '66'
-        '67'
-        '68'
-        '69'
-        '70'
-        '71'
-        '72'
-        '73'
-        '74'
-        '75'
-        '76'
-        '77'
-        '78'
-        '79'
-        '80'
-        '81'
-        '82'
-        '83'
-        '84'
-        '85'
-        '86'
-        '87'
-        '88'
-        '89'
-        '90'
-        '91'
-        '92'
-        '93'
-        '94'
-        '95'
-        '96'
-        '97'
-        '98'
-        '99'
-        '100')
-    end
     object Buttondefault: TButton
       Left = 212
       Top = 559
       Width = 217
       Height = 25
       Caption = 'return default parameters'
-      TabOrder = 6
+      TabOrder = 0
       OnClick = ButtondefaultClick
-    end
-    object Editthreshold: TEdit
-      Left = 164
-      Top = 39
-      Width = 66
-      Height = 21
-      TabOrder = 7
-      Text = '0.24'
-    end
-    object EditmagicT: TEdit
-      Left = 175
-      Top = 303
-      Width = 63
-      Height = 21
-      TabOrder = 8
-      Text = '0.4'
-    end
-    object EditthresholdSpeed: TEdit
-      Left = 243
-      Top = 39
-      Width = 72
-      Height = 21
-      TabOrder = 9
-      Text = '0.24'
-    end
-    object EditthresholdPressure: TEdit
-      Left = 332
-      Top = 39
-      Width = 65
-      Height = 21
-      TabOrder = 10
-      Text = '0.24'
-    end
-    object ComboBoxmaximumreducedlevelsSpeed: TComboBox
-      Left = 244
-      Top = 65
-      Width = 71
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 11
-      Text = '0'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-        '9'
-        '10'
-        '11'
-        '12'
-        '13'
-        '14'
-        '15'
-        '16'
-        '17'
-        '18'
-        '19'
-        '20')
-    end
-    object ComboBoxmaximumreducedlevelsPressure: TComboBox
-      Left = 333
-      Top = 66
-      Width = 65
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 12
-      Text = '0'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-        '9'
-        '10'
-        '11'
-        '12'
-        '13'
-        '14'
-        '15'
-        '16'
-        '17'
-        '18'
-        '19'
-        '20')
-    end
-    object ComboBoxnFinnestSpeed: TComboBox
-      Left = 244
-      Top = 89
-      Width = 71
-      Height = 21
-      ItemIndex = 1
-      TabOrder = 13
-      Text = '2'
-      Items.Strings = (
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnFinnestPressure: TComboBox
-      Left = 333
-      Top = 93
-      Width = 65
-      Height = 21
-      ItemIndex = 1
-      TabOrder = 14
-      Text = '2'
-      Items.Strings = (
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnumberpresmothersSpeed: TComboBox
-      Left = 244
-      Top = 116
-      Width = 71
-      Height = 21
-      ItemIndex = 1
-      TabOrder = 15
-      Text = '1'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnumberpresmothersPressure: TComboBox
-      Left = 333
-      Top = 120
-      Width = 65
-      Height = 21
-      ItemIndex = 1
-      TabOrder = 16
-      Text = '1'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnumberpostsweepsSpeed: TComboBox
-      Left = 244
-      Top = 143
-      Width = 71
-      Height = 21
-      ItemIndex = 2
-      TabOrder = 17
-      Text = '2'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnumberpostsweepsPressure: TComboBox
-      Left = 332
-      Top = 147
-      Width = 66
-      Height = 21
-      ItemIndex = 2
-      TabOrder = 18
-      Text = '2'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxmemorysizeSpeed: TComboBox
-      Left = 254
-      Top = 174
-      Width = 71
-      Height = 21
-      ItemIndex = 5
-      TabOrder = 19
-      Text = '9'
-      Items.Strings = (
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-        '9'
-        '10'
-        '11'
-        '12'
-        '13'
-        '14'
-        '15'
-        '16'
-        '17'
-        '18'
-        '19'
-        '20'
-        '21'
-        '22'
-        '23'
-        '24'
-        '25'
-        '26'
-        '27'
-        '28'
-        '29'
-        '30'
-        '31'
-        '32'
-        '33'
-        '34'
-        '35'
-        '36'
-        '37'
-        '38'
-        '39'
-        '40'
-        '41'
-        '42'
-        '43'
-        '44'
-        '45'
-        '46'
-        '47'
-        '48'
-        '49'
-        '50'
-        '51'
-        '52'
-        '53'
-        '54'
-        '55'
-        '56'
-        '57'
-        '58'
-        '59'
-        '60'
-        '61'
-        '62'
-        '63'
-        '64'
-        '65'
-        '66'
-        '67'
-        '68'
-        '69'
-        '70'
-        '71'
-        '72'
-        '73'
-        '74'
-        '75'
-        '76'
-        '77'
-        '78'
-        '79'
-        '80'
-        '81'
-        '82'
-        '83'
-        '84'
-        '85'
-        '86'
-        '87'
-        '88'
-        '89'
-        '90'
-        '91'
-        '92'
-        '93'
-        '94'
-        '95'
-        '96'
-        '97'
-        '98'
-        '99'
-        '100')
-    end
-    object ComboBoxmemorysizePressure: TComboBox
-      Left = 331
-      Top = 174
-      Width = 66
-      Height = 21
-      ItemIndex = 5
-      TabOrder = 20
-      Text = '9'
-      Items.Strings = (
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-        '9'
-        '10'
-        '11'
-        '12'
-        '13'
-        '14'
-        '15'
-        '16'
-        '17'
-        '18'
-        '19'
-        '20'
-        '21'
-        '22'
-        '23'
-        '24'
-        '25'
-        '26'
-        '27'
-        '28'
-        '29'
-        '30'
-        '31'
-        '32'
-        '33'
-        '34'
-        '35'
-        '36'
-        '37'
-        '38'
-        '39'
-        '40'
-        '41'
-        '42'
-        '43'
-        '44'
-        '45'
-        '46'
-        '47'
-        '48'
-        '49'
-        '50'
-        '51'
-        '52'
-        '53'
-        '54'
-        '55'
-        '56'
-        '57'
-        '58'
-        '59'
-        '60'
-        '61'
-        '62'
-        '63'
-        '64'
-        '65'
-        '66'
-        '67'
-        '68'
-        '69'
-        '70'
-        '71'
-        '72'
-        '73'
-        '74'
-        '75'
-        '76'
-        '77'
-        '78'
-        '79'
-        '80'
-        '81'
-        '82'
-        '83'
-        '84'
-        '85'
-        '86'
-        '87'
-        '88'
-        '89'
-        '90'
-        '91'
-        '92'
-        '93'
-        '94'
-        '95'
-        '96'
-        '97'
-        '98'
-        '99'
-        '100')
-    end
-    object ComboBoxsmoothertypeTemperature: TComboBox
-      Left = 158
-      Top = 335
-      Width = 80
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 21
-      Text = 'Gauss-Seidel'
-      Items.Strings = (
-        'Gauss-Seidel'
-        'iluk(k== lfil)'
-        'Runge-Kutta order = 3'
-        'Runge-Kutta order = 5'
-        'damped Jacoby'
-        'Rouch sor'
-        'GMRES'
-        'spai-0')
-    end
-    object ComboBoxsmoothertypeSpeed: TComboBox
-      Left = 244
-      Top = 335
-      Width = 84
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 22
-      Text = 'Gauss-Seidel'
-      Items.Strings = (
-        'Gauss-Seidel'
-        'iluk(k== lfil)'
-        'Runge-Kutta order = 3'
-        'Runge-Kutta order = 5'
-        'damped Jacoby'
-        'Rouch sor'
-        'GMRES'
-        'spai-0')
-    end
-    object ComboBoxsmoothertypePressure: TComboBox
-      Left = 334
-      Top = 335
-      Width = 77
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 23
-      Text = 'Gauss-Seidel'
-      Items.Strings = (
-        'Gauss-Seidel'
-        'iluk(k== lfil)'
-        'Runge-Kutta order=3'
-        'Runge-Kutta order=5'
-        'damped Jacoby'
-        'Rouch sor'
-        'GMRES'
-        'spai-0')
-    end
-    object ComboBoxcoarseningTemp: TComboBox
-      Left = 157
-      Top = 362
-      Width = 81
-      Height = 21
-      ItemIndex = 2
-      TabOrder = 24
-      Text = 'classical ST all con'
-      Items.Strings = (
-        'classical all con'
-        'RS 2 all con'
-        'classical ST all con'
-        'RS 2 ST all con'
-        'classical neg con'
-        'RS 2 neg con'
-        'classical ST neg con'
-        'RS 2 ST neg con'
-        'PMIS'
-        'HMIS')
-    end
-    object ComboBoxcoarseningSpeed: TComboBox
-      Left = 244
-      Top = 365
-      Width = 83
-      Height = 21
-      ItemIndex = 2
-      TabOrder = 25
-      Text = 'classical ST all con'
-      Items.Strings = (
-        'classical all con'
-        'RS 2 all con'
-        'classical ST all con'
-        'RS 2 ST all con'
-        'classical neg con'
-        'RS 2 neg con'
-        'classical ST neg con'
-        'RS 2 ST neg con'
-        'PMIS'
-        'HMIS')
-    end
-    object ComboBoxcoarseningPressure: TComboBox
-      Left = 333
-      Top = 362
-      Width = 77
-      Height = 21
-      ItemIndex = 2
-      TabOrder = 26
-      Text = 'classical ST all con'
-      Items.Strings = (
-        'classical all con'
-        'RS 2 all con'
-        'classical ST all con'
-        'RS 2 ST all con'
-        'classical neg con'
-        'RS 2 neg con'
-        'classical ST neg con'
-        'RS 2 ST neg con'
-        'PMIS'
-        'HMIS')
-    end
-    object ComboBoxStabilizationTemp: TComboBox
-      Left = 157
-      Top = 392
-      Width = 81
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 27
-      Text = 'none'
-      Items.Strings = (
-        'none'
-        'BiCGStab [1992]'
-        'FGMRes [1986]'
-        'for_NonLinear_problem')
-    end
-    object ComboBoxStabilizationSpeed: TComboBox
-      Left = 244
-      Top = 392
-      Width = 83
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 28
-      Text = 'none'
-      Items.Strings = (
-        'none'
-        'BiCGStab [1992]'
-        'FGMRes [1986]')
-    end
-    object ComboBoxStabilizationPressure: TComboBox
-      Left = 333
-      Top = 392
-      Width = 77
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 29
-      Text = 'none'
-      Items.Strings = (
-        'none'
-        'BiCGStab [1992]'
-        'FGMRes [1986]')
-    end
-    object EditmagicSpeed: TEdit
-      Left = 244
-      Top = 303
-      Width = 83
-      Height = 21
-      TabOrder = 30
-      Text = '0.4'
-    end
-    object EditmagicPressure: TEdit
-      Left = 333
-      Top = 303
-      Width = 77
-      Height = 21
-      TabOrder = 31
-      Text = '0.4'
-    end
-    object Edit_truncation_T: TEdit
-      Left = 164
-      Top = 276
-      Width = 74
-      Height = 21
-      TabOrder = 32
-      Text = '0.2'
-    end
-    object Edit_truncation_Speed: TEdit
-      Left = 244
-      Top = 276
-      Width = 83
-      Height = 21
-      TabOrder = 33
-      Text = '0.2'
-      Visible = False
-    end
-    object Edit_truncation_Pressure: TEdit
-      Left = 333
-      Top = 276
-      Width = 76
-      Height = 21
-      TabOrder = 34
-      Text = '0.2'
-      Visible = False
-    end
-    object CheckBoxtruncationT: TCheckBox
-      Left = 164
-      Top = 255
-      Width = 41
-      Height = 17
-      Caption = 'off'
-      TabOrder = 35
-      OnClick = CheckBoxtruncationTClick
-    end
-    object CheckBoxtruncationSpeed: TCheckBox
-      Left = 244
-      Top = 255
-      Width = 43
-      Height = 17
-      Caption = 'off'
-      Checked = True
-      State = cbChecked
-      TabOrder = 36
-      OnClick = CheckBoxtruncationSpeedClick
-    end
-    object CheckBoxtruncationPressure: TCheckBox
-      Left = 332
-      Top = 255
-      Width = 97
-      Height = 17
-      Caption = 'off'
-      Checked = True
-      State = cbChecked
-      TabOrder = 37
-      OnClick = CheckBoxtruncationPressureClick
-    end
-    object ComboBoxInterpolationSpeed: TComboBox
-      Left = 244
-      Top = 201
-      Width = 71
-      Height = 21
-      ItemIndex = 3
-      TabOrder = 38
-      Text = '4.  for a long time usage (lite 1)'
-      Items.Strings = (
-        '1. JACOBI distance 2 interpolation'
-        '2. J.W.RUGE and K.STUBEN [1987] p.30 (102) AMG1R5'
-        '3'
-        '4.  for a long time usage (lite 1)'
-        '5.  lite version 4'
-        '6.  square lite version 4')
-    end
-    object ComboBoxinterpolationPressure: TComboBox
-      Left = 333
-      Top = 201
-      Width = 66
-      Height = 21
-      ItemIndex = 3
-      TabOrder = 39
-      Text = '4.  for a long time usage (lite 1)'
-      Items.Strings = (
-        '1. JACOBI distance 2 interpolation'
-        '2. J.W.RUGE and K.STUBEN [1987] p.30 (102) AMG1R5'
-        '3'
-        '4.  for a long time usage (lite 1)'
-        '5.  lite version 4'
-        '6.  square lite version 4')
     end
     object CheckBoxprintlogTemperature: TCheckBox
       Left = 158
@@ -1079,7 +207,7 @@ object Form_amg_manager: TForm_amg_manager
       Caption = 'print'
       Checked = True
       State = cbChecked
-      TabOrder = 40
+      TabOrder = 1
     end
     object CheckBoxprintlogSpeed: TCheckBox
       Left = 248
@@ -1089,7 +217,7 @@ object Form_amg_manager: TForm_amg_manager
       Caption = 'print'
       Checked = True
       State = cbChecked
-      TabOrder = 41
+      TabOrder = 2
     end
     object CheckBoxprintlogPressure: TCheckBox
       Left = 332
@@ -1099,308 +227,7 @@ object Form_amg_manager: TForm_amg_manager
       Caption = 'print'
       Checked = True
       State = cbChecked
-      TabOrder = 42
-    end
-    object EditthresholdStress: TEdit
-      Left = 412
-      Top = 39
-      Width = 65
-      Height = 21
-      TabOrder = 43
-      Text = '0.24'
-    end
-    object ComboBoxmaximumreducedlevelsStress: TComboBox
-      Left = 412
-      Top = 66
-      Width = 65
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 44
-      Text = '0'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-        '9'
-        '10'
-        '11'
-        '12'
-        '13'
-        '14'
-        '15'
-        '16'
-        '17'
-        '18'
-        '19'
-        '20')
-    end
-    object ComboBoxnFinnestStress: TComboBox
-      Left = 412
-      Top = 93
-      Width = 65
-      Height = 21
-      ItemIndex = 1
-      TabOrder = 45
-      Text = '2'
-      Items.Strings = (
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnumberpresmoothersStress: TComboBox
-      Left = 412
-      Top = 120
-      Width = 65
-      Height = 21
-      ItemIndex = 1
-      TabOrder = 46
-      Text = '1'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxnumberpostsweepsStress: TComboBox
-      Left = 412
-      Top = 145
-      Width = 65
-      Height = 21
-      ItemIndex = 2
-      TabOrder = 47
-      Text = '2'
-      Items.Strings = (
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '6')
-    end
-    object ComboBoxmemorysizeStress: TComboBox
-      Left = 412
-      Top = 172
-      Width = 65
-      Height = 21
-      ItemIndex = 18
-      TabOrder = 48
-      Text = '22'
-      Items.Strings = (
-        '4'
-        '5'
-        '6'
-        '7'
-        '8'
-        '9'
-        '10'
-        '11'
-        '12'
-        '13'
-        '14'
-        '15'
-        '16'
-        '17'
-        '18'
-        '19'
-        '20'
-        '21'
-        '22'
-        '23'
-        '24'
-        '25'
-        '26'
-        '27'
-        '28'
-        '29'
-        '30'
-        '31'
-        '32'
-        '33'
-        '34'
-        '35'
-        '36'
-        '37'
-        '38'
-        '39'
-        '40'
-        '41'
-        '42'
-        '43'
-        '44'
-        '45'
-        '46'
-        '47'
-        '48'
-        '49'
-        '50'
-        '51'
-        '52'
-        '53'
-        '54'
-        '55'
-        '56'
-        '57'
-        '58'
-        '59'
-        '60'
-        '61'
-        '62'
-        '63'
-        '64'
-        '65'
-        '66'
-        '67'
-        '68'
-        '69'
-        '70'
-        '71'
-        '72'
-        '73'
-        '74'
-        '75'
-        '76'
-        '77'
-        '78'
-        '79'
-        '80'
-        '81'
-        '82'
-        '83'
-        '84'
-        '85'
-        '86'
-        '87'
-        '88'
-        '89'
-        '90'
-        '91'
-        '92'
-        '93'
-        '94'
-        '95'
-        '96'
-        '97'
-        '98'
-        '99'
-        '100'
-        '101'
-        '102'
-        '103'
-        '104'
-        '105'
-        '106'
-        '107'
-        '108'
-        '109'
-        '110')
-    end
-    object ComboBoxinterpollationStress: TComboBox
-      Left = 412
-      Top = 199
-      Width = 65
-      Height = 21
-      ItemIndex = 3
-      TabOrder = 49
-      Text = '4.  for a long time usage (lite 1)'
-      Items.Strings = (
-        '1. JACOBI distance 2 interpolation'
-        '2. J.W.RUGE and K.STUBEN [1987] p.30 (102) AMG1R5'
-        '3'
-        '4.  for a long time usage (lite 1)'
-        '5.  lite version 4'
-        '6.  square lite version 4')
-    end
-    object CheckBoxtruncationStress: TCheckBox
-      Left = 420
-      Top = 255
-      Width = 30
-      Height = 17
-      Caption = 'off'
-      Checked = True
-      State = cbChecked
-      TabOrder = 50
-    end
-    object Edittruncation_Stress: TEdit
-      Left = 415
-      Top = 276
-      Width = 62
-      Height = 21
-      TabOrder = 51
-      Text = '0.2'
-      Visible = False
-      OnClick = Edittruncation_StressClick
-    end
-    object EditmagicStress: TEdit
-      Left = 416
-      Top = 303
-      Width = 61
-      Height = 21
-      TabOrder = 52
-      Text = '0.4'
-    end
-    object ComboBoxsmoothertypeStress: TComboBox
-      Left = 417
-      Top = 335
-      Width = 61
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 53
-      Text = 'Gauss-Seidel'
-      Items.Strings = (
-        'Gauss-Seidel'
-        'iluk(k== lfil)'
-        'Runge-Kutta order=3'
-        'Runge-Kutta order=5'
-        'damped Jacoby'
-        'Rouch sor'
-        'GMRES'
-        'spai-0')
-    end
-    object ComboBoxcoarseningStress: TComboBox
-      Left = 416
-      Top = 362
-      Width = 77
-      Height = 21
-      ItemIndex = 2
-      TabOrder = 54
-      Text = 'classical ST all con'
-      Items.Strings = (
-        'classical all con'
-        'RS 2 all con'
-        'classical ST all con'
-        'RS 2 ST all con'
-        'classical neg con'
-        'RS 2 neg con'
-        'classical ST neg con'
-        'RS 2 ST neg con'
-        'PMIS'
-        'HMIS')
-    end
-    object ComboBoxstabilizationStress: TComboBox
-      Left = 416
-      Top = 389
-      Width = 61
-      Height = 21
-      ItemIndex = 0
-      TabOrder = 55
-      Text = 'none'
-      Items.Strings = (
-        'none'
-        'BiCGStab [1992]'
-        'FGMRes [1986]')
+      TabOrder = 3
     end
     object CheckBoxprintlogStress: TCheckBox
       Left = 420
@@ -1410,7 +237,7 @@ object Form_amg_manager: TForm_amg_manager
       Caption = 'print'
       Checked = True
       State = cbChecked
-      TabOrder = 56
+      TabOrder = 4
     end
     object GroupBox1: TGroupBox
       Left = 1
@@ -1418,7 +245,7 @@ object Form_amg_manager: TForm_amg_manager
       Width = 492
       Height = 49
       Caption = '15. C-F decomposition Algorithms and Data Structure'
-      TabOrder = 57
+      TabOrder = 5
       object ComboBoxCFalgorithmandDataStruct_Temperature: TComboBox
         Left = 147
         Top = 17
@@ -1494,7 +321,7 @@ object Form_amg_manager: TForm_amg_manager
       Width = 50
       Height = 17
       Caption = 'print'
-      TabOrder = 58
+      TabOrder = 6
     end
     object CheckBoxSpeedMatrixPortrait: TCheckBox
       Left = 248
@@ -1502,7 +329,7 @@ object Form_amg_manager: TForm_amg_manager
       Width = 49
       Height = 17
       Caption = 'print'
-      TabOrder = 59
+      TabOrder = 7
     end
     object CheckBoxPressureMatrixPortrait: TCheckBox
       Left = 334
@@ -1510,7 +337,7 @@ object Form_amg_manager: TForm_amg_manager
       Width = 50
       Height = 17
       Caption = 'print'
-      TabOrder = 60
+      TabOrder = 8
     end
     object CheckBoxStressMatrixPortrait: TCheckBox
       Left = 428
@@ -1518,7 +345,7 @@ object Form_amg_manager: TForm_amg_manager
       Width = 49
       Height = 17
       Caption = 'print'
-      TabOrder = 61
+      TabOrder = 9
     end
     object ComboBoxSort: TComboBox
       Left = 332
@@ -1526,7 +353,7 @@ object Form_amg_manager: TForm_amg_manager
       Width = 145
       Height = 21
       ItemIndex = 0
-      TabOrder = 62
+      TabOrder = 10
       Text = 'COUNTING SORT'
       Items.Strings = (
         'COUNTING SORT'
@@ -1543,7 +370,7 @@ object Form_amg_manager: TForm_amg_manager
       Caption = 'diagonal dominance'
       Checked = True
       State = cbChecked
-      TabOrder = 63
+      TabOrder = 11
     end
     object CheckBoxStrongTranspose: TCheckBox
       Left = 157
@@ -1553,7 +380,1256 @@ object Form_amg_manager: TForm_amg_manager
       Caption = 'Strong Transpose'
       Checked = True
       State = cbChecked
-      TabOrder = 64
+      TabOrder = 12
+    end
+    object PanelTemperature1: TPanel
+      Left = 157
+      Top = 39
+      Width = 81
+      Height = 187
+      Color = clMoneyGreen
+      ParentBackground = False
+      TabOrder = 13
+      object Editthreshold: TEdit
+        Left = 6
+        Top = 0
+        Width = 66
+        Height = 21
+        TabOrder = 0
+        Text = '0.24'
+      end
+      object ComboBoxmaximumreducedlevels: TComboBox
+        Left = 7
+        Top = 27
+        Width = 66
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 1
+        Text = '0'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6'
+          '7'
+          '8'
+          '9'
+          '10'
+          '11'
+          '12'
+          '13'
+          '14'
+          '15'
+          '16'
+          '17'
+          '18'
+          '19'
+          '20')
+      end
+      object ComboBoxnFinnest: TComboBox
+        Left = 7
+        Top = 54
+        Width = 66
+        Height = 21
+        ItemIndex = 1
+        TabOrder = 2
+        Text = '2'
+        Items.Strings = (
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxnumberpresmothers: TComboBox
+        Left = 7
+        Top = 81
+        Width = 66
+        Height = 21
+        ItemIndex = 1
+        TabOrder = 3
+        Text = '1'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxnumberpostsweeps: TComboBox
+        Left = 7
+        Top = 108
+        Width = 66
+        Height = 21
+        ItemIndex = 2
+        TabOrder = 4
+        Text = '2'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxmemorysize: TComboBox
+        Left = 7
+        Top = 135
+        Width = 66
+        Height = 21
+        ItemIndex = 5
+        TabOrder = 5
+        Text = '9'
+        Items.Strings = (
+          '4'
+          '5'
+          '6'
+          '7'
+          '8'
+          '9'
+          '10'
+          '11'
+          '12'
+          '13'
+          '14'
+          '15'
+          '16'
+          '17'
+          '18'
+          '19'
+          '20'
+          '21'
+          '22'
+          '23'
+          '24'
+          '25'
+          '26'
+          '27'
+          '28'
+          '29'
+          '30'
+          '31'
+          '32'
+          '33'
+          '34'
+          '35'
+          '36'
+          '37'
+          '38'
+          '39'
+          '40'
+          '41'
+          '42'
+          '43'
+          '44'
+          '45'
+          '46'
+          '47'
+          '48'
+          '49'
+          '50'
+          '51'
+          '52'
+          '53'
+          '54'
+          '55'
+          '56'
+          '57'
+          '58'
+          '59'
+          '60'
+          '61'
+          '62'
+          '63'
+          '64'
+          '65'
+          '66'
+          '67'
+          '68'
+          '69'
+          '70'
+          '71'
+          '72'
+          '73'
+          '74'
+          '75'
+          '76'
+          '77'
+          '78'
+          '79'
+          '80'
+          '81'
+          '82'
+          '83'
+          '84'
+          '85'
+          '86'
+          '87'
+          '88'
+          '89'
+          '90'
+          '91'
+          '92'
+          '93'
+          '94'
+          '95'
+          '96'
+          '97'
+          '98'
+          '99'
+          '100')
+      end
+      object ComboBoxinterpolation: TComboBox
+        Left = 7
+        Top = 166
+        Width = 66
+        Height = 21
+        ItemIndex = 3
+        TabOrder = 6
+        Text = '4.  for a long time usage (lite 1)'
+        Items.Strings = (
+          '1. JACOBI distance 2 interpolation'
+          '2. J.W.RUGE and K.STUBEN [1987] p.30 (102) AMG1R5'
+          '3'
+          '4.  for a long time usage (lite 1)'
+          '5.  lite version 4'
+          '6.  square lite version 4')
+      end
+    end
+    object PanelSpeed1: TPanel
+      Left = 238
+      Top = 39
+      Width = 89
+      Height = 187
+      Color = clMoneyGreen
+      ParentBackground = False
+      TabOrder = 14
+      object EditthresholdSpeed: TEdit
+        Left = 9
+        Top = 3
+        Width = 72
+        Height = 21
+        TabOrder = 0
+        Text = '0.24'
+      end
+      object ComboBoxmaximumreducedlevelsSpeed: TComboBox
+        Left = 10
+        Top = 30
+        Width = 71
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 1
+        Text = '0'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6'
+          '7'
+          '8'
+          '9'
+          '10'
+          '11'
+          '12'
+          '13'
+          '14'
+          '15'
+          '16'
+          '17'
+          '18'
+          '19'
+          '20')
+      end
+      object ComboBoxnFinnestSpeed: TComboBox
+        Left = 10
+        Top = 57
+        Width = 71
+        Height = 21
+        ItemIndex = 1
+        TabOrder = 2
+        Text = '2'
+        Items.Strings = (
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxnumberpresmothersSpeed: TComboBox
+        Left = 10
+        Top = 84
+        Width = 71
+        Height = 21
+        ItemIndex = 1
+        TabOrder = 3
+        Text = '1'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxnumberpostsweepsSpeed: TComboBox
+        Left = 10
+        Top = 111
+        Width = 71
+        Height = 21
+        ItemIndex = 2
+        TabOrder = 4
+        Text = '2'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxmemorysizeSpeed: TComboBox
+        Left = 10
+        Top = 138
+        Width = 71
+        Height = 21
+        ItemIndex = 5
+        TabOrder = 5
+        Text = '9'
+        Items.Strings = (
+          '4'
+          '5'
+          '6'
+          '7'
+          '8'
+          '9'
+          '10'
+          '11'
+          '12'
+          '13'
+          '14'
+          '15'
+          '16'
+          '17'
+          '18'
+          '19'
+          '20'
+          '21'
+          '22'
+          '23'
+          '24'
+          '25'
+          '26'
+          '27'
+          '28'
+          '29'
+          '30'
+          '31'
+          '32'
+          '33'
+          '34'
+          '35'
+          '36'
+          '37'
+          '38'
+          '39'
+          '40'
+          '41'
+          '42'
+          '43'
+          '44'
+          '45'
+          '46'
+          '47'
+          '48'
+          '49'
+          '50'
+          '51'
+          '52'
+          '53'
+          '54'
+          '55'
+          '56'
+          '57'
+          '58'
+          '59'
+          '60'
+          '61'
+          '62'
+          '63'
+          '64'
+          '65'
+          '66'
+          '67'
+          '68'
+          '69'
+          '70'
+          '71'
+          '72'
+          '73'
+          '74'
+          '75'
+          '76'
+          '77'
+          '78'
+          '79'
+          '80'
+          '81'
+          '82'
+          '83'
+          '84'
+          '85'
+          '86'
+          '87'
+          '88'
+          '89'
+          '90'
+          '91'
+          '92'
+          '93'
+          '94'
+          '95'
+          '96'
+          '97'
+          '98'
+          '99'
+          '100')
+      end
+      object ComboBoxInterpolationSpeed: TComboBox
+        Left = 10
+        Top = 165
+        Width = 71
+        Height = 21
+        ItemIndex = 3
+        TabOrder = 6
+        Text = '4.  for a long time usage (lite 1)'
+        Items.Strings = (
+          '1. JACOBI distance 2 interpolation'
+          '2. J.W.RUGE and K.STUBEN [1987] p.30 (102) AMG1R5'
+          '3'
+          '4.  for a long time usage (lite 1)'
+          '5.  lite version 4'
+          '6.  square lite version 4')
+      end
+    end
+    object PanelPressure1: TPanel
+      Left = 325
+      Top = 39
+      Width = 81
+      Height = 187
+      Color = clMoneyGreen
+      ParentBackground = False
+      TabOrder = 15
+      object EditthresholdPressure: TEdit
+        Left = 8
+        Top = 2
+        Width = 65
+        Height = 21
+        TabOrder = 0
+        Text = '0.24'
+      end
+      object ComboBoxmaximumreducedlevelsPressure: TComboBox
+        Left = 8
+        Top = 29
+        Width = 65
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 1
+        Text = '0'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6'
+          '7'
+          '8'
+          '9'
+          '10'
+          '11'
+          '12'
+          '13'
+          '14'
+          '15'
+          '16'
+          '17'
+          '18'
+          '19'
+          '20')
+      end
+      object ComboBoxnFinnestPressure: TComboBox
+        Left = 8
+        Top = 56
+        Width = 65
+        Height = 21
+        ItemIndex = 1
+        TabOrder = 2
+        Text = '2'
+        Items.Strings = (
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxnumberpresmothersPressure: TComboBox
+        Left = 8
+        Top = 83
+        Width = 65
+        Height = 21
+        ItemIndex = 1
+        TabOrder = 3
+        Text = '1'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxnumberpostsweepsPressure: TComboBox
+        Left = 7
+        Top = 110
+        Width = 66
+        Height = 21
+        ItemIndex = 2
+        TabOrder = 4
+        Text = '2'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxmemorysizePressure: TComboBox
+        Left = 7
+        Top = 137
+        Width = 66
+        Height = 21
+        ItemIndex = 5
+        TabOrder = 5
+        Text = '9'
+        Items.Strings = (
+          '4'
+          '5'
+          '6'
+          '7'
+          '8'
+          '9'
+          '10'
+          '11'
+          '12'
+          '13'
+          '14'
+          '15'
+          '16'
+          '17'
+          '18'
+          '19'
+          '20'
+          '21'
+          '22'
+          '23'
+          '24'
+          '25'
+          '26'
+          '27'
+          '28'
+          '29'
+          '30'
+          '31'
+          '32'
+          '33'
+          '34'
+          '35'
+          '36'
+          '37'
+          '38'
+          '39'
+          '40'
+          '41'
+          '42'
+          '43'
+          '44'
+          '45'
+          '46'
+          '47'
+          '48'
+          '49'
+          '50'
+          '51'
+          '52'
+          '53'
+          '54'
+          '55'
+          '56'
+          '57'
+          '58'
+          '59'
+          '60'
+          '61'
+          '62'
+          '63'
+          '64'
+          '65'
+          '66'
+          '67'
+          '68'
+          '69'
+          '70'
+          '71'
+          '72'
+          '73'
+          '74'
+          '75'
+          '76'
+          '77'
+          '78'
+          '79'
+          '80'
+          '81'
+          '82'
+          '83'
+          '84'
+          '85'
+          '86'
+          '87'
+          '88'
+          '89'
+          '90'
+          '91'
+          '92'
+          '93'
+          '94'
+          '95'
+          '96'
+          '97'
+          '98'
+          '99'
+          '100')
+      end
+      object ComboBoxinterpolationPressure: TComboBox
+        Left = 7
+        Top = 164
+        Width = 66
+        Height = 21
+        ItemIndex = 3
+        TabOrder = 6
+        Text = '4.  for a long time usage (lite 1)'
+        Items.Strings = (
+          '1. JACOBI distance 2 interpolation'
+          '2. J.W.RUGE and K.STUBEN [1987] p.30 (102) AMG1R5'
+          '3'
+          '4.  for a long time usage (lite 1)'
+          '5.  lite version 4'
+          '6.  square lite version 4')
+      end
+    end
+    object PanelStress1: TPanel
+      Left = 404
+      Top = 40
+      Width = 81
+      Height = 186
+      Color = clMoneyGreen
+      ParentBackground = False
+      TabOrder = 16
+      object EditthresholdStress: TEdit
+        Left = 8
+        Top = -1
+        Width = 65
+        Height = 21
+        TabOrder = 0
+        Text = '0.24'
+      end
+      object ComboBoxmaximumreducedlevelsStress: TComboBox
+        Left = 8
+        Top = 26
+        Width = 65
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 1
+        Text = '0'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6'
+          '7'
+          '8'
+          '9'
+          '10'
+          '11'
+          '12'
+          '13'
+          '14'
+          '15'
+          '16'
+          '17'
+          '18'
+          '19'
+          '20')
+      end
+      object ComboBoxnFinnestStress: TComboBox
+        Left = 8
+        Top = 53
+        Width = 65
+        Height = 21
+        ItemIndex = 1
+        TabOrder = 2
+        Text = '2'
+        Items.Strings = (
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxnumberpresmoothersStress: TComboBox
+        Left = 8
+        Top = 80
+        Width = 65
+        Height = 21
+        ItemIndex = 1
+        TabOrder = 3
+        Text = '1'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxnumberpostsweepsStress: TComboBox
+        Left = 8
+        Top = 107
+        Width = 65
+        Height = 21
+        ItemIndex = 2
+        TabOrder = 4
+        Text = '2'
+        Items.Strings = (
+          '0'
+          '1'
+          '2'
+          '3'
+          '4'
+          '5'
+          '6')
+      end
+      object ComboBoxmemorysizeStress: TComboBox
+        Left = 8
+        Top = 134
+        Width = 65
+        Height = 21
+        ItemIndex = 18
+        TabOrder = 5
+        Text = '22'
+        Items.Strings = (
+          '4'
+          '5'
+          '6'
+          '7'
+          '8'
+          '9'
+          '10'
+          '11'
+          '12'
+          '13'
+          '14'
+          '15'
+          '16'
+          '17'
+          '18'
+          '19'
+          '20'
+          '21'
+          '22'
+          '23'
+          '24'
+          '25'
+          '26'
+          '27'
+          '28'
+          '29'
+          '30'
+          '31'
+          '32'
+          '33'
+          '34'
+          '35'
+          '36'
+          '37'
+          '38'
+          '39'
+          '40'
+          '41'
+          '42'
+          '43'
+          '44'
+          '45'
+          '46'
+          '47'
+          '48'
+          '49'
+          '50'
+          '51'
+          '52'
+          '53'
+          '54'
+          '55'
+          '56'
+          '57'
+          '58'
+          '59'
+          '60'
+          '61'
+          '62'
+          '63'
+          '64'
+          '65'
+          '66'
+          '67'
+          '68'
+          '69'
+          '70'
+          '71'
+          '72'
+          '73'
+          '74'
+          '75'
+          '76'
+          '77'
+          '78'
+          '79'
+          '80'
+          '81'
+          '82'
+          '83'
+          '84'
+          '85'
+          '86'
+          '87'
+          '88'
+          '89'
+          '90'
+          '91'
+          '92'
+          '93'
+          '94'
+          '95'
+          '96'
+          '97'
+          '98'
+          '99'
+          '100'
+          '101'
+          '102'
+          '103'
+          '104'
+          '105'
+          '106'
+          '107'
+          '108'
+          '109'
+          '110')
+      end
+      object ComboBoxinterpollationStress: TComboBox
+        Left = 8
+        Top = 161
+        Width = 65
+        Height = 21
+        ItemIndex = 3
+        TabOrder = 6
+        Text = '4.  for a long time usage (lite 1)'
+        Items.Strings = (
+          '1. JACOBI distance 2 interpolation'
+          '2. J.W.RUGE and K.STUBEN [1987] p.30 (102) AMG1R5'
+          '3'
+          '4.  for a long time usage (lite 1)'
+          '5.  lite version 4'
+          '6.  square lite version 4')
+      end
+    end
+    object PanelTemperature2: TPanel
+      Left = 157
+      Top = 255
+      Width = 81
+      Height = 163
+      Color = clMoneyGreen
+      ParentBackground = False
+      TabOrder = 17
+      object CheckBoxtruncationT: TCheckBox
+        Left = 8
+        Top = 0
+        Width = 41
+        Height = 17
+        Caption = 'off'
+        TabOrder = 0
+        OnClick = CheckBoxtruncationTClick
+      end
+      object Edit_truncation_T: TEdit
+        Left = 7
+        Top = 23
+        Width = 66
+        Height = 21
+        TabOrder = 1
+        Text = '0.2'
+      end
+      object EditmagicT: TEdit
+        Left = 8
+        Top = 50
+        Width = 65
+        Height = 21
+        TabOrder = 2
+        Text = '0.4'
+      end
+      object ComboBoxsmoothertypeTemperature: TComboBox
+        Left = 8
+        Top = 77
+        Width = 65
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 3
+        Text = 'Gauss-Seidel'
+        Items.Strings = (
+          'Gauss-Seidel'
+          'iluk(k== lfil)'
+          'Runge-Kutta order = 3'
+          'Runge-Kutta order = 5'
+          'damped Jacoby'
+          'Rouch sor'
+          'GMRES'
+          'spai-0')
+      end
+      object ComboBoxcoarseningTemp: TComboBox
+        Left = 9
+        Top = 104
+        Width = 64
+        Height = 21
+        ItemIndex = 2
+        TabOrder = 4
+        Text = 'classical ST all con'
+        OnChange = ComboBoxcoarseningTempChange
+        Items.Strings = (
+          'classical all con'
+          'RS 2 all con'
+          'classical ST all con'
+          'RS 2 ST all con'
+          'classical neg con'
+          'RS 2 neg con'
+          'classical ST neg con'
+          'RS 2 ST neg con'
+          'PMIS'
+          'HMIS')
+      end
+      object ComboBoxStabilizationTemp: TComboBox
+        Left = 9
+        Top = 131
+        Width = 64
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 5
+        Text = 'none'
+        Items.Strings = (
+          'none'
+          'BiCGStab [1992]'
+          'FGMRes [1986]'
+          'for_NonLinear_problem')
+      end
+    end
+    object PanelSpeed2: TPanel
+      Left = 236
+      Top = 256
+      Width = 81
+      Height = 162
+      Color = clMoneyGreen
+      ParentBackground = False
+      TabOrder = 18
+      object CheckBoxtruncationSpeed: TCheckBox
+        Left = 6
+        Top = 4
+        Width = 43
+        Height = 17
+        Caption = 'off'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+        OnClick = CheckBoxtruncationSpeedClick
+      end
+      object Edit_truncation_Speed: TEdit
+        Left = 7
+        Top = 27
+        Width = 66
+        Height = 21
+        TabOrder = 1
+        Text = '0.2'
+        Visible = False
+      end
+      object EditmagicSpeed: TEdit
+        Left = 7
+        Top = 54
+        Width = 66
+        Height = 21
+        TabOrder = 2
+        Text = '0.4'
+      end
+      object ComboBoxsmoothertypeSpeed: TComboBox
+        Left = 7
+        Top = 81
+        Width = 66
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 3
+        Text = 'Gauss-Seidel'
+        Items.Strings = (
+          'Gauss-Seidel'
+          'iluk(k== lfil)'
+          'Runge-Kutta order = 3'
+          'Runge-Kutta order = 5'
+          'damped Jacoby'
+          'Rouch sor'
+          'GMRES'
+          'spai-0')
+      end
+      object ComboBoxcoarseningSpeed: TComboBox
+        Left = 7
+        Top = 108
+        Width = 66
+        Height = 21
+        ItemIndex = 2
+        TabOrder = 4
+        Text = 'classical ST all con'
+        OnChange = ComboBoxcoarseningSpeedChange
+        Items.Strings = (
+          'classical all con'
+          'RS 2 all con'
+          'classical ST all con'
+          'RS 2 ST all con'
+          'classical neg con'
+          'RS 2 neg con'
+          'classical ST neg con'
+          'RS 2 ST neg con'
+          'PMIS'
+          'HMIS')
+      end
+      object ComboBoxStabilizationSpeed: TComboBox
+        Left = 7
+        Top = 135
+        Width = 66
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 5
+        Text = 'none'
+        Items.Strings = (
+          'none'
+          'BiCGStab [1992]'
+          'FGMRes [1986]')
+      end
+    end
+    object PanelPressure2: TPanel
+      Left = 315
+      Top = 255
+      Width = 81
+      Height = 163
+      Color = clMoneyGreen
+      ParentBackground = False
+      TabOrder = 19
+      object CheckBoxtruncationPressure: TCheckBox
+        Left = 8
+        Top = 9
+        Width = 49
+        Height = 17
+        Caption = 'off'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+        OnClick = CheckBoxtruncationPressureClick
+      end
+      object Edit_truncation_Pressure: TEdit
+        Left = 7
+        Top = 32
+        Width = 66
+        Height = 21
+        TabOrder = 1
+        Text = '0.2'
+        Visible = False
+      end
+      object EditmagicPressure: TEdit
+        Left = 7
+        Top = 59
+        Width = 66
+        Height = 21
+        TabOrder = 2
+        Text = '0.4'
+      end
+      object ComboBoxsmoothertypePressure: TComboBox
+        Left = 9
+        Top = 86
+        Width = 64
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 3
+        Text = 'Gauss-Seidel'
+        Items.Strings = (
+          'Gauss-Seidel'
+          'iluk(k== lfil)'
+          'Runge-Kutta order=3'
+          'Runge-Kutta order=5'
+          'damped Jacoby'
+          'Rouch sor'
+          'GMRES'
+          'spai-0')
+      end
+      object ComboBoxcoarseningPressure: TComboBox
+        Left = 8
+        Top = 113
+        Width = 65
+        Height = 21
+        ItemIndex = 2
+        TabOrder = 4
+        Text = 'classical ST all con'
+        OnChange = ComboBoxcoarseningPressureChange
+        Items.Strings = (
+          'classical all con'
+          'RS 2 all con'
+          'classical ST all con'
+          'RS 2 ST all con'
+          'classical neg con'
+          'RS 2 neg con'
+          'classical ST neg con'
+          'RS 2 ST neg con'
+          'PMIS'
+          'HMIS')
+      end
+      object ComboBoxStabilizationPressure: TComboBox
+        Left = 7
+        Top = 140
+        Width = 66
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 5
+        Text = 'none'
+        Items.Strings = (
+          'none'
+          'BiCGStab [1992]'
+          'FGMRes [1986]')
+      end
+    end
+    object PanelStress2: TPanel
+      Left = 394
+      Top = 255
+      Width = 81
+      Height = 162
+      Color = clMoneyGreen
+      ParentBackground = False
+      TabOrder = 20
+      object CheckBoxtruncationStress: TCheckBox
+        Left = 3
+        Top = 8
+        Width = 30
+        Height = 17
+        Caption = 'off'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+        OnClick = CheckBoxtruncationStressClick
+      end
+      object Edittruncation_Stress: TEdit
+        Left = 7
+        Top = 31
+        Width = 66
+        Height = 21
+        TabOrder = 1
+        Text = '0.2'
+        Visible = False
+        OnClick = Edittruncation_StressClick
+      end
+      object EditmagicStress: TEdit
+        Left = 8
+        Top = 58
+        Width = 65
+        Height = 21
+        TabOrder = 2
+        Text = '0.4'
+      end
+      object ComboBoxsmoothertypeStress: TComboBox
+        Left = 4
+        Top = 85
+        Width = 69
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 3
+        Text = 'Gauss-Seidel'
+        Items.Strings = (
+          'Gauss-Seidel'
+          'iluk(k== lfil)'
+          'Runge-Kutta order=3'
+          'Runge-Kutta order=5'
+          'damped Jacoby'
+          'Rouch sor'
+          'GMRES'
+          'spai-0')
+      end
+      object ComboBoxcoarseningStress: TComboBox
+        Left = 4
+        Top = 112
+        Width = 69
+        Height = 21
+        ItemIndex = 2
+        TabOrder = 4
+        Text = 'classical ST all con'
+        OnChange = ComboBoxcoarseningStressChange
+        Items.Strings = (
+          'classical all con'
+          'RS 2 all con'
+          'classical ST all con'
+          'RS 2 ST all con'
+          'classical neg con'
+          'RS 2 neg con'
+          'classical ST neg con'
+          'RS 2 ST neg con'
+          'PMIS'
+          'HMIS')
+      end
+      object ComboBoxstabilizationStress: TComboBox
+        Left = 4
+        Top = 139
+        Width = 69
+        Height = 21
+        ItemIndex = 0
+        TabOrder = 5
+        Text = 'none'
+        Items.Strings = (
+          'none'
+          'BiCGStab [1992]'
+          'FGMRes [1986]')
+      end
     end
   end
   object ApplicationEvents1: TApplicationEvents

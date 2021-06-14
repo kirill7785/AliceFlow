@@ -3,8 +3,8 @@ object FormAMGCLParameters: TFormAMGCLParameters
   Top = 0
   AutoSize = True
   Caption = 'AMGCL'
-  ClientHeight = 316
-  ClientWidth = 186
+  ClientHeight = 373
+  ClientWidth = 185
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,17 +15,17 @@ object FormAMGCLParameters: TFormAMGCLParameters
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
-    Left = 9
-    Top = 296
+    Left = 7
+    Top = 353
     Width = 90
     Height = 13
     Caption = 'Denis Demidov  alg'
   end
   object RadioGroupAMGCLsmoother1: TRadioGroup
-    Left = 1
+    Left = 0
     Top = 0
     Width = 185
-    Height = 145
+    Height = 210
     Caption = 'AMGCL smoother'
     Color = clMoneyGreen
     Columns = 2
@@ -38,14 +38,18 @@ object FormAMGCLParameters: TFormAMGCLParameters
       'spai1'
       'chebyshev'
       'iluk, k=1'
-      'iluk, k=2')
+      'iluk, k=2'
+      'iluk, k=4'
+      'iluk, k=6'
+      'iluk, k=8'
+      'iluk, k=10')
     ParentBackground = False
     ParentColor = False
     TabOrder = 0
   end
   object Button1: TButton
-    Left = 110
-    Top = 291
+    Left = 103
+    Top = 348
     Width = 75
     Height = 25
     Caption = 'Apply'
@@ -54,7 +58,7 @@ object FormAMGCLParameters: TFormAMGCLParameters
   end
   object RadioGroupAMGCLCoarseningType: TRadioGroup
     Left = 0
-    Top = 151
+    Top = 216
     Width = 185
     Height = 99
     Caption = 'AMGCL coarsening type'
@@ -65,8 +69,8 @@ object FormAMGCLParameters: TFormAMGCLParameters
     TabOrder = 2
   end
   object ComboBoxIterator: TComboBox
-    Left = 9
-    Top = 264
+    Left = 7
+    Top = 321
     Width = 169
     Height = 21
     ItemIndex = 0

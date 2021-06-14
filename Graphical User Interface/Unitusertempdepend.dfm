@@ -42,7 +42,7 @@ object Formusertempdepend: TFormusertempdepend
     Caption = 'Label4'
   end
   object Label5: TLabel
-    Left = 216
+    Left = 176
     Top = 215
     Width = 31
     Height = 13
@@ -65,7 +65,7 @@ object Formusertempdepend: TFormusertempdepend
   end
   object ButtonApply: TButton
     Left = 304
-    Top = 232
+    Top = 234
     Width = 75
     Height = 25
     Caption = 'Apply'
