@@ -162,9 +162,11 @@ begin
                else
               begin
                  // √идродинамика не может быть нестационарной.
-                 RadioGroup1.ItemIndex:=0;
-                 Laplas.MainMemo.Lines.Add('WARNING!!! unsteady cfd calculation not support.');
-                 Application.MessageBox('unsteady cfd calculation not support.','WARNING',MB_OK)
+                 //RadioGroup1.ItemIndex:=0;
+                 //Laplas.MainMemo.Lines.Add('WARNING!!! unsteady cfd calculation not support.');
+                 //Application.MessageBox('unsteady cfd calculation not support.','WARNING',MB_OK);
+
+                 PanelTime.Visible:=True;
               end;
            end;
     end;

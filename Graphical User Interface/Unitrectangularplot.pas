@@ -4,14 +4,14 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, TeEngine, Series, StdCtrls, ExtCtrls, TeeProcs, Chart;
+  Dialogs, TeEngine, Series, StdCtrls, ExtCtrls, TeeProcs, Chart,
+  VclTee.TeeGDIPlus;
 
 type
   TfrmRectangularPlot = class(TForm)
     cht1: TChart;
-    btnclose: TButton;
     lnsrsSeries1: TLineSeries;
-    procedure btncloseClick(Sender: TObject);
+    procedure FormResize(Sender: TObject);
   private
     { Private declarations }
   public
@@ -25,9 +25,11 @@ implementation
 
 {$R *.dfm}
 
-procedure TfrmRectangularPlot.btncloseClick(Sender: TObject);
+// Изменение размеров экеранной формы.
+procedure TfrmRectangularPlot.FormResize(Sender: TObject);
 begin
-   Close;
+   cht1.Height:=frmRectangularPlot.ClientHeight;
+   cht1.Width:=frmRectangularPlot.ClientWidth;
 end;
 
 end.

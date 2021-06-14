@@ -20,6 +20,7 @@ type
     Series7: TFastLineSeries;
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
     procedure Timer1Timer(Sender: TObject);
+    procedure FormResize(Sender: TObject);
   private
     { Private declarations }
   public
@@ -34,7 +35,7 @@ implementation
 
 {$R *.dfm}
 
-uses VisualUnit;
+uses VisualUnit, UnitEQGD;
 
 // Запрет форме сворачиваться.
 procedure TFormResidualSSTTemp.ApplicationEvents1Message(var Msg: tagMSG;
@@ -45,14 +46,29 @@ begin
       msg.message:=0;
 end;
 
+// Изменение размеров формы.
+procedure TFormResidualSSTTemp.FormResize(Sender: TObject);
+begin
+   Chart1.Height:=FormResidualSSTTemp.ClientHeight;
+   Chart1.Width:=FormResidualSSTTemp.ClientWidth;
+end;
+
 procedure TFormResidualSSTTemp.Timer1Timer(Sender: TObject);
 var
    f : TStringList; // переменная типа объект TStringList
    i : Integer;
    fmin, fmax : Real;
    s, sub, subx : string;
+   istart : Integer;
+
 begin
-   // Действие будет происходить каждую секунду.
+     if (Laplas.ecology_btn) then
+   begin
+   if (EGDForm.ComboBoxTemperature.ItemIndex=1) then
+   begin
+    istart:=2;
+
+    // Действие будет происходить каждую секунду.
     f:=TStringList.Create();
 
       try
@@ -83,7 +99,13 @@ begin
              FormResidualSSTTemp.Chart1.SeriesList[4].Clear;
              FormResidualSSTTemp.Chart1.SeriesList[5].Clear;
              FormResidualSSTTemp.Chart1.SeriesList[6].Clear;
-             for i:=2 to f.Count-1 do
+
+             if (f.Count>9) then
+             begin
+                istart:=6;
+             end;
+
+             for i:=istart to f.Count-1 do
              begin
                 fmin:=20.0;
                 fmax:=120.0;
@@ -210,8 +232,10 @@ begin
                   // TODO
                   // обрыв данных.
                end;
-               FormResidualSSTTemp.Chart1.LeftAxis.Minimum:=1e-3*fmin;
-               FormResidualSSTTemp.Chart1.LeftAxis.Maximum:=1e3*fmax;
+               //FormResidualSSTTemp.Chart1.LeftAxis.Minimum:=1e-3*fmin;
+               //FormResidualSSTTemp.Chart1.LeftAxis.Maximum:=1e3*fmax;
+               FormResidualSSTTemp.Chart1.LeftAxis.Minimum:=0.5*fmin;
+               FormResidualSSTTemp.Chart1.LeftAxis.Maximum:=fmax;
             end;
             // Нам ненужно запускать форму, нам нужно при запущенной
             // из вне формы постоянно обновлять информацию.
@@ -231,6 +255,8 @@ begin
       end;
 
     f.Free;
+   end;
+   end;
 end;
 
 end.

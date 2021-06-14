@@ -29,6 +29,8 @@ type
     Label7: TLabel;
     Image1: TImage;
     ApplicationEvents1: TApplicationEvents;
+    Label8: TLabel;
+    Editoff_multiplyer: TEdit;
     procedure ButtonApplySquareWaveApparatClick(Sender: TObject);
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
   private
@@ -63,6 +65,21 @@ var
    bOk : Boolean;
    r1 : Real;
 begin
+
+   s1:=Trim(Editoff_multiplyer.Text);
+   for k:=1 to length(s1) do
+   begin
+      if (FormatSettings.DecimalSeparator=',') then
+      begin
+         if (s1[k]='.') then s1[k]:=',';
+      end;
+       if (FormatSettings.DecimalSeparator='.') then
+      begin
+         if (s1[k]=',') then s1[k]:='.';
+      end;
+   end;
+   Editoff_multiplyer.Text:=Trim(s1);
+
    s1:=Trim(Editmultiplyer.Text);
    for k:=1 to length(s1) do
    begin
@@ -154,7 +171,7 @@ begin
    if (bOk) then
    begin
       Laplas.glSTL.tau2:=StrToFloat(Edittau2.Text);
-      Edittau1.Color:=clWhite;
+      Edittau2.Color:=clWhite;
    end
    else
    begin
@@ -175,6 +192,7 @@ begin
       end;
    end;
    Edit_tau_pause.Text:=Trim(s1);
+
    bOk:=true;
    if bOk then r1:=FormVariables.my_real_convert(s1,bOk);
    if (r1<=0.0) then
@@ -187,12 +205,48 @@ begin
    if (bOk) then
    begin
       Laplas.glSTL.tau_pause:=StrToFloat(Edit_tau_pause.Text);
-      Edittau1.Color:=clWhite;
+      Edit_tau_pause.Color:=clWhite;
    end
    else
    begin
       Edit_tau_pause.Text:=FloatToStr(Laplas.glSTL.tau_pause);
       Edit_tau_pause.Color:=clRed;
+   end;
+
+    s1:=Trim(Editoff_multiplyer.Text);
+   for k:=1 to length(s1) do
+   begin
+      if (FormatSettings.DecimalSeparator=',') then
+      begin
+         if (s1[k]='.') then s1[k]:=',';
+      end;
+       if (FormatSettings.DecimalSeparator='.') then
+      begin
+         if (s1[k]=',') then s1[k]:='.';
+      end;
+   end;
+   Editoff_multiplyer.Text:=Trim(s1);
+
+
+    bOk:=true;
+   if bOk then r1:=FormVariables.my_real_convert(s1,bOk);
+   if ((r1 < 0.0)or(r1 > 1.0)) then
+   begin
+      // Физический смысл.
+      // Тепловая мощность в паузах может быть отлична от нуля и
+      //  равна мощности в пике умноженной на off_multiplyer.
+      ShowMessage('error user input : off_multiplyer mast be [0..1].');
+      bOk:=false;
+   end;
+   if (bOk) then
+   begin
+      Laplas.glSTL.off_multiplyer:=StrToFloat(Editoff_multiplyer.Text);
+      Editoff_multiplyer.Color:=clWhite;
+   end
+   else
+   begin
+      Editoff_multiplyer.Text:=FloatToStr(Laplas.glSTL.off_multiplyer);
+      Editoff_multiplyer.Color:=clRed;
    end;
 
      s1:=Trim(EditPeriod.Text);

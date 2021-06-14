@@ -18,6 +18,7 @@ type
     Series6: TFastLineSeries;
     Timer1: TTimer;
     procedure Timer1Timer(Sender: TObject);
+    procedure FormResize(Sender: TObject);
   private
     { Private declarations }
      procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
@@ -33,7 +34,7 @@ implementation
 
 {$R *.dfm}
 
-uses VisualUnit;
+uses VisualUnit, UnitEQGD;
 
 // Запрет форме сворачиваться.
 procedure TFormResidualStandartKEpsilon.ApplicationEvents1Message(var Msg: tagMSG;
@@ -44,6 +45,13 @@ begin
       msg.message:=0;
 end;
 
+// изменение размеров формы.
+procedure TFormResidualStandartKEpsilon.FormResize(Sender: TObject);
+begin
+   Chart1.Height:=FormResidualStandartKEpsilon.Height;
+   Chart1.Width:=FormResidualStandartKEpsilon.Width;
+end;
+
 procedure TFormResidualStandartKEpsilon.Timer1Timer(Sender: TObject);
 var
    f : TStringList; // переменная типа объект TStringList
@@ -51,8 +59,12 @@ var
    fmin, fmax : Real;
    s, sub, subx : string;
 begin
-    // Действие будет происходить каждую секунду.
-    f:=TStringList.Create();
+      if (Laplas.ecology_btn) then
+   begin
+   if (EGDForm.ComboBoxTemperature.ItemIndex=0) then
+   begin
+      // Действие будет происходить каждую секунду.
+      f:=TStringList.Create();
 
       try
        if brun_visibleKEpsilon then
@@ -214,6 +226,8 @@ begin
       end;
 
     f.Free;
+   end;
+   end;
 
 end;
 

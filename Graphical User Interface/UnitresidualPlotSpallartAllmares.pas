@@ -23,6 +23,7 @@ type
     Timer1: TTimer;
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
     procedure Timer1Timer(Sender: TObject);
+    procedure FormResize(Sender: TObject);
   private
     { Private declarations }
   public
@@ -37,7 +38,7 @@ implementation
 
 {$R *.dfm}
 
-uses VisualUnit, UnitResidualSATemp2;
+uses VisualUnit, UnitResidualSATemp2, UnitEQGD;
 
 // Запрет форме сворачиваться.
 procedure TFormResidualSpallart_Allmares.ApplicationEvents1Message(var Msg: tagMSG;
@@ -48,13 +49,28 @@ begin
   msg.message:=0;
 end;
 
+// изменение размеров формы.
+procedure TFormResidualSpallart_Allmares.FormResize(Sender: TObject);
+begin
+   Chart1.Height:=FormResidualSpallart_Allmares.ClientHeight;
+   Chart1.Width:=FormResidualSpallart_Allmares.ClientWidth;
+end;
+
 procedure TFormResidualSpallart_Allmares.Timer1Timer(Sender: TObject);
 var
    f : TStringList; // переменная типа объект TStringList
    i : Integer;
-   fmin, fmax : Real;
+   fmin, fmax, m1 : Real;
    s, sub, subx : string;
+   istart : Integer;
 begin
+     if (Laplas.ecology_btn) then
+   begin
+   if (EGDForm.ComboBoxTemperature.ItemIndex=0) then
+   begin
+    m1:=1.0;
+    istart:=2;
+
     // Действие будет происходить каждую секунду.
     f:=TStringList.Create();
 
@@ -84,10 +100,23 @@ begin
          FormResidualSpallart_Allmares.Chart1.SeriesList[2].Clear;
          FormResidualSpallart_Allmares.Chart1.SeriesList[3].Clear;
          FormResidualSpallart_Allmares.Chart1.SeriesList[4].Clear;
-         for i:=2 to f.Count-1 do
+
+         if (f.Count>9) then
+         begin
+            istart:=7;
+         end;
+
+         for i:=istart to f.Count-1 do
          begin
             fmin:=20.0;
-            fmax:=120.0;
+
+            fmax:=1.2;
+            if (i<7) then
+            begin
+               // Начальные сильные волнения неваязки.
+               fmax:=120.0;
+            end;
+
             s:=Trim(f.Strings[i]);
             subx:=Trim(Copy(s,1,Pos(' ',s)));
             s:=Trim(Copy(s,Pos(' ',s),Length(s)));
@@ -138,15 +167,29 @@ begin
                   end;
                   if (length(sub)>0) then
                   begin
-                     if (StrToFloat(sub)<fmin) then
+                     if (i=istart) then
                      begin
-                        fmin:=StrToFloat(sub);
-                     end;
-                     if (StrToFloat(sub)>fmax) then
+                        // Ремасштабирование continity.
+                        m1:=StrToFloat(sub);
+                        if (m1<1.0e-20) then
+                        begin
+                           // защита от деления на ноль.
+                           m1:=1.0;
+                        end;
+                        FormResidualSpallart_Allmares.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub)/m1,subx,clOlive);
+                     end
+                     else
                      begin
-                        fmax:=StrToFloat(sub);
+                        if (StrToFloat(sub)/m1<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub)/m1;
+                        end;
+                        if (StrToFloat(sub)/m1>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub)/m1;
+                        end;
+                        FormResidualSpallart_Allmares.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub)/m1,subx,clOlive);
                      end;
-                     FormResidualSpallart_Allmares.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
                      s:=Trim(Copy(s,Pos(' ',s),Length(s)));
                      if (pos(' ',Trim(s))=0) then
                      begin
@@ -183,8 +226,16 @@ begin
                // TODO
                // обрыв данных.
             end;
-            FormResidualSpallart_Allmares.Chart1.LeftAxis.Minimum:=1e-3*fmin;
-            FormResidualSpallart_Allmares.Chart1.LeftAxis.Maximum:=1e3*fmax;
+            if (f.Count<=9) then
+            begin
+               FormResidualSpallart_Allmares.Chart1.LeftAxis.Minimum:=1e-3*fmin;
+               FormResidualSpallart_Allmares.Chart1.LeftAxis.Maximum:=1e3*fmax;
+            end
+            else
+            begin
+               FormResidualSpallart_Allmares.Chart1.LeftAxis.Minimum:=0.5*fmin;
+               FormResidualSpallart_Allmares.Chart1.LeftAxis.Maximum:=fmax;
+            end;
          end;
          // Нам ненужно запускать форму, нам нужно при запущенной
          // из вне формы постоянно обновлять информацию.
@@ -204,6 +255,8 @@ begin
       end;
 
     f.Free;
+   end;
+   end;
 end;
 
 end.

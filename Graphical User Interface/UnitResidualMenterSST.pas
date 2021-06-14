@@ -21,6 +21,7 @@ type
 
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
     procedure Timer1Timer(Sender: TObject);
+    procedure FormResize(Sender: TObject);
 
   private
     { Private declarations }
@@ -36,7 +37,7 @@ implementation
 
 {$R *.dfm}
 
-uses VisualUnit;
+uses VisualUnit, UnitEQGD;
 
 // Запрет форме сворачиваться.
 procedure TFormResidualSST.ApplicationEvents1Message(var Msg: tagMSG;
@@ -48,23 +49,38 @@ begin
 end;
 
 
+// Изменение размеров формы.
+procedure TFormResidualSST.FormResize(Sender: TObject);
+begin
+   Chart1.Height:=FormResidualSST.ClientHeight;
+   Chart1.Width:=FormResidualSST.ClientWidth;
+end;
 
 procedure TFormResidualSST.Timer1Timer(Sender: TObject);
 var
    f : TStringList; // переменная типа объект TStringList
    i : Integer;
-   fmin, fmax : Real;
+   fmin, fmax, m1 : Real;
    s, sub, subx : string;
+   istart : Integer;
+
 begin
+    if (Laplas.ecology_btn) then
+   begin
+    if (EGDForm.ComboBoxTemperature.ItemIndex=0) then
+   begin
+   m1:=1.0;
+   istart:=2;
+
     // Действие будет происходить каждую секунду.
     f:=TStringList.Create();
 
-      try
+    try
        if brun_visibleSST then
        begin
 
-       if (Laplas.egddata.itemper=0) then
-       begin
+        if (Laplas.egddata.itemper=0) then
+        begin
           if (FileExists('statistic_convergence.txt')) then
           begin
              f.LoadFromFile('statistic_convergence.txt');
@@ -86,10 +102,21 @@ begin
              FormResidualSST.Chart1.SeriesList[3].Clear;
              FormResidualSST.Chart1.SeriesList[4].Clear;
              FormResidualSST.Chart1.SeriesList[5].Clear;
-             for i:=2 to f.Count-1 do
+
+             if (f.Count>9) then
+             begin
+                istart:=7;
+             end;
+
+             for i:=istart to f.Count-1 do
              begin
                 fmin:=20.0;
-                fmax:=120.0;
+                fmax:=1.2;
+                if (i<7) then
+                begin
+                   // Начальные сильные волнения неваязки.
+                   fmax:=120.0;
+                end;
                 s:=Trim(f.Strings[i]);
                 subx:=Trim(Copy(s,1,Pos(' ',s)));
                 s:=Trim(Copy(s,Pos(' ',s),Length(s)));
@@ -134,15 +161,29 @@ begin
                       sub:=Trim(Copy(s,1,Pos(' ',s)));
                       if (length(sub)>0) then
                       begin
-                         if (StrToFloat(sub)<fmin) then
+                         if (i=istart) then
                          begin
-                            fmin:=StrToFloat(sub);
-                         end;
-                         if (StrToFloat(sub)>fmax) then
+                            // Ремасштабирование continity.
+                            m1:=StrToFloat(sub);
+                            if (m1<1.0e-20) then
+                            begin
+                               // защита от деления на ноль.
+                               m1:=1.0;
+                            end;
+                            FormResidualSST.Chart1.SeriesList[3].AddXY(StrToFloat(subx),1.0,subx,clblue);
+                         end
+                         else
                          begin
-                            fmax:=StrToFloat(sub);
+                            if (StrToFloat(sub)/m1<fmin) then
+                            begin
+                               fmin:=StrToFloat(sub)/m1;
+                            end;
+                            if (StrToFloat(sub)/m1>fmax) then
+                            begin
+                               fmax:=StrToFloat(sub)/m1;
+                            end;
+                            FormResidualSST.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub)/m1,subx,clblue);
                          end;
-                         FormResidualSST.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
                          s:=Trim(Copy(s,Pos(' ',s),Length(s)));
                          if (pos(' ',Trim(s))=0) then
                          begin
@@ -184,41 +225,51 @@ begin
                                end;
                                FormResidualSST.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
                             end;
-                       end
-                        else
-                       begin
-                          // TODO
-                          // обрыв данных после первых трёх значений.
-                       end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после первых трёх значений.
+                         end;
+                      end;
                    end;
+                end
+                 else
+                begin
+                   // TODO
+                   // обрыв данных.
                 end;
-            end
-            else
-            begin
-               // TODO
-               // обрыв данных.
-            end;
-            FormResidualSST.Chart1.LeftAxis.Minimum:=1e-3*fmin;
-            FormResidualSST.Chart1.LeftAxis.Maximum:=1e3*fmax;
-         end;
-         // Нам ненужно запускать форму, нам нужно при запущенной
-         // из вне формы постоянно обновлять информацию.
-         //Formresidual.Show;
-      end
-      else
-      begin
-         // Если файл не найден на не надо ничего считывать постоянно.
-         //MainMemo.Lines.Add('statistic_convergence.txt not found.');
-      end;
-     end;
+                if (f.Count<=9) then
+                begin
+                   FormResidualSST.Chart1.LeftAxis.Minimum:=1e-3*fmin;
+                   FormResidualSST.Chart1.LeftAxis.Maximum:=1e3*fmax;
+                end
+                else
+                begin
+                   FormResidualSST.Chart1.LeftAxis.Minimum:=0.5*fmin;
+                   FormResidualSST.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+             end;
+             // Нам ненужно запускать форму, нам нужно при запущенной
+             // из вне формы постоянно обновлять информацию.
+             //Formresidual.Show;
+          end
+           else
+          begin
+             // Если файл не найден на не надо ничего считывать постоянно.
+             //MainMemo.Lines.Add('statistic_convergence.txt not found.');
+          end;
+        end;
        end;
 
-     except
-        brun_visibleSST:=false;
+    except
+       brun_visibleSST:=false;
 
-      end;
+    end;
 
     f.Free;
+   end;
+   end;
 end;
 
 end.

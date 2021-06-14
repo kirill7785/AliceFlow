@@ -20,6 +20,7 @@ type
     ApplicationEvents1: TApplicationEvents;
     procedure Timer1Timer(Sender: TObject);
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
+    procedure FormResize(Sender: TObject);
   private
     { Private declarations }
 
@@ -35,7 +36,7 @@ implementation
 
 {$R *.dfm}
 
-uses VisualUnit;
+uses VisualUnit, UnitEQGD;
 
 // «апрет форме сворачиватьс€.
 procedure TFormresidual2.ApplicationEvents1Message(var Msg: tagMSG;
@@ -46,13 +47,29 @@ begin
   msg.message:=0;
 end;
 
+// изменение размеров формы.
+procedure TFormresidual2.FormResize(Sender: TObject);
+begin
+   cht1.Height:=Formresidual2.ClientHeight;
+   cht1.Width:=Formresidual2.ClientWidth;
+end;
+
 procedure TFormresidual2.Timer1Timer(Sender: TObject);
 var
    f : TStringList; // переменна€ типа объект TStringList
    i : Integer;
    fmin, fmax : Real;
    s, sub, subx : string;
+   istart : Integer;
+
 begin
+     if (Laplas.ecology_btn) then
+   begin
+   if (EGDForm.ComboBoxTemperature.ItemIndex=1) then
+   begin
+
+    istart:=2;
+
     // ƒействие будет происходить каждую секунду.
     f:=TStringList.Create();
 
@@ -84,7 +101,13 @@ begin
          Formresidual2.cht1.SeriesList[2].Clear;
          Formresidual2.cht1.SeriesList[3].Clear;
          Formresidual2.cht1.SeriesList[4].Clear;
-         for i:=2 to f.Count-1 do
+
+         if (f.Count>9) then
+         begin
+            istart:=7;
+         end;
+
+         for i:=istart to f.Count-1 do
          begin
             fmin:=20.0;
             fmax:=120.0;
@@ -178,8 +201,10 @@ begin
                // TODO
                // обрыв данных.
             end;
-            Formresidual2.cht1.LeftAxis.Minimum:=1e-3*fmin;
-            Formresidual2.cht1.LeftAxis.Maximum:=1e3*fmax;
+            //Formresidual2.cht1.LeftAxis.Minimum:=1e-3*fmin;
+            //Formresidual2.cht1.LeftAxis.Maximum:=1e3*fmax;
+            Formresidual2.cht1.LeftAxis.Minimum:=0.5*fmin;
+            Formresidual2.cht1.LeftAxis.Maximum:=fmax;
          end;
          // Ќам ненужно запускать форму, нам нужно при запущенной
          // из вне формы посто€нно обновл€ть информацию.
@@ -199,6 +224,8 @@ begin
       end;
 
     f.Free;
+   end;
+   end;
 end;
 
 end.

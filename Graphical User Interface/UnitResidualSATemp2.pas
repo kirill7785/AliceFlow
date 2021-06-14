@@ -22,6 +22,7 @@ type
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
 
     procedure TimerSATempTimer(Sender: TObject);
+    procedure FormResize(Sender: TObject);
 
     private
     { Private declarations }
@@ -37,7 +38,7 @@ implementation
 
 {$R *.dfm}
 
-uses VisualUnit;
+uses VisualUnit, UnitEQGD;
 
 // «апрет форме сворачиватьс€.
 procedure TFormResidualSATemp.ApplicationEvents1Message(var Msg: tagMSG;
@@ -48,6 +49,12 @@ begin
       msg.message:=0;
 end;
 
+// изменение размеров формы.
+procedure TFormResidualSATemp.FormResize(Sender: TObject);
+begin
+   Chart1.Height:=FormResidualSATemp.ClientHeight;
+   Chart1.Width:=FormResidualSATemp.ClientWidth;
+end;
 
 procedure TFormResidualSATemp.TimerSATempTimer(Sender: TObject);
 var
@@ -56,6 +63,11 @@ var
    fmin, fmax : Real;
    s, sub, subx : string;
 begin
+   if (Laplas.ecology_btn) then
+   begin
+   if (EGDForm.ComboBoxTemperature.ItemIndex=1) then
+   begin
+
    // ƒействие будет происходить каждую секунду.
     f:=TStringList.Create();
 
@@ -221,6 +233,8 @@ begin
       end;
 
     f.Free;
+   end;
+   end;
 end;
 
 
