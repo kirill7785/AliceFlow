@@ -229,7 +229,19 @@ type
      Amu, Bmu, Cmu : Real;
      degreennmu : Real; // показатель степени в законе для не Ньютоновской жидкости
      // Thermal - Stress
-     Poisson_ratio, Young_Module, Linear_expansion_coefficient : Real;
+     n_Poisson_ratio, n_Young_Module : Integer;
+     // Ортотропность коэффициента линейного теплового расширения.
+     mult_Linear_expansion_coefficient_x,  mult_Linear_expansion_coefficient_y, mult_Linear_expansion_coefficient_z : Real;
+     mult_Young_Module_x, mult_Young_Module_y, mult_Young_Module_z : Real;
+     mult_Poisson_ratio_xy,  mult_Poisson_ratio_xz, mult_Poisson_ratio_yz : Real;
+     mult_Poisson_ratio_yx,  mult_Poisson_ratio_zx, mult_Poisson_ratio_zy : Real;
+     // Модуль сдвига GPa.
+     bShearModuleActive : Boolean;
+     ShearModuleGxy, ShearModuleGyz, ShearModuleGxz : Real; // GPa
+     temp_Poisson_ratio, temp_Young_Module : array of Real;
+     arr_Poisson_ratio, arr_Young_Module : array of Real;
+     n_Linear_expansion_coefficient  : Integer;
+     temp_Linear_expansion_coefficient, arr_Linear_expansion_coefficient : array of Real;
   end;
 
   // либо источник тепла либо стенка  (идеальный теплоотвод или
@@ -306,7 +318,7 @@ type
      Poisson_ratio, Young_Module, Linear_expansion_coefficient : Real;
   end;
 
-  // библиотека твёрдых материалов
+  // библиотека жидких материалов
   TLibMatFluid = record
      // Осторожно реальные свойства газов
      // и жидкостей сильно зависят от температуры,
@@ -338,6 +350,7 @@ type
       // 3 - Spalart Allmares (RANS)
       // 4 - K - Omega SST Menter (RANS)
       // 5 - Standart K-Epsilon (RANS)
+      // 6 - модель лапминарно турбулентного перехода Ментора Лантгрии (RANS).
       iturbmodel : Integer; // выбор модели турбулентности
       // Параметры модели Смагоринского.
       SmagConst : Real; // константа Смагоринского.
@@ -391,7 +404,7 @@ type
     //    ____|     |____  m1*Power            _____|
     //  _|               |______ 0 ___________|
     //    tau1  tau2 tau1
-    tau1, tau2, tau_pause, T : Real;
+    tau1, tau2, tau_pause, T, off_multiplyer : Real;
     m1 : Real;
     n : Integer;
     // double linear hot cold time law
@@ -613,6 +626,11 @@ type
     OpenDialog2: TOpenDialog;
     SaveDialog1: TSaveDialog;
     ViewFactorCalculator: TMenuItem;
+    Debug1: TMenuItem;
+    Parameters1: TMenuItem;
+    Runoptimization1: TMenuItem;
+    XYPlot2: TMenuItem;
+    BitBtn1: TBitBtn;
     // Вызывается при создании формы
     procedure FormCreate(Sender: TObject);
     // увеличение иображения
@@ -735,6 +753,10 @@ type
     procedure Scale1Click(Sender: TObject);
     procedure RedoSourceforPatternClick(Sender: TObject);
     procedure ViewFactorCalculatorClick(Sender: TObject);
+    procedure Parameters1Click(Sender: TObject);
+    procedure Runoptimization1Click(Sender: TObject);
+    procedure XYPlot2Click(Sender: TObject);
+    procedure BitBtn1Click(Sender: TObject);
 
 
   private
@@ -746,6 +768,7 @@ type
     risopic : Real;
     xpic, ypic, zpic : array of Real;
     ipa_count : array of Integer;
+    bvisible_granq : array of array of Boolean;
     temppicpotent : array of array of Real;
     temppicname : array of String;
     minimumpic, maximumpic : array of Real;
@@ -762,6 +785,7 @@ type
 
   public
     { Public declarations }
+    ecology_btn : Boolean;
     bon_rotate_polygon : Boolean;
     bonly_mesh_gen_call : Boolean; // Отдельный вызов сеточного генератора только.
     isleep_render : Integer;
@@ -788,6 +812,7 @@ type
     wall : array of TPlane; // список стенок
     drawing : Boolean;
     Alf,Bet,Gam,R1,perspectiveangle,Gam0 : Real;  // углы поворота для визуализации
+    cosAlf, cosBet, sinAlf, sinBet : Real;// Заранее вычисленные значения.
     m : Real; // масштабный коэффициент для визуализации
     mlength : Real; // для масштабирования реальных длин
     libsolid : array of TLibMatSolid;
@@ -834,6 +859,9 @@ type
     bperenapravlenie_na_import : Boolean;
     bVisualization_Management_now : Boolean;
     bREALESEversion : Boolean;
+    bOkTrials : Boolean;
+    boptimetric : Boolean;
+    id_0_index, id_1_index : Integer;
 
     // Каркасная модель не рисуется.
     procedure off_visible_karkas();
@@ -882,6 +910,12 @@ type
     function volume(b : Tbody) : Real;
     // Управление показом графики в плоскости.
     function if_visible_now(riso_loc : Real; start_loc : Real; end_loc : Real) : Boolean;
+    procedure WriteStartSolutionNEW(Sender: TObject);
+    procedure WriteStartSolutionOLD(Sender: TObject);
+
+    procedure SerialExecute1;
+    procedure SerialExecute2;
+    procedure SerialExecute3;
   end;
 
   // Для теплопередачи в твёрдом теле.
@@ -937,7 +971,9 @@ uses
   UnitResidualSATemp2, UnitResidualMenterSST, UnitResidualSSTTemperature,
   UnitResidualStandartKEpsilon, UnitResidualStandartK_Epsilon_TEMP,
   Unitpiecewiseconst, UnitPatternDelete, UnitTextNameSourcePattern,
-  UnitTimedependpowerLaw, UnitViewFactors;
+  UnitTimedependpowerLaw, UnitViewFactors, Unit_debug,
+  UnitUserDefinedSolidMaterial, UnitPlaneSelect, UnitResidual_Langtry_Menter,
+  UnitResidual_Langtry_Menter_Temp, UnitOptimetric;
 {$R *.dfm}
 
 
@@ -1331,6 +1367,50 @@ begin
          end;
       end;
 
+      // Стационарная постановка задачи.
+      if (FormUnsteady.RadioGroup1.ItemIndex=0) then
+      begin
+
+         // Запускаем показ одномерного графика в техплот.
+         // вызов программы tecplot360
+         // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+         if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+         begin
+            WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe xyplotT1.PLT'),SW_SHOWNORMAL);
+         end
+          else
+         begin
+            if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+            begin
+               WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+            end
+             else
+            begin
+               if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+               begin
+                  WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                     begin
+                        WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+                     end
+                      else
+                     begin
+                        Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 unfound.');
+                     end;
+                  end;
+               end;
+            end;
+         end;
+      end;
       Laplas.bVisualization_Management_now:=false;
 
    Laplas.brun:=false;
@@ -1516,6 +1596,168 @@ begin
                end;
             end;
 
+             if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+            begin
+               // Модель Ламинарно турбулнтного перехода Ментора Лантгрии (RANS) [2009].
+               // первые две строки нужно пропустить.
+               FormResidual_Langtry_Menter.Chart1.SeriesList[0].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[1].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[2].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[3].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[4].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[5].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[6].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[7].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=Max(1.0e-12,StrToFloat(sub));
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidual_Langtry_Menter.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=Max(1.0e-12,StrToFloat(sub));
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidual_Langtry_Menter.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=Max(1.0e-12,StrToFloat(sub));
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidual_Langtry_Menter.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=Max(1.0e-12,StrToFloat(sub));
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidual_Langtry_Menter.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=Max(1.0e-12,StrToFloat(sub));
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                               s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=Max(1.0e-12,StrToFloat(sub));
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                               s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                               sub:=Trim(Copy(s,1,Pos(' ',s)));
+                               if (length(sub)>0) then
+                               begin
+                                  if (StrToFloat(sub)<fmin) then
+                                  begin
+                                     fmin:=Max(1.0e-12,StrToFloat(sub));
+                                  end;
+                                  if (StrToFloat(sub)>fmax) then
+                                  begin
+                                     fmax:=StrToFloat(sub);
+                                  end;
+                                  FormResidual_Langtry_Menter.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+
+                                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                                  sub:=s;
+                                  if (length(sub)>0) then
+                                  begin
+                                     if (StrToFloat(sub)<fmin) then
+                                     begin
+                                        fmin:=Max(1.0e-12,StrToFloat(sub));
+                                     end;
+                                     if (StrToFloat(sub)>fmax) then
+                                     begin
+                                        fmax:=StrToFloat(sub);
+                                     end;
+                                     FormResidual_Langtry_Menter.Chart1.SeriesList[7].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                                  end
+                                   else
+                                  begin
+                                     // TODO
+                                     // обрыв данных после первых трёх значений.
+                                  end;
+                               end;
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Minimum:=fmin;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
             if (Laplas.egddata.myflmod[0].iturbmodel=5) then
             begin
                // Standart K-Epsilon model.
@@ -1969,6 +2211,14 @@ begin
             end;
          f.Clear;
          f.Free;
+
+          if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+         begin
+            // модель ламинарно турбулентного перехода Ментора Лангтрии.
+            FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=true;
+            FormResidual_Langtry_Menter.Show;
+         end
+         else
          if (Laplas.egddata.myflmod[0].iturbmodel=5) then
          begin
             // Standart K-Epsilon model.
@@ -2247,6 +2497,199 @@ begin
                   end;
                end;
 
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+            begin
+               // Standart K-Epsilon model на основек двухслойной модели.
+               // первые две строки нужно пропустить.
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[0].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[1].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[2].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[3].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[4].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[5].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[6].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[7].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[8].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[7].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[8].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                        end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidual_Lagtry_Menter_Temp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidual_Lagtry_Menter_Temp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=true;
+                FormResidual_Lagtry_Menter_Temp.Show;
+            end
+            else
             if ((Laplas.egddata.myflmod[0].iflowregime=1)and
              (Laplas.egddata.myflmod[0].iturbmodel=5)) then
             begin
@@ -2784,6 +3227,168 @@ begin
              end;
           end;
 
+           if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+            begin
+               // модель ламинарно турбулентного перехода Ментора-Лангтрии (RANS) [2009].
+               // первые две строки нужно пропустить.
+               FormResidual_Langtry_Menter.Chart1.SeriesList[0].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[1].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[2].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[3].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[4].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[5].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[6].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[7].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidual_Langtry_Menter.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidual_Langtry_Menter.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidual_Langtry_Menter.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidual_Langtry_Menter.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                               s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidual_Langtry_Menter.Chart1.SeriesList[7].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                           end;
+                           end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Minimum:=fmin;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
           if (Laplas.egddata.myflmod[0].iturbmodel=5) then
             begin
                // Standart K-Epsilon model.
@@ -3279,6 +3884,2872 @@ begin
 end;
 
 
+
+// Нужно создать процедуру Execute, уже описанную в классе TMyThread
+procedure TLaplas.SerialExecute1;
+var
+  // StartupInfo : TStartupInfo;
+   //ProcessInfo : TProcessInformation;
+   f, f2, f3 : TStringList;
+   ShellInfo : TShellExecuteInfo;
+   ExitCode : DWORD;
+   QuoteParams : Boolean;
+   i : Integer;
+   starttime, endtime, deltatime : TTime;
+      bodyname, sourcename, wallname : array of string;
+      is_hollow : array of Boolean;
+   lbclone, lsclone, lwclone : Integer;
+   s7 : String;
+
+begin
+    // Serial
+        // CreateProcess(nil,'test_pattern/solver/solid_static/AliceFlow_v0_07.exe',nil,nil,false,Create_NEW_CONSOLE or NORMAL_PRIORITY_CLASS,
+        //     nil,nil,StartupInfo,ProcessInfo);
+
+          // Надо сделать копию имён block, source и wall перед запуском.
+        lbclone:=Laplas.lb;
+        lsclone:=Laplas.ls;
+        lwclone:=Laplas.lw;
+        SetLength(bodyname,lbclone);
+        SetLength(is_hollow,lbclone);
+         for i:=0 to lbclone-1 do
+         begin
+           bodyname[i]:=Laplas.body[i].name;
+           if (Laplas.body[i].itype=2) then
+           begin
+              // HOLLOW
+              is_hollow[i]:=true;
+           end
+            else
+           begin
+              is_hollow[i]:=false;
+           end;
+         end;
+         SetLength(sourcename,lsclone);
+         for i:=0 to lsclone-1 do
+         begin
+            sourcename[i]:=Laplas.source[i].name;
+         end;
+         SetLength(wallname,lwclone);
+          for i:=0 to lwclone-1 do
+         begin
+           wallname[i]:=Laplas.wall[i].name;
+         end;
+
+         starttime:=Now();
+
+         if (not(Laplas.bonly_mesh_gen_call)) then
+         begin
+            if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+            begin
+               // Нестационарное моделирование и мы формируем
+               // наиполнейший отчёт о температурах всех объектов
+               // из которых состоит расчётная модель.
+
+               f2:=TStringList.Create();
+               s7:='time ';
+               for i:=0 to lbclone - 1 do
+               begin
+                  s7:=s7 + ' ' + bodyname[i] + '_tC ' + bodyname[i] + '_power';
+               end;
+               for i:=0 to lsclone - 1 do
+               begin
+                  s7:=s7 + ' ' + sourcename[i] + '_tC ' + sourcename[i] + '_power';
+               end;
+               for i:=0 to lwclone - 1 do
+               begin
+                  s7:=s7 + ' ' + wallname[i] + '_tC ' + wallname[i] + '_power';
+               end;
+               f2.Add(s7);
+               f2.SaveToFile('report_temperature_unsteady.txt');
+               f2.Clear;
+               f2.Free;
+            end;
+        end
+        else
+        begin
+           DeleteFile('report_temperature_unsteady.txt');
+        end;
+
+
+        ShellInfo.cbSize:=SizeOf(ShellInfo);
+        ShellInfo.fMask:=SEE_MASK_NOCLOSEPROCESS;
+        ShellInfo.Wnd:=HWND_DESKTOP;
+        ShellInfo.lpVerb:='open';
+        if (FormSetting.rgParallel.ItemIndex=0) then
+        begin
+        //if (FormUnsteady.RadioGroup1.ItemIndex=0) then
+        //begin
+           // модифицировано 23.07.2016.
+           // Steady Calculation and  Unsteady Calculation
+           //ShellInfo.lpFile:=PChar('"test_pattern\solver\solid_static\AliceFlow_v0_30.exe"');
+           ShellInfo.lpFile:=PChar('"test_pattern\solver\x64\AliceFlow_v0_48.exe"');
+        //end
+        //else
+        //begin
+           // Unsteady Calculation
+          // ShellInfo.lpFile:=PChar('"test_pattern\solver\solid_static\AliceFlow_v0_26Unsteady.exe"');
+        //end;
+        end;
+        if (FormSetting.rgParallel.ItemIndex=1) then
+        begin
+           ShellInfo.lpFile:=PChar('"test_pattern\solver\x86\AliceFlow_v0_48.exe"');
+        end;
+        if (FormSetting.rgParallel.ItemIndex=2) then
+        begin
+           ShellInfo.lpFile:=PChar('"test_pattern\solver\x64_float\AliceFlow_v0_48.exe"');
+        end;
+        QuoteParams:=true;
+        if QuoteParams then
+        ShellInfo.lpParameters:=PChar('""')
+        else
+        ShellInfo.lpParameters:=PChar('');
+        ShellInfo.lpDirectory:=PChar('".\"');
+        ShellInfo.nShow:=SW_SHOWNORMAL;
+        if not ShellExecuteEx(@ShellInfo) then
+        RaiseLastOSError;
+        if ShellInfo.hProcess<>0 then
+        try
+          WaitForSingleObjectEx(ShellInfo.hProcess,INFINITE,false);
+          GetExitCodeProcess(ShellInfo.hProcess,ExitCode);
+        finally
+           CloseHandle(ShellInfo.hProcess);
+        end;
+
+        // удаляем ненужные файлы.
+      DeleteFile('ALICEFLOW0_06_temp_part1.txt');
+      DeleteFile('ALICEFLOW0_06_temp_part3.txt');
+
+
+
+      if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         if (FileExists('report_temperature.txt')) then
+         begin
+            WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+         end;
+         (*
+         if (lbclone<300) then
+         begin
+            // Если будет больше 300 блоков то загружаться репорт
+            // будет очень долго.
+            if (FileExists('report_temperature.txt')) then
+            begin
+               f3:=TStringList.Create();
+               f:=TStringList.Create();
+               f.LoadFromFile('report_temperature.txt');
+               //Laplas.MainMemo.Lines.Add(f.Strings[0]);
+               f3.Add(f.Strings[0]);
+               for i:=0 to lbclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+1]);
+                  f3.Add(f.Strings[i+1]);
+               end;
+               for i:=0 to lsclone-1 do
+               begin
+                  // Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+1]);
+                  f3.Add(f.Strings[i+lbclone+1]);
+               end;
+               for i:=0 to lwclone-1 do
+               begin
+                  // Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(f.Strings[i+lbclone+lsclone+1]);
+               end;
+               //DeleteFile('solver/solid_static/report_temperature.txt');
+               // ускоренная загрузка репорта, чтобы не ждать.
+               Laplas.MainMemo.Lines.AddStrings(f3);
+               f.Clear;
+               f.Free;
+               f3.Clear;
+               f3.Free;
+             end
+              else
+             begin
+                ShowMessage('file report_temperature.txt not found ');
+                Laplas.MainMemo.Lines.Add('file report_temperature.txt not found ');
+             end;
+         end
+          else
+         begin
+            Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
+            Laplas.MainMemo.Lines.Add('synopsis: very big file...');
+         end;
+         *)
+      end;
+      // Освобождение оперативной памяти.
+      SetLength(wallname,0);
+      SetLength(sourcename,0);
+      SetLength(bodyname,0);
+      SetLength(is_hollow,0);
+
+      // В случае нестационарного моделирования записаны переходные характеристики.
+      if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+          begin
+             if (FormUnsteady.ComboBoxTimeStep.ItemIndex=0) then
+             begin
+                // Linear Time Step Law. // была снята переходная характеристика.
+                Laplas.MainMemo.Lines.Add('Evdokimova.txt report writing succsefull.');
+                Laplas.MainMemo.Lines.Add('heating_curves.txt report writing succsefull.');
+             end;
+         end;
+      end;
+      if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         if (FileExists('report.txt')) then
+         begin
+            f:=TStringList.Create();
+            f.LoadFromFile('report.txt');
+            Laplas.MainMemo.Lines.Add(f.Strings[0]);
+            DeleteFile('report.txt');
+            f.Clear;
+            f.Free;
+         end;
+      end;
+
+       if (Laplas.bonly_mesh_gen_call) then
+      begin
+       // Время работы сеточного генератора.
+         Laplas.MainMemo.Lines.Add('The meshing generation is completed.');
+         endtime:=Now();
+         deltatime:=endtime-starttime;
+         Laplas.MainMemo.Lines.Add('Time meshing generation equals '+TimeToStr(deltatime));
+
+      end
+      else
+      begin
+       // Для оптимизационных задач продублируем время счёта.
+         Laplas.MainMemo.Lines.Add('The calculation is completed.');
+         endtime:=Now();
+         deltatime:=endtime-starttime;
+         Laplas.MainMemo.Lines.Add('Time calculation equals '+TimeToStr(deltatime));
+      end;
+
+      if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+         begin
+            // Запуск визуализации графика зависимости максимальной температуры в расчётной области
+            // от времени.
+            if (FileExists('GraphicsKras.exe')) then
+            begin
+               WinExec('GraphicsKras.exe',SW_SHOWNORMAL);
+            end;
+        end;
+      end;
+
+
+      if (Laplas.bVisualization_Management_now=true) then
+      begin
+          // вызов программы tecplot360
+            // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+            if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+            begin
+               WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT'),SW_SHOWNORMAL);
+            end
+             else
+            begin
+               if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+               begin
+                  WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+                     begin
+                        WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+                     end
+                      else
+                     begin
+                        if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                        begin
+                           WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+                        end
+                         else
+                        begin
+                           Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 or 2017 unfound.');
+                        end;
+                     end;
+                  end;
+               end;
+            end;
+      end
+      else
+      begin
+         if (Laplas.egddata.itemper=2) then
+         begin
+            // Был запущен метод конечных элементов.
+            if (not(FormUnsteady.CheckBoxdonttec360.Checked))  then
+            begin
+               // вызов программы tecplot360
+               // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+               if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+               begin
+                  WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_08_temp.PLT'),SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+                     begin
+                        WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                     end
+                      else
+                     begin
+                        if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+                        begin
+                           WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                        end
+                         else
+                        begin
+                           if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                           begin
+                              WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                           end
+                            else
+                           begin
+                              Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 or 2017 unfound.');
+                           end;
+                        end;
+                     end;
+                  end;
+               end;
+            end;
+         end
+          else
+         begin
+
+            if (not(FormUnsteady.CheckBoxdonttec360.Checked))  then
+            begin
+               // вызов программы tecplot360
+               // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+               if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+               begin
+                  WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT'),SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+                     begin
+                        WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                     end
+                      else
+                     begin
+                        if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+                        begin
+                           WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                        end
+                         else
+                        begin
+                           if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                           begin
+                              WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                           end
+                            else
+                           begin
+                              Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 unfound.');
+                           end;
+                        end;
+                     end;
+                  end;
+               end;
+            end;
+         end;
+      end;
+
+      Laplas.bVisualization_Management_now:=false;
+
+   Laplas.brun:=false;
+
+    Laplas.bonly_mesh_gen_call:=false;
+end;
+
+ // Нужно создать процедуру Execute, уже описанную в классе TMyThread
+procedure TLaplas.SerialExecute2;
+var
+  // StartupInfo : TStartupInfo;
+   //ProcessInfo : TProcessInformation;
+   f, f3 : TStringList;
+   ShellInfo : TShellExecuteInfo;
+   ExitCode : DWORD;
+   QuoteParams : Boolean;
+   i : Integer;
+   starttime, endtime, deltatime : TTime;
+   bodyname, sourcename, wallname : array of string;
+   is_hollow : array of boolean;
+   lbclone, lsclone, lwclone : Integer;
+   s,subx,sub : String; // текущая рабочая строка
+   fmin, fmax : Real;
+
+begin
+
+        lbclone:=Laplas.lb;
+        lsclone:=Laplas.ls;
+        lwclone:=Laplas.lw;
+         SetLength(bodyname,lbclone);
+         SetLength(is_hollow,lbclone);
+         for i:=0 to lbclone-1 do
+         begin
+           bodyname[i]:=Laplas.body[i].name;
+           if (Laplas.body[i].itype=2) then
+           begin
+             // HOLLOW
+             is_hollow[i]:=true;
+           end
+           else
+           begin
+              is_hollow[i]:=false;
+           end;
+         end;
+         SetLength(sourcename,lsclone);
+         for i:=0 to lsclone-1 do
+         begin
+            sourcename[i]:=Laplas.source[i].name;
+         end;
+         SetLength(wallname,lwclone);
+          for i:=0 to lwclone-1 do
+         begin
+           wallname[i]:=Laplas.wall[i].name;
+         end;
+
+        starttime:=Now();
+
+
+
+         // Запускает приложение и ждёт окончания его работы.
+      //CreateProcess(nil,'test_pattern/solver/fluid_static/AliceFlow_v0_07.exe',nil,nil,false,Create_NEW_CONSOLE or NORMAL_PRIORITY_CLASS,
+        //     nil,nil,StartupInfo,ProcessInfo);
+
+
+        ShellInfo.cbSize:=SizeOf(ShellInfo);
+        ShellInfo.fMask:=SEE_MASK_NOCLOSEPROCESS;
+        ShellInfo.Wnd:=HWND_DESKTOP;
+        ShellInfo.lpVerb:='open';
+        if (FormSetting.rgParallel.ItemIndex=0) then
+        begin
+           // однопоточная версия.
+           //ShellInfo.lpFile:=PChar('"test_pattern\solver\fluid_static\AliceFlow_v0_26.exe"');
+           // 29.01.2017
+           //ShellInfo.lpFile:=PChar('"test_pattern\solver\solid_static\AliceFlow_v0_30.exe"');
+           ShellInfo.lpFile:=PChar('"test_pattern\solver\x64\AliceFlow_v0_48.exe"');
+        end;
+         if (FormSetting.rgParallel.ItemIndex=1) then
+        begin
+           // параллельные вычисления.
+           // Устарело 29.01.2017
+           //ShellInfo.lpFile:=PChar('"test_pattern\solver\fluid_static\AliceFlow_v0_07P.exe"');
+           ShellInfo.lpFile:=PChar('"test_pattern\solver\x86\AliceFlow_v0_48.exe"');
+        end;
+         if (FormSetting.rgParallel.ItemIndex=2) then
+        begin
+           ShellInfo.lpFile:=PChar('"test_pattern\solver\x64_float\AliceFlow_v0_48.exe"');
+        end;
+        QuoteParams:=true;
+        if QuoteParams then
+        ShellInfo.lpParameters:=PChar('""')
+        else
+        ShellInfo.lpParameters:=PChar('');
+        ShellInfo.lpDirectory:=PChar('".\"');
+        ShellInfo.nShow:=SW_SHOWNORMAL;
+        if not ShellExecuteEx(@ShellInfo) then
+        RaiseLastOSError;
+        if ShellInfo.hProcess<>0 then
+        try
+          WaitForSingleObjectEx(ShellInfo.hProcess,INFINITE,false);
+          GetExitCodeProcess(ShellInfo.hProcess,ExitCode);
+        finally
+           CloseHandle(ShellInfo.hProcess);
+        end;
+
+      //WaitforSingleObject(ProcessInfo.hProcess,INFINITE);
+
+      // удаляем ненужные файлы.
+      DeleteFile('ALICEFLOW0_06_temp_part1.txt');
+      DeleteFile('ALICEFLOW0_06_temp_part3.txt');
+
+
+
+
+      endtime:=Now();
+      deltatime:=endtime-starttime;
+      if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+          Laplas.MainMemo.Lines.Add('The calculation is completed.');
+          Laplas.MainMemo.Lines.Add('Time calculation equals.'+TimeToStr(deltatime));
+      end
+      else
+      begin
+          Laplas.MainMemo.Lines.Add('The mesh generation is completed.');
+          Laplas.MainMemo.Lines.Add('Time mesh generations is equals.'+TimeToStr(deltatime));
+      end;
+
+      if (not(FormUnsteady.CheckBoxdonttec360.Checked))  then
+       begin
+      // вызов программы tecplot360
+      //WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+      if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+              begin
+                 WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT'),SW_SHOWNORMAL);
+              end
+         else
+        begin
+        if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+        begin
+           WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+        end
+         else
+        begin
+           if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+           begin
+              WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+           end
+            else
+           begin
+              if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+              begin
+                 WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+              end
+               else
+              begin
+                 if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                 begin
+                    WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                 end
+                  else
+                 begin
+                    Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 unfound.');
+                 end;
+              end;
+           end;
+        end;
+       end;
+        end;
+
+       if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         if (FileExists('statistic_convergence.txt')) then
+         begin
+            f:=TStringList.Create();
+            f.LoadFromFile('statistic_convergence.txt');
+
+            if (FormatSettings.DecimalSeparator=',') then
+            begin
+               // заменить все точки в файле на запятые.
+               for i:=0 to f.Count-1 do
+               begin
+                  s:=f.Strings[i];
+                  f.Strings[i]:=StringReplace(s,'.',',',[rfReplaceAll]);
+               end;
+            end;
+
+             if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+            begin
+               // Модель Ламинарно турбулнтного перехода Ментора Лантгрии (RANS) [2009].
+               // первые две строки нужно пропустить.
+               FormResidual_Langtry_Menter.Chart1.SeriesList[0].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[1].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[2].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[3].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[4].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[5].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[6].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[7].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=Max(1.0e-12,StrToFloat(sub));
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidual_Langtry_Menter.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=Max(1.0e-12,StrToFloat(sub));
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidual_Langtry_Menter.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=Max(1.0e-12,StrToFloat(sub));
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidual_Langtry_Menter.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=Max(1.0e-12,StrToFloat(sub));
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidual_Langtry_Menter.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=Max(1.0e-12,StrToFloat(sub));
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                               s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=Max(1.0e-12,StrToFloat(sub));
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                               s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                               sub:=Trim(Copy(s,1,Pos(' ',s)));
+                               if (length(sub)>0) then
+                               begin
+                                  if (StrToFloat(sub)<fmin) then
+                                  begin
+                                     fmin:=Max(1.0e-12,StrToFloat(sub));
+                                  end;
+                                  if (StrToFloat(sub)>fmax) then
+                                  begin
+                                     fmax:=StrToFloat(sub);
+                                  end;
+                                  FormResidual_Langtry_Menter.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+
+                                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                                  sub:=s;
+                                  if (length(sub)>0) then
+                                  begin
+                                     if (StrToFloat(sub)<fmin) then
+                                     begin
+                                        fmin:=Max(1.0e-12,StrToFloat(sub));
+                                     end;
+                                     if (StrToFloat(sub)>fmax) then
+                                     begin
+                                        fmax:=StrToFloat(sub);
+                                     end;
+                                     FormResidual_Langtry_Menter.Chart1.SeriesList[7].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                                  end
+                                   else
+                                  begin
+                                     // TODO
+                                     // обрыв данных после первых трёх значений.
+                                  end;
+                               end;
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Minimum:=fmin;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
+            if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+            begin
+               // Standart K-Epsilon model.
+               // первые две строки нужно пропустить.
+               FormResidualStandartKEpsilon.Chart1.SeriesList[0].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[1].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[2].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[3].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[4].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualStandartKEpsilon.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualStandartKEpsilon.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualStandartKEpsilon.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualStandartKEpsilon.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualStandartKEpsilon.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualStandartKEpsilon.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+            begin
+               // K-Omega SST.
+               // первые две строки нужно пропустить.
+               FormResidualSST.Chart1.SeriesList[0].Clear;
+               FormResidualSST.Chart1.SeriesList[1].Clear;
+               FormResidualSST.Chart1.SeriesList[2].Clear;
+               FormResidualSST.Chart1.SeriesList[3].Clear;
+               FormResidualSST.Chart1.SeriesList[4].Clear;
+               FormResidualSST.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSST.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSST.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSST.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSST.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSST.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSST.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSST.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSST.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else if (Laplas.egddata.myflmod[0].iturbmodel=3) then
+            begin
+               // Спаларт Аллмарес.
+               // первые две строки нужно пропустить.
+               FormResidualSpallart_Allmares.Chart1.SeriesList[0].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[1].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[2].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[3].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[4].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSpallart_Allmares.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSpallart_Allmares.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSpallart_Allmares.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSpallart_Allmares.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=s;
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSpallart_Allmares.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
+            begin
+
+            // первые две строки нужно пропустить.
+            Formresidual.cht1.SeriesList[0].Clear;
+            Formresidual.cht1.SeriesList[1].Clear;
+            Formresidual.cht1.SeriesList[2].Clear;
+            Formresidual.cht1.SeriesList[3].Clear;
+            for i:=2 to f.Count-1 do
+            begin
+               fmin:=20.0;
+               fmax:=120.0;
+               s:=Trim(f.Strings[i]);
+               subx:=Trim(Copy(s,1,Pos(' ',s)));
+               s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+               sub:=Trim(Copy(s,1,Pos(' ',s)));
+               if (StrToFloat(sub)<fmin) then
+               begin
+                  fmin:=StrToFloat(sub);
+               end;
+               if (StrToFloat(sub)>fmax) then
+               begin
+                  fmax:=StrToFloat(sub);
+               end;
+               Formresidual.cht1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+               s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+               sub:=Trim(Copy(s,1,Pos(' ',s)));
+               if (length(sub)>0) then
+               begin
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     Formresidual.cht1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=s;
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        Formresidual.cht1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                     end
+                     else
+                     begin
+                        // TODO
+                        // обрыв данных после первых трёх значений.
+                     end;
+
+                end
+                else
+                begin
+                   // TODO
+                   // обрыв данных после двух первых значений.
+                end;
+            end
+            else
+            begin
+               // TODO
+               // обрыв данных.
+            end;
+            Formresidual.cht1.LeftAxis.Minimum:=fmin;
+            Formresidual.cht1.LeftAxis.Maximum:=fmax;
+         end;
+            end;
+         f.Clear;
+         f.Free;
+
+          if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+         begin
+            // модель ламинарно турбулентного перехода Ментора Лангтрии.
+            FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=true;
+            FormResidual_Langtry_Menter.Show;
+         end
+         else
+         if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+         begin
+            // Standart K-Epsilon model.
+            FormResidualStandartKEpsilon.brun_visibleKEpsilon:=true;
+            FormResidualStandartKEpsilon.Show;
+         end
+         else
+         if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+         begin
+            // SST Ментер 1993.
+            FormResidualSST.brun_visibleSST:=true;
+            FormResidualSST.Show;
+         end
+         else
+         if (Laplas.egddata.myflmod[0].iturbmodel=3) then
+         begin
+            // Спаларт Аллмарес 1992.
+            FormResidualSpallart_Allmares.brun_visibleSA:=true;
+            FormResidualSpallart_Allmares.Show;
+         end
+         else
+         begin
+            // Ламинарный
+            Formresidual.brun_visible:=true;
+            Formresidual.Show;
+         end;
+     end
+     else
+     begin
+        Laplas.MainMemo.Lines.Add('file statistic_convergence.txt  unfound.');
+     end;
+      end;
+
+      if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         if (FileExists('report_temperature.txt')) then
+         begin
+            WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+         end;
+         (*
+         if (lbclone<300) then
+         begin
+            // Если будет больше 300 блоков то загружаться репорт
+            // будет очень долго.
+            if (FileExists('report_temperature.txt')) then
+            begin
+               f3:=TStringList.Create();
+               f:=TStringList.Create();
+               f.LoadFromFile('report_temperature.txt');
+               //Laplas.MainMemo.Lines.Add(f.Strings[0]);
+               f3.Add(f.Strings[0]);
+               for i:=0 to lbclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+1]);
+                  f3.Add(f.Strings[i+1]);
+               end;
+               for i:=0 to lsclone-1 do
+               begin
+                 //Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+1]);
+                 f3.Add(f.Strings[i+lbclone+1]);
+               end;
+               for i:=0 to lwclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(f.Strings[i+lbclone+lsclone+1]);
+               end;
+               //DeleteFile('solver/solid_static/report_temperature.txt');
+               // Ускоренная загрузка репорта в программу интерфейс.
+               Laplas.MainMemo.Lines.AddStrings(f3);
+               f3.Clear;
+               f3.Free;
+               f.Clear;
+               f.Free;
+             end
+              else
+             begin
+                Laplas.MainMemo.Lines.Add('report_temperature.txt not found.');
+             end;
+         end
+          else
+         begin
+             Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
+            Laplas.MainMemo.Lines.Add('synopsis: very big file...');
+         end;
+         *)
+      end;
+
+     // Освобождение оперативной памяти.
+      SetLength(wallname,0);
+      SetLength(sourcename,0);
+      SetLength(bodyname,0);
+      SetLength(is_hollow,0);
+
+     Laplas.brun:=false;
+
+     Laplas.bonly_mesh_gen_call:=false;
+
+     Laplas.bVisualization_Management_now:=false;
+end;
+
+// Нужно создать процедуру Execute, уже описанную в классе TMyThread
+procedure TLaplas.SerialExecute3;
+var
+  // StartupInfo : TStartupInfo;
+   //ProcessInfo : TProcessInformation;
+   f, f3 : TStringList;
+   ShellInfo : TShellExecuteInfo;
+   ExitCode : DWORD;
+   QuoteParams : Boolean;
+   i : Integer;
+   starttime, endtime, deltatime : TTime;
+   bodyname, sourcename, wallname : array of string;
+   is_hollow : array of boolean;
+   lbclone, lsclone, lwclone : Integer;
+
+   s,subx,sub : String; // текущая рабочая строка
+   fmin, fmax : Real;
+begin
+
+
+
+        // Надо сделать копию имён block, source и wall перед запуском.
+        lbclone:=Laplas.lb;
+        lsclone:=Laplas.ls;
+        lwclone:=Laplas.lw;
+         SetLength(bodyname,lbclone);
+         SetLength(is_hollow,lbclone);
+         for i:=0 to lbclone-1 do
+         begin
+           bodyname[i]:=Laplas.body[i].name;
+           if (Laplas.body[i].itype=2) then
+           begin
+              // HOLLOW
+              is_hollow[i]:=true;
+           end
+           else
+           begin
+              is_hollow[i]:=false;
+           end;
+         end;
+         SetLength(sourcename,lsclone);
+         for i:=0 to lsclone-1 do
+         begin
+            sourcename[i]:=Laplas.source[i].name;
+         end;
+         SetLength(wallname,lwclone);
+          for i:=0 to lwclone-1 do
+         begin
+           wallname[i]:=Laplas.wall[i].name;
+         end;
+
+        starttime:=Now();
+
+
+
+
+        ShellInfo.cbSize:=SizeOf(ShellInfo);
+        ShellInfo.fMask:=SEE_MASK_NOCLOSEPROCESS;
+        ShellInfo.Wnd:=HWND_DESKTOP;
+        ShellInfo.lpVerb:='open';
+        if (FormSetting.rgParallel.ItemIndex=0) then
+        begin
+           //ShellInfo.lpFile:=PChar('"test_pattern\solver\conjugate_heat_transfer_static\AliceFlow_v0_26.exe"');
+           // 29.01.2017
+           //ShellInfo.lpFile:=PChar('"test_pattern\solver\solid_static\AliceFlow_v0_30.exe"');
+           ShellInfo.lpFile:=PChar('"test_pattern\solver\x64\AliceFlow_v0_48.exe"');
+        end;
+        if (FormSetting.rgParallel.ItemIndex=1) then
+        begin
+            ShellInfo.lpFile:=PChar('"test_pattern\solver\x86\AliceFlow_v0_48.exe"');
+        end;
+         if (FormSetting.rgParallel.ItemIndex=2) then
+        begin
+           ShellInfo.lpFile:=PChar('"test_pattern\solver\x64_float\AliceFlow_v0_48.exe"');
+        end;
+        QuoteParams:=true;
+        if QuoteParams then
+        ShellInfo.lpParameters:=PChar('""')
+        else
+        ShellInfo.lpParameters:=PChar('');
+        ShellInfo.lpDirectory:=PChar('".\"');
+        ShellInfo.nShow:=SW_SHOWNORMAL;
+        if not ShellExecuteEx(@ShellInfo) then
+        RaiseLastOSError;
+        if ShellInfo.hProcess<>0 then
+        try
+          WaitForSingleObjectEx(ShellInfo.hProcess,INFINITE,false);
+          GetExitCodeProcess(ShellInfo.hProcess,ExitCode);
+        finally
+           CloseHandle(ShellInfo.hProcess);
+        end;
+
+
+         // удаляем ненужные файлы.
+      DeleteFile('ALICEFLOW0_06_temp_part1.txt');
+      DeleteFile('ALICEFLOW0_06_temp_part3.txt');
+
+
+       if (FileExists('report_temperature.txt')) then
+      begin
+         WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+      end;
+
+      endtime:=Now();
+      deltatime:=endtime-starttime;
+      if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         Laplas.MainMemo.Lines.Add('The calculation is completed.');
+         Laplas.MainMemo.Lines.Add('Time calculation equals '+TimeToStr(deltatime));
+      end
+        else
+      begin
+         Laplas.MainMemo.Lines.Add('The mesh generation is completed.');
+         Laplas.MainMemo.Lines.Add('Time mesh generation equals '+TimeToStr(deltatime));
+      end;
+
+      if (not(FormUnsteady.CheckBoxdonttec360.Checked))  then
+      begin
+         // вызов программы tecplot360
+         // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+         if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+              begin
+                 WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT'),SW_SHOWNORMAL);
+              end
+         else
+        begin
+     if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+        begin
+           WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+        end
+         else
+        begin
+           if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+           begin
+              WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+           end
+            else
+           begin
+              if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+              begin
+                WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+              end
+               else
+              begin
+                 if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                 begin
+                    WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                 end
+                  else
+                 begin
+                    Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 unfound.');
+                 end;
+              end;
+           end;
+        end;
+     end;
+      end;
+
+      if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         if (Laplas.egddata.itemper>0) then
+         begin
+
+            if (FileExists('statistic_convergence.txt')) then
+            begin
+               f:=TStringList.Create();
+               f.LoadFromFile('statistic_convergence.txt');
+
+               if (FormatSettings.DecimalSeparator=',') then
+               begin
+                  // заменить все точки в файле на запятые.
+                  for i:=0 to f.Count-1 do
+                  begin
+                     s:=f.Strings[i];
+                     f.Strings[i]:=StringReplace(s,'.',',',[rfReplaceAll]);
+                  end;
+               end;
+
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+            begin
+               // Standart K-Epsilon model на основек двухслойной модели.
+               // первые две строки нужно пропустить.
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[0].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[1].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[2].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[3].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[4].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[5].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[6].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[7].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[8].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[7].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[8].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                        end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidual_Lagtry_Menter_Temp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidual_Lagtry_Menter_Temp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=true;
+                FormResidual_Lagtry_Menter_Temp.Show;
+            end
+            else
+            if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+            begin
+               // Standart K-Epsilon model на основек двухслойной модели.
+               // первые две строки нужно пропустить.
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[0].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[1].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[2].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[3].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[4].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[5].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[6].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualStandart_k_epsilon_Temp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualStandart_k_epsilon_Temp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
+                FormResidualStandart_k_epsilon_Temp.Show;
+            end
+            else
+            if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+            begin
+               // K-Omega SST.
+               // первые две строки нужно пропустить.
+               FormResidualSSTTemp.Chart1.SeriesList[0].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[1].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[2].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[3].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[4].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[5].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[6].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSSTTemp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSSTTemp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSSTTemp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSSTTemp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidualSSTTemp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSSTTemp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSSTTemp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSSTTemp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSSTTemp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=true;
+                FormResidualSSTTemp.Show;
+            end
+            else
+            if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+            begin
+               // Спаларт Аллмарес с температурой.
+               // первые две строки нужно пропустить.
+               FormResidualSATemp.Chart1.SeriesList[0].Clear;
+               FormResidualSATemp.Chart1.SeriesList[1].Clear;
+               FormResidualSATemp.Chart1.SeriesList[2].Clear;
+               FormResidualSATemp.Chart1.SeriesList[3].Clear;
+               FormResidualSATemp.Chart1.SeriesList[4].Clear;
+               FormResidualSATemp.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSATemp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSATemp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSATemp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSATemp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSATemp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSATemp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSATemp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSATemp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+                 f.Free;
+                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                 FormResidualSATemp.brun_visibleSA2:=true;
+                 FormResidualSATemp.Show;
+            end
+            else
+            begin
+              // первые две строки нужно пропустить.
+              Formresidual2.cht1.SeriesList[0].Clear;
+              Formresidual2.cht1.SeriesList[1].Clear;
+              Formresidual2.cht1.SeriesList[2].Clear;
+              Formresidual2.cht1.SeriesList[3].Clear;
+              Formresidual2.cht1.SeriesList[4].Clear;
+              for i:=2 to f.Count-1 do
+              begin
+                 fmin:=20.0;
+                 fmax:=1.2;
+                 s:=Trim(f.Strings[i]);
+                 subx:=Trim(Copy(s,1,Pos(' ',s)));
+                 s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                 if (StrToFloat(sub)<fmin) then
+                 begin
+                    fmin:=StrToFloat(sub);
+                 end;
+                 Formresidual2.cht1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                 s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                 if (StrToFloat(sub)<fmin) then
+                 begin
+                    fmin:=StrToFloat(sub);
+                 end;
+                 Formresidual2.cht1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                 s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                 if (StrToFloat(sub)<fmin) then
+                 begin
+                    fmin:=StrToFloat(sub);
+                 end;
+                 Formresidual2.cht1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                 s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                 sub:=s;
+                 if (StrToFloat(sub)<fmin) then
+                 begin
+                    fmin:=StrToFloat(sub);
+                 end;
+                 Formresidual2.cht1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                 s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                 sub:=s;
+                 if (StrToFloat(sub)<fmin) then
+                 begin
+                    fmin:=StrToFloat(sub);
+                 end;
+                 Formresidual2.cht1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clBlack);
+
+
+               Formresidual2.cht1.LeftAxis.Minimum:=fmin;
+               Formresidual2.cht1.LeftAxis.Maximum:=fmax;
+            end;
+            f.Clear;
+            f.Free;
+            FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+            Formresidual2.brun_visible2:=true;
+            Formresidual2.Show;
+            end;
+          end
+           else
+          begin
+            Laplas.MainMemo.Lines.Add('file statistic_convergence.txt  unfound.');
+          end;
+
+
+     end
+     else
+     begin
+
+
+      if (FileExists('statistic_convergence.txt')) then
+      begin
+         f:=TStringList.Create();
+         f.LoadFromFile('statistic_convergence.txt');
+
+         if (FormatSettings.DecimalSeparator=',') then
+          begin
+             // заменить все точки в файле на запятые.
+             for i:=0 to f.Count-1 do
+             begin
+                s:=f.Strings[i];
+                f.Strings[i]:=StringReplace(s,'.',',',[rfReplaceAll]);
+             end;
+          end;
+
+           if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+            begin
+               // модель ламинарно турбулентного перехода Ментора-Лангтрии (RANS) [2009].
+               // первые две строки нужно пропустить.
+               FormResidual_Langtry_Menter.Chart1.SeriesList[0].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[1].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[2].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[3].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[4].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[5].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[6].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[7].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidual_Langtry_Menter.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidual_Langtry_Menter.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidual_Langtry_Menter.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidual_Langtry_Menter.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                               s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidual_Langtry_Menter.Chart1.SeriesList[7].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                           end;
+                           end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Minimum:=fmin;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
+          if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+            begin
+               // Standart K-Epsilon model.
+               // первые две строки нужно пропустить.
+               FormResidualStandartKEpsilon.Chart1.SeriesList[0].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[1].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[2].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[3].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[4].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualStandartKEpsilon.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualStandartKEpsilon.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualStandartKEpsilon.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualStandartKEpsilon.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualStandartKEpsilon.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualStandartKEpsilon.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
+          if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+            begin
+               // K-Omega SST Menter [1993].
+               // первые две строки нужно пропустить.
+               FormResidualSST.Chart1.SeriesList[0].Clear;
+               FormResidualSST.Chart1.SeriesList[1].Clear;
+               FormResidualSST.Chart1.SeriesList[2].Clear;
+               FormResidualSST.Chart1.SeriesList[3].Clear;
+               FormResidualSST.Chart1.SeriesList[4].Clear;
+               FormResidualSST.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSST.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSST.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSST.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSST.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSST.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSST.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSST.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSST.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
+          if (Laplas.egddata.myflmod[0].iturbmodel=3) then
+            begin
+               // Спаларт Аллмарес.
+               // первые две строки нужно пропустить.
+               FormResidualSpallart_Allmares.Chart1.SeriesList[0].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[1].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[2].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[3].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[4].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSpallart_Allmares.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSpallart_Allmares.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSpallart_Allmares.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSpallart_Allmares.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=s;
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSpallart_Allmares.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+                f.Free;
+                FormResidualSpallart_Allmares.brun_visibleSA:=true;
+                FormResidualSpallart_Allmares.Show;
+            end
+             else
+            begin
+               // первые две строки нужно пропустить.
+               Formresidual.cht1.SeriesList[0].Clear;
+               Formresidual.cht1.SeriesList[1].Clear;
+               Formresidual.cht1.SeriesList[2].Clear;
+               Formresidual.cht1.SeriesList[3].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=1.2;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=s;
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                  Formresidual.cht1.LeftAxis.Minimum:=fmin;
+                  Formresidual.cht1.LeftAxis.Maximum:=fmax;
+               end;
+               f.Clear;
+               f.Free;
+               Formresidual.brun_visible:=true;
+               Formresidual.Show;
+         end;
+      end
+      else
+      begin
+        Laplas.MainMemo.Lines.Add('file statistic_convergence.txt  unfound.');
+      end;
+
+      end;
+     end;
+
+       if (Laplas.bonly_mesh_gen_call=false) then
+      begin
+         if (FileExists('report_temperature.txt')) then
+         begin
+            WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+         end;
+         (*
+         if (lbclone<300) then
+         begin
+            // Если будет больше 300 блоков то загружаться репорт
+            // будет очень долго.
+            if (FileExists('report_temperature.txt')) then
+            begin
+               f3:=TStringList.Create();
+               f:=TStringList.Create();
+               f.LoadFromFile('report_temperature.txt');
+               //Laplas.MainMemo.Lines.Add(f.Strings[0]);
+               f3.Add(f.Strings[0]);
+               for i:=0 to lbclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+1]);
+                  f3.Add(f.Strings[i+1]);
+               end;
+               for i:=0 to lsclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+1]);
+                  f3.Add(f.Strings[i+lbclone+1]);
+               end;
+               for i:=0 to lwclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(f.Strings[i+lbclone+lsclone+1]);
+               end;
+               //DeleteFile('solver/solid_static/report_temperature.txt');
+               // Ускоренная загрузка больших репортов в программу.
+               Laplas.MainMemo.Lines.AddStrings(f3);
+               f3.Clear;
+               f3.Free;
+               f.Clear;
+               f.Free;
+            end
+             else
+            begin
+               Laplas.MainMemo.Lines.Add('report_temperature.txt not found.');
+            end;
+         end
+          else
+         begin
+             Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
+            Laplas.MainMemo.Lines.Add('synopsis: very big file...');
+         end;
+         *)
+      end;
+
+      // Освобождение оперативной памяти.
+      SetLength(wallname,0);
+      SetLength(sourcename,0);
+      SetLength(bodyname,0);
+      SetLength(is_hollow,0);
+
+      Laplas.brun:=false;
+      Laplas.bonly_mesh_gen_call:=false;
+
+      Laplas.bVisualization_Management_now:=false;
+end;
+
+
+
+
 function TLaplas.GetSource(Index : integer) : TPlane;
 begin
   Result:=source[Index];
@@ -3544,9 +7015,12 @@ end;
 
 procedure TLaplas.IdleHandler(Sender: TObject; var Done: Boolean);
 begin
-   Render;
-   Sleep(isleep_render);  //5
-   Done:=False;
+   if (ecology_btn) then
+   begin
+      Render;
+      Sleep(isleep_render);  //5
+      Done:=False;
+   end;
 end;
 
 
@@ -8214,8 +11688,11 @@ procedure TLaplas.RedoSourceforPatternClick(Sender: TObject);
 var
     i_1, i_1_first : Integer;
     bfirst : Boolean;
+    i_count_patces : Integer; // Количество модифицированных источников тепла.
 begin
    FormTextNameSourcePattern.ShowModal;
+
+   i_count_patces:=0;
 
     // Текстовый шаблон.
       if (length(FormTextNameSourcePattern.EditSourcepatternname.Text)>0) then
@@ -8227,6 +11704,8 @@ begin
             begin
                if (Pos(Trim(FormTextNameSourcePattern.EditSourcepatternname.Text),body[i_1].name)>0) then
                begin
+                  inc(i_count_patces);
+
                   itek:=i_1;
                   if (bfirst) then
                   begin
@@ -8290,8 +11769,8 @@ begin
                end;
             end;
 
-            MainMemo.Lines.Add('Pathing heat source Done...');
-            Application.MessageBox('Pathing heat source Done...','Define group heat source', MB_OK);
+            MainMemo.Lines.Add('Pathing heat source name string search pattern='+Trim(FormTextNameSourcePattern.EditSourcepatternname.Text)+'. count patching sources='+IntToStr(i_count_patces)+'. Done...');
+            Application.MessageBox(PWideChar(IntToStr(i_count_patces)+'Pathing heat sources Done...'),'Define group heat source', MB_OK);
 
       end;
       // запрет на мощность зависящую от температуры снят.
@@ -8311,6 +11790,12 @@ var
    xa,xb,xc : Real;  // для метода дихтомии.
 
 begin
+
+  ecology_btn:=true;
+  boptimetric:=false;
+  id_0_index:=0;
+  id_1_index:=0;
+
    perspectiveangle_counter:=0.0;
 
    // Готовим для пользователя очень
@@ -8377,6 +11862,7 @@ begin
    glSTL.tau1:=180.0; // 3 мин подготовка аппаратуры.
    glSTL.tau2:=240.0; // 4 мин съёмка.
    glSTL.tau_pause:=5040.0; // один виток вокруг земли 94 мин минус время 2xtau1+tau2.
+   glSTL.off_multiplyer:=0.0;
    glSTL.T:=86400.0; // сутки
    glSTL.m1:=0.3333; // подготовка к режиму съёмки имеет тепловыделение в трое меньшее.
    glSTL.n:=6; // 6 витков в сутках.
@@ -8492,6 +11978,10 @@ begin
    // рёбра
    // Вращательное движение в 3D имеет три степени свободы.
    Alf:=-1.29; Bet:=1.26; Gam:=0.0;// углы поворота
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
    Gam0:=0;
 
    // Параметры модели освещения в OpenGL.
@@ -8533,13 +12023,48 @@ begin
    workmat[0].temp_lam[0]:=20.0;
    workmat[0].arr_lam[0]:=0.0261;  // теплопроводность воздуха
    // air   Thermal-Stress
-   workmat[0].Poisson_ratio:=0.49;
-   workmat[0].Young_Module:=1.42e-4;//GPa  // 60000Pa SolidWork.
-   workmat[0].Linear_expansion_coefficient:=3.331e+3;//*1e-6
+   //workmat[0].Poisson_ratio:=0.49;
+   workmat[0].n_Poisson_ratio:=1;
+   SetLength(workmat[0].temp_Poisson_ratio, workmat[0].n_Poisson_ratio);
+   SetLength(workmat[0].arr_Poisson_ratio, workmat[0].n_Poisson_ratio);
+   workmat[0].temp_Poisson_ratio[0]:=20.0;
+   workmat[0].arr_Poisson_ratio[0]:=0.49;
+   //workmat[0].Young_Module:=1.42e-4;//GPa  // 60000Pa SolidWork.
+   workmat[0].n_Young_Module:=1;
+   SetLength(workmat[0].temp_Young_Module, workmat[0].n_Young_Module);
+   SetLength(workmat[0].arr_Young_Module, workmat[0].n_Young_Module);
+   workmat[0].temp_Young_Module[0]:=20.0;
+   workmat[0].arr_Young_Module[0]:=1.42e-4;//GPa  // 60000Pa SolidWork.
+   //workmat[0].Linear_expansion_coefficient:=3.331e+3;//*1e-6
+   workmat[0].n_Linear_expansion_coefficient:=1;
+   SetLength(workmat[0].temp_Linear_expansion_coefficient, workmat[0].n_Linear_expansion_coefficient);
+   SetLength(workmat[0].arr_Linear_expansion_coefficient, workmat[0].n_Linear_expansion_coefficient);
+   workmat[0].temp_Linear_expansion_coefficient[0]:=20.0;
+   workmat[0].arr_Linear_expansion_coefficient[0]:=3.331e+3;//*1e-6
    // Ортотропность теплопроводности.
    workmat[0].mult_lam_x:=1.0;
    workmat[0].mult_lam_y:=1.0;
    workmat[0].mult_lam_z:=1.0;
+   workmat[0].mult_Linear_expansion_coefficient_x:=1.0;
+   workmat[0].mult_Linear_expansion_coefficient_y:=1.0;
+   workmat[0].mult_Linear_expansion_coefficient_z:=1.0;
+   workmat[0].mult_Young_Module_x:=1.0;
+   workmat[0].mult_Young_Module_y:=1.0;
+   workmat[0].mult_Young_Module_z:=1.0;
+   workmat[0].mult_Poisson_ratio_xy:=1.0;
+   workmat[0].mult_Poisson_ratio_xz:=1.0;
+   workmat[0].mult_Poisson_ratio_yz:=1.0;
+   workmat[0].mult_Poisson_ratio_yx:=1.0;
+   workmat[0].mult_Poisson_ratio_zx:=1.0;
+   workmat[0].mult_Poisson_ratio_zy:=1.0;
+   // Модуль сдвига.
+   workmat[0].bShearModuleActive:=false;
+   workmat[0].ShearModuleGxy:=workmat[0].arr_Young_Module[0]/(2.0*(1.0+workmat[0].arr_Poisson_ratio[0]));
+   workmat[0].ShearModuleGyz:=workmat[0].arr_Young_Module[0]/(2.0*(1.0+workmat[0].arr_Poisson_ratio[0]));
+   workmat[0].ShearModuleGxz:=workmat[0].arr_Young_Module[0]/(2.0*(1.0+workmat[0].arr_Poisson_ratio[0]));
+
+
+
    workmat[0].mu:=1.7894e-5; // коэффициент динамической вязкости
    workmat[0].ilawmu:=0; // const value
    // ограничители динамической вязкости.
@@ -8634,10 +12159,46 @@ begin
    workmat[1].mult_lam_x:=1.0;
    workmat[1].mult_lam_y:=1.0;
    workmat[1].mult_lam_z:=1.0;
+
+
     // aluminium
-   workmat[1].Poisson_ratio:=0.334;
-   workmat[1].Young_Module:=69.0;//GPa
-   workmat[1].Linear_expansion_coefficient:=23.0;//*1e-6
+   //workmat[1].Poisson_ratio:=0.334;
+    workmat[1].n_Poisson_ratio:=1;
+   SetLength(workmat[1].temp_Poisson_ratio, workmat[1].n_Poisson_ratio);
+   SetLength(workmat[1].arr_Poisson_ratio, workmat[1].n_Poisson_ratio);
+   workmat[1].temp_Poisson_ratio[0]:=20.0;
+   workmat[1].arr_Poisson_ratio[0]:=0.334;
+   //workmat[1].Young_Module:=69.0;//GPa
+   workmat[1].n_Young_Module:=1;
+   SetLength(workmat[1].temp_Young_Module, workmat[1].n_Young_Module);
+   SetLength(workmat[1].arr_Young_Module, workmat[1].n_Young_Module);
+   workmat[1].temp_Young_Module[0]:=20.0;
+   workmat[1].arr_Young_Module[0]:=69.0;//GPa
+   //workmat[1].Linear_expansion_coefficient:=23.0;//*1e-6
+   workmat[1].n_Linear_expansion_coefficient:=1;
+   SetLength(workmat[1].temp_Linear_expansion_coefficient, workmat[1].n_Linear_expansion_coefficient);
+   SetLength(workmat[1].arr_Linear_expansion_coefficient, workmat[1].n_Linear_expansion_coefficient);
+   workmat[1].temp_Linear_expansion_coefficient[0]:=20.0;
+   workmat[1].arr_Linear_expansion_coefficient[0]:=23.0;//*1e-6
+
+   workmat[1].mult_Linear_expansion_coefficient_x:=1.0;
+   workmat[1].mult_Linear_expansion_coefficient_y:=1.0;
+   workmat[1].mult_Linear_expansion_coefficient_z:=1.0;
+   workmat[1].mult_Young_Module_x:=1.0;
+   workmat[1].mult_Young_Module_y:=1.0;
+   workmat[1].mult_Young_Module_z:=1.0;
+   workmat[1].mult_Poisson_ratio_xy:=1.0;
+   workmat[1].mult_Poisson_ratio_xz:=1.0;
+   workmat[1].mult_Poisson_ratio_yz:=1.0;
+   workmat[1].mult_Poisson_ratio_yx:=1.0;
+   workmat[1].mult_Poisson_ratio_zx:=1.0;
+   workmat[1].mult_Poisson_ratio_zy:=1.0;
+   // Модуль сдвига.
+   workmat[1].bShearModuleActive:=false;
+   workmat[1].ShearModuleGxy:=workmat[1].arr_Young_Module[0]/(2.0*(1.0+workmat[1].arr_Poisson_ratio[0]));
+   workmat[1].ShearModuleGyz:=workmat[1].arr_Young_Module[0]/(2.0*(1.0+workmat[1].arr_Poisson_ratio[0]));
+   workmat[1].ShearModuleGxz:=workmat[1].arr_Young_Module[0]/(2.0*(1.0+workmat[1].arr_Poisson_ratio[0]));
+
    // следующие 8 значений не используются
    workmat[1].mu:=1.7894e-5; // воздух
    workmat[1].ilawmu:=0; // const value
@@ -8663,7 +12224,7 @@ begin
    lmatsol:=42;
    SetLength(libsolid,lmatsol);
    // YoungModule GPa, linear expansion coefficient *1.0E-6.
-   libsolid[0].name:='Al-Duralumin'; libsolid[0].Poisson_ratio:=0.334; libsolid[0].Young_Module:=69.0; libsolid[0].Linear_expansion_coefficient:=22.5; libsolid[0].lam:=164; libsolid[0].cp:=921; libsolid[0].rho:=2800;  libsolid[0].mult_lam_x:=1.0; libsolid[0].mult_lam_y:=1.0; libsolid[0].mult_lam_z:=1.0;
+   libsolid[0].name:='Al-Duralumin'; libsolid[0].Poisson_ratio:=0.345; libsolid[0].Young_Module:=70.5; libsolid[0].Linear_expansion_coefficient:=22.5; libsolid[0].lam:=164; libsolid[0].cp:=921; libsolid[0].rho:=2800;  libsolid[0].mult_lam_x:=1.0; libsolid[0].mult_lam_y:=1.0; libsolid[0].mult_lam_z:=1.0;
    libsolid[1].name:='GaN'; libsolid[1].Poisson_ratio:=0.352; libsolid[1].Young_Module:=181.0; libsolid[1].Linear_expansion_coefficient:=4.0; libsolid[1].lam:=130; libsolid[1].cp:=700; libsolid[1].rho:=6150;  libsolid[1].mult_lam_x:=1.0; libsolid[1].mult_lam_y:=1.0; libsolid[1].mult_lam_z:=1.0;
    libsolid[2].name:='SiC-4H'; libsolid[2].Poisson_ratio:=0.14; libsolid[2].Young_Module:=410.0; libsolid[2].Linear_expansion_coefficient:=4.0; libsolid[2].lam:=370; libsolid[2].cp:=690; libsolid[2].rho:=3210; libsolid[2].mult_lam_x:=1.0; libsolid[2].mult_lam_y:=1.0; libsolid[2].mult_lam_z:=1.0;
    libsolid[3].name:='SOLDER_Au80Sn20'; libsolid[3].Poisson_ratio:=0.4; libsolid[3].Young_Module:=68.0; libsolid[3].Linear_expansion_coefficient:=16.0; libsolid[3].lam:=57; libsolid[3].cp:=143; libsolid[3].rho:=14510;  libsolid[3].mult_lam_x:=1.0; libsolid[3].mult_lam_y:=1.0; libsolid[3].mult_lam_z:=1.0;// TDIM Master
@@ -8677,7 +12238,7 @@ begin
    // ковар (используется в качестве держателя при испытаниях. Сплав: Co 17% Ni 29% Fe остальное).
    libsolid[10].name:='kovar'; libsolid[10].Poisson_ratio:=317.0; libsolid[10].Young_Module:=20.0; libsolid[10].Linear_expansion_coefficient:=5.1; libsolid[10].lam:=19; libsolid[10].cp:=669; libsolid[10].rho:=8350; libsolid[10].mult_lam_x:=1.0; libsolid[10].mult_lam_y:=1.0; libsolid[10].mult_lam_z:=1.0;// ковар.
    // поликор alumina
-   libsolid[11].name:='Alumina'; libsolid[11].Poisson_ratio:=0.334; libsolid[11].Young_Module:=69.0; libsolid[11].Linear_expansion_coefficient:=8.1; libsolid[11].lam:=32.0; libsolid[11].cp:=837.0; libsolid[11].rho:=3960.0; libsolid[11].mult_lam_x:=1.0; libsolid[11].mult_lam_y:=1.0; libsolid[11].mult_lam_z:=1.0;
+   libsolid[11].name:='Alumina'; libsolid[11].Poisson_ratio:=0.22; libsolid[11].Young_Module:=340.0; libsolid[11].Linear_expansion_coefficient:=7.8; libsolid[11].lam:=25.0; libsolid[11].cp:=750.0; libsolid[11].rho:=3760.0; libsolid[11].mult_lam_x:=1.0; libsolid[11].mult_lam_y:=1.0; libsolid[11].mult_lam_z:=1.0;
    // Латунь ЛС-59-1-Л (Brass)
    libsolid[12].name:='Brass'; libsolid[12].Poisson_ratio:=0.331; libsolid[12].Young_Module:=120.0; libsolid[12].Linear_expansion_coefficient:=19.0; libsolid[12].lam:=108.784; libsolid[12].cp:=377.0; libsolid[12].rho:=8500.0; libsolid[12].mult_lam_x:=1.0; libsolid[12].mult_lam_y:=1.0; libsolid[12].mult_lam_z:=1.0;
    // полиимид (polyimide PI)
@@ -8726,12 +12287,15 @@ begin
    libsolid[32].name:='Polystyrene_Typical'; libsolid[32].Poisson_ratio:=0.334; libsolid[32].Young_Module:=69.0; libsolid[32].Linear_expansion_coefficient:=22.5; libsolid[32].lam:=0.08; libsolid[32].cp:=1300; libsolid[32].rho:=1165; libsolid[32].mult_lam_x:=1.0; libsolid[32].mult_lam_y:=1.0; libsolid[32].mult_lam_z:=1.0;
    libsolid[33].name:='air_solid'; libsolid[33].Poisson_ratio:=0.49; libsolid[33].Young_Module:=1.42e-4; libsolid[33].Linear_expansion_coefficient:=3.331e+3; libsolid[33].lam:=0.0261; libsolid[33].cp:=1005; libsolid[33].rho:=1.1614; libsolid[33].mult_lam_x:=1.0; libsolid[33].mult_lam_y:=1.0; libsolid[33].mult_lam_z:=1.0;
    libsolid[34].name:='indium'; libsolid[34].Poisson_ratio:=0.455; libsolid[34].Young_Module:=11.5; libsolid[34].Linear_expansion_coefficient:=28.5; libsolid[34].lam:=81.8; libsolid[34].cp:=238; libsolid[34].rho:=7310; libsolid[34].mult_lam_x:=1.0; libsolid[34].mult_lam_y:=1.0; libsolid[34].mult_lam_z:=1.0;
-   libsolid[35].name:='VK_87_Ceramics'; libsolid[35].Poisson_ratio:=0.334; libsolid[35].Young_Module:=69.0; libsolid[35].Linear_expansion_coefficient:=22.5; libsolid[35].lam:=16.5; libsolid[35].cp:=887; libsolid[35].rho:=3900; libsolid[35].mult_lam_x:=1.0; libsolid[35].mult_lam_y:=1.0; libsolid[35].mult_lam_z:=1.0;
+   libsolid[35].name:='VK_87_Ceramics'; libsolid[35].Poisson_ratio:=0.22; libsolid[35].Young_Module:=310.0; libsolid[35].Linear_expansion_coefficient:=3.5; libsolid[35].lam:=16.5; libsolid[35].cp:=887; libsolid[35].rho:=3900; libsolid[35].mult_lam_x:=1.0; libsolid[35].mult_lam_y:=1.0; libsolid[35].mult_lam_z:=1.0;
    libsolid[36].name:='AlN'; libsolid[36].Poisson_ratio:=0.24; libsolid[36].Young_Module:=330.0; libsolid[36].Linear_expansion_coefficient:=4.5; libsolid[36].lam:=319.0; libsolid[36].cp:=600; libsolid[36].rho:=3255; libsolid[36].mult_lam_x:=1.0; libsolid[36].mult_lam_y:=1.0; libsolid[36].mult_lam_z:=1.0;
    libsolid[37].name:='vacuum'; libsolid[37].Poisson_ratio:=0.49; libsolid[37].Young_Module:=1.42e-4; libsolid[37].Linear_expansion_coefficient:=3.331e+3; libsolid[37].lam:=0.0001; libsolid[37].cp:=1.0; libsolid[37].rho:=0.0001; libsolid[37].mult_lam_x:=1.0; libsolid[37].mult_lam_y:=1.0; libsolid[37].mult_lam_z:=1.0;
-   libsolid[38].name:='rogers5870'; libsolid[38].Poisson_ratio:=0.334; libsolid[38].Young_Module:=69.0; libsolid[38].Linear_expansion_coefficient:=22.5; libsolid[38].lam:=0.22; libsolid[38].cp:=960.0; libsolid[38].rho:=2200.0; libsolid[38].mult_lam_x:=1.0; libsolid[38].mult_lam_y:=1.0; libsolid[38].mult_lam_z:=1.0;
-   libsolid[39].name:='rogers6002'; libsolid[39].Poisson_ratio:=0.334; libsolid[39].Young_Module:=69.0; libsolid[39].Linear_expansion_coefficient:=22.5; libsolid[39].lam:=0.68; libsolid[39].cp:=930.0; libsolid[39].rho:=2100.0; libsolid[39].mult_lam_x:=1.0; libsolid[39].mult_lam_y:=1.0; libsolid[39].mult_lam_z:=1.0;
-   libsolid[40].name:='rogers5880'; libsolid[40].Poisson_ratio:=0.334; libsolid[40].Young_Module:=69.0; libsolid[40].Linear_expansion_coefficient:=22.5; libsolid[40].lam:=0.2; libsolid[40].cp:=960.0; libsolid[40].rho:=2200.0; libsolid[40].mult_lam_x:=1.0; libsolid[40].mult_lam_y:=1.0; libsolid[40].mult_lam_z:=1.0;
+   // Внимание ! модуль Юнга и коэффициент линейного теплового расширения для rogers ортотропны.
+   // Ссылка на параметры материалов для различных роджерсов.
+   //        http://materials.ellwest.com/rogers/high_guide.pdf
+   libsolid[38].name:='rogers5870'; libsolid[38].Poisson_ratio:=0.3685; libsolid[38].Young_Module:=0.185; libsolid[38].Linear_expansion_coefficient:=28.0; libsolid[38].lam:=0.22; libsolid[38].cp:=960.0; libsolid[38].rho:=2200.0; libsolid[38].mult_lam_x:=1.0; libsolid[38].mult_lam_y:=1.0; libsolid[38].mult_lam_z:=1.0;
+   libsolid[39].name:='rogers6002'; libsolid[39].Poisson_ratio:=0.3685; libsolid[39].Young_Module:=0.360; libsolid[39].Linear_expansion_coefficient:=16.0; libsolid[39].lam:=0.68; libsolid[39].cp:=930.0; libsolid[39].rho:=2100.0; libsolid[39].mult_lam_x:=1.0; libsolid[39].mult_lam_y:=1.0; libsolid[39].mult_lam_z:=1.0;
+   libsolid[40].name:='rogers5880'; libsolid[40].Poisson_ratio:=0.3685; libsolid[40].Young_Module:=0.136; libsolid[40].Linear_expansion_coefficient:=48.0; libsolid[40].lam:=0.2; libsolid[40].cp:=960.0; libsolid[40].rho:=2200.0; libsolid[40].mult_lam_x:=1.0; libsolid[40].mult_lam_y:=1.0; libsolid[40].mult_lam_z:=1.0;
    libsolid[41].name:='rohacellhf51D'; libsolid[41].Poisson_ratio:=0.334; libsolid[41].Young_Module:=69.0; libsolid[41].Linear_expansion_coefficient:=22.5; libsolid[41].lam:=0.0567; libsolid[41].cp:=2399.04; libsolid[41].rho:=52.0; libsolid[41].mult_lam_x:=1.0; libsolid[41].mult_lam_y:=1.0; libsolid[41].mult_lam_z:=1.0;
 
 
@@ -8790,6 +12354,7 @@ begin
    // 3 - Spalart Allmares (RANS) [1992]
    // 4 - K-Omega SST Menter (RANS) [1993]
    // 5 - Standart K-Epsilon (RANS) [2001]
+   // 6 - модель ламинарно турбулентного перехода Ментора Лантгрии (RANS) [2009].
    egddata.myflmod[0].iturbmodel:=0; // ZEM
    // модель Смагоринского
    egddata.myflmod[0].SmagConst:=0.151; // при Ck==1.8   (Ck соответствующая константа Колмогорова).
@@ -8809,6 +12374,8 @@ begin
    egddata.myflmod[0].bSelectiveSmagorinsky:=false; // добавляем избирательности в модель Смагоринского.
    egddata.myflmod[0].rSelectiveAngle:=15.0; // значение угла равное 15 градусов подобрано из DNS моделирования.
    egddata.myflmod[0].itypefiltr:=2; // фильтр Симпсона.
+
+   
 
    ivar:=2; // нету переменных.
    SetLength(parametric,2); // нет переменных
@@ -8887,7 +12454,7 @@ begin
       // Это значительно меньше ресурсов
       // требует от компьютера.
       // Прорисовка только линиями.
-      rgview.Visible:=false;
+      rgview.Visible:=true;
       SpeedButton1.Visible:=false;
        // Среди моделей турбулентности оставляем только
       // Zero Equation Turbulence Model.
@@ -8897,18 +12464,18 @@ begin
       // Полностью отключаем механику из интерфейса
       // т.к. она так и не заработала на мсмент
       // 4 августа 2019 года.
-      //EGDForm.CheckBoxStaticStructural.Visible:=false;
+      //EGDForm.CheckBoxStaticStructural.Visible:=true;
       //EGDForm.CheckBoxStaticStructural.Checked:=false;
       // Не задаём свойства механических материалов.
-      //FormUserDefinedSolidMat.GroupBoxThermalStress.Visible:=false;
+      //FormUserDefinedSolidMat.GroupBoxThermalStress.Visible:=true;
       //FormUserDefinedSolidMat.PanelSOLID.Width:=287;
       //FormUserDefinedSolidMat.Width:=290;
       // Убираем управление фиксацией боковых стенок цилиндра.
-      // AddBlockForm.CheckBoxFixedCylinder.Visible:=false;
+      //AddBlockForm.CheckBoxFixedCylinder.Visible:=true;
       // Убираем задание механических граничных условий на стенке.
-      //AddWallForm.GroupBoxThermalStress.Visible:=false;
+      //AddWallForm.GroupBoxThermalStress.Visible:=true;
 
-      bon_rotate_polygon:=false; // закоментировать если используется вращение полигона
+      //bon_rotate_polygon:=false; // закоментировать если используется вращение полигона
    end;
 
 end;
@@ -10458,6 +14025,10 @@ begin
    Alf:=0.0;  //X
    Bet:=0.0;  // Y
    Gam:=0.0;  // Z
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
 end;
 
 // сохраняет bmp картинку в файл.
@@ -10602,6 +14173,7 @@ begin
    s:=s+FloatToStr(glSTL.tau)+' :'+FloatToStr(glSTL.iQ)+' :';
    s:=s+FloatToStr(glSTL.m1)+' :'+FloatToStr(glSTL.tau1)+' :';
    s:=s+FloatToStr(glSTL.tau2)+' :'+FloatToStr(glSTL.tau_pause)+' :';
+   s:=s+FloatToStr(glSTL.off_multiplyer)+' :';
    s:=s+IntToStr(glSTL.n)+' :'+FloatToStr(glSTL.T)+' :';
    s:=s+FloatToStr(glSTL.on_time_double_linear)+' :';
    f.Add(s); // масштабирующий коэффициент
@@ -10682,10 +14254,52 @@ begin
       s:=s+FloatToStr(workmat[i].mult_lam_x)+ ' :';
       s:=s+FloatToStr(workmat[i].mult_lam_y)+ ' :';
       s:=s+FloatToStr(workmat[i].mult_lam_z)+ ' :';
+
       // Thermal-Stress
-      s:=s+FloatToStr(workmat[i].Poisson_ratio)+ ' :';
-      s:=s+FloatToStr(workmat[i].Young_Module)+ ' :';
-      s:=s+FloatToStr(workmat[i].Linear_expansion_coefficient)+ ' :';
+      // Коэффициент линейного теплового расширения.
+      s:=s+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_x)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_y)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_z)+ ' :';
+      // Модуль Юнга.
+      s:=s+FloatToStr(workmat[i].mult_Young_Module_x)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Young_Module_y)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Young_Module_z)+ ' :';
+       // Ортотропность коэффициента Пуассона.
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_xy)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_xz)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_yz)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_yx)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_zx)+ ' :';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_zy)+ ' :';
+      // Модуль сдвига
+      if (workmat[i].bShearModuleActive) then
+      begin
+         s:=s+'1 :';  // Модуль сдвига задаётся пользователем.
+      end
+      else
+      begin
+         s:=s+'0 :';  // Модуль сдвига не задаётся пользователем.
+      end;
+      s:=s+FloatToStr(workmat[i].ShearModuleGxy)+ ' :';
+      s:=s+FloatToStr(workmat[i].ShearModuleGyz)+ ' :';
+      s:=s+FloatToStr(workmat[i].ShearModuleGxz)+ ' :';
+
+
+      s:=s+IntToStr(workmat[i].n_Poisson_ratio)+ ' :';
+      for i_4 := 0 to (workmat[i].n_Poisson_ratio-1) do
+      begin
+         s:=s+FloatToStr(workmat[i].temp_Poisson_ratio[i_4])+ ' :'+FloatToStr(workmat[i].arr_Poisson_ratio[i_4])+ ' :';
+      end;
+      s:=s+IntToStr(workmat[i].n_Young_Module)+ ' :';
+      for i_4 := 0 to (workmat[i].n_Young_Module-1) do
+      begin
+         s:=s+FloatToStr(workmat[i].temp_Young_Module[i_4])+ ' :'+FloatToStr(workmat[i].arr_Young_Module[i_4])+ ' :';
+      end;
+      s:=s+IntToStr(workmat[i].n_Linear_expansion_coefficient)+ ' :';
+      for i_4 := 0 to (workmat[i].n_Linear_expansion_coefficient-1) do
+      begin
+         s:=s+FloatToStr(workmat[i].temp_Linear_expansion_coefficient[i_4])+ ' :'+FloatToStr(workmat[i].arr_Linear_expansion_coefficient[i_4])+ ' :';
+      end;
       // etc.
       s:=s+FloatToStr(workmat[i].mu)+ ' :'; // динамическая вязкость
       s:=s+FloatToStr(workmat[i].beta_t)+ ' :'; // коэффициент линейного температурного расширения
@@ -11489,6 +15103,8 @@ begin
     f.Add(s);
     s:=IntToStr(FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex)+' :';
     f.Add(s);
+    s:=IntToStr(FormSetting.ComboBoxFlowSchemePrefix.ItemIndex)+' :';
+    f.Add(s);
     s:=IntToStr(FormSetting.ComboBoxFlowScheme.ItemIndex)+' :';
     f.Add(s);
     s:=IntToStr(FormSetting.ComboBoxSchemeTemperature.ItemIndex)+' :';
@@ -11782,6 +15398,7 @@ begin
    s:=s+'tau='+FloatToStr(glSTL.tau)+' :'+'iQ_duty_cycle='+FloatToStr(glSTL.iQ)+' :';
    s:=s+'m1='+FloatToStr(glSTL.m1)+' :'+'tau1='+FloatToStr(glSTL.tau1)+' :';
    s:=s+'tau2='+FloatToStr(glSTL.tau2)+' :'+'tau_pause='+FloatToStr(glSTL.tau_pause)+' :';
+   s:=s+'off_multiplyer='+FloatToStr(glSTL.off_multiplyer)+' :';
    s:=s+'number_vitkov='+IntToStr(glSTL.n)+' :'+'Time_period='+FloatToStr(glSTL.T)+' :';
    s:=s+'on_time_double_linear='+FloatToStr(glSTL.on_time_double_linear)+' :';
    f.Add(s);
@@ -11864,9 +15481,52 @@ begin
       s:=s+'matherial'+IntToStr(i)+'mult_lam_y='+FloatToStr(workmat[i].mult_lam_y)+ ' :';
       s:=s+'matherial'+IntToStr(i)+'mult_lam_z='+FloatToStr(workmat[i].mult_lam_z)+ ' :';
       // Thermal-Stress
-      s:=s+'matherial'+IntToStr(i)+'Poisson_ratio='+FloatToStr(workmat[i].Poisson_ratio)+ ' :';
-      s:=s+'matherial'+IntToStr(i)+'Young_Module='+FloatToStr(workmat[i].Young_Module)+ ' :';
-      s:=s+'matherial'+IntToStr(i)+'Linear_expansion_coefficient='+FloatToStr(workmat[i].Linear_expansion_coefficient)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Linear_expansion_coefficient_x='+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_x)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Linear_expansion_coefficient_y='+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_y)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Linear_expansion_coefficient_z='+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_z)+ ' :';
+       // Ортотропность Модуля Юнга.
+      s:=s+'matherial'+IntToStr(i)+'mult_Young_Module_x='+FloatToStr(workmat[i].mult_Young_Module_x)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Young_Module_y='+FloatToStr(workmat[i].mult_Young_Module_y)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Young_Module_z='+FloatToStr(workmat[i].mult_Young_Module_z)+ ' :';
+      // Ортотропность коэффициента Пуассона.
+      s:=s+'matherial'+IntToStr(i)+'mult_Poisson_ratio_xy='+FloatToStr(workmat[i].mult_Poisson_ratio_xy)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Poisson_ratio_xz='+FloatToStr(workmat[i].mult_Poisson_ratio_xz)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Poisson_ratio_yz='+FloatToStr(workmat[i].mult_Poisson_ratio_yz)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Poisson_ratio_yx='+FloatToStr(workmat[i].mult_Poisson_ratio_yx)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Poisson_ratio_zx='+FloatToStr(workmat[i].mult_Poisson_ratio_zx)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'mult_Poisson_ratio_zy='+FloatToStr(workmat[i].mult_Poisson_ratio_zy)+ ' :';
+      // Модуль сдвига
+      if (workmat[i].bShearModuleActive) then
+      begin
+         s:=s+'matherial'+IntToStr(i)+'bShearModuleActive=1 :';  // Модуль сдвига задаётся пользователем.
+      end
+      else
+      begin
+         s:=s+'matherial'+IntToStr(i)+'bShearModuleActive=0 :';  // Модуль сдвига не задаётся пользователем.
+      end;
+      s:=s+'matherial'+IntToStr(i)+'ShearModuleGxy='+FloatToStr(workmat[i].ShearModuleGxy)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'ShearModuleGyz='+FloatToStr(workmat[i].ShearModuleGyz)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'ShearModuleGxz='+FloatToStr(workmat[i].ShearModuleGxz)+ ' :';
+
+
+      //s:=s+'matherial'+IntToStr(i)+'Poisson_ratio='+FloatToStr(workmat[i].Poisson_ratio)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'n_Poisson_ratio='+IntToStr(workmat[i].n_Poisson_ratio)+ ' :';
+      for i_4 := 0 to (workmat[i].n_Poisson_ratio-1) do
+      begin
+         s:=s+'matherial'+IntToStr(i)+'temp_Poisson_ratio'+IntToStr(i_4)+'='+FloatToStr(workmat[i].temp_Poisson_ratio[i_4])+ ' :'+'matherial'+IntToStr(i)+'arr_Poisson_ratio'+IntToStr(i_4)+'='+FloatToStr(workmat[i].arr_Poisson_ratio[i_4])+ ' :';
+      end;
+      //s:=s+'matherial'+IntToStr(i)+'Young_Module='+FloatToStr(workmat[i].Young_Module)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'n_Young_Module='+IntToStr(workmat[i].n_Young_Module)+ ' :';
+      for i_4 := 0 to (workmat[i].n_Young_Module-1) do
+      begin
+         s:=s+'matherial'+IntToStr(i)+'temp_Young_Module'+IntToStr(i_4)+'='+FloatToStr(workmat[i].temp_Young_Module[i_4])+ ' :'+'matherial'+IntToStr(i)+'arr_Young_Module'+IntToStr(i_4)+'='+FloatToStr(workmat[i].arr_Young_Module[i_4])+ ' :';
+      end;
+      //s:=s+'matherial'+IntToStr(i)+'Linear_expansion_coefficient='+FloatToStr(workmat[i].Linear_expansion_coefficient)+ ' :';
+      s:=s+'matherial'+IntToStr(i)+'n_Linear_expansion_coefficient='+IntToStr(workmat[i].n_Linear_expansion_coefficient)+ ' :';
+      for i_4 := 0 to (workmat[i].n_Linear_expansion_coefficient-1) do
+      begin
+         s:=s+'matherial'+IntToStr(i)+'temp_Linear_expansion_coefficient'+IntToStr(i_4)+'='+FloatToStr(workmat[i].temp_Linear_expansion_coefficient[i_4])+ ' :'+'matherial'+IntToStr(i)+'arr_Linear_expansion_coefficient_val'+IntToStr(i_4)+'='+FloatToStr(workmat[i].arr_Linear_expansion_coefficient[i_4])+ ' :';
+      end;
       // etc.
       s:=s+'matherial'+IntToStr(i)+'mu='+FloatToStr(workmat[i].mu)+ ' :'; // динамическая вязкость
       s:=s+'matherial'+IntToStr(i)+'beta_t='+FloatToStr(workmat[i].beta_t)+ ' :'; // коэффициент линейного температурного расширения
@@ -12701,6 +16361,8 @@ begin
 
     s:='PressureVelocityCoupling='+IntToStr(FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex)+' :';
     f.Add(s);
+    s:='FlowConvectionSchemePrefix_id='+IntToStr(FormSetting.ComboBoxFlowSchemePrefix.ItemIndex)+' :';
+    f.Add(s);
     s:='FlowConvectionScheme_id='+IntToStr(FormSetting.ComboBoxFlowScheme.ItemIndex)+' :';
     f.Add(s);
     s:='TemperatureConvectionScheme_id='+IntToStr(FormSetting.ComboBoxSchemeTemperature.ItemIndex)+' :';
@@ -12979,11 +16641,53 @@ begin
    NewWriteFile();  // 14.10.2017
 end;
 
-// 3 января 2017.
-// Настройки для построения графика по одной из пространственных координат.
+// 3 января 2017, 30.05.2021.
+// Вызов для построения графика по одной из пространственных координат.
 procedure TLaplas.XYPlot1Click(Sender: TObject);
 begin
-  // Устанавливаем единицы измерения.
+      // вызов программы tecplot360
+         // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+     if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+     begin
+        WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe xyplotT1.PLT'),SW_SHOWNORMAL);
+     end
+     else
+     begin
+     if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+        begin
+           WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+        end
+         else
+        begin
+           if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+           begin
+              WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+           end
+            else
+           begin
+              if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+              begin
+                WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+              end
+               else
+              begin
+                 if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                 begin
+                    WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe xyplotT1.PLT',SW_SHOWNORMAL);
+                 end
+                  else
+                 begin
+                    Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 unfound.');
+                 end;
+              end;
+           end;
+        end;
+     end;
+end;
+
+procedure TLaplas.XYPlot2Click(Sender: TObject);
+begin
+   // Устанавливаем единицы измерения.
    case ComboBoxlength.ItemIndex of
      0 : begin
             // m
@@ -13244,6 +16948,82 @@ begin
    sub:=Trim(Copy(s,1,Pos(':',s)-1));
    workmat.mult_lam_z:=StrToFloat(sub);
    // Thermal-Stress
+    // Ортотропность коэффициента линейного теплового расширения :
+   s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Linear_expansion_coefficient_x
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Linear_expansion_coefficient_x:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Linear_expansion_coefficient_y
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Linear_expansion_coefficient_y:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Linear_expansion_coefficient_z
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Linear_expansion_coefficient_z:=StrToFloat(sub);
+    // Ортотропность модуля Юнга (Упругости) :
+   s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Young_Module_x
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Young_Module_x:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Young_Module_y
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Young_Module_y:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Young_Module_z
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Young_Module_z:=StrToFloat(sub);
+   // Ортотропность коэффициента Пуассона :
+   s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Poisson_ratio_xy
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Poisson_ratio_xy:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Poisson_ratio_xz
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Poisson_ratio_xz:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Poisson_ratio_yz
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Poisson_ratio_yz:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Poisson_ratio_yx
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Poisson_ratio_yx:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Poisson_ratio_zx
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Poisson_ratio_zx:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // multiplyer_Poisson_ratio_zy
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.mult_Poisson_ratio_zy:=StrToFloat(sub);
+
+   // Модуль сдвига :
+   s:=Copy(s,Pos(':',s)+1,length(s));
+   // bShearModuleActive
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   if (StrToInt(sub)=1) then
+   begin
+      workmat.bShearModuleActive:=true;
+   end
+   else
+   begin
+      workmat.bShearModuleActive:=false;
+   end;
+   s:=Copy(s,Pos(':',s)+1,length(s));
+   // ShearModuleGxy  GPa
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.ShearModuleGxy:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // ShearModuleGyz   GPa
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.ShearModuleGyz:=StrToFloat(sub);
+    s:=Copy(s,Pos(':',s)+1,length(s));
+   // ShearModuleGxz   GPa
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   workmat.ShearModuleGxz:=StrToFloat(sub);
    (*
    s:=Copy(s,Pos(':',s)+1,length(s));
    // Poisson Ratio
@@ -13256,12 +17036,42 @@ begin
     s:=Copy(s,Pos(':',s)+1,length(s));
    // linear_expansion koefficient
    sub:=Trim(Copy(s,1,Pos(':',s)-1));
-   workmat.Linear_expansion_coefficient:=StrToFloat(sub);
+   //workmat.Linear_expansion_coefficient:=StrToFloat(sub);
+    //workmat.n_Linear_expansion_coefficient:=1;
+   workmat.n_Linear_expansion_coefficient:=StrToInt(sub);
+
+   SetLength(workmat.temp_Linear_expansion_coefficient, workmat.n_Linear_expansion_coefficient);
+   SetLength(workmat.arr_Linear_expansion_coefficient, workmat.n_Linear_expansion_coefficient);
+   for i := 0 to workmat.n_Linear_expansion_coefficient-1 do
+   begin
+      s:=Copy(s,Pos(':',s)+1,length(s));
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      workmat.temp_Linear_expansion_coefficient[i]:= StrToFloat(sub);
+      s:=Copy(s,Pos(':',s)+1,length(s));
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      workmat.arr_Linear_expansion_coefficient[i]:= StrToFloat(sub);
+   end;
    *)
-   // thermal stress stub
-    workmat.Poisson_ratio:=0.154;
-    workmat.Young_Module:=217.5;
-    workmat.Linear_expansion_coefficient:=1.0;
+    // thermal stress stub
+    //workmat.Poisson_ratio:=0.154;
+    workmat.n_Poisson_ratio:=1;
+    SetLength(workmat.temp_Poisson_ratio, workmat.n_Poisson_ratio);
+    SetLength(workmat.arr_Poisson_ratio, workmat.n_Poisson_ratio);
+    workmat.temp_Poisson_ratio[0]:= 20.0;
+    workmat.arr_Poisson_ratio[0]:=0.154;
+    //workmat.Young_Module:=217.5;
+    workmat.n_Young_Module:=1;
+    SetLength(workmat.temp_Young_Module, workmat.n_Young_Module);
+    SetLength(workmat.arr_Young_Module, workmat.n_Young_Module);
+    workmat.temp_Young_Module[0]:= 20.0;
+    workmat.arr_Young_Module[0]:=217.5;
+    //workmat.Linear_expansion_coefficient:=1.0;
+    workmat.n_Linear_expansion_coefficient:=1;
+    SetLength(workmat.temp_Linear_expansion_coefficient, workmat.n_Linear_expansion_coefficient);
+    SetLength(workmat.arr_Linear_expansion_coefficient, workmat.n_Linear_expansion_coefficient);
+    workmat.temp_Linear_expansion_coefficient[0]:= 20.0;
+    workmat.arr_Linear_expansion_coefficient[0]:=1.0;
+
 
    s:=Copy(s,Pos(':',s)+1,length(s));
    // динамическая вязкость
@@ -13964,9 +17774,18 @@ begin
    SpeedButtonplanepos_ZClick(Sender);
 end;
 
+// Вызывает настройки отладочной панели, параметры которой передаются в
+// солвер и отвечают за настройку работы солвера без перекомпиляции.
+procedure TLaplas.Parameters1Click(Sender: TObject);
+begin
+   Form_debug_panel.ShowModal;
+end;
+
 // считываем входной файл :
 procedure TLaplas.read1Click(Sender: TObject);
-var iq : Integer;
+var
+    iq : Integer;
+    bsbros : Boolean;
 
 procedure My_read_model_old();
 var
@@ -13983,6 +17802,8 @@ var
    im1, im2 : Integer;
    bXY_empty : Boolean;
 begin
+   bsbros:=false;
+
     breadfinish:=false;
    f:=TStringList.Create();
    // читает файл с геометрией и создаёт тепловую модель
@@ -14103,6 +17924,9 @@ begin
    s:=Copy(s,Pos(':',s)+1,length(s));
    sub:=Copy(s,1,Pos(':',s)-1);
    glSTL.tau_pause:=StrToFloat(Trim(sub));
+   s:=Copy(s,Pos(':',s)+1,length(s));
+   sub:=Copy(s,1,Pos(':',s)-1);
+   glSTL.off_multiplyer:=StrToFloat(Trim(sub));
    s:=Copy(s,Pos(':',s)+1,length(s));
    sub:=Copy(s,1,Pos(':',s)-1);
    glSTL.n:=StrToInt(Trim(sub));
@@ -14884,7 +18708,7 @@ begin
       end
         else
       begin
-         if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+         if ((StrToInt(Trim(sub))>11)or(StrToInt(Trim(sub))<0)) then
          begin
             FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=0; // spai0
          end
@@ -15240,6 +19064,34 @@ begin
    else
    begin
       FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=0; // SIMPLE 1972 Б.Сполдинг и С.Патанкар.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! FlowConvectionSchemePrefix_id is empty.');
+         FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=1; // Upwind.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=1; // Upwind.
+         end
+          else
+         begin
+            FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=1; // Upwind.
    end;
 
    if (i+1< f.Count) then
@@ -17519,11 +21371,13 @@ var
    ivar_package, j_var : Integer;
    bfound_variable : Boolean;
    snew, sold, subloc : String;
-   bXY_empty  : Boolean;
+   bXY_empty : Boolean;
+   bPostShearStressxy, bPostShearStressyz, bPostShearStressxz : Boolean;
 
 
 begin
 
+   bsbros:=false;
    iq:=0;// начинаем поиск с самого начала файла.
    breadfinish:=false;
    f:=TStringList.Create();
@@ -17971,6 +21825,19 @@ begin
    //sub:=Copy(s,1,Pos(':',s)-1);
    //glSTL.tau_pause:=StrToFloat(Trim(sub));
    //s:=Copy(s,Pos(':',s)+1,length(s));
+
+   sub:=My_Get_String_for_to_val('off_multiplyer',f);
+   if (length(sub)=0) then
+   begin
+      // default
+      glSTL.off_multiplyer:=0.0;
+   end
+    else
+   begin
+      glSTL.off_multiplyer:=StrToFloat(sub);
+   end;
+
+
 
    sub:=My_Get_String_for_to_val('number_vitkov',f);
    if (length(sub)=0) then
@@ -18717,39 +22584,457 @@ begin
       end;
 
       // Thermal-Stress
-      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'Poisson_ratio',f);
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Linear_expansion_coefficient_x',f);
       if (length(sub)=0) then
       begin
-         ShowMessage('error! matherial Poisson_ratio is empty.');
-         workmat[j].Poisson_ratio:=0.154; // AlSiC-8
+         //ShowMessage('error! matherial mult_Linear_expansion_coefficient_x is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Linear_expansion_coefficient_x is empty.');
+         workmat[j].mult_Linear_expansion_coefficient_x:=1;
       end
         else
       begin
-         workmat[j].Poisson_ratio:=StrToFloat(Trim(sub)); // Poisson_ratio
+         workmat[j].mult_Linear_expansion_coefficient_x:=StrToFloat(Trim(sub)); // multiplyer x - axis
       end;
 
-      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'Young_Module',f);
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Linear_expansion_coefficient_y',f);
       if (length(sub)=0) then
       begin
-         ShowMessage('error! matherial Young_Module is empty.');
-         workmat[j].Young_Module:=217.5; // GPa AlSiC-8
+         //ShowMessage('error! matherial mult_Linear_expansion_coefficient_y is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Linear_expansion_coefficient_y is empty.');
+         workmat[j].mult_Linear_expansion_coefficient_y:=1;
       end
         else
       begin
-         workmat[j].Young_Module:=StrToFloat(Trim(sub)); // Young_Module
+         workmat[j].mult_Linear_expansion_coefficient_y:=StrToFloat(Trim(sub)); // multiplyer y - axis
       end;
 
-      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'Linear_expansion_coefficient',f);
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Linear_expansion_coefficient_z',f);
       if (length(sub)=0) then
       begin
-         ShowMessage('error! matherial Linear_expansion_coefficient is empty.');
-         workmat[j].Linear_expansion_coefficient:=6.5; // *1E-6 AlSiC-8
+         //ShowMessage('error! matherial mult_Linear_expansion_coefficient_z is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Linear_expansion_coefficient_z is empty.');
+         workmat[j].mult_Linear_expansion_coefficient_z:=1;
       end
         else
       begin
-         workmat[j].Linear_expansion_coefficient:=StrToFloat(Trim(sub)); // Linear_expansion_coefficient
+         workmat[j].mult_Linear_expansion_coefficient_z:=StrToFloat(Trim(sub)); // multiplyer z - axis
       end;
 
+      // Модуль Юнга
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Young_Module_x',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Young_Module_x is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Young_Module_x is empty.');
+         workmat[j].mult_Young_Module_x:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Young_Module_x:=StrToFloat(Trim(sub)); // multiplyer x - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Young_Module_y',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Young_Module_y is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Young_Module_y is empty.');
+         workmat[j].mult_Young_Module_y:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Young_Module_y:=StrToFloat(Trim(sub)); // multiplyer y - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Young_Module_z',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Young_Module_z is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Young_Module_z is empty.');
+         workmat[j].mult_Young_Module_z:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Young_Module_z:=StrToFloat(Trim(sub)); // multiplyer z - axis
+      end;
+
+
+      // multiplyer Коэффициента Пуассона.
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Poisson_ratio_xy',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Poisson_ratio_xy is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Poisson_ratio_xy is empty.');
+         workmat[j].mult_Poisson_ratio_xy:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Poisson_ratio_xy:=StrToFloat(Trim(sub)); // multiplyer z - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Poisson_ratio_xz',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Poisson_ratio_xz is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Poisson_ratio_xz is empty.');
+         workmat[j].mult_Poisson_ratio_xz:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Poisson_ratio_xz:=StrToFloat(Trim(sub)); // multiplyer y - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Poisson_ratio_yz',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Poisson_ratio_yz is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Poisson_ratio_yz is empty.');
+         workmat[j].mult_Poisson_ratio_yz:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Poisson_ratio_yz:=StrToFloat(Trim(sub)); // multiplyer x - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Poisson_ratio_yx',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Poisson_ratio_yx is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Poisson_ratio_yx is empty.');
+         workmat[j].mult_Poisson_ratio_yx:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Poisson_ratio_yx:=StrToFloat(Trim(sub)); // multiplyer z - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Poisson_ratio_zx',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Poisson_ratio_zx is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Poisson_ratio_zx is empty.');
+         workmat[j].mult_Poisson_ratio_zx:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Poisson_ratio_zx:=StrToFloat(Trim(sub)); // multiplyer y - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mult_Poisson_ratio_zy',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial mult_Poisson_ratio_zy is empty.');
+         MainMemo.Lines.Add('error! matherial mult_Poisson_ratio_zy is empty.');
+         workmat[j].mult_Poisson_ratio_zy:=1;
+      end
+        else
+      begin
+         workmat[j].mult_Poisson_ratio_zy:=StrToFloat(Trim(sub)); // multiplyer x - axis
+      end;
+
+      // Модуль сдвига
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'bShearModuleActive',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial bShearModuleActive is empty.');
+         MainMemo.Lines.Add('error! matherial bShearModuleActive is empty.');
+         workmat[j].bShearModuleActive:=false;
+      end
+        else
+      begin
+         if (StrToInt(Trim(sub))=1) then
+         begin
+            workmat[j].bShearModuleActive:=true;
+         end
+         else
+         begin
+            workmat[j].bShearModuleActive:=false;
+         end;
+      end;
+
+      bPostShearStressxy:=false;
+      bPostShearStressyz:=false;
+      bPostShearStressxz:=false;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'ShearModuleGxy',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial ShearModuleGxy is empty.');
+         MainMemo.Lines.Add('error! matherial ShearModuleGxy is empty.');
+         bPostShearStressxy:=true;
+      end
+        else
+      begin
+         workmat[j].ShearModuleGxy:=StrToFloat(Trim(sub)); // multiplyer z - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'ShearModuleGyz',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial ShearModuleGyz is empty.');
+         MainMemo.Lines.Add('error! matherial ShearModuleGyz is empty.');
+         bPostShearStressyz:=true;
+      end
+        else
+      begin
+         workmat[j].ShearModuleGyz:=StrToFloat(Trim(sub)); // multiplyer y - axis
+      end;
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'ShearModuleGxz',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial ShearModuleGxz is empty.');
+         MainMemo.Lines.Add('error! matherial ShearModuleGxz is empty.');
+         bPostShearStressxz:=true;
+      end
+        else
+      begin
+         workmat[j].ShearModuleGxz:=StrToFloat(Trim(sub)); // multiplyer x - axis
+      end;
+
+
+      // Коэффициент Пуассона
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'n_Poisson_ratio',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial n_Poisson_ratio is empty.');
+         workmat[j].n_Poisson_ratio:=1;
+         SetLength(workmat[j].temp_Poisson_ratio, workmat[j].n_Poisson_ratio);
+         SetLength(workmat[j].arr_Poisson_ratio, workmat[j].n_Poisson_ratio);
+
+         iq:=0;
+         bsbros:=true;
+
+         sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'Poisson_ratio',f);
+         if (length(sub)=0) then
+         begin
+            ShowMessage('error! matherial Poisson_ratio is empty.');
+            workmat[j].temp_Poisson_ratio[0]:=20.0;
+            workmat[j].arr_Poisson_ratio[0]:=0.154; // AlSiC-8
+         end
+          else
+         begin
+
+            workmat[j].temp_Poisson_ratio[0]:=20.0;
+            workmat[j].arr_Poisson_ratio[0]:=StrToFloat(Trim(sub)); // Poisson_ratio
+         end;
+      end
+        else
+      begin
+         workmat[j].n_Poisson_ratio:=StrToInt(Trim(sub)); // количество значений для таблично заданного коэффициента Пуассона
+      end;
+
+      if (not(bsbros)) then
+      begin
+         // Выделение оперативной памяти.
+         SetLength(workmat[j].temp_Poisson_ratio, workmat[j].n_Poisson_ratio);
+         SetLength(workmat[j].arr_Poisson_ratio, workmat[j].n_Poisson_ratio);
+
+      // цикл по новой локальной переменной.
+      for i_1:=0 to (workmat[j].n_Poisson_ratio-1) do
+      begin
+          sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'temp_Poisson_ratio'+IntToStr(i_1),f);
+          if (length(sub)=0) then
+          begin
+             if (j>0) then
+             begin
+                ShowMessage('error! matherial temp_Poisson_ratio is empty.');
+                workmat[j].temp_Poisson_ratio[i_1]:=300.0+i_1; // Температуры при которых задан Poisson_ratio.
+             end;
+          end
+           else
+          begin
+             workmat[j].temp_Poisson_ratio[i_1]:=StrToFloat(Trim(sub)); // температура при которой задан Poisson_ratio.
+          end;
+
+          sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'arr_Poisson_ratio'+IntToStr(i_1),f);
+          if (length(sub)=0) then
+          begin
+             if (j>0) then
+             begin
+                ShowMessage('error! matherial arr_Poisson_ratio value is empty.');
+                workmat[j].arr_Poisson_ratio[i_1]:=0.154; // Poisson_ratio по умолчанию.
+             end;
+          end
+           else
+          begin
+             workmat[j].arr_Poisson_ratio[i_1]:=StrToFloat(Trim(sub)); // Poisson_ratio.
+          end;
+
+        end;
+      end;
+
+
+      bsbros:=false;
+
+      // Модуль Юнга
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'n_Young_Module',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial n_Young_Module is empty.');
+         workmat[j].n_Young_Module:=1;
+         SetLength(workmat[j].temp_Young_Module, workmat[j].n_Young_Module);
+         SetLength(workmat[j].arr_Young_Module, workmat[j].n_Young_Module);
+
+         iq:=0;
+         bsbros:=true;
+
+         sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'Young_Module',f);
+         if (length(sub)=0) then
+         begin
+            ShowMessage('error! matherial Young_Module is empty.');
+            workmat[j].temp_Young_Module[0]:=20.0;
+            workmat[j].arr_Young_Module[0]:=217.5; // GPa AlSiC-8
+         end
+          else
+         begin
+
+            workmat[j].temp_Young_Module[0]:=20.0;
+            workmat[j].arr_Young_Module[0]:=StrToFloat(Trim(sub)); // Young_Module
+         end;
+      end
+        else
+      begin
+         workmat[j].n_Young_Module:=StrToInt(Trim(sub)); // количество значений для таблично заданного модуля Юнга
+      end;
+
+      if (not(bsbros)) then
+      begin
+         // Выделение оперативной памяти.
+         SetLength(workmat[j].temp_Young_Module, workmat[j].n_Young_Module);
+         SetLength(workmat[j].arr_Young_Module, workmat[j].n_Young_Module);
+
+      // цикл по новой локальной переменной.
+      for i_1:=0 to (workmat[j].n_Young_Module-1) do
+      begin
+          sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'temp_Young_Module'+IntToStr(i_1),f);
+          if (length(sub)=0) then
+          begin
+             if (j>0) then
+             begin
+                ShowMessage('error! matherial temp_Young_Module is empty.');
+                workmat[j].temp_Young_Module[i_1]:=300.0+i_1; // Температуры при которых задан модуль Юнга.
+             end;
+          end
+           else
+          begin
+             workmat[j].temp_Young_Module[i_1]:=StrToFloat(Trim(sub)); // температура при которой задан модуль Юнга.
+          end;
+
+          sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'arr_Young_Module'+IntToStr(i_1),f);
+          if (length(sub)=0) then
+          begin
+             if (j>0) then
+             begin
+                ShowMessage('error! matherial arr_Young_Module value is empty.');
+                workmat[j].arr_Young_Module[i_1]:=217.5; // модуль Юнга по умолчанию.
+             end;
+          end
+           else
+          begin
+             workmat[j].arr_Young_Module[i_1]:=StrToFloat(Trim(sub)); // модуль Юнга.
+          end;
+
+        end;
+      end;
+
+
+      if (bPostShearStressxy) then
+      begin
+         workmat[j].ShearModuleGxy:=workmat[j].arr_Young_Module[0]/(2.0*(1.0+workmat[j].arr_Poisson_ratio[0]));
+      end;
+
+      if (bPostShearStressyz) then
+      begin
+         workmat[j].ShearModuleGyz:=workmat[j].arr_Young_Module[0]/(2.0*(1.0+workmat[j].arr_Poisson_ratio[0]));
+      end;
+
+      if (bPostShearStressxz) then
+      begin
+         workmat[j].ShearModuleGxz:=workmat[j].arr_Young_Module[0]/(2.0*(1.0+workmat[j].arr_Poisson_ratio[0]));
+      end;
+
+
+      bsbros:=false;
+
+      // Коэффициент линейного теплового расширения.
+
+      sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'n_Linear_expansion_coefficient',f);
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! matherial n_Linear_expansion_coefficient is empty.');
+         workmat[j].n_Linear_expansion_coefficient:=1;
+         SetLength(workmat[j].temp_Linear_expansion_coefficient, workmat[j].n_Linear_expansion_coefficient);
+         SetLength(workmat[j].arr_Linear_expansion_coefficient, workmat[j].n_Linear_expansion_coefficient);
+
+         iq:=0;
+         bsbros:=true;
+
+         sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'Linear_expansion_coefficient',f);
+         if (length(sub)=0) then
+         begin
+            ShowMessage('error! matherial Linear_expansion_coefficient is empty.');
+            workmat[j].temp_Linear_expansion_coefficient[0]:=20.0;
+            workmat[j].arr_Linear_expansion_coefficient[0]:=6.5; // *1E-6 AlSiC-8
+         end
+          else
+         begin
+
+            workmat[j].temp_Linear_expansion_coefficient[0]:=20.0;
+            workmat[j].arr_Linear_expansion_coefficient[0]:=StrToFloat(Trim(sub)); // Linear_expansion_coefficient
+         end;
+      end
+        else
+      begin
+         workmat[j].n_Linear_expansion_coefficient:=StrToInt(Trim(sub)); // количество значений для таблично заданного коэффициента линейного теплового расширения
+      end;
+
+      if (not(bsbros)) then
+      begin
+      // Выделение оперативной памяти.
+      SetLength(workmat[j].temp_Linear_expansion_coefficient, workmat[j].n_Linear_expansion_coefficient);
+      SetLength(workmat[j].arr_Linear_expansion_coefficient, workmat[j].n_Linear_expansion_coefficient);
+
+      // цикл по новой локальной переменной.
+      for i_1:=0 to (workmat[j].n_Linear_expansion_coefficient-1) do
+      begin
+          sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'temp_Linear_expansion_coefficient'+IntToStr(i_1),f);
+          if (length(sub)=0) then
+          begin
+             if (j>0) then
+             begin
+                ShowMessage('error! matherial temp_Linear_expansion_coefficient is empty.');
+                workmat[j].temp_Linear_expansion_coefficient[i_1]:=300.0+i_1; // Температуры при которых задан коэффициент линейного теплового расширения.
+             end;
+          end
+           else
+          begin
+             workmat[j].temp_Linear_expansion_coefficient[i_1]:=StrToFloat(Trim(sub)); // температура при которой задан коэффициент линейного теплового расширения.
+          end;
+
+          sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'arr_Linear_expansion_coefficient_val'+IntToStr(i_1),f);
+          if (length(sub)=0) then
+          begin
+             if (j>0) then
+             begin
+                ShowMessage('error! matherial arr_Linear_expansion_coefficient_val value is empty.');
+                workmat[j].arr_Linear_expansion_coefficient[i_1]:=6.5; // коэффициент линейного теплового расширения по умолчанию.
+             end;
+          end
+           else
+          begin
+             workmat[j].arr_Linear_expansion_coefficient[i_1]:=StrToFloat(Trim(sub)); // коэффициент линейного теплового расширения.
+          end;
+
+        end;
+      end;
+
+
+      bsbros:=false;
 
       sub:=My_Get_String_for_to_val('matherial'+IntToStr(j-imatherial_old)+'mu',f);
       if (length(sub)=0) then
@@ -22275,7 +26560,7 @@ begin
      end
        else
      begin
-        if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+        if ((StrToInt(Trim(sub))>11)or(StrToInt(Trim(sub))<0)) then
         begin
            FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=0; // spai0.
         end
@@ -22513,6 +26798,24 @@ begin
        else
        begin
           FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('FlowConvectionSchemePrefix_id',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! FlowConvectionSchemePrefix_id is empty.');
+       FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=1; // Upwind.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=1; // Upwind.
+       end
+       else
+       begin
+          FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=StrToInt(Trim(sub));
        end;
     end;
 
@@ -24878,6 +29181,10 @@ begin
    Alf:=-0.96;
    Bet:=0.51;
    Gam:=2.68;
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
 end;
 
 // уменьшение изображения в окошке
@@ -25328,7 +29635,7 @@ begin
       // недоработанные функциональные
       // возможности из интерфейса программы.
       // Убираем задание механических граничных условий на стенке.
-      AddWallForm.GroupBoxThermalStress.Visible:=false;
+      AddWallForm.GroupBoxThermalStress.Visible:=true;
    end;
    AddWallForm.ShowModal;
    MainTreeView.Items[MainTreeView.Items.Count-1].Text:=wall[itek].name;
@@ -27096,6 +31403,57 @@ begin
    end;
 end;
 
+
+// Вычисление углов при повороте.
+procedure angle_calc(var phi0 : Real;
+              xi_loc : Real; yi_loc : Real;
+              dx_loc : Real; dy_loc : Real);
+begin
+    if (abs(xi_loc-dx_loc)<abs(yi_loc-dy_loc)) then
+    begin
+
+       phi0:=arctan((xi_loc-dx_loc)/(yi_loc-dy_loc))+1.5705;;
+       // Угол всегда острый
+
+
+
+       //MainMemo.Lines.Add(FloatToStr(phic)+' '+FloatToStr(xavg-dx_loc));
+
+       if ((yi_loc-dy_loc)>0.0) then
+       begin
+          //phi0:=phi0+1.5705;
+          phi0:=phi0;
+       end
+        else
+       begin
+          //phi0:=phi0+1.5705+3.141;
+          phi0:=phi0+3.141;
+       end;
+
+    end
+     else
+    begin
+       phi0:=arctan((yi_loc-dy_loc)/(xi_loc-dx_loc));
+       //  MainMemo.Lines.Add(FloatToStr(phi0));
+
+       // Угол всегда острый
+
+       // if ((body[id].xi[i_1]-dx_loc)>0.0) then add 0.0
+
+       if ((xi_loc-dx_loc)<0.0) then
+       begin
+          phi0:=phi0+3.141;
+       end
+        else
+       begin
+          phi0:=phi0;
+       end;
+    end;
+
+end;
+
+
+
 // создаёт inum копий блока с идентификатором id.
 procedure copyblock(id : Integer; idunion : Integer; bCabinet : Boolean);
 var
@@ -27107,7 +31465,7 @@ var
    curNodeTree : TTreeNode;
    bOk_conflict_name : Boolean;
    b_polygon_x, b_polygon_y, b_polygon_z : Boolean;
-   phi0, phi_step, xavg, yavg, zavg, Rdd, Rdd2 : Real;
+   phi0, phic, phi_step, xavg, yavg, zavg, Rdd, Rdd2 : Real;
    xmin2, ymin2, zmin2, xmax2, ymax2, zmax2, size_obj : Real;
 
 begin
@@ -27138,13 +31496,24 @@ begin
             xavg:=0.0;
             yavg:=0.0;
             zavg:=0.0;
+
+            body[i1].Hcyl:=body[id].Hcyl;
+            body[i1].iPlane:=body[id].iPlane;
+            if (body[id].igeometry_type=1) then
+            begin
+               // Цилиндр.
+               // Выбираем правильную плоскость копирования.
+               body[id].iPlane_obj2:=body[id].iPlane;
+            end;
+
+
             case body[id].iPlane_obj2 of
                1 : begin
                       // XY
                        for i_1:=0 to body[id].nsizei-1 do
                        begin
-                          xavg:= body[id].xi[i_1];
-                          yavg:= body[id].yi[i_1];
+                          xavg:= xavg + body[id].xi[i_1];
+                          yavg:= yavg + body[id].yi[i_1];
                        end;
                        xavg:=xavg/body[id].nsizei;
                        yavg:=yavg/body[id].nsizei;
@@ -27161,10 +31530,20 @@ begin
                        for i_1:=0 to body[id].nsizei-1 do
                        begin
                           Rdd2:= sqrt((body[id].xi[i_1]-dx)*(body[id].xi[i_1]-dx)+(body[id].yi[i_1]-dy)*(body[id].yi[i_1]-dy));
-                          phi0:=arctan((body[id].yi[i_1]-dy)/(body[id].xi[i_1]-dx));
+
+                          angle_calc(phi0,  body[id].xi[i_1], body[id].yi[i_1],  dx, dy);
+
                           body[i1].xi[i_1]:=dx+Rdd2*cos(phi0+j1*phi_step);
                           body[i1].yi[i_1]:=dy+Rdd2*sin(phi0+j1*phi_step);
                        end;
+
+                       angle_calc(phi0,  body[id].xC, body[id].yC,  dx, dy);
+
+                       Rdd2:=sqrt((body[id].xC-dx)*(body[id].xC-dx)+(body[id].yC-dy)*(body[id].yC-dy));
+                       body[i1].xC:=dx+Rdd2*cos(phi0+j1*phi_step);
+                       body[i1].yC:=dy+Rdd2*sin(phi0+j1*phi_step);
+                       body[i1].sxC:=FloatToStr(body[i1].xC);
+                       body[i1].syC:=FloatToStr(body[i1].yC);
 
                        xmin2:=1.0e30;
                        ymin2:=1.0e30;
@@ -27175,8 +31554,8 @@ begin
 
                        for i_1:=0 to body[id].nsizei-1 do
                        begin
-                          xavg:= body[i1].xi[i_1];
-                          yavg:= body[i1].yi[i_1];
+                          xavg:= xavg + body[i1].xi[i_1];
+                          yavg:= yavg + body[i1].yi[i_1];
                           if (body[i1].xi[i_1]<xmin2) then
                           begin
                               xmin2:=body[i1].xi[i_1];
@@ -27204,10 +31583,7 @@ begin
                        body[i1].syS:=FloatToStr(ymin2);
                        body[i1].sxE:=FloatToStr(xmax2);
                        body[i1].syE:=FloatToStr(ymax2);
-                       body[i1].xC:=xavg;
-                       body[i1].yC:=yavg;
-                       body[i1].sxC:=FloatToStr(xavg);
-                       body[i1].syC:=FloatToStr(yavg);
+
                         // copy
                        body[i1].szS:=body[id].szS;
                        body[i1].szE:=body[id].szE;
@@ -27221,14 +31597,14 @@ begin
                       // XZ
                        xavg:=0.0;
                        zavg:=0.0;
-                        xmin2:=1.0e30;
+                       xmin2:=1.0e30;
                        zmin2:=1.0e30;
                        xmax2:=-1.0e30;
                        zmax2:=-1.0e30;
                        for i_1:=0 to body[id].nsizei-1 do
                        begin
-                          xavg:= body[id].xi[i_1];
-                          zavg:= body[id].zi[i_1];
+                          xavg:= xavg+body[id].xi[i_1];
+                          zavg:= zavg+body[id].zi[i_1];
                            if (body[id].xi[i_1]<xmin2) then
                           begin
                               xmin2:=body[id].xi[i_1];
@@ -27250,10 +31626,18 @@ begin
                        zavg:=zavg/body[id].nsizei;
                        yavg:=body[id].yi[0];
                        Rdd:= sqrt((xavg-dx)*(xavg-dx)+(zavg-dz)*(zavg-dz));
-                       phi0:=arcsin((zavg-dz)/Rdd);
+
                        phi_step:=2.0*3.141/ (lb-1-lold1+2);
                        size_obj:=sqrt((zmax2-zmin2)*(zmax2-zmin2)+(xmax2-xmin2)*(xmax2-xmin2));
 
+
+                      SetLength(body[i1].yi,body[id].nsizei);
+                      SetLength(body[i1].hi,body[id].nsizei);
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          body[i1].yi[i_1]:=yavg;
+                          body[i1].hi[i_1]:=body[id].hi[0];
+                       end;
 
                       b_polygon_x:=true;
                       b_polygon_z:=true;
@@ -27263,10 +31647,23 @@ begin
                        for i_1:=0 to body[id].nsizei-1 do
                        begin
                           Rdd2:= sqrt((body[id].xi[i_1]-dx)*(body[id].xi[i_1]-dx)+(body[id].zi[i_1]-dz)*(body[id].zi[i_1]-dz));
-                          phi0:=arctan((body[id].zi[i_1]-dz)/(body[id].xi[i_1]-dx));
+
+                          angle_calc(phi0,  body[id].xi[i_1], body[id].zi[i_1],  dx, dz);
+
                           body[i1].xi[i_1]:=dx+Rdd2*cos(phi0+j1*phi_step);
                           body[i1].zi[i_1]:=dz+Rdd2*sin(phi0+j1*phi_step);
+
                        end;
+
+
+
+                       angle_calc(phi0,  body[id].xC, body[id].zC,  dx, dz);
+
+                       Rdd2:=sqrt((body[id].xC-dx)*(body[id].xC-dx)+(body[id].zC-dz)*(body[id].zC-dz));
+                       body[i1].xC:=dx+Rdd2*cos(phi0+j1*phi_step);
+                       body[i1].zC:=dz+Rdd2*sin(phi0+j1*phi_step);
+                       body[i1].sxC:=FloatToStr(body[i1].xC);
+                       body[i1].szC:=FloatToStr(body[i1].zC);
 
                        xmin2:=1.0e30;
                        zmin2:=1.0e30;
@@ -27277,8 +31674,8 @@ begin
 
                        for i_1:=0 to body[id].nsizei-1 do
                        begin
-                          xavg:= body[i1].xi[i_1];
-                          zavg:= body[i1].zi[i_1];
+                          xavg:= xavg+body[i1].xi[i_1];
+                          zavg:= zavg+body[i1].zi[i_1];
                           if (body[i1].xi[i_1]<xmin2) then
                           begin
                               xmin2:=body[i1].xi[i_1];
@@ -27306,10 +31703,7 @@ begin
                        body[i1].szS:=FloatToStr(zmin2);
                        body[i1].sxE:=FloatToStr(xmax2);
                        body[i1].szE:=FloatToStr(zmax2);
-                       body[i1].xC:=xavg;
-                       body[i1].zC:=zavg;
-                       body[i1].sxC:=FloatToStr(xavg);
-                       body[i1].szC:=FloatToStr(zavg);
+
                        // copy
                        body[i1].syS:=body[id].syS;
                        body[i1].syE:=body[id].syE;
@@ -27328,8 +31722,8 @@ begin
                        zavg:=0.0;
                        for i_1:=0 to body[id].nsizei-1 do
                        begin
-                          yavg:= body[id].yi[i_1];
-                          zavg:= body[id].zi[i_1];
+                          yavg:= yavg + body[id].yi[i_1];
+                          zavg:= zavg + body[id].zi[i_1];
                        end;
                        yavg:=yavg/body[id].nsizei;
                        zavg:=zavg/body[id].nsizei;
@@ -27346,20 +31740,26 @@ begin
                        begin
                           Rdd2:= sqrt((body[id].zi[i_1]-dz)*(body[id].zi[i_1]-dz)+
                           (body[id].yi[i_1]-dy)*(body[id].yi[i_1]-dy));
-                          if (abs(body[id].zi[i_1]-dz)<0.1) then
-                          begin
-                             phi0:=arccos((body[id].zi[i_1]-dz)/Rdd2);
-                          end
-                          else
-                          begin
-                             phi0:=arctan((body[id].yi[i_1]-dy)/(body[id].zi[i_1]-dz));
-                          end;
-                          body[i1].zi[i_1]:=dz+Rdd2*sin(phi0+j1*phi_step-3.141/2.0);
-                          body[i1].yi[i_1]:=dy+Rdd2*cos(phi0+j1*phi_step-3.141/2.0);
+
+
+                          angle_calc(phi0,  body[id].yi[i_1], body[id].zi[i_1],  dy, dz);
+
+                          body[i1].yi[i_1]:=dy+Rdd2*cos(phi0+j1*phi_step);
+                          body[i1].zi[i_1]:=dz+Rdd2*sin(phi0+j1*phi_step);
+
                           //phi0:=arctan((body[id].zi[i_1]-dz)/(body[id].yi[i_1]-dy));
                           //body[i1].zi[i_1]:=dz+Rdd2*cos(phi0+j1*phi_step);
                           //body[i1].yi[i_1]:=dy+Rdd2*sin(phi0+j1*phi_step);
                        end;
+
+
+                       angle_calc(phi0,  body[id].yC, body[id].zC,  dy, dz);
+
+                       Rdd2:=sqrt((body[id].yC-dy)*(body[id].yC-dy)+(body[id].zC-dz)*(body[id].zC-dz));
+                       body[i1].yC:=dy+Rdd2*cos(phi0+j1*phi_step);
+                       body[i1].zC:=dz+Rdd2*sin(phi0+j1*phi_step);
+                       body[i1].syC:=FloatToStr(body[i1].yC);
+                       body[i1].szC:=FloatToStr(body[i1].zC);
 
                        zmin2:=1.0e30;
                        ymin2:=1.0e30;
@@ -27370,8 +31770,8 @@ begin
 
                        for i_1:=0 to body[id].nsizei-1 do
                        begin
-                          zavg:= body[i1].zi[i_1];
-                          yavg:= body[i1].yi[i_1];
+                          zavg:= zavg + body[i1].zi[i_1];
+                          yavg:= yavg + body[i1].yi[i_1];
                           if (body[i1].zi[i_1]<zmin2) then
                           begin
                               zmin2:=body[i1].zi[i_1];
@@ -27399,10 +31799,7 @@ begin
                        body[i1].syS:=FloatToStr(ymin2);
                        body[i1].szE:=FloatToStr(zmax2);
                        body[i1].syE:=FloatToStr(ymax2);
-                       body[i1].zC:=zavg;
-                       body[i1].yC:=yavg;
-                       body[i1].szC:=FloatToStr(zavg);
-                       body[i1].syC:=FloatToStr(yavg);
+                      
                        // copy
                        body[i1].sxS:=body[id].sxS;
                        body[i1].sxE:=body[id].sxE;
@@ -28958,21 +33355,106 @@ begin
       end;
    end;
 
-    if (bon_rotate_polygon) then
+    // Если выделено объединение то мы его тоже можем вращать.
+    // По всем объединениям.
+   iobass:=-1;
+   for i:=0 to (lu-1) do
+   begin
+      if ( (length(myassembles[i].name) = length(scop)) and (Pos(myassembles[i].name,scop)=1)) then
+      begin
+         iobass:=i; // номер копируемого асемблеса
+      end;
+   end;
+   if (iobass>-1) then
+   begin
+      FormCopyObject.CheckBoxRotate.Visible:=true;
+   end;
+
+    // копирование элементов
+   FormCopyObject.ShowModal;
+
+   if (FormCopyObject.CheckBoxRotate.Checked) then
+   begin
+      // Вращаем
+      if (bon_rotate_polygon) then
     begin
        if (iob>-1) then
        begin
-          if (body[iob].igeometry_type=2) then
+          if ((body[iob].igeometry_type=2)or(body[iob].igeometry_type=1)) then
           begin
-             // Найденный блок полигон. Можно вращать в плоскости полигона,
+             // Найденный блок полигон 2 или цилиндр 1. Можно вращать в плоскости полигона,
              // вокруг заданного центра.
-             FormCopyObject.CheckBoxRotate.Visible:=true;
+
           end
            else
           begin
              // Вращать нельзя.
-             FormCopyObject.CheckBoxRotate.Visible:=false;
+            // FormCopyObject.CheckBoxRotate.Visible:=false;
+            FormSelectPlaneRotation.ShowModal;
+            body[iob].igeometry_type:=2;
+            body[iob].iPlane_obj2:=FormSelectPlaneRotation.ComboBoxPlane.ItemIndex+1;
+            body[iob].nsizei:=4;
+            SetLength(body[iob].xi,body[iob].nsizei);
+            SetLength(body[iob].yi,body[iob].nsizei);
+            SetLength(body[iob].zi,body[iob].nsizei);
+            SetLength(body[iob].hi,body[iob].nsizei);
+            case FormSelectPlaneRotation.ComboBoxPlane.ItemIndex of
+             0 : // XY
+             begin
+                for i := 0 to body[iob].nsizei do
+                begin
+                   body[iob].hi[i]:=body[iob].zE-body[iob].zS;
+                   body[iob].zi[i]:=body[iob].zS;
+                end;
+                // Против часовой стрелки.
+                body[iob].xi[0]:=body[iob].xS;
+                body[iob].yi[0]:=body[iob].yS;
+                body[iob].xi[1]:=body[iob].xE;
+                body[iob].yi[1]:=body[iob].yS;
+                body[iob].xi[2]:=body[iob].xE;
+                body[iob].yi[2]:=body[iob].yE;
+                body[iob].xi[3]:=body[iob].xS;
+                body[iob].yi[3]:=body[iob].yE;
+             end;
+             1 : // XZ
+             begin
+                 for i := 0 to body[iob].nsizei do
+                begin
+                   body[iob].hi[i]:=body[iob].yE-body[iob].yS;
+                   body[iob].yi[i]:=body[iob].yS;
+                end;
+                // Против часовой стрелки.
+                body[iob].xi[0]:=body[iob].xS;
+                body[iob].zi[0]:=body[iob].zS;
+                body[iob].xi[1]:=body[iob].xE;
+                body[iob].zi[1]:=body[iob].zS;
+                body[iob].xi[2]:=body[iob].xE;
+                body[iob].zi[2]:=body[iob].zE;
+                body[iob].xi[3]:=body[iob].xS;
+                body[iob].zi[3]:=body[iob].zE;
+             end;
+             2 : // YZ
+             begin
+                for i := 0 to body[iob].nsizei do
+                begin
+                   body[iob].hi[i]:=body[iob].xE-body[iob].xS;
+                   body[iob].xi[i]:=body[iob].xS;
+                end;
+                // Против часовой стрелки.
+                body[iob].yi[0]:=body[iob].yS;
+                body[iob].zi[0]:=body[iob].zS;
+                body[iob].yi[1]:=body[iob].yE;
+                body[iob].zi[1]:=body[iob].zS;
+                body[iob].yi[2]:=body[iob].yE;
+                body[iob].zi[2]:=body[iob].zE;
+                body[iob].yi[3]:=body[iob].yS;
+                body[iob].zi[3]:=body[iob].zE;
+
+             end;
+            end;
+
           end;
+          FormCopyObject.CheckBoxRotate.Visible:=true;
       end
        else
       begin
@@ -28986,8 +33468,8 @@ begin
         FormCopyObject.CheckBoxRotate.Visible:=false;
     end;
 
-    // копирование элементов
-   FormCopyObject.ShowModal;
+   end;
+
 
    if (bcontinuecopy) then
    begin
@@ -29128,6 +33610,24 @@ begin
    end;
    if (iobass>-1) then
    begin
+
+      if (bon_rotate_polygon) then
+      begin
+          if (FormCopyObject.CheckBoxRotate.Checked) then
+          begin
+             FormSelectPlaneRotation.ShowModal;
+          end;
+         FormCopyObject.CheckBoxRotate.Visible:=true;
+
+
+       end
+        else
+       begin
+          // Вращать нельзя.
+          FormCopyObject.CheckBoxRotate.Visible:=false;
+       end;
+
+
        iunionid:=myassembles[iobass].identifire;
        //iunionid:=iobass+1; // номер выделеннного юниона.   НЕВЕРНО !!!
 
@@ -29183,6 +33683,91 @@ begin
           begin
               if (iob>-1) then
               begin
+
+                 if (bon_rotate_polygon) then
+                 begin
+                   if (FormCopyObject.CheckBoxRotate.Checked) then
+                   begin
+
+                    if ((body[iob].igeometry_type=2)or
+                        (body[iob].igeometry_type=1)) then
+                        begin
+                          // Найденный блок полигон 2 или цилиндр 1. Можно вращать в плоскости полигона,
+                          // вокруг заданного центра.
+
+                        end
+                         else
+                        begin
+                           // Вращать нельзя.
+                           // FormCopyObject.CheckBoxRotate.Visible:=false;
+
+                          body[iob].igeometry_type:=2;
+                          body[iob].iPlane_obj2:=FormSelectPlaneRotation.ComboBoxPlane.ItemIndex+1;
+                          body[iob].nsizei:=4;
+                         SetLength(body[iob].xi,body[iob].nsizei);
+                         SetLength(body[iob].yi,body[iob].nsizei);
+                         SetLength(body[iob].zi,body[iob].nsizei);
+                         SetLength(body[iob].hi,body[iob].nsizei);
+                         case FormSelectPlaneRotation.ComboBoxPlane.ItemIndex of
+                           0 : // XY
+                               begin
+                                  for i := 0 to body[iob].nsizei do
+                                  begin
+                                     body[iob].hi[i]:=body[iob].zE-body[iob].zS;
+                                     body[iob].zi[i]:=body[iob].zS;
+                                  end;
+                                  // Против часовой стрелки.
+                                  body[iob].xi[0]:=body[iob].xS;
+                                  body[iob].yi[0]:=body[iob].yS;
+                                  body[iob].xi[1]:=body[iob].xE;
+                                  body[iob].yi[1]:=body[iob].yS;
+                                  body[iob].xi[2]:=body[iob].xE;
+                                  body[iob].yi[2]:=body[iob].yE;
+                                  body[iob].xi[3]:=body[iob].xS;
+                                  body[iob].yi[3]:=body[iob].yE;
+                               end;
+                            1 : // XZ
+                               begin
+                                 for i := 0 to body[iob].nsizei do
+                                 begin
+                                    body[iob].hi[i]:=body[iob].yE-body[iob].yS;
+                                    body[iob].yi[i]:=body[iob].yS;
+                                 end;
+                                 // Против часовой стрелки.
+                                 body[iob].xi[0]:=body[iob].xS;
+                                 body[iob].zi[0]:=body[iob].zS;
+                                 body[iob].xi[1]:=body[iob].xE;
+                                 body[iob].zi[1]:=body[iob].zS;
+                                 body[iob].xi[2]:=body[iob].xE;
+                                 body[iob].zi[2]:=body[iob].zE;
+                                 body[iob].xi[3]:=body[iob].xS;
+                                 body[iob].zi[3]:=body[iob].zE;
+                               end;
+                            2 : // YZ
+                               begin
+                                  for i := 0 to body[iob].nsizei do
+                                  begin
+                                     body[iob].hi[i]:=body[iob].xE-body[iob].xS;
+                                     body[iob].xi[i]:=body[iob].xS;
+                                  end;
+                                 // Против часовой стрелки.
+                                 body[iob].yi[0]:=body[iob].yS;
+                                 body[iob].zi[0]:=body[iob].zS;
+                                 body[iob].yi[1]:=body[iob].yE;
+                                 body[iob].zi[1]:=body[iob].zS;
+                                 body[iob].yi[2]:=body[iob].yE;
+                                 body[iob].zi[2]:=body[iob].zE;
+                                 body[iob].yi[3]:=body[iob].yS;
+                                 body[iob].zi[3]:=body[iob].zE;
+
+                               end;
+                         end;
+
+                        end;
+
+                   end;
+                 end;
+
                  copyblock(iob,luold+1,false);
               end;
            end;
@@ -29238,6 +33823,10 @@ begin
    Alf:=0.0;
    Bet:=-0.5*3.1415926;
    Gam:=0.0;
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
 end;
 
 // вид в плоскости XZ  pos_Y
@@ -29253,6 +33842,10 @@ begin
    Alf:=-0.5*3.141592;
    Bet:=0.0;
    Gam:=0.0;
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
    //ShowMessage('impossible'); // более корректно чем непредсказуемое поведение.
 end;
 
@@ -29266,6 +33859,10 @@ begin
    Alf:=0.0;  //X
    Bet:=3.1415926;  // Y
    Gam:=0.0;  // Z
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
 end;
 
 // вид в плоскости YZ  neg_X
@@ -29281,6 +33878,10 @@ begin
    Alf:=0.0;
    Bet:=0.5*3.1415926;
    Gam:=0.0;
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
 end;
 
 // вид в плоскости XZ  neg_Y
@@ -29294,6 +33895,10 @@ begin
    Alf:=-0.5*3.141592;
    Bet:=0.0;
    Gam:=3.1415926;
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
 end;
 
 // Создаёт обединение
@@ -29507,10 +34112,37 @@ begin
    FormViewFactors.ShowModal;
 end;
 
-// записывает файл premeshin.txt
-procedure TLaplas.RunSolution1Click(Sender: TObject);
 
-procedure FixHeap(root : Integer; m : TBody; bound : Integer; iadd : Integer);
+procedure TLaplas.WriteStartSolutionOLD(Sender: TObject);
+var
+    f, freport : TStringList; // переменная типа объект TStringList
+    s,subx,sub,s1, s2 : String; // текущая рабочая строка
+    i, i1,i2,i3, i_4, j : Integer; // текущий номер блока или источника при записи
+    xavg, yavg, zavg, powertri : Real;
+    Sc : Real; // мощность тепловыделения на единицу объёма
+   // StartupInfo:TStartupInfo;  // Устаревший синтаксис.
+    //ProcessInfo:TProcessInformation;
+    fmin, fmax : Real;
+    starttime, endtime, deltatime : TTime;
+    ShellInfo : TShellExecuteInfo;
+    ExitCode : DWORD;
+    QuoteParams : Boolean;
+    bmodelcheck, bmodelcheck_cab_hollow : Boolean; // проверка на наличие теплоотвода.
+    bOk : Boolean;
+    irun : Integer;
+    // Для сортировки блоков по приоритетам.
+  //  isort, jsort : Integer;
+   // body_change : TBody;
+   cab_geom, cab_geom2 : Visible_Line;
+   lw_dec : Integer;
+   myDate : TDateTime;
+   checkFLUIDtoSOLID, bf7 : Boolean;
+   // для преобразования Цилиндра в призму.
+   xS1, yS1, zS1, xE1, yE1, zE1 : Real;
+   iu_number, i5 :   Integer;
+   xSass, xEass, ySass, yEass, zSass, zEass : Real;
+
+   procedure FixHeap(root : Integer; m : TBody; bound : Integer; iadd : Integer);
 var
    vacant, largerChild : Integer;
    lCadd, lCadd1 : Integer;
@@ -29557,34 +34189,7 @@ begin
      end;
 end;
 
-procedure WriteStartSolutionOLD();
-var
-    f, freport : TStringList; // переменная типа объект TStringList
-    s,subx,sub,s1, s2 : String; // текущая рабочая строка
-    i, i1,i2,i3, i_4, j : Integer; // текущий номер блока или источника при записи
-    xavg, yavg, zavg, powertri : Real;
-    Sc : Real; // мощность тепловыделения на единицу объёма
-   // StartupInfo:TStartupInfo;  // Устаревший синтаксис.
-    //ProcessInfo:TProcessInformation;
-    fmin, fmax : Real;
-    starttime, endtime, deltatime : TTime;
-    ShellInfo : TShellExecuteInfo;
-    ExitCode : DWORD;
-    QuoteParams : Boolean;
-    bmodelcheck, bmodelcheck_cab_hollow : Boolean; // проверка на наличие теплоотвода.
-    bOk : Boolean;
-    irun : Integer;
-    // Для сортировки блоков по приоритетам.
-  //  isort, jsort : Integer;
-   // body_change : TBody;
-   cab_geom, cab_geom2 : Visible_Line;
-   lw_dec : Integer;
-   myDate : TDateTime;
-   checkFLUIDtoSOLID, bf7 : Boolean;
-   // для преобразования Цилиндра в призму.
-   xS1, yS1, zS1, xE1, yE1, zE1 : Real;
-   iu_number, i5 :   Integer;
-   xSass, xEass, ySass, yEass, zSass, zEass : Real;
+
 begin
     checkFLUIDtoSOLID:=false; // 8 september 2017 не трогать т.к. усторело.
 
@@ -29653,7 +34258,7 @@ begin
              if (egddata.iStaticStructural=0) then
              begin
                 egddata.imaxflD:=1;
-                egddata.itemper:=1;
+                egddata.itemper:=1; // Метод контрольного объёма
                 egddata.myflmod[0].iflow:=0;
              end;
              if (egddata.iStaticStructural=1) then
@@ -30016,6 +34621,7 @@ begin
    // Static Structural linear equation solver.
    s:=s+' '+IntToStr(FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex);
    s:=s+' '+IntToStr(FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex);
+   s:=s+' '+IntToStr(FormSetting.ComboBoxFlowSchemePrefix.ItemIndex);  // Prefix схема аппроксимации конвективного члена
    s:=s+' '+IntToStr(FormSetting.ComboBoxFlowScheme.ItemIndex);  // Схема аппроксимации конвективного члена
    s:=s+' '+IntToStr(FormSetting.ComboBoxSchemeTemperature.ItemIndex);  // Схема аппроксимации конвективного члена
 
@@ -30103,20 +34709,38 @@ begin
                   if (egddata.itemper>0) then
                   begin
                      // Thermal Stress
-                     s:=s+' 6';
+                      if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                     begin
+                        if (egddata.itemper=1) then
+                        begin
+                           // Теплопередача на основе метода контрольного объёма.
+                           // Нестационарная механика и теплопередача.
+                           s:=' 13';
+                        end;
+                         if (egddata.itemper=2) then
+                        begin
+                           // Нестационарный температурный солвер   #2 (10,11,2018)
+                           s:=s+' 7';
+                        end;
+                     end
+                     else
+                     begin
+                        // Стационарная механика и теплопередача.
+                        s:=s+' 6';
+                     end;
                   end
                    else
                   begin
                      // Static Structural
                      if (FormUnsteady.RadioGroup1.ItemIndex=1) then
                      begin
-                        // Нестационарный температурный солвер   #2 (10,11,2018)
-                        s:=s+' 7';
+                        s:=s+' 12'; // Нестационарный механический солвер.
                      end
                       else
                      begin
-                        // Стационарный температурный солвер #2. (10,11,2018)
-                        s:=s+' 5';
+                        // Устарело- Стационарный температурный солвер #2. (10,11,2018)
+                        // 14.08.2020
+                        s:=s+' 5';  // Стационарный механический солвер.
                      end;
                   end;
                end
@@ -30194,7 +34818,7 @@ begin
    s:=s+' '+FloatToStr(glSTL.iQ)+' '; // Скважность.
    // параметры импульсного режима работы для темы АППАРАТ.
    s:=s+FloatToStr(glSTL.m1)+' '+FloatToStr(glSTL.tau1)+' ';
-   s:=s+FloatToStr(glSTL.tau2)+' '+FloatToStr(glSTL.tau_pause)+' ';
+   s:=s+FloatToStr(glSTL.tau2)+' '+FloatToStr(glSTL.tau_pause)+' '+FloatToStr(glSTL.off_multiplyer)+' ';
    s:=s+IntToStr(glSTL.n)+' '+FloatToStr(glSTL.T)+' '+FloatToStr(glSTL.on_time_double_linear);
    s:=s+' '+FloatToStr(FormVariables.my_real_convert(FormUnsteady.EditTime.Text,bOk)); // данные предполагаются корректными.
    s:=s+' '+IntToStr(adiabatic_vs_heat_transfer_coeff)+' '+FloatToStr(filmcoefficient)+' ';  // Условие Ньютона-Рихмана.
@@ -30705,9 +35329,56 @@ begin
       s:=s+FloatToStr(workmat[i].mult_lam_y)+ ' ';
       s:=s+FloatToStr(workmat[i].mult_lam_z)+ ' ';
       // Thermal Stress
-      s:=s+FloatToStr(workmat[i].Poisson_ratio)+ ' ';
-      s:=s+FloatToStr(workmat[i].Young_Module)+ ' ';  // GPa
-      s:=s+FloatToStr(workmat[i].Linear_expansion_coefficient)+ ' '; // *1E-6
+      // Ортотропность Коэффициента теплового линейного расширения.
+      s:=s+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_x)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_y)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_z)+ ' ';
+       // Ортотропность модуля Юнга.
+      s:=s+FloatToStr(workmat[i].mult_Young_Module_x)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Young_Module_y)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Young_Module_z)+ ' ';
+      // Ортотропность коэффициента Пуассона.
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_xy)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_xz)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_yz)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_yx)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_zx)+ ' ';
+      s:=s+FloatToStr(workmat[i].mult_Poisson_ratio_zy)+ ' ';
+      // Модуль сдвига
+      if (workmat[i].bShearModuleActive) then
+      begin
+         s:=s+'1 ';  // Модуль сдвига задаётся пользователем.
+      end
+      else
+      begin
+         s:=s+'0 ';  // Модуль сдвига не задаётся пользователем.
+      end;
+      s:=s+FloatToStr(workmat[i].ShearModuleGxy)+ ' ';
+      s:=s+FloatToStr(workmat[i].ShearModuleGyz)+ ' ';
+      s:=s+FloatToStr(workmat[i].ShearModuleGxz)+ ' ';
+
+
+      //s:=s+FloatToStr(workmat[i].Poisson_ratio)+ ' ';
+      s:=s+IntToStr(workmat[i].n_Poisson_ratio)+' ';
+      for i3 := 0 to workmat[i].n_Poisson_ratio-1 do
+      begin
+          // Poisson_ratio
+          s:=s+FloatToStr(workmat[i].temp_Poisson_ratio[i3])+' '+FloatToStr(workmat[i].arr_Poisson_ratio[i3])+' ';
+      end;
+      //s:=s+FloatToStr(workmat[i].Young_Module)+ ' ';  // GPa
+      s:=s+IntToStr(workmat[i].n_Young_Module)+' ';
+      for i3 := 0 to workmat[i].n_Young_Module-1 do
+      begin
+          // Young_Module  GPa
+          s:=s+FloatToStr(workmat[i].temp_Young_Module[i3])+' '+FloatToStr(workmat[i].arr_Young_Module[i3])+' ';
+      end;
+      //s:=s+FloatToStr(workmat[i].Linear_expansion_coefficient)+ ' '; // *1E-6
+      s:=s+IntToStr(workmat[i].n_Linear_expansion_coefficient)+' ';
+      for i3 := 0 to workmat[i].n_Linear_expansion_coefficient-1 do
+      begin
+          // Linear_expansion_coefficient *1E-6
+          s:=s+FloatToStr(workmat[i].temp_Linear_expansion_coefficient[i3])+' '+FloatToStr(workmat[i].arr_Linear_expansion_coefficient[i3])+' ';
+      end;
       s:=s+FloatToStr(workmat[i].mu)+ ' '; // динамическая вязкость
       s:=s+FloatToStr(workmat[i].beta_t)+ ' '; // коэффициент линейного температурного расширения
       s:=s+IntToStr(workmat[i].blibmat)+' '; // является ли материал библиотечным ?
@@ -31005,11 +35676,11 @@ begin
                   // Polygon
                   // Для полигона мы передаём значение температуры при которой задана тепловая мощность и значение
                   // тепловой мощности в Вт.
-                  //s:=s+FloatToStr(body[i].temp_power[i_4])+' '+FloatToStr(body[i].arr_power[i_4])+' ';
+                  s:=s+FloatToStr(body[i].temp_power[i_4])+' '+FloatToStr(body[i].arr_power[i_4])+' ';
                   // 26.01.2018.
                   // Для полигона мы всегда задаём нулевое значение тепловой мощности.
                   // Главная причина. Я не умею правильно вычислять объём полигона в интерфейсе.
-                  s:=s+FloatToStr(body[i].temp_power[i_4])+' 0.0 ';
+                  //s:=s+FloatToStr(body[i].temp_power[i_4])+' 0.0 ';
 
                          (*
                          // работает только для треугольника
@@ -31074,7 +35745,7 @@ begin
                               s:=s+FloatToStr(body[i].temp_power[i_4])+' '+FloatToStr(powertri)+' ';
                             end;
                             *)
-                         end;
+               end;
             end;
             s:=s+IntToStr(ipower_time_depend)+' '; // зависимость мощности тепловыделения в блоке от времени.
             if ((i<>0)and checkFLUIDtoSOLID) then
@@ -31723,11 +36394,11 @@ begin
                       // Polygon
                       // Для полигона мы передаём значение температуры при которой задана тепловая мощность и значение
                       // тепловой мощности в Вт.
-                      //s:=s+FloatToStr(body[i].temp_power[i_4])+' '+FloatToStr(body[i].arr_power[i_4])+' ';
+                      s:=s+FloatToStr(body[i].temp_power[i_4])+' '+FloatToStr(body[i].arr_power[i_4])+' ';
                       // 26.01.2018.
                       // Для полигона мы всегда задаём нулевое значение тепловой мощности.
                       // Главная причина. Я не умею правильно вычислять объём полигона в интерфейсе.
-                      s:=s+FloatToStr(body[i].temp_power[i_4])+' 0.0 ';
+                      //s:=s+FloatToStr(body[i].temp_power[i_4])+' 0.0 ';
 
                          (*
                          // работает только для треугольника
@@ -31793,7 +36464,7 @@ begin
                               s:=s+FloatToStr(body[i].temp_power[i_4])+' '+FloatToStr(powertri)+' ';
                             end;
                             *)
-                    end;
+                   end;
                end;
             end;
             s:=s+IntToStr(ipower_time_depend)+' '; // зависимость мощности тепловыделения в блоке от времени.
@@ -32662,6 +37333,18 @@ begin
         DeleteFile('statistic_convergence.txt');
           if (Laplas.egddata.itemper>0) then
           begin
+               if ((Laplas.egddata.myflmod[0].iflowregime=1) and
+                   (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+                begin
+                    // Модель Лангтрии Ментора gamma-ReTheta-SST [2009].
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=true;
+                    FormResidual_Lagtry_Menter_Temp.Show;
+                end
+                else
                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                (Laplas.egddata.myflmod[0].iturbmodel=5)) then
                 begin
@@ -32669,6 +37352,7 @@ begin
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
                     FormResidualStandart_k_epsilon_Temp.Show;
                 end
@@ -32680,6 +37364,7 @@ begin
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                     FormResidualSSTTemp.Show;
                 end
@@ -32690,6 +37375,7 @@ begin
                     // Спаларт Аллмарес [1992]
                     Formresidual2.brun_visible2:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                     FormResidualSATemp.brun_visibleSA2:=true;
                     FormResidualSATemp.Show;
@@ -32698,6 +37384,7 @@ begin
                 begin
                    FormResidualSATemp.brun_visibleSA2:=false;
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                   FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    Formresidual2.brun_visible2:=true;
                    Formresidual2.Show;
@@ -32707,6 +37394,13 @@ begin
           begin
              if (egddata.iStaticStructural=0) then
              begin
+                if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+                begin
+                   // Модель Ментора Лантгрии gamma-ReTheta-SST
+                   FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=true;
+                   FormResidual_Langtry_Menter.Show;
+                end
+                else
                 if (Laplas.egddata.myflmod[0].iturbmodel=5) then
                 begin
                    // Standart K-Epsilon model
@@ -32806,6 +37500,18 @@ begin
           DeleteFile('statistic_convergence.txt');
           if (Laplas.egddata.itemper>0) then
           begin
+           if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+                begin
+                    // Модель ламинарно турбулентного перехода Ментора Лантгрии [2009]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                       FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=true;
+                    FormResidual_Lagtry_Menter_Temp.Show;
+                end
+                else
               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                (Laplas.egddata.myflmod[0].iturbmodel=5)) then
                 begin
@@ -32813,6 +37519,7 @@ begin
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
                     FormResidualStandart_k_epsilon_Temp.Show;
                 end
@@ -32823,6 +37530,7 @@ begin
                     // K-Omega SST Menter [1993]
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                     FormResidualSSTTemp.Show;
@@ -32834,6 +37542,7 @@ begin
                    // Спаларт Аллмарес
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                    Formresidual2.brun_visible2:=false;
+                   FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    FormResidualSATemp.brun_visibleSA2:=true;
                    FormResidualSATemp.Show;
@@ -32842,6 +37551,7 @@ begin
                 begin
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                    FormResidualSATemp.brun_visibleSA2:=false;
+                   FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    Formresidual2.brun_visible2:=true;
                    Formresidual2.Show;
@@ -32849,6 +37559,13 @@ begin
           end
            else
           begin
+               if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+               begin
+                   // Модель Ментора Лантгрии 2009. gamma-ReTheta-SST
+                   FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=true;
+                   FormResidual_Langtry_Menter.Show;
+                end
+                else
                if (Laplas.egddata.myflmod[0].iturbmodel=5) then
                begin
                    // Standart K-Epsilon
@@ -32958,7 +37675,7 @@ begin
 
 end;
 
-procedure WriteStartSolutionNEW();
+procedure TLaplas.WriteStartSolutionNEW(Sender: TObject);
 var
     f, fpiecewise, freport : TStringList; // переменная типа объект TStringList
     s,subx,sub,s1, s2, spiecewise : String; // текущая рабочая строка
@@ -32986,6 +37703,53 @@ var
     xS1, yS1, zS1, xE1, yE1, zE1 : Real;
     iu_number, i5 :   Integer;
     xSass, xEass, ySass, yEass, zSass, zEass : Real;
+
+    procedure FixHeap(root : Integer; m : TBody; bound : Integer; iadd : Integer);
+var
+   vacant, largerChild : Integer;
+   lCadd, lCadd1 : Integer;
+begin
+   vacant:=root;
+   while (2*vacant<=bound) do
+   begin
+      largerChild:=2*vacant;
+      lCadd:=largerChild+iadd;
+      lCadd1:=lCadd+1;
+      if ((largerChild<bound)and(body[lCadd1].priority>body[lCadd].priority)) then
+      begin
+         inc(largerChild);
+      end;
+      lCadd:=largerChild+iadd;
+      if (m.priority>body[lCadd].priority) then
+      begin
+        break;
+      end
+      else
+      begin
+         body[vacant+iadd]:=body[lCadd];
+         vacant:=largerChild;
+      end;
+   end;
+   body[vacant+iadd]:=m;
+end;
+
+// Пирамидальная сортировка.
+procedure HeapSort(first,last : Integer);
+var
+   body_buf : TBody;
+   i9 : Integer;
+begin
+   for i9 := ((last-first+1) div 2) downto 1 do
+   begin
+      FixHeap(i9,body[i9+first-1],last-first+1,first-1);
+   end;
+   for i9 := last-first+1 downto 2 do
+     begin
+       body_buf:=body[first];
+       FixHeap(1,body[i9+first-1],i9-1,first-1);
+       body[i9+first-1]:=body_buf;
+     end;
+end;
 
 begin
    checkFLUIDtoSOLID:=false; // 8 september 2017 не трогать т.к. усторело.
@@ -33150,7 +37914,14 @@ begin
    end;
    if (not(bVisualization_Management_now)) then
    begin
-      FormUnsteady.ShowModal;
+      if (bOkTrials=true) then
+      begin
+         FormUnsteady.ShowModal;
+      end
+      else
+      begin
+         FormUnsteady.bRunOk:=true;
+      end;
    end
    else
    begin
@@ -33521,6 +38292,10 @@ begin
    f.Add(s);
    s:='PressureVelocityCoupling='+IntToStr(FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex)+'   ';
    f.Add(s);
+   s:='# 0 - CD, 1 - UDS, 2 - COMB, 3 - POLY, 4 - EXP, 5 - BULG, 6 - POW;';
+   f.Add(s);
+   s:='FlowSchemePrefix='+ IntToStr(FormSetting.ComboBoxFlowSchemePrefix.ItemIndex)+'  ';  // Prefix схема аппроксимации конвективного члена
+   f.Add(s);
    s:='# 0 - Upwind; 1 - MUSCL; 2 - SOUCUP; 3 - HLPA; 4 - SMART; 5 - WACEB;';
    f.Add(s);
    s:='# 6 - SMARTER; 7 - LPPA; 8 - VONOS; 9 - STOIC; 10 -  CLAM; 11 - OSHER;';
@@ -33559,8 +38334,11 @@ begin
       // 5 - Static Structural
       // 6 - Thermal Stress
       // 8 - подготовка данных к печати только. 5.01.2018
+      // 9 - Нестационарная чистая гидродинамика.
       // 10 - NetWork_T solver
       // 11 - NetWork_T solver unsteady   04.07.2020
+      // 12 - Нестационарная механика 14.08.2020
+      // 13 - Нестационарная механика в сочетании с теплопередачей 14.08.2020.
       if (egddata.itemper=3) then
       begin
          if (bVisualization_Management_now) then
@@ -33618,19 +38396,36 @@ begin
                      if (egddata.itemper>0) then
                      begin
                         // Thermal Stress
-                        s:='6';
+                        if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                        begin
+                           if (egddata.itemper=1) then
+                           begin
+                              // На основе метода Контрольного объёма для теплопередачи.
+                              s:='13'; // Нестационарная механика и теплопередача.
+                           end;
+                           if (egddata.itemper=2) then
+                           begin
+                              // На основе метода Конечных Элементов
+                              // Нестационарный температурный солвер   #2 (10,11,2018)
+                              // Только теплопередача без механики.
+                              s:='7';
+                           end;
+                        end
+                        else
+                        begin
+                           s:='6'; // Стационарная механика и теплопередача.
+                        end;
                      end
                       else
                      begin
                         // Static Structural
                         if (FormUnsteady.RadioGroup1.ItemIndex=1) then
                         begin
-                           // Нестационарный температурный солвер   #2 (10,11,2018)
-                           s:='7';
+                           s:='12'; // Нестационарная механика.
                         end
                          else
                         begin
-                           // Стационарный температурный солвер #2. (10,11,2018)
+                           // Стационарная Механика. (14,08,2020) (температурный солве №2 10,11,2018)
                            s:='5';
                         end;
                      end;
@@ -33649,14 +38444,32 @@ begin
                         begin
                            //  гидродинамика.
                            // Default Structural Mesh
-                           s:='3';
+                            if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                            begin
+                               // Нестационарная гидродинамика.
+                               s:='9';
+                            end
+                              else
+                            begin
+                              // Стационарная гидродинамика.
+                              s:='3';
+                            end;
                         end;
                      end
                       else
                      begin
                         //  гидродинамика.
                         // Default Structural Mesh
-                        s:='3';
+                        if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                        begin
+                           // Нестационарная гидродинамика.
+                           s:='9';
+                        end
+                        else
+                        begin
+                           // Стационарная гидродинамика.
+                           s:='3';
+                        end;
                      end;
                   end;
                end
@@ -33666,7 +38479,16 @@ begin
                   // Гидродинамика включена.
                   //  гидродинамика.
                   // Default Structural Mesh
-                  s:='3';
+                   if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                   begin
+                      // Нестационарная гидродинамика.
+                      s:='9';
+                   end
+                    else
+                   begin
+                      // Стационарная гидродинамика.
+                      s:='3';
+                   end;
                end;
             end;
          end;
@@ -33690,6 +38512,8 @@ begin
       s:='tau2='+FloatToStr(glSTL.tau2)+' ';
       f.Add(s);
       s:='tau_pause='+FloatToStr(glSTL.tau_pause)+' ';
+      f.Add(s);
+      s:='off_multiplyer='+FloatToStr(glSTL.off_multiplyer)+' ';
       f.Add(s);
       s:='n='+IntToStr(glSTL.n)+' ';
       f.Add(s);
@@ -33873,7 +38697,7 @@ begin
    // interpolation
    s:='# interpolation: ';
    f.Add(s);
-   s:='# 0 - Jacobi, 1 - AMG1R5, 2 - not usage;  ';
+   s:='# 0 - Jacobi, 1 - AMG1R5, 2 - long range interpolation distanse=3;  ';
    f.Add(s);
    s:='# 3 - version 4; 4 - light version 4; 5 - second lite version 4;';
    f.Add(s);
@@ -34389,12 +39213,85 @@ begin
       s:='matherial'+IntToStr(i)+'mult_lam_z='+FloatToStr(workmat[i].mult_lam_z)+ ' # z -axis thermal conductivity orthotropal multiplyer.';
       f.Add(s);
       // Thermal Stress
-      s:='matherial'+IntToStr(i)+'Poisson_ratio='+FloatToStr(workmat[i].Poisson_ratio)+ ' ';
+       // Ортотропность коэффициента линейного теплового расширения.
+      s:='matherial'+IntToStr(i)+'mult_Linear_expansion_coefficient_x='+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_x)+ ' # x -axis Linear_expansion_coefficient orthotropal multiplyer.';
       f.Add(s);
-      s:='matherial'+IntToStr(i)+'Young_Module='+FloatToStr(workmat[i].Young_Module)+ ' # GPa';  // GPa
+      s:='matherial'+IntToStr(i)+'mult_Linear_expansion_coefficient_y='+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_y)+ ' # y -axis Linear_expansion_coefficient orthotropal multiplyer.';
       f.Add(s);
-      s:='matherial'+IntToStr(i)+'Linear_expansion_coefficient='+FloatToStr(workmat[i].Linear_expansion_coefficient)+ ' # *1e-6 1/K'; // *1E-6
+      s:='matherial'+IntToStr(i)+'mult_Linear_expansion_coefficient_z='+FloatToStr(workmat[i].mult_Linear_expansion_coefficient_z)+ ' # z -axis Linear_expansion_coefficient orthotropal multiplyer.';
       f.Add(s);
+      // Ортотропность модуля Юнга.
+      s:='matherial'+IntToStr(i)+'mult_Young_Module_x='+FloatToStr(workmat[i].mult_Young_Module_x)+ ' # x - axis Young_Module orthotropal multiplyer.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'mult_Young_Module_y='+FloatToStr(workmat[i].mult_Young_Module_y)+ ' # y - axis Young_Module orthotropal multiplyer.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'mult_Young_Module_z='+FloatToStr(workmat[i].mult_Young_Module_z)+ ' # z - axis Young_Module orthotropal multiplyer.';
+      f.Add(s);
+      // Ортотропность коэффициента Пуассона.
+      s:='matherial'+IntToStr(i)+'mult_Poisson_ratio_xy='+FloatToStr(workmat[i].mult_Poisson_ratio_xy)+ ' # z -axis thermal conductivity orthotropal multiplyer.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'mult_Poisson_ratio_xz='+FloatToStr(workmat[i].mult_Poisson_ratio_xz)+ ' # y -axis thermal conductivity orthotropal multiplyer.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'mult_Poisson_ratio_yz='+FloatToStr(workmat[i].mult_Poisson_ratio_yz)+ ' # x -axis thermal conductivity orthotropal multiplyer.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'mult_Poisson_ratio_yx='+FloatToStr(workmat[i].mult_Poisson_ratio_yx)+ ' # z -axis thermal conductivity orthotropal multiplyer.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'mult_Poisson_ratio_zx='+FloatToStr(workmat[i].mult_Poisson_ratio_zx)+ ' # y -axis thermal conductivity orthotropal multiplyer.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'mult_Poisson_ratio_zy='+FloatToStr(workmat[i].mult_Poisson_ratio_zy)+ ' # x -axis thermal conductivity orthotropal multiplyer.';
+      f.Add(s);
+      // Модуль сдвига
+      if (workmat[i].bShearModuleActive) then
+      begin
+         s:='matherial'+IntToStr(i)+'bShearModuleActive='+'1 # z -axis Shear Module.';
+      end
+      else
+      begin
+         s:='matherial'+IntToStr(i)+'bShearModuleActive='+'0 # z -axis Shear Module.';
+      end;
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'ShearModuleGxy='+FloatToStr(workmat[i].ShearModuleGxy)+ ' # z -axis Shear Module.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'ShearModuleGyz='+FloatToStr(workmat[i].ShearModuleGyz)+ ' # x -axis Shear Module.';
+      f.Add(s);
+      s:='matherial'+IntToStr(i)+'ShearModuleGxz='+FloatToStr(workmat[i].ShearModuleGxz)+ ' # y -axis Shear Module.';
+      f.Add(s);
+
+      //s:='matherial'+IntToStr(i)+'Poisson_ratio='+FloatToStr(workmat[i].Poisson_ratio)+ ' ';
+      //f.Add(s);
+      // 24.08.2020
+      s:='matherial'+IntToStr(i)+'n_Poisson_ratio='+IntToStr(workmat[i].n_Poisson_ratio)+' # number points for define temperature depend Poisson_ratio.';
+      f.Add(s);
+      for i3 := 0 to workmat[i].n_Poisson_ratio-1 do
+      begin
+          s:='matherial'+IntToStr(i)+'temp_Poisson_ratio'+IntToStr(i3)+'=' +FloatToStr(workmat[i].temp_Poisson_ratio[i3])+' # temperature';
+          f.Add(s);
+          s:='matherial'+IntToStr(i)+'arr_Poisson_ratio'+IntToStr(i3)+'='+FloatToStr(workmat[i].arr_Poisson_ratio[i3])+' # Poisson_ratio.';
+          f.Add(s);
+      end;
+      //s:='matherial'+IntToStr(i)+'Young_Module='+FloatToStr(workmat[i].Young_Module)+ ' # GPa';  // GPa
+      //f.Add(s);
+      s:='matherial'+IntToStr(i)+'n_Young_Module='+IntToStr(workmat[i].n_Young_Module)+' # number points for define temperature depend Young_Module GPa.';
+      f.Add(s);
+      for i3 := 0 to workmat[i].n_Young_Module-1 do
+      begin
+          s:='matherial'+IntToStr(i)+'temp_Young_Module'+IntToStr(i3)+'=' +FloatToStr(workmat[i].temp_Young_Module[i3])+' # temperature';
+          f.Add(s);
+          s:='matherial'+IntToStr(i)+'arr_Young_Module'+IntToStr(i3)+'='+FloatToStr(workmat[i].arr_Young_Module[i3])+' # Young_Module GPa.';
+          f.Add(s);
+      end;
+      //s:='matherial'+IntToStr(i)+'Linear_expansion_coefficient='+FloatToStr(workmat[i].Linear_expansion_coefficient)+ ' # *1e-6 1/K'; // *1E-6
+      //f.Add(s);
+      // 17.08.2020
+      s:='matherial'+IntToStr(i)+'n_Linear_expansion_coefficient='+IntToStr(workmat[i].n_Linear_expansion_coefficient)+' # number points for define temperature depend linear expansion coefficient.';
+      f.Add(s);
+      for i3 := 0 to workmat[i].n_Linear_expansion_coefficient-1 do
+      begin
+          s:='matherial'+IntToStr(i)+'temp_Linear_expansion_coefficient'+IntToStr(i3)+'=' +FloatToStr(workmat[i].temp_Linear_expansion_coefficient[i3])+' # temperature';
+          f.Add(s);
+          s:='matherial'+IntToStr(i)+'arr_Linear_expansion_coefficient'+IntToStr(i3)+'='+FloatToStr(workmat[i].arr_Linear_expansion_coefficient[i3])+' # linear expansion coefficient, 1E-6/(K).';
+          f.Add(s);
+      end;
       s:='matherial'+IntToStr(i)+'mu='+FloatToStr(workmat[i].mu)+ ' '; // динамическая вязкость
       f.Add(s);
       s:='matherial'+IntToStr(i)+'beta_t='+FloatToStr(workmat[i].beta_t)+ ' '; // коэффициент линейного температурного расширения
@@ -34809,7 +39706,9 @@ begin
                   s:=FloatToStr(body[i].temp_power[i_4])+' ';
                   s:='body'+IntToStr(i)+'temp_power'+IntToStr(i_4)+'='+s;
                   f.Add(s);
-                  s:='body'+IntToStr(i)+'arr_power'+IntToStr(i_4)+'='+'0.0 ';
+                  // Для полигона передаётся значение тепловой мощности в Вт.
+                  s:=FloatToStr(body[i].arr_power[i_4]);
+                  s:='body'+IntToStr(i)+'arr_power'+IntToStr(i_4)+'='+s+' ';
                   f.Add(s);
                          (*
                          // работает только для треугольника
@@ -34874,7 +39773,7 @@ begin
                               s:=s+FloatToStr(body[i].temp_power[i_4])+' '+FloatToStr(powertri)+' ';
                             end;
                             *)
-                         end;
+               end;
             end;
             s:=IntToStr(ipower_time_depend)+' '; // зависимость мощности тепловыделения в блоке от времени.
             s:='body'+IntToStr(i)+'ipower_time_depend='+s;
@@ -35409,7 +40308,9 @@ begin
                   s:=FloatToStr(body[i].temp_power[i_4])+' ';
                   s:='body'+IntToStr(i)+'temp_power'+IntToStr(i_4)+'='+s;
                   f.Add(s);
-                  s:='body'+IntToStr(i)+'arr_power'+IntToStr(i_4)+'='+'0.0 ';
+                  // Для полигона передаётся значение тепловой мощности в Вт.
+                  s:=FloatToStr(body[i].arr_power[i_4]);
+                  s:='body'+IntToStr(i)+'arr_power'+IntToStr(i_4)+'='+s+' ';
                   f.Add(s);
                          (*
                          // работает только для треугольника
@@ -35761,7 +40662,9 @@ begin
                   s:=FloatToStr(body[i].temp_power[i_4])+' ';
                   s:='body'+IntToStr(i+1)+'temp_power'+IntToStr(i_4)+'='+s;
                   f.Add(s);
-                  s:='body'+IntToStr(i+1)+'arr_power'+IntToStr(i_4)+'='+'0.0 ';
+                  // Для полигона передаётся значение тепловой мощности в Вт.
+                  s:=FloatToStr(body[i].arr_power[i_4]);
+                  s:='body'+IntToStr(i+1)+'arr_power'+IntToStr(i_4)+'='+s+' ';
                   f.Add(s);
                          (*
                          // работает только для треугольника
@@ -36195,7 +41098,9 @@ begin
                       //s:=s+FloatToStr(body[i].temp_power[i_4])+' 0.0 ';
                       s:='body'+IntToStr(i+1)+'temp_power'+IntToStr(i_4)+'='+FloatToStr(body[i].temp_power[i_4])+' ';
                       f.Add(s);
-                      s:='body'+IntToStr(i+1)+'arr_power'+IntToStr(i_4)+'='+'0.0 ';
+                      // Для полигона передаётся значение тепловой мощности в Вт.
+                      s:= FloatToStr(body[i].arr_power[i_4]);
+                      s:='body'+IntToStr(i+1)+'arr_power'+IntToStr(i_4)+'='+s+' ';
                       f.Add(s);
                          (*
                          // работает только для треугольника
@@ -37155,6 +42060,10 @@ begin
       s:='stabilization_amg1r5_algorithm='+IntToStr(Formamg1r5Parameters.ComboBoxStabilization.ItemIndex)+' ';
       f.Add(s);
 
+      // free_debug_parameter1 06.08.2020
+      s:='free_debug_parametr1='+Trim(Form_debug_panel.Edit_free_debug_param.Text)+' ';
+      f.Add(s);
+
    // Дело в том что компилятор языка СИ понимает только точку
    // в качестве разделителя целой и дробной части, поэтому
    // если в системе windows установлена запятая в качестве разделителя
@@ -37261,13 +42170,23 @@ begin
         end;
         *)
 
+           if (boptimetric=true) then
+           begin
+              // однопоточный запуск
+
+              SerialExecute1;
+           end
+           else
+           begin
+
+              MyThread1:=TmyThread1.Create(true);
+              // поток завершиться автоматически.
+              MyThread1.FreeOnTerminate:=true;
+              MyThread1.Priority:=tpLower;
+              MyThread1.Resume;
 
 
-          MyThread1:=TmyThread1.Create(true);
-          // поток завершиться автоматически.
-          MyThread1.FreeOnTerminate:=true;
-          MyThread1.Priority:=tpLower;
-          MyThread1.Resume;
+          end;
 
           bonly_mesh_gen_call:=false;
 
@@ -37375,6 +42294,18 @@ begin
         DeleteFile('statistic_convergence.txt');
           if (Laplas.egddata.itemper>0) then
           begin
+          if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+                begin
+                    // Модель ламинарно турбулентного перехода Ментора Лантгрии [2009]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=true;
+                    FormResidual_Lagtry_Menter_Temp.Show;
+                end
+                else
                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                (Laplas.egddata.myflmod[0].iturbmodel=5)) then
                 begin
@@ -37382,6 +42313,7 @@ begin
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
                     FormResidualStandart_k_epsilon_Temp.Show;
                 end
@@ -37392,6 +42324,7 @@ begin
                     // K-Omega SST Menter [1993]
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                     FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                     FormResidualSSTTemp.Show;
@@ -37403,6 +42336,7 @@ begin
                    // Спаларт Аллмарес
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                    Formresidual2.brun_visible2:=false;
+                   FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    FormResidualSATemp.brun_visibleSA2:=true;
                    FormResidualSATemp.Show;
@@ -37411,6 +42345,7 @@ begin
                 begin
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                    FormResidualSATemp.brun_visibleSA2:=false;
+                   FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    Formresidual2.brun_visible2:=true;
                    Formresidual2.Show;
@@ -37420,6 +42355,14 @@ begin
           begin
              if (egddata.iStaticStructural=0) then
              begin
+                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+                begin
+                   // Модель Ментора Лангтрии.
+                   FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=true;
+                   FormResidual_Langtry_Menter.Show;
+                end
+                else
                 if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                 (Laplas.egddata.myflmod[0].iturbmodel=5)) then
                 begin
@@ -37451,11 +42394,21 @@ begin
              end;
           end;
 
-          MyThread2:=TmyThread2.Create(true);
-          // поток завершиться автоматически.
-          MyThread2.FreeOnTerminate:=true;
-          MyThread2.Priority:=tpLower;
-          MyThread2.Resume;
+           if (boptimetric=true) then
+           begin
+              // однопоточный запуск
+
+              SerialExecute2;
+           end
+           else
+           begin
+
+              MyThread2:=TmyThread2.Create(true);
+              // поток завершится автоматически.
+              MyThread2.FreeOnTerminate:=true;
+              MyThread2.Priority:=tpLower;
+              MyThread2.Resume;
+          end;
 
           bonly_mesh_gen_call:=false;
 
@@ -37522,6 +42475,18 @@ begin
           DeleteFile('statistic_convergence.txt');
           if (Laplas.egddata.itemper>0) then
           begin
+          if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+                begin
+                    // Модель ламинарно турбулентного перехода Ментора Лантгрии [2009]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                    FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=true;
+                    FormResidual_Lagtry_Menter_Temp.Show;
+                end
+                else
               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
               (Laplas.egddata.myflmod[0].iturbmodel=5)) then
               begin
@@ -37529,6 +42494,7 @@ begin
                  FormResidualSATemp.brun_visibleSA2:=false;
                  Formresidual2.brun_visible2:=false;
                  FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                 FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                  FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
                  FormResidualStandart_k_epsilon_Temp.Show;
               end
@@ -37539,6 +42505,7 @@ begin
                  // K-Omega SST
                  FormResidualSATemp.brun_visibleSA2:=false;
                  Formresidual2.brun_visible2:=false;
+                 FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                  FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                  FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                  FormResidualSSTTemp.Show;
@@ -37550,6 +42517,7 @@ begin
                  // Спаларт Аллмарес
                  FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                  Formresidual2.brun_visible2:=false;
+                 FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                  FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                  FormResidualSATemp.brun_visibleSA2:=true;
                  FormResidualSATemp.Show;
@@ -37558,6 +42526,7 @@ begin
               begin
                  FormResidualSATemp.brun_visibleSA2:=false;
                  FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                 FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                  FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                  Formresidual2.brun_visible2:=true;
                  Formresidual2.Show;
@@ -37565,6 +42534,14 @@ begin
           end
            else
           begin
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                   (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+                begin
+                   // модель Ментора Лангтрии [2009]
+                   FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=true;
+                   FormResidual_Langtry_Menter.Show;
+                end
+                else
                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                    (Laplas.egddata.myflmod[0].iturbmodel=5)) then
                 begin
@@ -37595,11 +42572,21 @@ begin
              end;
           end;
 
-          MyThread3:=TmyThread3.Create(true);
-          // поток завершиться автоматически.
-          MyThread3.FreeOnTerminate:=true;
-          MyThread3.Priority:=tpLower;
-          MyThread3.Resume;
+           if (boptimetric=true) then
+           begin
+              // однопоточный запуск
+
+              SerialExecute3;
+           end
+           else
+           begin
+
+              MyThread3:=TmyThread3.Create(true);
+              // поток завершиться автоматически.
+              MyThread3.FreeOnTerminate:=true;
+              MyThread3.Priority:=tpLower;
+              MyThread3.Resume;
+          end;
 
           bonly_mesh_gen_call:=false;
       end
@@ -37676,11 +42663,217 @@ begin
    end;
 end;
 
+
+
+// Оптиметрик 13.02.2021
+procedure TLaplas.Runoptimization1Click(Sender: TObject);
+var
+  ivar_id, i,j, n_id_0, n_id_1, ivar_id1 : Integer;
+  value_var_id0, value_var_id1 : array of Real;
+  s, sub : String;
+
+begin
+     // Вызываем форму задания и редактирования переменных.
+    for i:=1 to FormVariables.StringGridVariables.RowCount-1 do
+    begin
+       if (i-1>=ivar) then
+       begin
+          FormVariables.StringGridVariables.Cells[1,i]:='';
+          FormVariables.StringGridVariables.Cells[2,i]:='';
+       end
+       else
+       begin
+          FormVariables.StringGridVariables.Cells[1,i]:=Laplas.parametric[i-1].svar;
+          FormVariables.StringGridVariables.Cells[2,i]:=Laplas.parametric[i-1].sval;
+       end;
+    end;
+
+     FormOptimetric.ComboBoxvar_id0.Items.Clear;
+     FormOptimetric.ComboBoxvar_id1.Items.Clear;
+     for i:=0 to Laplas.ivar-1 do
+    begin
+       FormOptimetric.ComboBoxvar_id0.Items.Add(Laplas.parametric[i].svar);
+       FormOptimetric.ComboBoxvar_id1.Items.Add(Laplas.parametric[i].svar);
+    end;
+
+    FormOptimetric.ComboBoxvar_id0.ItemIndex:=id_0_index;
+    FormOptimetric.ComboBoxvar_id1.ItemIndex:=id_1_index;
+
+    bOkTrials:=false;
+    FormOptimetric.ShowModal;
+
+    s:=Trim(FormOptimetric.EditListVariable.Text);
+
+    n_id_0:=0;
+    n_id_1:=0;
+
+    if (length(s)>0) then
+    begin
+
+       n_id_0:=0;
+       while (pos(' ',s)>0) do
+       begin
+          sub:=Trim(Copy(s,1,pos(' ',s)));
+          inc(n_id_0);
+          SetLength(value_var_id0, n_id_0);
+          for i:=1 to length(sub) do
+          begin
+             if (FormatSettings.DecimalSeparator=',') then
+             begin
+                if (sub[i]='.') then sub[i]:=',';
+             end;
+             if (FormatSettings.DecimalSeparator='.') then
+             begin
+                if (sub[i]=',') then sub[i]:='.';
+             end;
+          end;
+
+          value_var_id0[n_id_0-1]:=StrToFloat(sub);
+          s:=Trim(Copy(s,pos(' ',s),length(s)));
+       end;
+       inc(n_id_0);
+       SetLength(value_var_id0, n_id_0);
+       sub:=Trim(s);
+       for i:=1 to length(sub) do
+          begin
+             if (FormatSettings.DecimalSeparator=',') then
+             begin
+                if (sub[i]='.') then sub[i]:=',';
+             end;
+             if (FormatSettings.DecimalSeparator='.') then
+             begin
+                if (sub[i]=',') then sub[i]:='.';
+             end;
+          end;
+       value_var_id0[n_id_0-1]:=StrToFloat(sub);
+
+       s:=Trim(FormOptimetric.EditListVariable1.Text);
+
+    if (length(s)>0) then
+    begin
+
+       n_id_1:=0;
+       while (pos(' ',s)>0) do
+       begin
+          sub:=Trim(Copy(s,1,pos(' ',s)));
+          inc(n_id_1);
+          SetLength(value_var_id1, n_id_1);
+          for i:=1 to length(sub) do
+          begin
+             if (FormatSettings.DecimalSeparator=',') then
+             begin
+                if (sub[i]='.') then sub[i]:=',';
+             end;
+             if (FormatSettings.DecimalSeparator='.') then
+             begin
+                if (sub[i]=',') then sub[i]:='.';
+             end;
+          end;
+
+          value_var_id1[n_id_1-1]:=StrToFloat(sub);
+          s:=Trim(Copy(s,pos(' ',s),length(s)));
+       end;
+       inc(n_id_1);
+       SetLength(value_var_id1, n_id_1);
+       sub:=Trim(s);
+        for i:=1 to length(sub) do
+          begin
+             if (FormatSettings.DecimalSeparator=',') then
+             begin
+                if (sub[i]='.') then sub[i]:=',';
+             end;
+             if (FormatSettings.DecimalSeparator='.') then
+             begin
+                if (sub[i]=',') then sub[i]:='.';
+             end;
+          end;
+       value_var_id1[n_id_1-1]:=StrToFloat(sub);
+
+    end;
+
+    if (bOkTrials=true) then
+    begin
+
+       if (n_id_1>0) then
+       begin
+          // Две переменные
+          ivar_id:=FormOptimetric.ComboBoxvar_id0.ItemIndex;
+          ivar_id1:=FormOptimetric.ComboBoxvar_id1.ItemIndex;
+
+          id_0_index:=ivar_id;
+          id_1_index:=ivar_id1;
+
+          // Варьируем  одну переменную.
+          for i:=0 to   n_id_0-1 do
+          begin
+             for j:=0 to   n_id_1-1 do
+             begin
+                if ((i>0)or(j>0))  then
+                begin
+                   bOkTrials:=false;
+                end;
+                Laplas.parametric[ivar_id].sval:= FloatToStr(value_var_id0[i]);
+                FormVariables.StringGridVariables.Cells[2,ivar_id+1]:=Laplas.parametric[ivar_id].sval;
+
+                Laplas.parametric[ivar_id1].sval:= FloatToStr(value_var_id1[j]);
+                FormVariables.StringGridVariables.Cells[2,ivar_id1+1]:=Laplas.parametric[ivar_id1].sval;
+
+                FormVariables.BApplyClick(Sender);
+
+                boptimetric:=true;
+
+                //WriteStartSolutionOLD(Sender);
+                // начало 3.11.2018 - окончание 20.08.2019
+                WriteStartSolutionNEW(Sender);
+             end;
+          end;
+
+       end
+       else
+       begin
+          // Одна переменная.
+
+          //Laplas.MainMemo.Lines.Add('n_id_0'+IntToStr(n_id_0));
+
+          ivar_id:=FormOptimetric.ComboBoxvar_id0.ItemIndex;
+
+          id_0_index:=ivar_id;
+
+          // Варьируем  одну переменную.
+          for i:=0 to   n_id_0-1 do
+          begin
+             if (i>0)  then
+             begin
+                bOkTrials:=false;
+             end;
+             Laplas.parametric[ivar_id].sval:= FloatToStr(value_var_id0[i]);
+             FormVariables.StringGridVariables.Cells[2,ivar_id+1]:=Laplas.parametric[ivar_id].sval;
+             FormVariables.BApplyClick(Sender);
+
+             boptimetric:=true;
+
+             //WriteStartSolutionOLD(Sender);
+             // начало 3.11.2018 - окончание 20.08.2019
+             WriteStartSolutionNEW(Sender);
+          end;
+       end;
+    end;
+   end;
+
+end;
+
+// записывает файл premeshin.txt
+procedure TLaplas.RunSolution1Click(Sender: TObject);
 begin
 
-    //WriteStartSolutionOLD();
+    bOkTrials:=true;
+    boptimetric:=false;
+
+
+
+    //WriteStartSolutionOLD(Sender);
     // начало 3.11.2018 - окончание 20.08.2019
-    WriteStartSolutionNEW();
+    WriteStartSolutionNEW(Sender);
 
 end;
 
@@ -38605,6 +43798,10 @@ begin
              end;
           end;
    end;
+   cosAlf:=cos(Alf);
+   cosBet:=cos(Bet);
+   sinAlf:=sin(Alf);
+   sinBet:=sin(Bet);
    Render; // прорисовка геометрии
 end;
 
@@ -40600,6 +45797,17 @@ var
 begin
     f:=TStringList.Create();
 
+    if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+        (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+    begin
+       // Модель Ментора Лангтрии [2009].
+       Formresidual2.brun_visible2:=false;
+       FormResidualSATemp.brun_visibleSA2:=false;
+       FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+       FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+       FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=true;
+    end
+     else
       if ((Laplas.egddata.myflmod[0].iflowregime=1)and
         (Laplas.egddata.myflmod[0].iturbmodel=5)) then
     begin
@@ -40607,6 +45815,7 @@ begin
        Formresidual2.brun_visible2:=false;
        FormResidualSATemp.brun_visibleSA2:=false;
        FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+       FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
        FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
     end
      else
@@ -40616,6 +45825,7 @@ begin
        // SST K-Omega
        Formresidual2.brun_visible2:=false;
        FormResidualSATemp.brun_visibleSA2:=false;
+        FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
        FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
        FormResidualSSTTemp.brun_visibleSSTTemp:=true;
     end
@@ -40626,6 +45836,7 @@ begin
        // Спаларт Аллмарес
        FormResidualSSTTemp.brun_visibleSSTTemp:=false;
        Formresidual2.brun_visible2:=false;
+        FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
        FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
        FormResidualSATemp.brun_visibleSA2:=true;
     end
@@ -40633,13 +45844,27 @@ begin
     begin
         FormResidualSSTTemp.brun_visibleSSTTemp:=false;
         FormResidualSATemp.brun_visibleSA2:=false;
+         FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
         FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
         Formresidual2.brun_visible2:=true;
     end;
+
+    if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+     (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+     begin
+        // Модель Ментора Лангтрии [2009]
+        Formresidual.brun_visible:=false;
+        FormResidualSpallart_Allmares.brun_visibleSA:=false;
+        FormResidualSST.brun_visibleSST:=false;
+        FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
+        FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=true;
+     end
+     else
       if ((Laplas.egddata.myflmod[0].iflowregime=1)and
      (Laplas.egddata.myflmod[0].iturbmodel=5)) then
      begin
         // Standart K-epsilon model
+        FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=false;
         Formresidual.brun_visible:=false;
         FormResidualSpallart_Allmares.brun_visibleSA:=false;
         FormResidualSST.brun_visibleSST:=false;
@@ -40650,6 +45875,7 @@ begin
      (Laplas.egddata.myflmod[0].iturbmodel=4)) then
      begin
         // SST Ментер
+        FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=false;
         Formresidual.brun_visible:=false;
         FormResidualSpallart_Allmares.brun_visibleSA:=false;
         FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
@@ -40660,6 +45886,7 @@ begin
     if ((Laplas.egddata.myflmod[0].iflowregime=1)and
         (Laplas.egddata.myflmod[0].iturbmodel=3)) then
     begin
+        FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=false;
         Formresidual.brun_visible:=false;
         FormResidualSST.brun_visibleSST:=false;
         FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
@@ -40668,6 +45895,7 @@ begin
     end
     else
     begin
+       FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=false;
        FormResidualSST.brun_visibleSST:=false;
        FormResidualSpallart_Allmares.brun_visibleSA:=false;
         FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
@@ -40694,6 +45922,199 @@ begin
                end;
              end;
 
+                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=6)) then
+            begin
+               // Модель ламинарно турбулентного перехода Менторпа Лантгрии [2009].
+               // первые две строки нужно пропустить.
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[0].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[1].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[2].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[3].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[4].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[5].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[6].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[7].Clear;
+               FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[8].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[7].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidual_Lagtry_Menter_Temp.Chart1.SeriesList[8].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                           end;
+                           end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidual_Lagtry_Menter_Temp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidual_Lagtry_Menter_Temp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
+                FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=true;
+                FormResidual_Lagtry_Menter_Temp.Show;
+            end
+            else
               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
              (Laplas.egddata.myflmod[0].iturbmodel=5)) then
             begin
@@ -40849,6 +46270,7 @@ begin
                 Formresidual2.brun_visible2:=false;
                 FormResidualSATemp.brun_visibleSA2:=false;
                 FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
                 FormResidualStandart_k_epsilon_Temp.Show;
             end
@@ -41007,6 +46429,7 @@ begin
                 f.Free;
                 Formresidual2.brun_visible2:=false;
                 FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                 FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                 FormResidualSSTTemp.Show;
@@ -41151,6 +46574,7 @@ begin
                 f.Free;
                 Formresidual2.brun_visible2:=false;
                 FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                 FormResidualSATemp.brun_visibleSA2:=true;
                 FormResidualSATemp.Show;
@@ -41266,6 +46690,7 @@ begin
                 f.Free;
                 FormResidualSATemp.brun_visibleSA2:=false;
                 FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidual_Lagtry_Menter_Temp.brun_visible_Langtry_Menter_Temp:=false;
                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                Formresidual2.brun_visible2:=true;
                Formresidual2.Show;
@@ -41296,6 +46721,178 @@ begin
                end;
              end;
 
+
+                if (Laplas.egddata.myflmod[0].iturbmodel=6) then
+            begin
+               // Модель Лангтрии Ментора gamma-ReTheta-SST.
+               // первые две строки нужно пропустить.
+               FormResidual_Langtry_Menter.Chart1.SeriesList[0].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[1].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[2].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[3].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[4].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[5].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[6].Clear;
+               FormResidual_Langtry_Menter.Chart1.SeriesList[7].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=Max(1.0e-12,StrToFloat(sub));
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidual_Langtry_Menter.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=Max(1.0e-12,StrToFloat(sub));
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidual_Langtry_Menter.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=Max(1.0e-12,StrToFloat(sub));
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidual_Langtry_Menter.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=Max(1.0e-12,StrToFloat(sub));
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidual_Langtry_Menter.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=Max(1.0e-12,StrToFloat(sub));
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidual_Langtry_Menter.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=Max(1.0e-12,StrToFloat(sub));
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidual_Langtry_Menter.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                                 s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                                 if (length(sub)>0) then
+                                 begin
+                                    if (StrToFloat(sub)<fmin) then
+                                    begin
+                                       fmin:=Max(1.0e-12,StrToFloat(sub));
+                                    end;
+                                    if (StrToFloat(sub)>fmax) then
+                                    begin
+                                       fmax:=StrToFloat(sub);
+                                    end;
+                                    FormResidual_Langtry_Menter.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+
+
+                                    s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                                    sub:=s;
+                                    if (length(sub)>0) then
+                                    begin
+                                       if (StrToFloat(sub)<fmin) then
+                                       begin
+                                          fmin:=Max(1.0e-12,StrToFloat(sub));
+                                       end;
+                                       if (StrToFloat(sub)>fmax) then
+                                       begin
+                                          fmax:=StrToFloat(sub);
+                                       end;
+                                       FormResidual_Langtry_Menter.Chart1.SeriesList[7].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                                    end
+                                     else
+                                    begin
+                                       // TODO
+                                       // обрыв данных после первых трёх значений.
+                                    end;
+                                 end;
+                              end;
+                           end
+                            else
+                           begin
+                              // TODO
+                              // обрыв данных после первых трёх значений.
+                           end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Minimum:=fmin;
+                   //FormResidual_Langtry_Menter.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+                f.Free;
+                Formresidual.brun_visible:=false;
+                FormResidualSpallart_Allmares.brun_visibleSA:=false;
+                FormResidualSST.brun_visibleSST:=false;
+                FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
+                FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=true;
+                FormResidual_Langtry_Menter.Show;
+            end
+            else
               if (Laplas.egddata.myflmod[0].iturbmodel=5) then
             begin
                // Standart K-epsilon model.
@@ -41425,6 +47022,7 @@ begin
                 end;
 
                 f.Free;
+                FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=false;
                 Formresidual.brun_visible:=false;
                 FormResidualSpallart_Allmares.brun_visibleSA:=false;
                 FormResidualSST.brun_visibleSST:=false;
@@ -41561,6 +47159,7 @@ begin
                 end;
 
                 f.Free;
+                FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=false;
                 Formresidual.brun_visible:=false;
                 FormResidualSpallart_Allmares.brun_visibleSA:=false;
                 FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
@@ -41678,6 +47277,7 @@ begin
 
 
                 f.Free;
+                FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=false;
                 FormResidualSST.brun_visibleSST:=false;
                 Formresidual.brun_visible:=false;
                 FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
@@ -41779,6 +47379,7 @@ begin
                end;
 
                 f.Free;
+                FormResidual_Langtry_Menter.brun_visible_Langtry_Menter:=false;
                 FormResidualSST.brun_visibleSST:=false;
                 FormResidualSpallart_Allmares.brun_visibleSA:=false;
                 FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
@@ -41815,7 +47416,7 @@ var
     pnew, pold : Pointxy;
     mashtab, mul2 : Real;
 begin
-   isleep_render:=1; // Пауза при рендере.
+   isleep_render:=0; // Пауза при рендере.
    if (Button = mbLeft) then
    begin
       drawing:=false;
@@ -41918,7 +47519,7 @@ begin
 
    if (Button = mbLeft) then
    begin
-      isleep_render:=1; // Пауза при рендере.
+      isleep_render:=0; // Пауза при рендере.
       drawing:=true;
       // запоминаем начальную позицию мыши
       ixo:=X;
@@ -42277,6 +47878,10 @@ begin
                Gam:=3.141-Gam;
             end;
             *)
+            cosAlf:=cos(Alf);
+            cosBet:=cos(Bet);
+            sinAlf:=sin(Alf);
+            sinBet:=sin(Bet);
          end;
       end;
 
@@ -42340,8 +47945,38 @@ var
       end
        else
       begin
-         if (((il1=1)and((il2=2)or(il2=3)))
-         or ((il2=1)and((il1=2)or(il1=3))))  then
+         if (((il1=1)and((il2=2)or(il2=3)or(il2=5)))
+         or ((il2=1)and((il1=2)or(il1=3)or(il1=5))))  then
+         begin
+            Result:=true;
+         end
+         else
+         if (((il1=3)and(il2=2))or
+         ((il2=3)and(il1=2))) then
+         begin
+            Result:=true;
+         end
+         else
+         if (((il1=7)and(il2=5))or
+         ((il2=7)and(il1=5))) then
+         begin
+            Result:=true;
+         end
+         else
+         if (((il1=7)and(il2=3))or
+         ((il2=7)and(il1=3))) then
+         begin
+            Result:=true;
+         end
+         else
+         //if (((il1=6)and(il2=3))or
+         //((il2=6)and(il1=3))) then
+         //begin
+           // Result:=true;
+         //end
+         //else
+          if (((il1=6)and(il2=5))or
+         ((il2=6)and(il1=5))) then
          begin
             Result:=true;
          end
@@ -42576,6 +48211,25 @@ begin
    end;
 
    Result:=ret;
+end;
+
+
+function binvisible_face_detectq(nx : Real;
+ny : Real; nz : Real): Boolean;
+var
+   nz1 : Real;
+begin
+
+   // Использует заранее вычисленные значения синуса и косинуса.
+   nz1:= -sinBet*CosAlf*nx + sinAlf*ny + cosAlf*cosBet*nz;
+   if (nz1>-1.0e-3) then
+   begin
+      Result:=true;
+   end
+   else
+   begin
+      Result:=false;
+   end;
 end;
 
 function binvisible_face_detect(nx : Real;
@@ -48782,6 +54436,30 @@ begin
      glDisable(GL_BLEND);
      *)
 
+     // Делаем всего один раз вне цикла!!!!.
+
+     glpushMatrix;
+     //glTranslatef(0,0,-Hscale*(Laplas.body[0].zE-Laplas.body[0].zS));
+     //glTranslatef(0,0,-Hscale*sqrt(sqr(Laplas.body[0].zE-Laplas.body[0].zS)+sqr(Laplas.body[0].yE-Laplas.body[0].yS)+sqr(Laplas.body[0].xE-Laplas.body[0].xS)));
+     //glTranslatef(0.5*(Laplas.body[0].xS+Laplas.body[0].xE),0.5*(Laplas.body[0].yS+Laplas.body[0].yE),0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+       glTranslatef(0,0,-Hscale*sqrt(sqr(zmaxpic-zminpic)+sqr(ymaxpic-yminpic)+sqr(xmaxpic-xminpic)));
+       glTranslatef(0.5*(xminpic+xmaxpic),0.5*(yminpic+ymaxpic),0.5*(zminpic+zmaxpic));
+
+     //-->glRotatef(180.0*Alf/3.141,0.0,0.0,1.0); // z
+     //glRotatef(180.0*Bet/3.141,1.0,0.0,0.0); // x
+     //--->glRotatef(180.0*Bet/3.141,0.7071,0.7071,0.0); // x && y
+     // Вращательное движение в 3D имеет три степени свободы.
+     //glRotatef(180.0*Gam0/3.141,0.0,0.0,1.0); // z apriory
+     glRotatef(180.0*Alf/3.141,1.0,0.0,0.0); // x
+     glRotatef(180.0*Bet/3.141,0.0,1.0,0.0); // y
+     //glRotatef(180.0*Gam/3.141,0.0,0.0,1.0); // z
+     //glTranslatef(-0.5*(Laplas.body[0].xS+Laplas.body[0].xE),-0.5*(Laplas.body[0].yS+Laplas.body[0].yE),-0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+     glTranslatef(-0.5*(xminpic+xmaxpic),-0.5*(yminpic+ymaxpic),-0.5*(zminpic+zmaxpic));
+
+     //glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+     glLineWidth(3);
+     //glLineWidth(1);
+
       for j:=0 to epic-1 do
       begin
               //todo***
@@ -48798,59 +54476,45 @@ begin
                 // TODO код изъят 06.09.2019.
 
 
-                glpushMatrix;
-                //glTranslatef(0,0,-Hscale*(Laplas.body[0].zE-Laplas.body[0].zS));
-                //glTranslatef(0,0,-Hscale*sqrt(sqr(Laplas.body[0].zE-Laplas.body[0].zS)+sqr(Laplas.body[0].yE-Laplas.body[0].yS)+sqr(Laplas.body[0].xE-Laplas.body[0].xS)));
-                //glTranslatef(0.5*(Laplas.body[0].xS+Laplas.body[0].xE),0.5*(Laplas.body[0].yS+Laplas.body[0].yE),0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
-                glTranslatef(0,0,-Hscale*sqrt(sqr(zmaxpic-zminpic)+sqr(ymaxpic-yminpic)+sqr(xmaxpic-xminpic)));
-                glTranslatef(0.5*(xminpic+xmaxpic),0.5*(yminpic+ymaxpic),0.5*(zminpic+zmaxpic));
 
-                //-->glRotatef(180.0*Alf/3.141,0.0,0.0,1.0); // z
-                //glRotatef(180.0*Bet/3.141,1.0,0.0,0.0); // x
-                //--->glRotatef(180.0*Bet/3.141,0.7071,0.7071,0.0); // x && y
-                // Вращательное движение в 3D имеет три степени свободы.
-                glRotatef(180.0*Gam0/3.141,0.0,0.0,1.0); // z apriory
-                glRotatef(180.0*Alf/3.141,1.0,0.0,0.0); // x
-                glRotatef(180.0*Bet/3.141,0.0,1.0,0.0); // y
-                glRotatef(180.0*Gam/3.141,0.0,0.0,1.0); // z
-                //glTranslatef(-0.5*(Laplas.body[0].xS+Laplas.body[0].xE),-0.5*(Laplas.body[0].yS+Laplas.body[0].yE),-0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
-                glTranslatef(-0.5*(xminpic+xmaxpic),-0.5*(yminpic+ymaxpic),-0.5*(zminpic+zmaxpic));
 
 
                 //glColor3f(0.0,0.0,0.0);
 
-                if (binvisible_face_detect(0.0,0.0,-1.0)) then
-                               begin
+                 // All
+               if (bvisible_granq[6][j]) then
+               begin
 
-                // XY bottom
-                 if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i4-1]<=bVisibleCount)) then
-                    begin
+
+                      // XY bottom
+                  if (bvisible_granq[4][j]) then
+                  begin
+
+                     if (binvisible_face_detectq(0.0,0.0,-1.0)) then
+                     begin
 
                     //glColor3f(0.84,0.84,0.84);
 
 
 
-                    glBegin(GL_QUADS);
-                    glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,0.0,-1.0);
-                                    glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
-                                    glColor3f(1.0,1.0,1.0);
-                                    glNormal3f(0.0,0.0,-1.0);
-                                    glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
-                                    glColor3f(1.0,1.0,1.0);
-                                     glNormal3f(0.0,0.0,-1.0);
-                                    glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
-                                    glColor3f(1.0,1.0,1.0);
-                                    glNormal3f(0.0,0.0,-1.0);
-                                    glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
-                                  glColor3f(0.0,0.0,0.0);
-                                  glEnd;
+                        glBegin(GL_QUADS);
+                           glColor3f(1.0,1.0,1.0);
+                           glNormal3f(0.0,0.0,-1.0);
+                           glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                           //glColor3f(1.0,1.0,1.0);
+                           glNormal3f(0.0,0.0,-1.0);
+                           glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                           //glColor3f(1.0,1.0,1.0);
+                           glNormal3f(0.0,0.0,-1.0);
+                           glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                           //glColor3f(1.0,1.0,1.0);
+                           glNormal3f(0.0,0.0,-1.0);
+                           glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                           glColor3f(0.0,0.0,0.0);
+                         glEnd();
 
 
-                       glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+                           //glLineWidth(ComboBoxlineWidth.ItemIndex+1);
 
 
                             if (CheckLine(ipa_count[elmpic[j].i1-1],
@@ -48860,7 +54524,7 @@ begin
                               glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
                                   glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
-                              glEnd;
+                              glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i3-1],
@@ -48870,7 +54534,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
                                   glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i3-1],
@@ -48880,7 +54544,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
                                   glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i1-1],
@@ -48890,46 +54554,45 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
                                   glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             //glLineWidth(1);
                             glColor3f(1.0,1.0,1.0);
-                            glLineWidth(1);
+                            //glLineWidth(1);
 
                     end;
                   end;
 
-                  if (binvisible_face_detect(0.0,0.0,1.0)) then
-                               begin
+
                      // XY Top
-                  if ((ipa_count[elmpic[j].i5-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount)) then
+                    if (bvisible_granq[5][j]) then
+                    begin
+
+                    if (binvisible_face_detectq(0.0,0.0,1.0)) then
                     begin
 
                     //glColor3f(0.84,0.84,0.84);
 
 
-                    glBegin(GL_QUADS);
-                    glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,0.0,1.0);
+                         glBegin(GL_QUADS);
+                           glColor3f(1.0,1.0,1.0);
+                            glNormal3f(0.0,0.0,1.0);
                                       glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
-                                      glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,0.0,1.0);
+                                      //glColor3f(1.0,1.0,1.0);
+                             glNormal3f(0.0,0.0,1.0);
                                       glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
-                                     glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,0.0,1.0);
+                                     //glColor3f(1.0,1.0,1.0);
+                             glNormal3f(0.0,0.0,1.0);
                                       glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
-                                      glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,0.0,1.0);
+                                      //glColor3f(1.0,1.0,1.0);
+                             glNormal3f(0.0,0.0,1.0);
                                       glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
                                       glColor3f(0.0,0.0,0.0);
-                                  glEnd;
+                                  glEnd();
 
 
-                      glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+                      ///glLineWidth(ComboBoxlineWidth.ItemIndex+1);
 
 
                             if (CheckLine(ipa_count[elmpic[j].i5-1],
@@ -48939,7 +54602,7 @@ begin
                               glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
                                   glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
-                              glEnd;
+                              glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i6-1],
@@ -48949,7 +54612,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
                                   glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i7-1],
@@ -48959,7 +54622,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
                                   glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i5-1],
@@ -48969,45 +54632,44 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
                                   glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                            // glLineWidth(1);
                            glColor3f(1.0,1.0,1.0);
-                           glLineWidth(1);
+                           //glLineWidth(1);
 
                     end;
                   end;
 
-                   if (binvisible_face_detect(0.0,-1.0,0.0)) then
-                            begin
+
                   // XZ SSIDE min Y
-                  if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i5-1]<=bVisibleCount)) then
-                    begin
+                 if (bvisible_granq[2][j]) then
+                 begin
+
+                     if (binvisible_face_detectq(0.0,-1.0,0.0)) then
+                     begin
 
                     //glColor3f(0.84,0.84,0.84);
 
-                    glBegin(GL_QUADS);
-                    glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,-1.0,0.0);
+                                glBegin(GL_QUADS);
+                                   glColor3f(1.0,1.0,1.0);
+                                  glNormal3f(0.0,-1.0,0.0);
                                   glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
-                                  glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,-1.0,0.0);
+                                  //glColor3f(1.0,1.0,1.0);
+                                  glNormal3f(0.0,-1.0,0.0);
                                   glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
-                                  glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,-1.0,0.0);
+                                  //glColor3f(1.0,1.0,1.0);
+                                  glNormal3f(0.0,-1.0,0.0);
                                   glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
-                                  glColor3f(1.0,1.0,1.0);
-                    glNormal3f(0.0,-1.0,0.0);
+                                  //glColor3f(1.0,1.0,1.0);
+                                  glNormal3f(0.0,-1.0,0.0);
                                   glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
                                   glColor3f(0.0,0.0,0.0);
-                               glEnd;
+                               glEnd();
 
 
-                       glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+                          //glLineWidth(ComboBoxlineWidth.ItemIndex+1);
 
 
                           if (CheckLine(ipa_count[elmpic[j].i1-1],
@@ -49017,7 +54679,7 @@ begin
                               glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
                                   glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
-                              glEnd;
+                              glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i2-1],
@@ -49027,7 +54689,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
                                   glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i6-1],
@@ -49037,7 +54699,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
                                   glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i1-1],
@@ -49047,44 +54709,43 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
                                   glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                              //glLineWidth(1);
                              glColor3f(1.0,1.0,1.0);
-                             glLineWidth(1);
+                             //glLineWidth(1);
                     end;
                   end;
 
-                   if (binvisible_face_detect(0.0,1.0,0.0)) then
-                            begin
-                   // XZ SSIDE max Y
-                  if ((ipa_count[elmpic[j].i4-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount)) then
+
+                 // XZ SSIDE max Y
+                 if (bvisible_granq[3][j]) then
+                 begin
+
+                    if (binvisible_face_detectq(0.0,1.0,0.0)) then
                     begin
 
                     //glColor3f(0.84,0.84,0.84);
 
-                    glBegin(GL_QUADS);
-                    glColor3f(1.0,1.0,1.0);
-                   glNormal3f(0.0,1.0,0.0);
+                      glBegin(GL_QUADS);
+                      glColor3f(1.0,1.0,1.0);
+                      glNormal3f(0.0,1.0,0.0);
                                    glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
-                                  glColor3f(1.0,1.0,1.0);
-                   glNormal3f(0.0,1.0,0.0);
+                                 // glColor3f(1.0,1.0,1.0);
+                      glNormal3f(0.0,1.0,0.0);
                                    glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
-                                  glColor3f(1.0,1.0,1.0);
-                   glNormal3f(0.0,1.0,0.0);
+                                  //glColor3f(1.0,1.0,1.0);
+                       glNormal3f(0.0,1.0,0.0);
                                    glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
-                                  glColor3f(1.0,1.0,1.0);
-                   glNormal3f(0.0,1.0,0.0);
+                                  //glColor3f(1.0,1.0,1.0);
+                       glNormal3f(0.0,1.0,0.0);
                                    glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
                                     glColor3f(0.0,0.0,0.0);
-                                glEnd;
+                                glEnd();
 
 
-                           glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+                           //glLineWidth(ComboBoxlineWidth.ItemIndex+1);
 
 
                           if (CheckLine(ipa_count[elmpic[j].i3-1],
@@ -49094,7 +54755,7 @@ begin
                               glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
                                   glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
-                              glEnd;
+                              glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i3-1],
@@ -49104,7 +54765,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
                                   glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i7-1],
@@ -49114,7 +54775,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
                                   glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i8-1],
@@ -49124,22 +54785,21 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
                                   glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                           // glLineWidth(1);
                           glColor3f(1.0,1.0,1.0);
-                          glLineWidth(1);
+                         // glLineWidth(1);
                     end;
                   end;
 
-                   if (binvisible_face_detect(1.0,0.0,0.0)) then
-                            begin
+
                    // YZ SSIDE max X
-                  if ((ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount)) then
+                 if (bvisible_granq[0][j]) then
+                 begin
+
+                    if (binvisible_face_detectq(1.0,0.0,0.0)) then
                     begin
 
                     //glColor3f(0.84,0.84,0.84);
@@ -49149,20 +54809,20 @@ begin
                                  glColor3f(1.0,1.0,1.0);
                     glNormal3f(1.0,0.0,0.0);
                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
-                                glColor3f(1.0,1.0,1.0);
+                                //glColor3f(1.0,1.0,1.0);
                     glNormal3f(1.0,0.0,0.0);
                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
-                                 glColor3f(1.0,1.0,1.0);
+                                 //glColor3f(1.0,1.0,1.0);
                     glNormal3f(1.0,0.0,0.0);
                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
-                                 glColor3f(1.0,1.0,1.0);
+                                 //glColor3f(1.0,1.0,1.0);
                     glNormal3f(1.0,0.0,0.0);
                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
                               glColor3f(0.0,0.0,0.0);
-                               glEnd;
+                               glEnd();
 
 
-                          glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+                          //glLineWidth(ComboBoxlineWidth.ItemIndex+1);
 
 
                           if (CheckLine(ipa_count[elmpic[j].i3-1],
@@ -49172,7 +54832,7 @@ begin
                               glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
                                   glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
-                              glEnd;
+                              glEnd();
                             end;
 
                             if(CheckLine(ipa_count[elmpic[j].i3-1],
@@ -49182,7 +54842,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
                                   glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i7-1],
@@ -49192,7 +54852,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
                                   glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i6-1],
@@ -49202,47 +54862,46 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
                                   glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             //glLineWidth(1);
                             glColor3f(1.0,1.0,1.0);
-                            glLineWidth(1);
+                           // glLineWidth(1);
 
                     end;
                   end;
 
-                  if (binvisible_face_detect(-1.0,0.0,0.0)) then
-                            begin
+
                   // YZ SSIDE min X
-                  if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i5-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount) and
-                 (ipa_count[elmpic[j].i4-1]<=bVisibleCount)) then
-                    begin
+                 if (bvisible_granq[1][j]) then
+                 begin
 
-                    //glColor3f(0.84,0.84,0.84);
+                     if (binvisible_face_detectq(-1.0,0.0,0.0)) then
+                     begin
 
-
-                    glBegin(GL_QUADS);
-                                  glColor3f(1.0,1.0,1.0);
-                    glNormal3f(-1.0,0.0,0.0);
-                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
-                                   glColor3f(1.0,1.0,1.0);
-                    glNormal3f(-1.0,0.0,0.0);
-                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
-                                  glColor3f(1.0,1.0,1.0);
-                    glNormal3f(-1.0,0.0,0.0);
-                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
-                                  glColor3f(1.0,1.0,1.0);
-                    glNormal3f(-1.0,0.0,0.0);
-                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
-                                glColor3f(0.0,0.0,0.0);
-                                glEnd;
+                           //glColor3f(0.84,0.84,0.84);
 
 
+                           glBegin(GL_QUADS);
+                               glColor3f(1.0,1.0,1.0);
+                               glNormal3f(-1.0,0.0,0.0);
+                               glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                               //glColor3f(1.0,1.0,1.0);
+                               glNormal3f(-1.0,0.0,0.0);
+                               glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                               //glColor3f(1.0,1.0,1.0);
+                               glNormal3f(-1.0,0.0,0.0);
+                               glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                               //glColor3f(1.0,1.0,1.0);
+                               glNormal3f(-1.0,0.0,0.0);
+                               glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                               glColor3f(0.0,0.0,0.0);
+                            glEnd();
 
-                          glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+
+
+                          //glLineWidth(ComboBoxlineWidth.ItemIndex+1);
 
                           if (CheckLine(ipa_count[elmpic[j].i1-1],
                                 ipa_count[elmpic[j].i4-1])
@@ -49251,7 +54910,7 @@ begin
                               glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
                                   glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
-                              glEnd;
+                              glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i4-1],
@@ -49261,7 +54920,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
                                   glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i5-1],
@@ -49271,7 +54930,7 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
                                   glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                             if (CheckLine(ipa_count[elmpic[j].i1-1],
@@ -49281,20 +54940,23 @@ begin
                                 glBegin(GL_LINE_LOOP);
                                   glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
                                   glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
-                               glEnd;
+                               glEnd();
                             end;
 
                              //glLineWidth(1);
                              glColor3f(1.0,1.0,1.0);
-                             glLineWidth(1);
+                            // glLineWidth(1);
                     end;
                   end;
 
-                glPopmatrix;
+               end;
+
 
              end;
           end;
       end;
+
+      glPopmatrix;
 
     end;
   end;
@@ -49507,23 +55169,23 @@ begin
     //glEnable(GL_DEPTH_TEST); //включить тест глубины : включаем проверку разрешения фигур (впереди стоящая закрывает фигуру за ней)
     // glDepthFunc(GL_LEQUAL); //тип проверки
 
-     glEnable ( GL_CULL_FACE );  //показывать только передние грани
-     glCullFace  ( GL_BACK );
+     //--->glEnable ( GL_CULL_FACE );  //показывать только передние грани
+     //--->glCullFace  ( GL_BACK );
 
      //glPolygonMode (GL_FRONT_AND_BACK, GL_FILL); // закраска сторон !!!
-     glPolygonMode (GL_FRONT, GL_FILL);
+     //--->glPolygonMode (GL_FRONT, GL_FILL);
 
   end
   else
   begin
      //glDisable(GL_COLOR_MATERIAL); // выключает цвет материала.
      //glDisable(GL_BLEND);
-     glDisable(GL_CULL_FACE);  // отключаем избирательный показ граней.
+     //--->glDisable(GL_CULL_FACE);  // отключаем избирательный показ граней.
     // glDisable(GL_DEPTH_TEST);  // отключаем тест глубины.
 
     if (not(bvisiblepic)) then
     begin
-       glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+       //--->glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
        // показать передние и задние стороны полигона линиями
     end
     else
@@ -49531,12 +55193,12 @@ begin
        if ((icurrentpic=0)or(ComboBoxVisibleVariable.ItemIndex=nvalpic+1)) then
        begin
          // Расчётная сетка или геометрия.
-         glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+         //--->glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
          // показать передние и задние стороны полигона линиями
        end
         else
        begin
-          glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+          //--->glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
        end;
     end;
   end;
@@ -49662,6 +55324,10 @@ begin
                     // Standart K-Epsilon (RANS)
                     EGDForm.BEditTurb.Visible:=false;
                  end;
+             6 : begin
+                    // Модель Ментора Лантгрии (RANS) [2009]
+                    EGDForm.BEditTurb.Visible:=false;
+                 end;
             end;
          end;
       end
@@ -49696,8 +55362,8 @@ begin
       // Полностью отключаем механику из интерфейса
       // т.к. она так и не заработала на мсмент
       // 4 августа 2019 года.
-      EGDForm.CheckBoxStaticStructural.Visible:=false;
-      EGDForm.CheckBoxStaticStructural.Checked:=false;
+      EGDForm.CheckBoxStaticStructural.Visible:=true;
+      //EGDForm.CheckBoxStaticStructural.Checked:=false;
    end;
    EGDForm.CBFlowClick(Sender);
 
@@ -49716,8 +55382,17 @@ begin
 
    if (egddata.itemper<>2) then
    begin
-      // none, МКО или графовый метод.
-      FormSetting.GroupBox2.Visible:=false;
+      if (egddata.iStaticStructural=1) then
+      begin
+         // Механика
+         FormSetting.GroupBox2.Visible:=true;
+      end
+      else
+      begin
+         // точно не механика.
+         // none, МКО или графовый метод.
+         FormSetting.GroupBox2.Visible:=false;
+      end;
    end
    else
    begin
@@ -49731,24 +55406,28 @@ begin
       FormSetting.Height:=566;
       FormSetting.PanelSolverSetting.Visible:=true;
 
-      if (MeshForm.CheckBoxALICE.Checked) then
-      begin
+      //if (MeshForm.CheckBoxALICE.Checked) then
+      //begin
+         // закоментировано 04.01.2021
          // АЛИС сетка
-         FormSetting.ComboBoxFlowScheme.Visible:=false;
-         FormSetting.ComboBoxSchemeTemperature.Visible:=false;
-         FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind
-         FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind
-         FormSetting.Label1.Visible:=false;
-         FormSetting.Label2.Visible:=false;
-      end
-      else
-      begin
+         //FormSetting.ComboBoxFlowSchemePrefix.Visible:=true;
+         //FormSetting.ComboBoxFlowScheme.Visible:=false;
+         //FormSetting.ComboBoxSchemeTemperature.Visible:=false;
+         //FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=1; // Upwind
+         //FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind
+         //FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind
+         //FormSetting.Label1.Visible:=false;
+         //FormSetting.Label2.Visible:=false;
+      //end
+      //else
+      //begin
          // Структурированная сетка.
+         FormSetting.ComboBoxFlowSchemePrefix.Visible:=true;
          FormSetting.ComboBoxFlowScheme.Visible:=true;
          FormSetting.ComboBoxSchemeTemperature.Visible:=true;
          FormSetting.Label1.Visible:=true;
          FormSetting.Label2.Visible:=true;
-      end;
+      //end;
    end
    else
    begin
@@ -49772,25 +55451,30 @@ begin
          end;
          FormSetting.Height:=566;
       end;
-       if (MeshForm.CheckBoxALICE.Checked) then
-      begin
+       //if (MeshForm.CheckBoxALICE.Checked) then
+      //begin
+         // закоментировано 04.01.2021
          // АЛИС сетка
-         FormSetting.ComboBoxFlowScheme.Visible:=false;
-         FormSetting.ComboBoxSchemeTemperature.Visible:=false;
-         FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind
-         FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind
-         FormSetting.Label1.Visible:=false;
-         FormSetting.Label2.Visible:=false;
-      end
-      else
-      begin
+         //FormSetting.ComboBoxFlowSchemePrefix.Visible:=false;
+        // FormSetting.ComboBoxFlowScheme.Visible:=false;
+         //FormSetting.ComboBoxSchemeTemperature.Visible:=false;
+         //FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=1; // Upwind
+         //FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind
+         //FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind
+         //FormSetting.Label1.Visible:=false;
+         //FormSetting.Label2.Visible:=false;
+      //end
+      //else
+      //begin
          // Структурированная сетка.
+         FormSetting.ComboBoxFlowSchemePrefix.Visible:=false;
          FormSetting.ComboBoxFlowScheme.Visible:=false;
          FormSetting.ComboBoxSchemeTemperature.Visible:=true;
+         FormSetting.ComboBoxFlowSchemePrefix.ItemIndex:=1; // Upwind
          FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind
          FormSetting.Label1.Visible:=false;
          FormSetting.Label2.Visible:=true;
-      end;
+      //end;
    end;
    FormSetting.ComboBoxSolverSettingChange(Sender);
    FormSetting.ShowModal;
@@ -49894,6 +55578,8 @@ end;
 
 // Считываем картинку из Техплот.
 procedure TLaplas.LoadSolutionIDClick(Sender: TObject);
+const
+ bVisibleCount = 7;
 var
    f : TStringList; // переменная типа объект TStringList
    s, sub : string;
@@ -50024,6 +55710,7 @@ begin
       SetLength(ypic,npic);
       SetLength(zpic,npic);
       SetLength(ipa_count,npic);
+
       for j := 0 to npic-1 do
       begin
          ipa_count[j]:=0; // инициализация
@@ -50033,6 +55720,15 @@ begin
 
      // ShowMessage('ok');
       SetLength(elmpic,epic);
+
+       SetLength(bvisible_granq,7,epic);
+      for j := 0 to epic-1 do
+      begin
+      for i := 0 to 6 do
+         begin
+            bvisible_granq[i][j]:=false;
+         end;
+      end;
 
       istr:=istrnow;
       // Считывание x.
@@ -50307,6 +56003,70 @@ begin
            inc(ipa_count[elmpic[ielm].i8-1]);
          end;
 
+          for ielm:=0 to epic-1 do
+       begin
+          // XY bottom 4
+          if ((ipa_count[elmpic[ielm].i1-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i2-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i3-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i4-1]<=bVisibleCount)) then
+          Begin
+             bvisible_granq[4][ielm]:=true;
+             bvisible_granq[6][ielm]:=true;
+          End;
+
+          // XY Top 5
+          if ((ipa_count[elmpic[ielm].i5-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i6-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i7-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i8-1]<=bVisibleCount)) then
+          Begin
+             bvisible_granq[5][ielm]:=true;
+             bvisible_granq[6][ielm]:=true;
+          End;
+
+          // XZ SSIDE min Y 2
+          if ((ipa_count[elmpic[ielm].i1-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i2-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i6-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i5-1]<=bVisibleCount)) then
+          Begin
+             bvisible_granq[2][ielm]:=true;
+             bvisible_granq[6][ielm]:=true;
+          End;
+
+         // XZ SSIDE max Y 3
+         if ((ipa_count[elmpic[ielm].i4-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i8-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i7-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i3-1]<=bVisibleCount)) then
+         Begin
+            bvisible_granq[3][ielm]:=true;
+            bvisible_granq[6][ielm]:=true;
+         end;
+
+         // YZ SSIDE max X 0
+         if ((ipa_count[elmpic[ielm].i2-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i3-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i7-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i6-1]<=bVisibleCount)) then
+          Begin
+             bvisible_granq[0][ielm]:=true;
+             bvisible_granq[6][ielm]:=true;
+          end;
+
+          // YZ SSIDE min X 1
+          if ((ipa_count[elmpic[ielm].i1-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i5-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i8-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i4-1]<=bVisibleCount)) then
+           begin
+              bvisible_granq[1][ielm]:=true;
+              bvisible_granq[6][ielm]:=true;
+           end;
+
+       end;
+
 
        // Определение максимума и минимума за одно линейное сканирование.
        xminpic:=1.0e30;
@@ -50391,7 +56151,7 @@ begin
        SetLength(ypic,npic);
        SetLength(zpic,npic);
        SetLength(ipa_count,npic);
-
+       SetLength(bvisible_granq,7,epic);
 
 
        // Мы ориентированы на файл с АЛИС сеткой.
@@ -50407,6 +56167,8 @@ end;
 
 // Каркасная модель рисуется.
 procedure TLaplas.on_visible_karkas();
+const
+   bVisibleCount = 7;
 var
    f : TStringList; // переменная типа объект TStringList
    s, sub : string;
@@ -50537,6 +56299,7 @@ begin
       SetLength(ypic,npic);
       SetLength(zpic,npic);
       SetLength(ipa_count,npic);
+
       for j := 0 to npic-1 do
       begin
          ipa_count[j]:=0; // инициализация
@@ -50546,6 +56309,15 @@ begin
 
      // ShowMessage('ok');
       SetLength(elmpic,epic);
+
+      SetLength(bvisible_granq,7,epic);
+      for j := 0 to epic-1 do
+      begin
+      for i := 0 to 6 do
+         begin
+            bvisible_granq[i][j]:=false;
+         end;
+      end;
 
       istr:=istrnow;
       // Считывание x.
@@ -50821,6 +56593,70 @@ begin
            inc(ipa_count[elmpic[ielm].i8-1]);
          end;
 
+       for ielm:=0 to epic-1 do
+       begin
+          // XY bottom 4
+          if ((ipa_count[elmpic[ielm].i1-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i2-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i3-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i4-1]<=bVisibleCount)) then
+          Begin
+             bvisible_granq[4][ielm]:=true;
+             bvisible_granq[6][ielm]:=true;
+          End;
+
+          // XY Top 5
+          if ((ipa_count[elmpic[ielm].i5-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i6-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i7-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i8-1]<=bVisibleCount)) then
+          Begin
+             bvisible_granq[5][ielm]:=true;
+             bvisible_granq[6][ielm]:=true;
+          End;
+
+          // XZ SSIDE min Y 2
+          if ((ipa_count[elmpic[ielm].i1-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i2-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i6-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i5-1]<=bVisibleCount)) then
+          Begin
+             bvisible_granq[2][ielm]:=true;
+             bvisible_granq[6][ielm]:=true;
+          End;
+
+         // XZ SSIDE max Y 3
+         if ((ipa_count[elmpic[ielm].i4-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i8-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i7-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i3-1]<=bVisibleCount)) then
+         Begin
+            bvisible_granq[3][ielm]:=true;
+            bvisible_granq[6][ielm]:=true;
+         end;
+
+         // YZ SSIDE max X 0
+         if ((ipa_count[elmpic[ielm].i2-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i3-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i7-1]<=bVisibleCount) and
+             (ipa_count[elmpic[ielm].i6-1]<=bVisibleCount)) then
+          Begin
+             bvisible_granq[0][ielm]:=true;
+             bvisible_granq[6][ielm]:=true;
+          end;
+
+          // YZ SSIDE min X 1
+          if ((ipa_count[elmpic[ielm].i1-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i5-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i8-1]<=bVisibleCount) and
+              (ipa_count[elmpic[ielm].i4-1]<=bVisibleCount)) then
+           begin
+              bvisible_granq[1][ielm]:=true;
+              bvisible_granq[6][ielm]:=true;
+           end;
+
+       end;
+
 
        // Определение максимума и минимума за одно линейное сканирование.
        xminpic:=1.0e30;
@@ -50907,11 +56743,9 @@ begin
    SetLength(ypic,npic);
    SetLength(zpic,npic);
    SetLength(ipa_count,npic);
-
-
+   SetLength(bvisible_granq,7,epic); // Хранение для быстрой проверки требуется ли рисовать грань.
 
    // Мы ориентированы на файл с АЛИС сеткой.
-
 
    SetLength(elmpic,epic);
 
@@ -51197,9 +57031,9 @@ begin
    zceo:=0.0;
    for i := 1 to (lb-1) do
    begin
-      xceo:=body[i].xS+body[i].xE;
-      yceo:=body[i].yS+body[i].yE;
-      zceo:=body[i].zS+body[i].zE;
+      xceo:=xceo+body[i].xS+body[i].xE;
+      yceo:=yceo+body[i].yS+body[i].yE;
+      zceo:=zceo+body[i].zS+body[i].zE;
    end;
    // Мы округляем до целого при поворотах чтобы не было щелей
    // при построении сетки.
@@ -53207,7 +59041,7 @@ begin
    end;
    // Масштабирование
    // Возвращение в исходный вид если визуализация глюканула.
-  // perspectiveangle:=45.0;
+   // perspectiveangle:=45.0;
 
    // Высота
    //Hscale*sqrt(sqr(body[0].zE-body[0].zS)+sqr(body[0].yE-body[0].yS)+sqr(body[0].xE-body[0].xS))
@@ -53230,7 +59064,7 @@ begin
      end;
      xc:=0.5*(xa+xb);
    end;
-    perspectiveangle_counter:=xc;
+   perspectiveangle_counter:=xc;
 
 
 
@@ -53241,6 +59075,24 @@ begin
    Oxc:=0.5*(xmin+xmax);
    Oyc:=0.5*(ymin+ymax);
    Ozc:=0.5*(zmin+zmax);
+end;
+
+// Включает  режим экономии электроэнергии и ресурса акумулятора.
+procedure TLaplas.BitBtn1Click(Sender: TObject);
+begin
+   ecology_btn:=not(ecology_btn);
+   if (ecology_btn) then
+   begin
+      // энергосбережение выключено.
+      BitBtn1.Caption:='off';
+   end
+   else
+   begin
+      // режим экономии энергии и ресурса акумулятора.
+
+      // энергосбережение включено.
+      BitBtn1.Caption:='Eco';
+   end;
 end;
 
 // Вызывает генератор сетки (Структурированной или АЛИС).

@@ -45,6 +45,42 @@ type
     EditLinearExpansionKoefficient: TEdit;
     LabelLinearExpansionCoefficient: TLabel;
     ButtonCancel: TButton;
+    ComboBoxlinearExpansion: TComboBox;
+    ButtonEditlinearexpansioncoefficient: TButton;
+    ButtonYoungModule: TButton;
+    ComboBoxYoungModule: TComboBox;
+    ComboBoxPoissonratio: TComboBox;
+    ButtonPoissonratio: TButton;
+    Label1: TLabel;
+    EditbetaX: TEdit;
+    Label2: TLabel;
+    EditbetaY: TEdit;
+    Label3: TLabel;
+    EditbetaZ: TEdit;
+    Label4: TLabel;
+    Label5: TLabel;
+    Label6: TLabel;
+    Editnuxy: TEdit;
+    Label7: TLabel;
+    Editnuxz: TEdit;
+    Label8: TLabel;
+    Editnuyz: TEdit;
+    GroupBoxShearModulus: TGroupBox;
+    CheckBoxShearModulus: TCheckBox;
+    PanelShearModulus: TPanel;
+    Label9: TLabel;
+    EditGxy: TEdit;
+    Label10: TLabel;
+    EditGyz: TEdit;
+    Label11: TLabel;
+    EditGxz: TEdit;
+    Label12: TLabel;
+    Label13: TLabel;
+    EditEx: TEdit;
+    Label14: TLabel;
+    EditEy: TEdit;
+    Label15: TLabel;
+    EditEz: TEdit;
     procedure BApplyClick(Sender: TObject);
     procedure CBsolidmatChange(Sender: TObject);
     procedure ComboBoxheatcapacitytypeChange(Sender: TObject);
@@ -53,6 +89,13 @@ type
     procedure ButtonconductiviypiecewiseClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure ButtonCancelClick(Sender: TObject);
+    procedure ButtonEditlinearexpansioncoefficientClick(Sender: TObject);
+    procedure ComboBoxlinearExpansionChange(Sender: TObject);
+    procedure ButtonYoungModuleClick(Sender: TObject);
+    procedure ButtonPoissonratioClick(Sender: TObject);
+    procedure ComboBoxYoungModuleClick(Sender: TObject);
+    procedure ComboBoxPoissonratioClick(Sender: TObject);
+    procedure CheckBoxShearModulusClick(Sender: TObject);
 
   private
     { Private declarations }
@@ -223,17 +266,84 @@ begin
              Laplas.workmat[imatid].temp_lam[0]:=20.0;
              Laplas.workmat[imatid].arr_lam[0]:= StrToFloat(ELam.Text); // теплопроводность
              // Если же свойства температурно зависимые при
-             // ComboBoxHeatCapacitytype.ItemIndex=1
+             // ComboBoxconductivitytype.ItemIndex=1
              // то уже все данные занесены и здесь ввод не нужен.
           end;
-          // Ортотропность.
+          // Ортотропность коэффициента теплопроводности.
           Laplas.workmat[imatid].mult_lam_x:=StrToFloat(Editmultx.Text);
           Laplas.workmat[imatid].mult_lam_y:=StrToFloat(Editmulty.Text);
           Laplas.workmat[imatid].mult_lam_z:=StrToFloat(Editmultz.Text);
+          // Коэффициент линейного теплового расширения.
+          Laplas.workmat[imatid].mult_Linear_expansion_coefficient_x:=StrToFloat(EditbetaX.Text);
+          Laplas.workmat[imatid].mult_Linear_expansion_coefficient_y:=StrToFloat(EditbetaY.Text);
+          Laplas.workmat[imatid].mult_Linear_expansion_coefficient_z:=StrToFloat(EditbetaZ.Text);
+          // Модуль Юнга.
+          Laplas.workmat[imatid].mult_Young_Module_x:=StrToFloat(EditEx.Text);
+          Laplas.workmat[imatid].mult_Young_Module_y:=StrToFloat(EditEy.Text);
+          Laplas.workmat[imatid].mult_Young_Module_z:=StrToFloat(EditEz.Text);
+          // Ортотропность коэффициента Пуассона.
+          Laplas.workmat[imatid].mult_Poisson_ratio_xy:=StrToFloat(Editnuxy.Text);
+          Laplas.workmat[imatid].mult_Poisson_ratio_xz:=StrToFloat(Editnuxz.Text);
+          Laplas.workmat[imatid].mult_Poisson_ratio_yz:=StrToFloat(Editnuyz.Text);
+          // Для выполнения симметричности матрицы механических свойств относительно главной диагонали должны выполняться
+          // следующие условия симметрии.
+          Laplas.workmat[imatid].mult_Poisson_ratio_yx:=StrToFloat(Editnuxy.Text)*(Laplas.workmat[imatid].mult_Young_Module_y/Laplas.workmat[imatid].mult_Young_Module_x);
+          Laplas.workmat[imatid].mult_Poisson_ratio_zx:=StrToFloat(Editnuxz.Text)*(Laplas.workmat[imatid].mult_Young_Module_z/Laplas.workmat[imatid].mult_Young_Module_x);
+          Laplas.workmat[imatid].mult_Poisson_ratio_zy:=StrToFloat(Editnuyz.Text)*(Laplas.workmat[imatid].mult_Young_Module_z/Laplas.workmat[imatid].mult_Young_Module_y);
+          // Модуль сдвига
+          if (CheckBoxShearModulus.Checked) then
+          begin
+              Laplas.workmat[imatid].bShearModuleActive:=true;
+          end
+          else
+          begin
+             Laplas.workmat[imatid].bShearModuleActive:=false;
+          end;
+          Laplas.workmat[imatid].ShearModuleGxy:=StrToFloat(EditGxy.Text);
+          Laplas.workmat[imatid].ShearModuleGyz:=StrToFloat(EditGyz.Text);
+          Laplas.workmat[imatid].ShearModuleGxz:=StrToFloat(EditGxz.Text);
+
+
           // Thermal-Stress
-          Laplas.workmat[imatid].Poisson_ratio:= StrToFloat(EditPoissonRatio.Text);
-          Laplas.workmat[imatid].Young_Module:=StrToFloat(EditYoungModule.Text);
-          Laplas.workmat[imatid].Linear_expansion_coefficient:=StrToFloat(EditLinearExpansionKoefficient.Text);
+          //Laplas.workmat[imatid].Poisson_ratio:= StrToFloat(EditPoissonRatio.Text);
+           if (ComboBoxPoissonratio.ItemIndex=0) then
+          begin
+             // Constant properties
+             Laplas.workmat[imatid].n_Poisson_ratio:=1;
+             SetLength(Laplas.workmat[imatid].temp_Poisson_ratio, Laplas.workmat[imatid].n_Poisson_ratio);
+             SetLength(Laplas.workmat[imatid].arr_Poisson_ratio, Laplas.workmat[imatid].n_Poisson_ratio);
+             Laplas.workmat[imatid].temp_Poisson_ratio[0]:=20.0;
+             Laplas.workmat[imatid].arr_Poisson_ratio[0]:= StrToFloat(EditPoissonRatio.Text); // Коэффициент Пуассона.
+             // Если же свойства температурно зависимые при
+             // ComboBoxPoissonratio.ItemIndex=1
+             // то уже все данные занесены и здесь ввод не нужен.
+          end;
+          //Laplas.workmat[imatid].Young_Module:=StrToFloat(EditYoungModule.Text);
+           if (ComboBoxYoungModule.ItemIndex=0) then
+          begin
+             // Constant properties
+             Laplas.workmat[imatid].n_Young_Module:=1;
+             SetLength(Laplas.workmat[imatid].temp_Young_Module, Laplas.workmat[imatid].n_Young_Module);
+             SetLength(Laplas.workmat[imatid].arr_Young_Module, Laplas.workmat[imatid].n_Young_Module);
+             Laplas.workmat[imatid].temp_Young_Module[0]:=20.0;
+             Laplas.workmat[imatid].arr_Young_Module[0]:= StrToFloat(EditYoungModule.Text); // модуль Юнга.
+             // Если же свойства температурно зависимые при
+             // ComboBoxYoungModule.ItemIndex=1
+             // то уже все данные занесены и здесь ввод не нужен.
+          end;
+          //Laplas.workmat[imatid].Linear_expansion_coefficient:=StrToFloat(EditLinearExpansionKoefficient.Text);
+           if (ComboBoxlinearExpansion.ItemIndex=0) then
+          begin
+             // Constant properties
+             Laplas.workmat[imatid].n_Linear_expansion_coefficient:=1;
+             SetLength(Laplas.workmat[imatid].temp_Linear_expansion_coefficient, Laplas.workmat[imatid].n_Linear_expansion_coefficient);
+             SetLength(Laplas.workmat[imatid].arr_Linear_expansion_coefficient, Laplas.workmat[imatid].n_Linear_expansion_coefficient);
+             Laplas.workmat[imatid].temp_Linear_expansion_coefficient[0]:=20.0;
+             Laplas.workmat[imatid].arr_Linear_expansion_coefficient[0]:= StrToFloat(EditLinearExpansionKoefficient.Text); // коэффициент линейного теплового расширения.
+             // Если же свойства температурно зависимые при
+             // ComboBoxlinearExpansion.ItemIndex=1
+             // то уже все данные занесены и здесь ввод не нужен.
+          end;
           Laplas.workmat[imatid].blibmat:=0; // это материал определённый пользователем
           Laplas.workmat[imatid].ilibident:=100; // это материал определённый пользователем
        end;
@@ -269,6 +379,27 @@ begin
    Formusertempdepend.ShowModal;
 end;
 
+procedure TFormUserDefinedSolidMat.ButtonEditlinearexpansioncoefficientClick(
+  Sender: TObject);
+  var
+    i_4 : Integer;
+begin
+   Formusertempdepend.Caption:='Solid linear expansion coefficient';
+   Formusertempdepend.Label1.Caption:='The following curve specification consists of';
+   Formusertempdepend.Label2.Caption:='a list of temperature/linear expansion coefficient pairs, which define a';
+   Formusertempdepend.Label3.Caption:='piecewise-linear curve. Spacing is not significant';
+   Formusertempdepend.Label4.Caption:='as long as the numbers are given in pairs.';
+   Formusertempdepend.Label5.Caption:='solid linear expansion coefficient units 1E-6/(K).';
+   Formusertempdepend.ComboBoxtemperatureUnit.ItemIndex:=0;  // Градусы Цельсия
+   Formusertempdepend.Memopiecewiseproperties.Clear;
+   for i_4 := 0 to Laplas.workmat[Laplas.body[Laplas.itek].imatid].n_Linear_expansion_coefficient-1 do
+   begin
+      Formusertempdepend.Memopiecewiseproperties.Lines.Add(FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].temp_Linear_expansion_coefficient[i_4])+' '+FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].arr_Linear_expansion_coefficient[i_4]));
+   end;
+   Formusertempdepend.identifier:=3;
+   Formusertempdepend.ShowModal;
+end;
+
 // Вызов piecewise heat capacity.
 procedure TFormUserDefinedSolidMat.ButtonheatcapacitypiecewiseClick(
   Sender: TObject);
@@ -291,6 +422,46 @@ begin
    Formusertempdepend.ShowModal;
 end;
 
+procedure TFormUserDefinedSolidMat.ButtonPoissonratioClick(Sender: TObject);
+var
+  i_4 : Integer;
+begin
+   Formusertempdepend.Caption:='Solid Poisson ratio ';
+   Formusertempdepend.Label1.Caption:='The following curve specification consists of';
+   Formusertempdepend.Label2.Caption:='a list of temperature/Poisson ratio pairs, which define a';
+   Formusertempdepend.Label3.Caption:='piecewise-linear curve. Spacing is not significant';
+   Formusertempdepend.Label4.Caption:='as long as the numbers are given in pairs.';
+   Formusertempdepend.Label5.Caption:='solid Poisson ratio units 1.';
+   Formusertempdepend.ComboBoxtemperatureUnit.ItemIndex:=0;  // Градусы Цельсия
+   Formusertempdepend.Memopiecewiseproperties.Clear;
+   for i_4 := 0 to Laplas.workmat[Laplas.body[Laplas.itek].imatid].n_Poisson_ratio-1 do
+   begin
+      Formusertempdepend.Memopiecewiseproperties.Lines.Add(FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].temp_Poisson_ratio[i_4])+' '+FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].arr_Poisson_ratio[i_4]));
+   end;
+   Formusertempdepend.identifier:=5;
+   Formusertempdepend.ShowModal;
+end;
+
+procedure TFormUserDefinedSolidMat.ButtonYoungModuleClick(Sender: TObject);
+var
+   i_4 : Integer;
+begin
+   Formusertempdepend.Caption:='Solid Young Module GPa';
+   Formusertempdepend.Label1.Caption:='The following curve specification consists of';
+   Formusertempdepend.Label2.Caption:='a list of temperature/Young Module pairs, which define a';
+   Formusertempdepend.Label3.Caption:='piecewise-linear curve. Spacing is not significant';
+   Formusertempdepend.Label4.Caption:='as long as the numbers are given in pairs.';
+   Formusertempdepend.Label5.Caption:='solid Young Module units GPa.';
+   Formusertempdepend.ComboBoxtemperatureUnit.ItemIndex:=0;  // Градусы Цельсия
+   Formusertempdepend.Memopiecewiseproperties.Clear;
+   for i_4 := 0 to Laplas.workmat[Laplas.body[Laplas.itek].imatid].n_Young_Module-1 do
+   begin
+      Formusertempdepend.Memopiecewiseproperties.Lines.Add(FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].temp_Young_Module[i_4])+' '+FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].arr_Young_Module[i_4]));
+   end;
+   Formusertempdepend.identifier:=4;
+   Formusertempdepend.ShowModal;
+end;
+
 // Выбор шаблона заполнения:
 procedure TFormUserDefinedSolidMat.CBsolidmatChange(Sender: TObject);
 begin
@@ -303,6 +474,25 @@ begin
       Editmultx.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].mult_lam_x);
       Editmulty.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].mult_lam_y);
       Editmultz.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].mult_lam_z);
+      // Множитель коэффициента линейного теплового расширения
+      EditbetaX.Text:='1.0';
+      EditbetaY.Text:='1.0';
+      EditbetaZ.Text:='1.0';
+      // Множитель модуля Юнга.
+      EditEx.Text:='1.0';
+      EditEy.Text:='1.0';
+      EditEz.Text:='1.0';
+      // Множитель коэффициента Пуассона
+      Editnuxy.Text:='1.0';
+      Editnuxz.Text:='1.0';
+      Editnuyz.Text:='1.0';
+
+      CheckBoxShearModulus.Checked:=false;
+      CheckBoxShearModulusClick(Sender);
+      EditGxy.Text:='1.0';
+      EditGyz.Text:='1.0';
+      EditGxz.Text:='1.0';
+
       EditPoissonRatio.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].Poisson_Ratio);
       EditYoungModule.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].Young_Module);
       EditLinearExpansionKoefficient.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].Linear_expansion_coefficient);
@@ -324,6 +514,18 @@ begin
        EditPoissonRatio.Text:='';
        EditYoungModule.Text:='';
        EditLinearExpansionKoefficient.Text:='';
+   end;
+end;
+
+procedure TFormUserDefinedSolidMat.CheckBoxShearModulusClick(Sender: TObject);
+begin
+   if (CheckBoxShearModulus.Checked) then
+   begin
+      PanelShearModulus.Visible:=true;
+   end
+   else
+   begin
+      PanelShearModulus.Visible:=false;
    end;
 end;
 
@@ -364,6 +566,59 @@ begin
             ECp.Visible:=false;
             LSICp.Visible:=false;
          end;
+   end;
+end;
+
+procedure TFormUserDefinedSolidMat.ComboBoxlinearExpansionChange(
+  Sender: TObject);
+begin
+   case ComboBoxlinearExpansion.ItemIndex of
+       0 : begin
+              // Constant
+              ButtonEditlinearexpansioncoefficient.Visible:=false;
+              EditLinearExpansionKoefficient.Visible:=true;
+              LabelLinearExpansionCoefficient.Visible:=true;
+           end;
+       1 : begin
+              // Piecewise
+              ButtonEditlinearexpansioncoefficient.Visible:=true;
+              EditLinearExpansionKoefficient.Visible:=false;
+              LabelLinearExpansionCoefficient.Visible:=false;
+           end;
+    end;
+end;
+
+procedure TFormUserDefinedSolidMat.ComboBoxPoissonratioClick(Sender: TObject);
+begin
+   case ComboBoxPoissonratio.ItemIndex of
+       0 : begin
+              // Constant
+              ButtonPoissonratio.Visible:=false;
+              EditPoissonRatio.Visible:=true;
+           end;
+       1 : begin
+              // Piecewise
+              ButtonPoissonratio.Visible:=true;
+              EditPoissonRatio.Visible:=false;
+           end;
+   end;
+end;
+
+procedure TFormUserDefinedSolidMat.ComboBoxYoungModuleClick(Sender: TObject);
+begin
+   case ComboBoxYoungModule.ItemIndex of
+       0 : begin
+              // Constant
+              ButtonYoungModule.Visible:=false;
+              EditYoungModule.Visible:=true;
+              LabelYoungModule.Visible:=true;
+           end;
+       1 : begin
+              // Piecewise
+              ButtonYoungModule.Visible:=true;
+              EditYoungModule.Visible:=false;
+              LabelYoungModule.Visible:=false;
+           end;
    end;
 end;
 
