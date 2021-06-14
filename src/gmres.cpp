@@ -1207,6 +1207,13 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	integer nnz;
 	// нумерация векторов начинается с нуля.
 	integer n75 = maxelm + maxbound; // число неизвестных на подробном уровне.
+
+	doublereal eps_now = dterminatedTResudual;
+	if (iVar == PAM) {
+		eps_now = 1.0e-7;//30.01.2021
+	}
+	
+
 	doublereal* val75 = nullptr;
 	//val75 = new doublereal[nnz];
 	integer* col_ind75 = nullptr;
@@ -1228,7 +1235,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	doublereal *vCopy = nullptr;
 
 	doublereal normb = 0.0;
-	doublereal *r;
+	doublereal *r = nullptr;
 	doublereal beta = 0.0;
 	doublereal norm_r = 0.0;
 	const integer maxit = 2000;// максимальное число итераций
@@ -2296,7 +2303,7 @@ L20:
 				// 14.05.2019
 				dterminatedTResudual = 1.0e-12;
 			}
-			if ((resid) < dterminatedTResudual) {
+			if ((resid) < eps_now) {
 				//std::cout << "dterminatedTResudual=" << dterminatedTResudual << std::endl;
 				//getchar();
 				if (iVar == TEMP) {
@@ -2376,7 +2383,7 @@ L20:
 		resid = beta / normb;
 		//resid = beta;
 
-		if ((resid) < dterminatedTResudual) {
+		if ((resid) < eps_now) {
 			//tol = resid;
 			//maxit = j;
 			if (iVar == TEMP) {
@@ -2468,6 +2475,11 @@ L20:
 
 
 LABEL_FGMRES_CONTINUE:
+
+
+	if (iVar == PAM) {
+		std::cout << " " << j <<" ";
+	}
 
 	/*
 	solve_(madapt, ncyc, nrd, nsolco, nru, &kout, ierr, &a[1], &u[1], &f[1], &

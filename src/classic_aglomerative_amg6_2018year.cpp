@@ -33,7 +33,7 @@
 #include "basic_functions_my_agregat_amg.cpp"
 
 // Дерево ван Эмде Боаса.
-#define VEB_FLAG 1 
+#define VEB_FLAG 0 
 
 #if VEB_FLAG
 // Исправлено 21.03.2019
@@ -84,8 +84,12 @@ void calculate_row_ptr(integer istart, integer iend,
 		i_size_75++;
 		
 	}
+
+	integer ilen = (i_size_75 + 1);
+
 #pragma omp parallel for
-	for (integer istr = 1; istr <= i_size_75; istr++) {
+	for (integer istr = 1; istr < ilen; istr++)
+	{
 		integer kf = row_ind_SA[istr];
 		while ((kf <= iend) && (Amat.i[kf] == istr)) {
 			kf++;
@@ -122,8 +126,12 @@ void calculate_row_ptr(integer istart, integer iend,
 		i_size_75++;
 		
 	}
+
+	integer ilen = (i_size_75 + 1);
+
 #pragma omp parallel for
-	for (integer istr = 1; istr <= i_size_75; istr++) {
+	for (integer istr = 1; istr < ilen; istr++)
+	{
 		integer kf = row_ind_SA[istr];
 		while ((kf <= iend) && (Amat[kf].i == istr)) {
 			kf++;
@@ -305,6 +313,12 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 	 bool identiti = amg_pp.identiti;
 	 MY_AMG_SPLITTING_COARSENING_ALGORITHM  memo_icoarseningtype = amg_pp.memo_icoarseningtype;
 
+	 //std::wcout << "my_amg_manager.bCFJacoby  " << my_amg_manager.bCFJacoby << " \n";
+	 //std::wcout << "my_amg_manager.b_spai0  " << my_amg_manager.b_spai0 << " \n";
+	 //std::wcout << "my_amg_manager.gold_const  " << my_amg_manager.gold_const << " \n";
+	 //std::wcout << "my_amg_manager.b_gmres  " << my_amg_manager.b_gmres << " \n";
+	 //std::wcout << "my_amg_manager.iRunge_Kutta_smoother  " << my_amg_manager.iRunge_Kutta_smoother << " \n";
+	 //getchar();
 
 
 	// 4-5-6 30-31 dec 2016 Поддерживается не более 50 уровней вложенности
@@ -341,11 +355,21 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 			diag_minus_one[i_id_level_local] = (doublereal*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublereal));
 			handle_error<doublereal>(diag_minus_one[i_id_level_local], "diag_minus_one[", i_id_level_local, "]", "classic_aglomerative_amg_6", (n_a[i_id_level_local] + 1));
 		}
+		if (ilevel == i_id_level_local) {
+			diag_minus_one[i_id_level_local] = (doublereal*)malloc((n_a[ilevel-1] + 1) * sizeof(doublereal));
+			handle_error<doublereal>(diag_minus_one[i_id_level_local], "diag_minus_one[", i_id_level_local, "]", "classic_aglomerative_amg_6", (n_a[i_id_level_local-1] + 1));
+
+		}
 	}
 
 	for (integer i_id_level_local = 0; i_id_level_local < maxlevel; i_id_level_local++) {
 		if (ilevel > i_id_level_local) {
 			for (integer i_96 = 1; i_96 <= n_a[i_id_level_local]; i_96++) {
+				diag_minus_one[i_id_level_local][i_96] = 1.0;
+			}
+		}
+		if (ilevel == i_id_level_local) {
+			for (integer i_96 = 1; i_96 <= n_a[i_id_level_local-1]; i_96++) {
 				diag_minus_one[i_id_level_local][i_96] = 1.0;
 			}
 		}
@@ -506,10 +530,10 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 
 	// Заголовок 29.10.2016.
 	if (bprint_mesage_diagnostic) {
-		std::cout <<  "1. positive connections %, 2. max positive/ diagonal %" << std::endl;
+		std::cout <<  "1. (number positive connections)/Nnz [%], 2. max positive/ diagonal [average (positive connection/ diagonal)]" << std::endl;
 	}
 
-	for (integer ilevel_detector = 1; ilevel_detector <= maxlevel - 1; ilevel_detector++) {
+	for (integer ilevel_detector = 1; ilevel_detector <= maxlevel-1; ilevel_detector++) {
 
 		// Обработка матрицы действует до 99 уровня включительно, но
 		// сбор статистики желательно сделать для всех уровней.
@@ -526,7 +550,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 			doublerealT inum_only_positive_vnediagonal = 0.0;
 			doublerealT memo_diagonal_element = 0.0;
 			doublerealT max_positive_connections_element = -1.0;
-			doublerealT ratio_positive_connections_by_diagonalelement = -1.0;
+			doublerealT ratio_positive_connections_by_diagonalelement = 0.0;
 			doublerealT ratio_positive_connections_by_diagonalelement_avg = 0.0;
 			bool b_ne_menee_2_positive_con_in_string = false;
 			doublerealT inum_only_positive_vnediagonal_ne_menee2_in_string = 0.0;
@@ -562,7 +586,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 					integer icdiag = ii;
 					integer istart_row_ptr = istr + istart_row_ptr0;
 
-					max_positive_connections_element = -1.0;
+					max_positive_connections_element = 0.0;
 					dn_num += 1.0;
 
 
@@ -634,8 +658,10 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 								}
 
 								// Определение величины максимальной внедиагональной связи.
-								if (max_positive_connections_element < Amat.aij[ic]) {
-									max_positive_connections_element = Amat.aij[ic];
+								if (Amat.aij[ic] > 0.0) {
+									if (max_positive_connections_element < Amat.aij[ic]) {
+										max_positive_connections_element = Amat.aij[ic];
+									}
 								}
 							}
 						}
@@ -704,7 +730,23 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				//std::cout << "element in the row, in procent " << 100.0*ratio_positive_connections_by_diagonalelement << std::endl;
 				//std::cout << "\n";
 
-				std::cout <<  ilevel_detector << " " << 1.00 * inum_only_positive_vnediagonal / inum_vnediagonal_all << " % [ " << 100 * inum_only_positive_vnediagonal_ne_menee2_in_string / inum_vnediagonal_all << " % ] " <<  1e-4 * ratio_positive_connections_by_diagonalelement << "  [" << 1e-4 * ratio_positive_connections_by_diagonalelement_avg / dn_num << " ]" << std::endl;
+				
+				std::cout << ilevel_detector << " ";
+				//std::cout.precision(4);
+				std::cout.width(12);
+				std::cout << 1.00 * inum_only_positive_vnediagonal / inum_vnediagonal_all;
+				std::cout << "  [ ";
+				//std::cout.precision(2);
+				std::cout.width(12);
+				std::cout << 100.0 * inum_only_positive_vnediagonal / inum_vnediagonal_all;
+				std::cout << " % ] ";
+				std::cout.width(12);
+				std::cout << ratio_positive_connections_by_diagonalelement;
+				std::cout << "  [";
+				//std::cout.precision(3);
+				std::cout.width(12);
+				std::cout  << ratio_positive_connections_by_diagonalelement_avg / dn_num;
+				std::cout << " ]" << std::endl;
 			}
 		}
 
@@ -1036,6 +1078,13 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		std::cout <<  "run residualq2 analysys." << std::endl;
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	}
+	if (((iVar == GAMMA_LANGTRY_MENTER) || (iVar == RE_THETA_LANGTRY_MENTER)) && (dres_initial > 20.0)) {
+		// 22.01.2021
+		// Это признак ошибки в сборке матрицы СЛАУ на турбулентные характеристики.
+		std::cout << "may be problem convergence Turbulence equations Langtry Menter model: very big dres0=" << dres_initial << std::endl;
+		std::cout << "run residualq2 analysys." << std::endl;
+		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
+	}
 	/*
 	// код заимствованный из amg5:
 	integer iflag_cont = 1;
@@ -1146,7 +1195,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) tolerance *= 1e-11;
+			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+			(iVar == GAMMA_LANGTRY_MENTER)||
+			(iVar == RE_THETA_LANGTRY_MENTER)) tolerance *= 1e-11;
 		if (iVar == PAM) tolerance *= 1e-14;
 		if (iVar == TEMP) tolerance *= 1e-6;
 		if (iVar == TOTALDEFORMATIONVAR) tolerance = 1.0e-17;
@@ -1171,7 +1222,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 
 					if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 						(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
-						(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS))
+						(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) ||
+						(iVar == GAMMA_LANGTRY_MENTER) ||
+						(iVar == RE_THETA_LANGTRY_MENTER))
 					{
 						if (dres < 1.0e-3 * dres_initial) {
 							break;
@@ -1794,6 +1847,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 					//quick seidel
 					if (bonly_serial) {
 						if (bILU2smoother == 2) {
+
+						
+
 							seidelq<doublereal>(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, 0);
 							residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 #pragma omp parallel for
@@ -1923,7 +1979,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 					(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 					(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-					(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+					(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+					(iVar == GAMMA_LANGTRY_MENTER) ||
+					(iVar == RE_THETA_LANGTRY_MENTER)) {
 					// Это по умолчанию для компонент скорости внутри SIMPLE алгоритма.
 					dresfinish_probably = 1.0e-3 * norma(residual_fine[0], n_a[0]);
 				}
@@ -2023,7 +2081,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				P, nnz_aRP, residual_coarse, igam, nnz_a,
 				error_approx_coarse, dapply_ilu_max_pattern_size,
 				process_flow_alpha,
-				error_approx_fine, nFinestSweeps);
+				error_approx_fine, nFinestSweeps, ibsp_length);
 			// end 08.01.2018
 
 			//if (bfirst_start_nonlinear_process) {
@@ -2194,7 +2252,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+			(iVar == GAMMA_LANGTRY_MENTER) ||
+			(iVar == RE_THETA_LANGTRY_MENTER)) {
 			std::cout << "Turbulence equations: bicgStab+camg: iflag=" << iflag75 << ", iflag1=" << iflag175 << ", delta0=" << delta075 <<std::endl; 
 		}
 		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
@@ -2208,7 +2268,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+				(iVar == GAMMA_LANGTRY_MENTER) ||
+				(iVar == RE_THETA_LANGTRY_MENTER)) {
 				iN75 = 1; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
@@ -2255,7 +2317,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+				(iVar == GAMMA_LANGTRY_MENTER) ||
+				(iVar == RE_THETA_LANGTRY_MENTER)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
@@ -2304,7 +2368,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+				(iVar == GAMMA_LANGTRY_MENTER) ||
+				(iVar == RE_THETA_LANGTRY_MENTER)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
@@ -2347,7 +2413,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+				(iVar == GAMMA_LANGTRY_MENTER) ||
+				(iVar == RE_THETA_LANGTRY_MENTER)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
@@ -2389,7 +2457,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+				(iVar == GAMMA_LANGTRY_MENTER) ||
+				(iVar == RE_THETA_LANGTRY_MENTER)) {
 				iN75 = 6; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
@@ -2431,7 +2501,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+				(iVar == GAMMA_LANGTRY_MENTER) ||
+				(iVar == RE_THETA_LANGTRY_MENTER)) {
 				iN75 = 6; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
@@ -2470,7 +2542,9 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
-			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS))
+			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+			(iVar == GAMMA_LANGTRY_MENTER) ||
+			(iVar == RE_THETA_LANGTRY_MENTER))
 		{
 			maxit75 = 100; // 100
 		}
@@ -2490,7 +2564,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		// Если число расходимостей превысит оговорённую константу то произойдёт выход из алгоритма.
 		integer i_signal_break_pam_opening75 = 0;
 		// x хорошее значение.
-		const integer i_limit_signal_pam_break_opening75 = 4000;//20
+		const integer i_limit_signal_pam_break_opening75 = 8000;//20
 		doublereal delta_old_iter75 = 1.0e10;
 
 		integer count_iter_for_film_coef75 = 0;
@@ -2553,7 +2627,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				P, nnz_aRP, residual_coarse, igam, nnz_a,
 				error_approx_coarse, dapply_ilu_max_pattern_size,
 				process_flow_alpha,
-				error_approx_fine, nFinestSweeps);
+				error_approx_fine, nFinestSweeps, ibsp_length);
 			// Вставлено 6.01.2017 end
 
 			// Возвращение результата.
@@ -2606,7 +2680,7 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				P, nnz_aRP, residual_coarse, igam, nnz_a,
 				error_approx_coarse, dapply_ilu_max_pattern_size,
 				process_flow_alpha,
-				error_approx_fine, nFinestSweeps);
+				error_approx_fine, nFinestSweeps, ibsp_length);
 			// Вставлено 6.01.2017 end
 
 #pragma omp parallel for private(i75)
@@ -2858,12 +2932,19 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		if (fabs(normb) < 1.0e-30)
 			normb = 1;
 
-		doublereal norm_r = 0.0;
+		doublereal norm_r = beta;
 
 
-		norm_r = NormaV_for_gmres(r, n75);
+		integer maxit = 2000;
 
-		const integer maxit = 2000;
+		if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+		{
+			// Нормальная система СЛАУ должна сходится не более чем за 2000итераций.
+			maxit = 2000;
+		}
 
 		resid = norm_r / normb;
 
@@ -2978,22 +3059,24 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 					vCopy[i_1 + 1] = v[i][i_1];
 				}
 
-				// Предобуславливание с помощью V цикла многосеточного метода.
-				// Нулевое начальное приближение
-				for (integer i_numberV_cycle = 0; i_numberV_cycle < 1; i_numberV_cycle++) {
-					// достаточно одного V цикла.
-					// A*Zcopy=vCopy;
-					// В Zcopy и vCopy нумерация начинается с единицы.
-					V_cycle_solve<doublerealT>(Amat, Zcopy, vCopy, process_flow_logic, row_ptr_start,
-						row_ptr_end, residual_fine, diag, diag_minus_one, n_a, bonly_serial,
-						process_flow_beta, F_false_C_true, nu1, nu2, bILU2smoother,
-						ilevel, inumberVcyclelocbicgstab, imyinit, maxlevel, milu2, milu0, nested_desection,
-						P, nnz_aRP, residual_coarse, igam, nnz_a,
-						error_approx_coarse, dapply_ilu_max_pattern_size,
-						process_flow_alpha,
-						error_approx_fine, nFinestSweeps);
-					//getchar();
-				}
+				
+					// Предобуславливание с помощью V цикла многосеточного метода.
+					// Нулевое начальное приближение
+					for (integer i_numberV_cycle = 0; i_numberV_cycle < 1; i_numberV_cycle++) {
+						// достаточно одного V цикла.
+						// A*Zcopy=vCopy;
+						// В Zcopy и vCopy нумерация начинается с единицы.
+						V_cycle_solve<doublerealT>(Amat, Zcopy, vCopy, process_flow_logic, row_ptr_start,
+							row_ptr_end, residual_fine, diag, diag_minus_one, n_a, bonly_serial,
+							process_flow_beta, F_false_C_true, nu1, nu2, bILU2smoother,
+							ilevel, inumberVcyclelocbicgstab, imyinit, maxlevel, milu2, milu0, nested_desection,
+							P, nnz_aRP, residual_coarse, igam, nnz_a,
+							error_approx_coarse, dapply_ilu_max_pattern_size,
+							process_flow_alpha,
+							error_approx_fine, nFinestSweeps, ibsp_length);
+						//getchar();
+					}
+				
 
 #pragma omp parallel for
 				for (integer i_1 = 0; i_1 < n75; i_1++) {
@@ -3071,12 +3154,26 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 				resid = fabs(s[i + 1]) / normb;
 				//resid = beta*fabs(s[i + 1]);
 
-				if (((((i > 4)&&((iVar==VELOCITY_X_COMPONENT)|| (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)))||
+				bool b_dosrochnji_vjhod_Mechanical = false;
+				if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+				{
+					b_dosrochnji_vjhod_Mechanical = true;
+				}
+
+				if (((j + 2 == maxit) && (b_dosrochnji_vjhod_Mechanical)) || (((((i > 4)&&((iVar==VELOCITY_X_COMPONENT)|| (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)))||
 					((iVar != VELOCITY_X_COMPONENT) && (iVar != VELOCITY_Y_COMPONENT) && (iVar != VELOCITY_Z_COMPONENT)))||
 					((iVar==TEMP)&&(((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)&&(i > 4))||
 						(steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY))))
-					&&((resid) < dterminatedTResudual)) {
+					&&((resid) < dterminatedTResudual))) {
 
+
+					//std::cout << "j==" << j;
+			//if (b_dosrochnji_vjhod_Mechanical) {
+				//std::cout << "  b_dosrochnji_vjhod_Mechanical";
+			//}
 
 					if (bprint_mesage_diagnostic)
 					{
@@ -3147,7 +3244,15 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 			resid = beta / normb;
 			//resid = beta;
 
+			
+
+			
+
 			if ((resid) < dterminatedTResudual) {
+
+				// В случае механической задачи сойтись полностью бывает проблематично, но нужно вернуть хоть какое-то решение
+				// механической задачи, тем более что метод FGMRes более стабилен чем метод BiCGStab.
+
 				//tol = resid;
 				//maxit = j;
 
@@ -3335,6 +3440,8 @@ FULL_DIVERGENCE_DETECTED:
 		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: std::cout << "TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA"<< std::endl;  break;
 		case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  std::cout << " TURBULENT_KINETIK_ENERGY_STD_K_EPS"<< std::endl; break;
 		case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  std::cout << "TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS"<< std::endl; break;
+		case GAMMA_LANGTRY_MENTER: std::cout << "TURBULENT_GAMMA_LANGTRY_MENTER" << std::endl; break;
+		case RE_THETA_LANGTRY_MENTER: std::cout << "TURBULENT_RE_THETA_LANGTRY_MENTER" << std::endl; break;
 		case TEMP:  std::cout << "TEMP"<< std::endl; break;
 		case TOTALDEFORMATIONVAR: std::cout << "Stress system"<< std::endl; break;
 		}
@@ -3354,6 +3461,8 @@ FULL_DIVERGENCE_DETECTED:
 		//case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  std::cout << "TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA "<< ilevel<< " " << n_a[ilevel - 4] / n_a[ilevel - 3]<<" "<< n_a[ilevel - 3] / n_a[ilevel - 2]<<" "<< n_a[ilevel - 2] / n_a[ilevel - 1]<<" "<< n_a[ilevel - 1] / n_a[ilevel]<<std::endl; break;
 		//case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  std::cout << " TURBULENT_KINETIK_ENERGY_STD_K_EPS " << ilevel<< " " <<  n_a[ilevel - 4] / n_a[ilevel - 3]<<" " << n_a[ilevel - 3] / n_a[ilevel - 2]<< " " << n_a[ilevel - 2] / n_a[ilevel - 1]<<" "<< n_a[ilevel - 1] / n_a[ilevel]<<std::endl; break;
 		//case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  std::cout << "TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS  " << ilevel<<" "<< n_a[ilevel - 4] / n_a[ilevel - 3]<<" "<< n_a[ilevel - 3] / n_a[ilevel - 2]<< " " << n_a[ilevel - 2] / n_a[ilevel - 1]<<" "<< n_a[ilevel - 1] / n_a[ilevel]<<std::endl; break;
+		//case GAMMA_LANGTRY_MENTER: std::cout << "TURBULENT_GAMMA_LANGTRY_MENTER"  << ilevel<< " " <<  n_a[ilevel - 4] / n_a[ilevel - 3]<<" " << n_a[ilevel - 3] / n_a[ilevel - 2]<< " " << n_a[ilevel - 2] / n_a[ilevel - 1]<<" "<< n_a[ilevel - 1] / n_a[ilevel] << std::endl; break;
+		//case RE_THETA_LANGTRY_MENTER: std::cout << "TURBULENT_RE_THETA_LANGTRY_MENTER"  << ilevel<< " " <<  n_a[ilevel - 4] / n_a[ilevel - 3]<<" " << n_a[ilevel - 3] / n_a[ilevel - 2]<< " " << n_a[ilevel - 2] / n_a[ilevel - 1]<<" "<< n_a[ilevel - 1] / n_a[ilevel] << std::endl; break;
 		//case TEMP:  std::cout << "TEMP "<< ilevel<< " "<<  n_a[ilevel - 4] / n_a[ilevel - 3]<< " "<<  n_a[ilevel - 3] / n_a[ilevel - 2]<< " " << n_a[ilevel - 2] / n_a[ilevel - 1]<<" "<< n_a[ilevel - 1] / n_a[ilevel]<<std::endl; break;
 		//case TOTALDEFORMATIONVAR:  std::cout << "Stress system "<< ilevel<< " "<<  n_a[ilevel - 4] / n_a[ilevel - 3]<< " "<< n_a[ilevel - 3] / n_a[ilevel - 2]<<" "<< n_a[ilevel - 2] / n_a[ilevel - 1]<< " "<< n_a[ilevel - 1] / n_a[ilevel]<<std::endl; break;
 		//}
@@ -3370,6 +3479,8 @@ FULL_DIVERGENCE_DETECTED:
 		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  std::cout << "TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
 		case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  std::cout << " TURBULENT_KINETIK_ENERGY_STD_K_EPS level = " << ilevel << " CopA = " << dr_grid_complexity << " CopP = " << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV = " << icount_V_cycle << " res0 = " << dres_initial << "  n_a[ilevel - 2] =" << n_a[ilevel - 2] << "  n_a[ilevel - 1] = " << n_a[ilevel - 1] << " n_a[ilevel] = " << n_a[ilevel] << std::endl; break;
 		case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  std::cout << "TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS level = " << ilevel << " CopA = " << dr_grid_complexity << " CopP = " << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV = " << icount_V_cycle << " res0 =" << dres_initial << "  n_a[ilevel - 2] = " << n_a[ilevel - 2] << "  n_a[ilevel - 1] = " << n_a[ilevel - 1] << " n_a[ilevel] = " << n_a[ilevel] << std::endl;  break;
+		case GAMMA_LANGTRY_MENTER: std::cout << "TURBULENT_GAMMA_LANGTRY_MENTER" << ilevel << " CopA = " << dr_grid_complexity << " CopP = " << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV = " << icount_V_cycle << " res0 =" << dres_initial << "  n_a[ilevel - 2] = " << n_a[ilevel - 2] << "  n_a[ilevel - 1] = " << n_a[ilevel - 1] << " n_a[ilevel] = " << n_a[ilevel] << std::endl; break;
+		case RE_THETA_LANGTRY_MENTER: std::cout << "TURBULENT_RE_THETA_LANGTRY_MENTER" << ilevel << " CopA = " << dr_grid_complexity << " CopP = " << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV = " << icount_V_cycle << " res0 =" << dres_initial << "  n_a[ilevel - 2] = " << n_a[ilevel - 2] << "  n_a[ilevel - 1] = " << n_a[ilevel - 1] << " n_a[ilevel] = " << n_a[ilevel] << std::endl; break;
 		case TEMP:  std::cout << "TEMP level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
 		case TOTALDEFORMATIONVAR:  std::cout << "Stress system  level=" << ilevel << " CopA=" << dr_grid_complexity << " CopP=" << (doublereal)(nnz_P_memo_all / n_a[0]) << " nV=" << icount_V_cycle << " res0=" << dres_initial << "  n_a[ilevel - 2]=" << n_a[ilevel - 2] << "  n_a[ilevel - 1]=" << n_a[ilevel - 1] << " n_a[ilevel]=" << n_a[ilevel] << std::endl; break;
 		}
@@ -3393,6 +3504,10 @@ FULL_DIVERGENCE_DETECTED:
 	if (bnested_desection_global_amg != nullptr) {
 		free(bnested_desection_global_amg);  // Глобальная память.
 		bnested_desection_global_amg = nullptr;
+	}
+	if (diag_minus_one[ilevel + 1] != nullptr) {
+		free(diag_minus_one[ilevel + 1]);
+		diag_minus_one[ilevel + 1] = nullptr;
 	}
 	for (integer i_scan_levels = 0; i_scan_levels <= maxlevel - 1; i_scan_levels++) {
 		if (ilevel + 1 > i_scan_levels) {
@@ -3559,7 +3674,8 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 	integer& newCcount,
 	doublerealT*& threshold_quick_only_negative,
 	integer const *const row_startA,
-	Taccumulqtor_list**& hash_StrongTranspose_collection1,
+	integer* &hash_StrongTranspose_collection1Eco,
+	integer* & isize_hash_StrongTranspose_collection,
 	bool bprint_mesage_diagnostic,
 	bool*& flag, integer iadd, 
 	bool bpositive_connections_CF_decomp,
@@ -3793,7 +3909,11 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				integer imarker75_scan = 0;
 
 				// обычный линейный список.
-				formirate_F_SiTranspose_hash_table_Gus2_struct02(hash_StrongTranspose_collection1[Amat.i[ii]], imarker75_scan, this_is_F_node, this_is_C_node);
+				/*formirate_F_SiTranspose_hash_table_Gus2_struct03(hash_StrongTranspose_collection1[Amat.i[ii]],
+					isize_hash_StrongTranspose_collection[Amat.i[ii]], imarker75_scan, this_is_F_node, this_is_C_node);*/
+
+				formirate_F_SiTranspose_hash_table_Gus2_struct04(hash_StrongTranspose_collection1Eco, Amat.i[ii], n_a[ilevel-1],
+					isize_hash_StrongTranspose_collection[Amat.i[ii]], imarker75_scan, this_is_F_node, this_is_C_node);
 
 				ic = imarker75_scan + 1;
 			}
@@ -4612,7 +4732,8 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 	integer& newCcount,
 	doublerealT*& threshold_quick_only_negative,
 	integer*& row_startA,
-	Taccumulqtor_list**& hash_StrongTranspose_collection1,
+	integer*& hash_StrongTranspose_collection1Eco,
+	integer* & isize_hash_StrongTranspose_collection,
 	bool bprint_mesage_diagnostic,
 	bool*& flag, integer iadd,
 	bool bpositive_connections_CF_decomp,
@@ -4780,7 +4901,13 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 				integer imarker75_scan = 0;
 
 				// обычный линейный список.
-				formirate_F_SiTranspose_hash_table_Gus2_struct02(hash_StrongTranspose_collection1[Amat.i[ii]], imarker75_scan, this_is_F_node, this_is_C_node);
+				/*formirate_F_SiTranspose_hash_table_Gus2_struct03(hash_StrongTranspose_collection1[Amat.i[ii]],
+					isize_hash_StrongTranspose_collection[Amat.i[ii]], imarker75_scan, this_is_F_node, this_is_C_node);*/
+
+				// 10.06.2021
+				// На основе таблицы значений в массиве.
+				formirate_F_SiTranspose_hash_table_Gus2_struct04(hash_StrongTranspose_collection1Eco, Amat.i[ii], n_a[ilevel - 1],
+					isize_hash_StrongTranspose_collection[Amat.i[ii]], imarker75_scan, this_is_F_node, this_is_C_node);
 
 				ic = imarker75_scan + 1;
 			}
@@ -5198,7 +5325,8 @@ void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*&
 	integer& newCcount,
 	doublerealT*& threshold_quick_only_negative,
 	integer*& row_startA,
-	Taccumulqtor_list**& hash_StrongTranspose_collection1)
+	integer*& hash_StrongTranspose_collection1Eco,
+	integer* &isize_hash_StrongTranspose_collection)
 {
 
 	bool bprint_mesage_diagnostic = true;
@@ -5317,21 +5445,36 @@ void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*&
 					
 				}
 				// учитываем transpose(S(i)):
-				if (hash_StrongTranspose_collection1 != nullptr) {
-					if (hash_StrongTranspose_collection1[i7] != nullptr) {
-						Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
-						while (list_scan != nullptr) {
-							integer icandidate73 = list_scan->ikey;
+				//if (hash_StrongTranspose_collection1 != nullptr)
+				{
+					//if (hash_StrongTranspose_collection1[i7] != nullptr)
+					{
+						//Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
+						integer i71 = 0;
+						integer isize71 = isize_hash_StrongTranspose_collection[i7];
+						while (i71<isize71) {
+
+							//integer icandidate73 = list_scan->ikey;
+							integer icandidate73 = hash_StrongTranspose_collection1Eco[i71 *n_a[ilevel-1]+i7];
+
+
 							if (icandidate73 != i7) {
 								
 								// Сосед еще не обрабатывался.
 								if ((this_is_C_node[icandidate73] == false) && (this_is_F_node[icandidate73] == false)) {
 
 									// соседи соседей.
-									if (hash_StrongTranspose_collection1[icandidate73] != nullptr) {
-										Taccumulqtor_list* list_scan2 = hash_StrongTranspose_collection1[icandidate73];
-										while (list_scan2 != nullptr) {
-											integer icandidate734 = list_scan2->ikey;
+									//if (hash_StrongTranspose_collection1[icandidate73] != nullptr)
+									{
+										//Taccumulqtor_list* list_scan2 = hash_StrongTranspose_collection1[icandidate73];
+										integer i72 = 0;
+										integer isize72 = isize_hash_StrongTranspose_collection[icandidate73];
+
+										while (i72<isize72) {
+											//integer icandidate734 = list_scan2->ikey;
+
+											integer icandidate734 = hash_StrongTranspose_collection1Eco[i72 * n_a[ilevel - 1] + icandidate73];
+
 											if ((icandidate734 != i7)&&(icandidate734 != icandidate73)) {
 												if (dcount_neighbour[icandidate734] > id_diag) {
 													// Сосед соседей еще не обрабатывался.
@@ -5340,7 +5483,8 @@ void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*&
 													}
 												}
 											}
-											list_scan2 = list_scan2->next;
+											//list_scan2 = list_scan2->next;
+											i72++;
 										}
 									}
 
@@ -5356,7 +5500,8 @@ void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*&
 									//}
 								}
 							}
-							list_scan = list_scan->next;
+							//list_scan = list_scan->next;
+							i71++;
 						}
 					}
 				}
@@ -5407,11 +5552,16 @@ void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*&
 
 
 						// Здесь соседей брать только из transpose(S(i)).
-						if (hash_StrongTranspose_collection1 != nullptr) {
-							if (hash_StrongTranspose_collection1[i7] != nullptr) {
-								Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
-								while (list_scan != nullptr) {
-									integer icandidate72 = list_scan->ikey;
+						//if (hash_StrongTranspose_collection1 != nullptr) 
+						{
+							//if (hash_StrongTranspose_collection1[i7] != nullptr)
+							{
+								//Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
+								integer i71 = 0;
+								integer isize71 = isize_hash_StrongTranspose_collection[i7];
+								while (i71<isize71) {
+									//integer icandidate72 = list_scan->ikey;
+									integer icandidate72 = hash_StrongTranspose_collection1Eco[i71 * n_a[ilevel - 1] + i7];
 									if (icandidate72 != i7) {
 
 										// Сосед еще не обрабатывался.
@@ -5420,10 +5570,14 @@ void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*&
 										{
 
 											// соседи соседей (квадрат матрицы).
-											if (hash_StrongTranspose_collection1[icandidate72] != nullptr) {
-												Taccumulqtor_list* list_scan2 = hash_StrongTranspose_collection1[icandidate72];
-												while (list_scan2 != nullptr) {
-													integer icandidate723 = list_scan2->ikey;
+											//if (hash_StrongTranspose_collection1[icandidate72] != nullptr)
+											{
+												//Taccumulqtor_list* list_scan2 = hash_StrongTranspose_collection1[icandidate72];
+												integer i72 = 0;
+												integer isize72 = isize_hash_StrongTranspose_collection[icandidate72];
+												while (i72<isize72) {
+													//integer icandidate723 = list_scan2->ikey;
+													integer icandidate723 = hash_StrongTranspose_collection1Eco[i72 * n_a[ilevel - 1] + icandidate72];
 													if ((icandidate723 != i7)&&(icandidate723 != icandidate72)) {
 														// Сосед еще не обрабатывался.
 														if ((this_is_C_node[icandidate723] == false) &&
@@ -5431,7 +5585,8 @@ void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*&
 															this_is_F_node[icandidate723] = true;
 														}
 													}
-													list_scan2 = list_scan2->next;
+													//list_scan2 = list_scan2->next;
+													i72++;
 												}
 											}
 
@@ -5475,7 +5630,8 @@ void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*&
 											this_is_F_node[icandidate72] = true;
 										}
 									}
-									list_scan = list_scan->next;
+									//list_scan = list_scan->next;
+									i71++;
 								}
 							}
 						}
@@ -5522,7 +5678,8 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 	integer &newCcount,
 	doublerealT*& threshold_quick_only_negative,
 	integer*& row_startA,
-	Taccumulqtor_list** &hash_StrongTranspose_collection1)
+	integer* &hash_StrongTranspose_collection1Eco,
+	integer* &isize_hash_StrongTranspose_collection)
 {
 
 
@@ -5618,11 +5775,17 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 						}
 					}
 					// учитываем transpose(S(i)):
-					if (hash_StrongTranspose_collection1 != nullptr) {
-						if (hash_StrongTranspose_collection1[i7] != nullptr) {
-							Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
-							while (list_scan != nullptr) {
-								integer icandidate73 = list_scan->ikey;
+					//if (hash_StrongTranspose_collection1 != nullptr)
+					{
+						//if (hash_StrongTranspose_collection1[i7] != nullptr)
+						{
+							//Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
+							integer i71 = 0;
+							integer isize71 = isize_hash_StrongTranspose_collection[i7];
+							while (i71<isize71) {
+								//integer icandidate73 = list_scan->ikey;
+								integer icandidate73 = hash_StrongTranspose_collection1Eco[i71*n_a[ilevel-1]+i7];
+
 								if (icandidate73 != i7) {
 									if (dcount_neighbour[icandidate73] >= id_diag) {
 										// Сосед еще не обрабатывался.
@@ -5636,7 +5799,8 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 									//	}
 									//}
 								}
-								list_scan = list_scan->next;
+								//list_scan = list_scan->next;
+								i71++;
 							}
 						}
 					}
@@ -5667,11 +5831,17 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 							inumber_of_C_nodes++;
 							this_is_C_node[i7] = true;
 							// Здесь соседей брать только из transpose(S(i)).
-							if (hash_StrongTranspose_collection1 != nullptr) {
-								if (hash_StrongTranspose_collection1[i7] != nullptr) {
-									Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
-									while (list_scan != nullptr) {
-										integer icandidate72 = list_scan->ikey;
+							//if (hash_StrongTranspose_collection1 != nullptr)
+							{
+								//if (hash_StrongTranspose_collection1[i7] != nullptr) 
+								{
+									//Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
+									integer i71 = 0;
+									integer isize71 = isize_hash_StrongTranspose_collection[i7];
+									while (i71<isize71) {
+										//integer icandidate72 = list_scan->ikey;
+										integer icandidate72 = hash_StrongTranspose_collection1Eco[i71 * n_a[ilevel - 1] + i7];
+
 										if (icandidate72 != i7) {
 											// Сосед еще не обрабатывался.
 											if ((this_is_C_node[icandidate72] == false) &&
@@ -5679,7 +5849,8 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 												this_is_F_node[icandidate72] = true;
 											}
 										}
-										list_scan = list_scan->next;
+										//list_scan = list_scan->next;
+										i71++;
 									}
 								}
 							}
@@ -5734,6 +5905,8 @@ void my_realloc_memory(myARRT* &x, integer n) {
 
 // Визуализирует портрет матрицы с помощью графической библиотеки OpenGL.
 int PortraitPrint(Ak2 &Amat, integer iadd, integer nnz, integer n) {
+
+#ifndef NO_OPENGL_GLFW
 
 	SCREEN_WIDTH = 500;
 	SCREEN_HEIGHT = 500;
@@ -5823,10 +5996,22 @@ int PortraitPrint(Ak2 &Amat, integer iadd, integer nnz, integer n) {
 
 	glfwTerminate();
 
+#endif
+
 	return 0;
 }
 
+// 08.06.2021 - xx.xx.xxxx Версия 6 на основе версии 4.
 // 29.07.2018 - xx.xx.xxxx Версия 6 на основе версии 4.
+// 08.06.2021 Всего используются три сортировки. Однократно исходной матрицы и
+// двукратно в цикле одна сортировка для P и одна сортировка для R. 
+// Оптимизирована скорость работы алгоритмов сортировки. Библиотечная сортировка 
+// std::sort на основе quick sort существенно быстрее чем собственная реализация quick sort, 
+// также std::sort быстрее чем пирамидальная и сортировка Тима,  поэтому
+// имеет смысл переходить на неё. Осуществлён полный переход на std::sort во всех трех вышеописанных 
+// вызовах. Сохранены пирамидальная и сортировка Тима. Сортировки std::sort, пирамидальная и Тима 
+// работают в два потока с помощью omp parallel sections это ускоряет каждую из них в 1.6 раза.
+// Достигнута экономия времени решения задачи не менее 7% на 2.7млн неизвестных в уравнении Пуассона.
 // 24.04.2020 Выделил алгоритм селектора(C/F разбиения) в отдельную функцию.
 // 14.04.2020 Разделил на две функции setup и solution phase.
 // 13.04.2020 Убрал сортировку CountingSort из параллельного умножения
@@ -5952,6 +6137,34 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 
 	const bool b_REALLOC = false;
+
+	integer* C1 = (integer*)malloc((n + 1) * sizeof(integer));
+	char c19[3] = "C1";
+	char c29[14] = "Counting_Sort";
+	handle_error<integer>(C1, c19, c29, (n + 1));
+
+	integer* C2 = (integer*)malloc((n + 1) * sizeof(integer));
+	char c39[3] = "C2";
+	char c49[14] = "Counting_Sort";
+	handle_error<integer>(C2, c39, c49, (n + 1));
+
+	Ak1* Bm1 = nullptr;
+	Ak1* Bm2 = nullptr;
+
+	if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+		(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+	{
+		Bm1 = (Ak1*)malloc((nnz + 2) * sizeof(Ak1));
+		char c59[4] = "Bm1";
+		char c69[14] = "Counting_Sort";
+		handle_error<Ak1>(Bm1, c59, c69, (nnz + 2));
+
+		Bm2 = (Ak1*)malloc((nnz + 2) * sizeof(Ak1));
+		char c79[4] = "Bm2";
+		char c89[14] = "Counting_Sort";
+		handle_error<Ak1>(Bm2, c79, c89, (nnz + 2));
+
+	}
 
 	
 
@@ -6088,6 +6301,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	integer* row_ind_AE = nullptr;
 	integer* index_visit = nullptr;
 	doublerealT* vector_sum = nullptr;
+	bool* hash_table = nullptr;
 			
 	integer* row_ind_ER = nullptr;
 	integer* row_ind_SR = nullptr;
@@ -6383,15 +6597,15 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		//index_visit_m[i_9] = (integer*)malloc((n + 1) * sizeof(integer));
 		//handle_error<integer>(index_visit_m[i_9], "index_visit_m[i_9]", "classic_aglomerative_amg_6", (n + 1));
 
-		hash_table_m[i_9] = new bool[(10 * n + 1)];
+		hash_table_m[i_9] = new bool[( n + 2)];
 		//hash_table_m[i_9] = (bool*)malloc((10 * n + 1) * sizeof(bool));
 		//handle_error<bool>(hash_table_m[i_9], "hash_table_m[i_9]", "classic_aglomerative_amg_6", (10 * n + 1));
 
-		integer i_91_end = 10 * n + 1;
+		/*integer i_91_end = n + 2;
 #pragma omp parallel for
 		for (integer i_91 = 0; i_91 < i_91_end; i_91++) {
 			hash_table_m[i_9][i_91] = false;// inicialization
-		}
+		}*/
 //#pragma omp parallel for
 	//	for (integer i_91 = 0; i_91 < n + 1; i_91++) {
 			//vector_sum_m[i_9][i_91] = 0.0;
@@ -6465,9 +6679,38 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	}
 	
 	node_AVLST** hash_StrongTranspose_collection = nullptr;
-	Taccumulqtor_list** hash_StrongTranspose_collection1 = nullptr;
+	//Taccumulqtor_list** hash_StrongTranspose_collection1 = nullptr;
 	integer isize_memory_alloc_hash_StrongTranspose_collection1 = -1;
 	integer *isize_hash_StrongTranspose_collection = nullptr;
+
+	integer isize_hash_StrongTranspose_collection1Eco = 20;
+	if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+		(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+	{
+		if (bmyconvective7248) {
+			// Конвекция.
+			isize_hash_StrongTranspose_collection1Eco = 20;
+		}
+		else {
+			if (b_on_adaptive_local_refinement_mesh) {
+				isize_hash_StrongTranspose_collection1Eco = 101; //81
+			}
+			else {
+				isize_hash_StrongTranspose_collection1Eco = 14;
+			}
+		}
+	}
+	// Будем выделять память ровно один раз и хранить все данные  одномерном массиве:
+	integer* hash_StrongTranspose_collection1Eco = new integer[isize_hash_StrongTranspose_collection1Eco *n];
+	isize_hash_StrongTranspose_collection = new integer[n + 1];
+
+#ifdef _OPENMP
+
+#else
+	vector_sum = my_declaration_array<doublerealT>(n, 0.0, "vector_sum");
+	index_visit = my_declaration_array<integer>(n, 0, "index_visit");
+	hash_table = my_declaration_array<bool>(n, false, "hash_table");
+#endif
 
 	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50) && (bcontinue_global)) {
 		
@@ -6573,6 +6816,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			this_is_C_node[ii] = this_is_F_node[ii] = false;
 		}
 
+		const integer isize2 = (nnz_a[ilevel - 1] / 2);
+		integer ilab1 = nnz_a[ilevel - 1] + iadd + 1;
+
 		// Сортировка нужна лишь на первом уровне, т.к.
 		// результат алгоритма перемножения по Ф. Густавсону 1978 уже 
 		// даёт на выходе отсортированную по строкам матрицу.
@@ -6580,34 +6826,192 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			// сортировка исходной  А  по i.
 			//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1]);
 
+			int inth = number_cores();
+			if (inth > 1) {
+				omp_set_num_threads(inth);
+			}
+			//omp_set_num_threads(8);
+			Ak1* Amattmp = nullptr;
+		
+
 			// 7 января 2016. Обязательно нужна эта сортировка.
 			switch (imy_sort_algorithm) {
 			case MY_SORT_ALGORITHM:: COUNTING_SORT:
-				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings,n_a[ilevel-1]);	//подходит именно n_a[ilevel - 1]			
+				if (bmemory_savings == false) {
+					// выделение памяти.
+					Amattmp = new Ak1[nnz_a[ilevel - 1]];
+					// прямое копирование.
+
+#pragma omp parallel for
+					for (integer i86 = 1 + iadd; i86 <= nnz_a[ilevel - 1] + iadd; i86++) {
+						integer j87 = i86 - 1 - iadd;
+						Amattmp[j87].i = Amat.i[i86];
+						Amattmp[j87].j = Amat.j[i86];
+						Amattmp[j87].aij = Amat.aij[i86];
+					}
+					// сортировка
+
+#pragma omp parallel for
+					for (integer i = 0; i <= n_a[ilevel - 1]; i++) {
+						C1[i] = 0; // инициализация.
+						//C2[i] = 0; // инициализация.
+					}
+					if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+						(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+					{
+						Counting_Sort_bmemo_false(Amattmp, 0, nnz_a[ilevel - 1] - 1, n_a[ilevel - 1], indx_comparei, C1, Bm1);// numberofcoarcenodes <-> n_a[ilevel - 1]
+					}
+					else {
+						Counting_Sort_bmemo_false(Amattmp, 0, nnz_a[ilevel - 1] - 1, n_a[ilevel - 1], indx_comparei, C1);// numberofcoarcenodes <-> n_a[ilevel - 1]
+					}
+
+					// обратное копирование
+
+#pragma omp parallel for
+					for (integer i86 = 1 + iadd; i86 <= nnz_a[ilevel - 1] + iadd; i86++) {
+						integer j86 = i86 - 1 - iadd;
+						Amat.i[i86] = Amattmp[j86].i;
+						Amat.j[i86] = Amattmp[j86].j;
+						Amat.aij[i86] = Amattmp[j86].aij;
+					}
+					// освобождение оперативной памяти.
+					delete[] Amattmp;
+				}
+				else {
+
+					Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings, n_a[ilevel - 1]);	//подходит именно n_a[ilevel - 1]			
+				}
 				break;
 			case MY_SORT_ALGORITHM::HEAP_SORT:
-				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-				//LeftistHeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+
+				if (inth == 1) {
+
+					HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					//LeftistHeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				}
+				else {
+#pragma omp parallel sections
+					{
+#pragma omp section
+						{
+							HeapSort(Amat, 1 + iadd, isize2 + iadd);
+						}
+#pragma omp section
+						{
+							HeapSort(Amat, isize2 + 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						}
+					}
+					mergeTim_amg(Amat, 1 + iadd, isize2 + iadd, nnz_a[ilevel - 1] + iadd);
+				}
 				break;
 			case MY_SORT_ALGORITHM::QUICK_SORT:
 				qs_abbys_heigh = 0;
 				// quicksort
-				qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				if (0) {
+					if (inth == 1) {
+
+						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+
+					}
+					else {
+
+#pragma omp parallel sections
+						{
+#pragma omp section
+							{
+								qs(Amat, 1 + iadd, isize2 + iadd);
+							}
+#pragma omp section
+							{
+								qs(Amat, isize2 + 1 + iadd, nnz_a[ilevel - 1] + iadd);
+							}
+						}
+						mergeTim_amg(Amat, 1 + iadd, isize2 + iadd, nnz_a[ilevel - 1] + iadd);
+					}
+				}
+				else {
+					// выделение памяти.
+					Amattmp = new Ak1[nnz_a[ilevel - 1]];
+					// прямое копирование.
+					
+#pragma omp parallel for
+					for (integer i86 = 1 + iadd; i86 <= nnz_a[ilevel - 1] + iadd; i86++) {
+						integer j87 = i86 - 1 - iadd;
+						Amattmp[j87].i = Amat.i[i86];
+						Amattmp[j87].j = Amat.j[i86];
+						Amattmp[j87].aij = Amat.aij[i86];
+					}
+					// сортировка
+					// Библиотечный алгоритм. O(n*log2(n)).
+				    // Не использует лишней памяти.
+					// Библиотечный std::sort намного быстрее собственной реализации QuickSort qs.
+					// Распараллеленная версия библиотечного std::sort на два потока в 1.6 раза 
+					// быстрее чем его последовательная версия (Проверено на размерности 10 млн значений в сортируемом массиве).
+					// 08.06.2021
+					if (inth == 1) {
+						std::sort(Amattmp, Amattmp + nnz_a[ilevel - 1], compareAk1R);
+					}
+					else {
+#pragma omp parallel sections
+						{
+#pragma omp section
+							{
+								std::sort(Amattmp, Amattmp + isize2 , compareAk1R);
+							}
+#pragma omp section
+							{
+								std::sort(Amattmp + isize2 + 1, Amattmp  + nnz_a[ilevel - 1], compareAk1R);
+							}
+						}
+						mergeTim_amg(Amattmp, 0, isize2, nnz_a[ilevel - 1]-1, indx_comparei);
+					}
+					// обратное копирование
+					
+#pragma omp parallel for
+					for (integer i86 = 1 + iadd; i86 <= nnz_a[ilevel - 1] + iadd; i86++) {
+						integer j86 = i86 - 1 - iadd;
+						Amat.i[i86] = Amattmp[j86].i;
+						Amat.j[i86] = Amattmp[j86].j;
+						Amat.aij[i86] = Amattmp[j86].aij;
+					}
+					// освобождение оперативной памяти.
+					delete[] Amattmp;
+				}
 				// Библиотечный алгоритм. O(n*log2(n)).
 				// Не использует лишней памяти.
-				//std::sort(Amat + (1 + iadd) * sizeof(Ak1), Amat + (nnz_a[ilevel - 1] + iadd + 1) * sizeof(Ak1), compAi);
+				//std::sort(Amat + (1 + iadd) * sizeof(Ak1), Amat + (nnz_a[ilevel - 1] + iadd + 1) * sizeof(Ak1), compAi);			
+
+				
 
 				//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-				
 				break;
 			case MY_SORT_ALGORITHM::TIM_SORT:
 				// Сортировка Тима Петерсома 2002г.
-				timSort_amg(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				if (inth == 1) {
+					timSort_amg(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				}
+				else {
+#pragma omp parallel sections
+					{
+#pragma omp section
+						{
+							timSort_amg(Amat, 1 + iadd, isize2 + iadd);
+						}
+#pragma omp section
+						{
+							timSort_amg(Amat, isize2 + 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						}
+					}
+					mergeTim_amg(Amat, 1 + iadd, isize2 + iadd, nnz_a[ilevel - 1] + iadd);
+				}
 				break;
 			default:
 				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings, n_a[ilevel - 1]);//подходит именно n_a[ilevel - 1]
 				break;
 			}
+
+
+			//omp_set_num_threads(1);
 
 		} // ilevel == 1
 
@@ -6731,6 +7135,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			// Эта ветвь активна лес АВЛ деревьев ненужен.
 
 			// Обычный накопитель - линейный список с быстрой вставкой.
+			/*
 			if (hash_StrongTranspose_collection1 != nullptr) {
 
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
@@ -6749,22 +7154,26 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				delete[] isize_hash_StrongTranspose_collection;
 				isize_hash_StrongTranspose_collection = nullptr;
 			}
-			// Выделяем память под лес линейных однонаправленных списков.
-			hash_StrongTranspose_collection1 = new Taccumulqtor_list*[n_a[ilevel - 1] + 1];
+			*/
 			ii_end1 = n_a[ilevel - 1];
+
+			// Выделяем память под лес линейных однонаправленных списков.
+			/*hash_StrongTranspose_collection1 = new Taccumulqtor_list * [n_a[ilevel - 1] + 1];
 #pragma omp parallel for
 			for (integer i_1 = 0; i_1 <= ii_end1; i_1++) {
 				hash_StrongTranspose_collection1[i_1] = nullptr;
-			}
+			}*/
 
-			isize_memory_alloc_hash_StrongTranspose_collection1 = n_a[ilevel - 1];
-			if (isize_hash_StrongTranspose_collection != nullptr) {
+			isize_memory_alloc_hash_StrongTranspose_collection1 = ii_end1;
+			/*if (isize_hash_StrongTranspose_collection != nullptr) {
 				delete[] isize_hash_StrongTranspose_collection;
 				isize_hash_StrongTranspose_collection = nullptr;
 			}
 			isize_hash_StrongTranspose_collection = new integer[n_a[ilevel - 1] + 1];
+			*/
 
-			for (integer i_73 = 0; i_73 <= n_a[ilevel - 1]; i_73++) {
+#pragma omp parallel for
+			for (integer i_73 = 0; i_73 <= ii_end1; i_73++) {
 				isize_hash_StrongTranspose_collection[i_73] = 0;// Нет элементов.
 			}
 			
@@ -6777,9 +7186,11 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 		if (bpositive_connections_CF_decomp) {
 
-			
+		
+			integer ilen = (ii_end1 + 1);
+
 #pragma omp parallel for
-			for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
+			for (integer ii = 1 + iadd; ii < ilen; ii++) {
 				bool cond = (flag[Amat.i[ii]] == false);
 				if (!cond) continue;
 
@@ -6812,8 +7223,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				//flag[Amat.i[ii]] = false;
 			//}
 
+			ilen = (n_a[ilevel - 1] + 1);
+
 #pragma omp parallel for
-			for (integer ii = 0; ii <= n_a[ilevel - 1]; ii++) {
+			for (integer ii = 0; ii < ilen; ii++) {
 				flag[ii] = false;
 		    }
 
@@ -6842,11 +7255,14 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 					if (bStrongTransposeON) {
 						// O(1) вставка в начало линейного списка.
-						insert_list(hash_StrongTranspose_collection1[Amat.j[is0]], Amat.i[ii]);
+						//insert_list(hash_StrongTranspose_collection1[Amat.j[is0]], Amat.i[ii]);
+						hash_StrongTranspose_collection1Eco[isize_hash_StrongTranspose_collection[Amat.j[is0]]*n_a[ilevel-1]+ Amat.j[is0]] = Amat.i[ii];
 						isize_hash_StrongTranspose_collection[Amat.j[is0]]++;
 					}
 
 				}
+
+				
 
 				count_neighbour[Amat.i[ii]] = ic;
 				// 01.03.2019
@@ -6870,10 +7286,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		else {
 
 			
-
+			integer ilen = (ii_end1+1);
 
 #pragma omp parallel for
-			for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
+			for (integer ii = 1 + iadd; ii < ilen; ii++) {
 				bool cond = (flag[Amat.i[ii]] == false);
 				if (!cond) continue;
 
@@ -6908,8 +7324,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				//flag[Amat.i[ii]] = false;
 			//}
 
+			ilen = (n_a[ilevel - 1] + 1);
+
 #pragma omp parallel for
-			for (integer ii = 0; ii <= n_a[ilevel - 1]; ii++) {
+			for (integer ii = 0; ii < ilen; ii++) {
 				flag[ii] = false;
 			}
 
@@ -6938,7 +7356,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 					if (bStrongTransposeON) {
 						// O(1) вставка в начало линейного списка.
-						insert_list(hash_StrongTranspose_collection1[Amat.j[is0]], Amat.i[ii]);
+						//insert_list(hash_StrongTranspose_collection1[Amat.j[is0]], Amat.i[ii]);
+						hash_StrongTranspose_collection1Eco[isize_hash_StrongTranspose_collection[Amat.j[is0]] * n_a[ilevel - 1] + Amat.j[is0]] = Amat.i[ii];
 						isize_hash_StrongTranspose_collection[Amat.j[is0]]++;
 					}
 				}
@@ -6963,6 +7382,14 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				flag[Amat.i[ii]] = true;
 			}
 		}
+
+		integer imaximum_neighbour = 0;
+		for (integer i_73 = 0; i_73 <= n_a[ilevel - 1]; i_73++) {
+			if (isize_hash_StrongTranspose_collection[i_73] > imaximum_neighbour) {
+				imaximum_neighbour = isize_hash_StrongTranspose_collection[i_73];
+			}
+		}
+		printf("\nilevel=%lld imaximum_neighbour=%lld\n", ilevel, imaximum_neighbour);
 
 		if (bStrongTransposeON) {
 			// 5.01.2017. StrongTranspose.
@@ -7018,7 +7445,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 					newCcount,
 					threshold_quick_only_negative,
 					row_startA,
-					hash_StrongTranspose_collection1);
+					hash_StrongTranspose_collection1Eco,
+					isize_hash_StrongTranspose_collection);
 
 			}
 			else {
@@ -7034,7 +7462,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 					newCcount,
 					threshold_quick_only_negative,
 					row_startA,
-					hash_StrongTranspose_collection1);
+					hash_StrongTranspose_collection1Eco,
+					isize_hash_StrongTranspose_collection);
 			}
 		}
 		else {
@@ -7073,7 +7502,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				newCcount,
 				threshold_quick_only_negative,
 				row_startA,
-				hash_StrongTranspose_collection1,
+				hash_StrongTranspose_collection1Eco,
+				isize_hash_StrongTranspose_collection,
 				bprint_mesage_diagnostic,
 				flag, iadd, bpositive_connections_CF_decomp,
 				bStrongTransposeON, hash_table2,
@@ -7742,10 +8172,20 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 												if (1) {// if (0) 11.08.2018
 														// Добавок 19.01.2017
 
-													if (hash_StrongTranspose_collection1 != nullptr) {
+													//if (hash_StrongTranspose_collection1 != nullptr)
+													{
 														//data_BalTreeST dat_key;
 														//dat_key.i = Amat.j[is0];
-														if (isfound(hash_StrongTranspose_collection1[Amat.i[i_2]], Amat.j[is0])) {
+														bool bfound71 = false;
+														for (integer i72 = 0; i72 < isize_hash_StrongTranspose_collection[Amat.i[i_2]]; i72++) {
+															if (Amat.j[is0] == hash_StrongTranspose_collection1Eco[i72*n_a[ilevel-1]+ Amat.i[i_2]]) {
+																bfound71 = true;
+																break;
+															}
+														}
+														//if (isfound(hash_StrongTranspose_collection1[Amat.i[i_2]], Amat.j[is0])) 
+														if (bfound71)
+														{
 															// конец добавка 19.01.2017
 															// Сюда почему-то вообще не заходит код исполнения??? 
 
@@ -7756,13 +8196,13 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 															insertion_list_i(ibuffer_strongF, Amat.j[is0]);
 														}
 													}
-													else {
+													/*else {
 														// Сильный Fj сосед найден.
 														// Элементы Fi и Fj сильно связаны.
 														inumber_strongF_count_Fi++;
 														ibuffer_strongF_marker++;
 														insertion_list_i(ibuffer_strongF, Amat.j[is0]);
-													}
+													}*/
 
 												}
 												else {
@@ -7965,6 +8405,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 			
 			// Обычный линейный список.
+			/*
 			if (hash_StrongTranspose_collection1 != nullptr) {
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 				//isize_memory_alloc_hash_StrongTranspose_collection1
@@ -7978,12 +8419,13 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 				delete[] hash_StrongTranspose_collection1;
 				hash_StrongTranspose_collection1 = nullptr;
-			}
+			}*/
 
+			/*
 			if (isize_hash_StrongTranspose_collection != nullptr) {
 				delete[] isize_hash_StrongTranspose_collection;
 				isize_hash_StrongTranspose_collection = nullptr;
-			}
+			}*/
 		}
 
 		// Нужно корректно обработать узлы Дирихле,
@@ -8718,33 +9160,160 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		// Сортировка оператора интерполяции P по строкам 17.02.2018
 		// heapsort(P,key==i,iaddR+1,iaddR+nnzR - 1);
 
-		
+		int isize20 = nnzR / 2;
+		int inth0 = number_cores();
+		if (inth0 > 1) {
+			omp_set_num_threads(inth0);
+		}
+		//omp_set_num_threads(8);
+
 		switch (imy_sort_algorithm) {
 		case MY_SORT_ALGORITHM:: COUNTING_SORT:
-			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, false, numberofcoarcenodes, indx_comparei);// numberofcoarcenodes <-> n_a[ilevel - 1]
+			//Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, false, numberofcoarcenodes, indx_comparei);// numberofcoarcenodes <-> n_a[ilevel - 1]
+			if (inth0 == 1) {
+#pragma omp parallel for
+				for (integer i = 0; i <= numberofcoarcenodes; i++) {
+					C1[i] = 0; // инициализация.
+					//C2[i] = 0; // инициализация.
+				}
+				if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+					(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+				{
+					Counting_Sort_bmemo_false(P, 1 + iaddR, iaddR + nnzR - 1, numberofcoarcenodes, indx_comparei, C1, Bm1);// numberofcoarcenodes <-> n_a[ilevel - 1]
+				}
+				else {
+					Counting_Sort_bmemo_false(P, 1 + iaddR, iaddR + nnzR - 1, numberofcoarcenodes, indx_comparei, C1);// numberofcoarcenodes <-> n_a[ilevel - 1]
+				}
+			}
+			else {
+#pragma omp parallel for
+				for (integer i = 0; i <= numberofcoarcenodes; i++) {
+					C1[i] = 0; // инициализация.
+					C2[i] = 0; // инициализация.
+				}
+
+#pragma omp parallel sections
+				{
+#pragma omp section
+					{
+						if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+							(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+						{
+							Counting_Sort_bmemo_false(P, 1 + iaddR, isize20 + iaddR, numberofcoarcenodes, indx_comparei, C1,Bm1);
+						}
+						else {
+							Counting_Sort_bmemo_false(P, 1 + iaddR, isize20 + iaddR, numberofcoarcenodes, indx_comparei, C1);
+						}
+					}
+#pragma omp section
+					{
+						if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+							(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+						{
+							Counting_Sort_bmemo_false(P, isize20 + 1 + iaddR, iaddR + nnzR - 1, numberofcoarcenodes, indx_comparei, C2,Bm2);
+						}
+						else {
+							Counting_Sort_bmemo_false(P, isize20 + 1 + iaddR, iaddR + nnzR - 1, numberofcoarcenodes, indx_comparei, C2);
+						}
+					}
+				}
+				mergeTim_amg(P, 1 + iaddR, isize20 + iaddR, iaddR + nnzR - 1, indx_comparei);
+			}
 			break;
 		case MY_SORT_ALGORITHM::QUICK_SORT:
 			//qs_abbys_heigh = 0;
 			//qs(P, 1 + iaddR, iaddR + nnzR - 1);
 			// Библиотечный алгоритм. O(nlog(n)).
 			// Не использует лишней памяти.
-			std::sort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1R);
+			if (inth0 == 1) {
+				std::sort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1R);
+			}
+		else {
+#pragma omp parallel sections
+			{
+#pragma omp section
+				{
+					std::sort(P + 1 + iaddR, P + isize20 + iaddR, compareAk1R);
+				}
+#pragma omp section
+				{
+					std::sort(P + isize20 + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1R);
+				}
+			}
+			mergeTim_amg(P, 1 + iaddR, isize20 + iaddR, iaddR + nnzR - 1, indx_comparei);
+
+		}
+
+			/*
+#pragma omp parallel sections
+		{
+#pragma omp section
+			{
+				qs(Amat, 1 + iadd, isize2 + iadd);
+			}
+#pragma omp section
+			{
+				qs(Amat, isize2 + 1 + iadd, nnz_a[ilevel - 1] + iadd);
+			}
+		}
+		mergeTim_amg(Amat, 1 + iadd, isize2 + iadd, nnz_a[ilevel - 1] + iadd);
+		*/
+
 			break;
 		case MY_SORT_ALGORITHM::HEAP_SORT:
-			//HeapSort(P, 1 + iaddR, iaddR + nnzR - 1,comparei);
-			//LeftistHeapSort(P, 1 + iaddR, iaddR + nnzR - 1);
-			mySTDHeapSort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
+			if (inth0 == 1) {
+				//HeapSort(P, 1 + iaddR, iaddR + nnzR - 1,comparei);
+				//LeftistHeapSort(P, 1 + iaddR, iaddR + nnzR - 1);
+				mySTDHeapSort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
+			}
+			else {
+
+#pragma omp parallel sections
+				{
+#pragma omp section
+					{
+						mySTDHeapSort(P, 1 + iaddR, isize20 + iaddR, indx_comparei);
+					}
+#pragma omp section
+					{
+						mySTDHeapSort(P,  isize20 + 1 + iaddR,  iaddR + nnzR - 1, indx_comparei);
+					}
+				}
+				mergeTim_amg(P, 1 + iaddR, isize20 + iaddR, iaddR + nnzR - 1, indx_comparei);
+			}
 			break;
 		case MY_SORT_ALGORITHM::TIM_SORT:
 			// Сортировка Тима Петерсона 2002г.
 			//timSort_amg(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
-			gfx::timsort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1R);
+			if (inth0 == 1) {
+				gfx::timsort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1R);
+			}
+			else {
+				printf("number threads=%d", omp_get_max_threads());
+
+				
+
+#pragma omp parallel sections
+				{
+#pragma omp section
+					{
+						gfx::timsort(P + 1 + iaddR, P + isize20 + iaddR, compareAk1R);
+					}
+#pragma omp section
+					{
+						gfx::timsort(P + isize20 + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1R);
+					}
+				}
+				mergeTim_amg(P, 1 + iaddR, isize20 + iaddR, iaddR + nnzR - 1, indx_comparei);
+			}
 			break;
 		default:
 			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, false, numberofcoarcenodes, indx_comparei);// numberofcoarcenodes <-> n_a[ilevel - 1]
 			break;
 		}
 		
+		//omp_set_num_threads(1);
+
 
 		if (bprint_mesage_diagnostic) {
 
@@ -8913,27 +9482,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		istartAnew = nnz_a[ilevel - 1] + 1 + iadd;
 		//integer istartAnew_mem = istartAnew;
 
-		// Данные используемые для частичного формирователя суммы.
-		if (vector_sum != nullptr) {
-			free(vector_sum);
-			vector_sum = nullptr;
-		}
-		vector_sum = my_declaration_array<doublerealT>(n_a[ilevel - 1], 0.0, "vector_sum");
+		
 
-		// Храним индексы ненулевых элементов в отсортированном порядке.
-		if (index_visit != nullptr) {
-			free(index_visit);
-			index_visit = nullptr;
-		}
-		index_visit = my_declaration_array<integer>(n_a[ilevel - 1], 0, "index_visit");
-
-
-		// hash_table nnz+1
-		// Огромного размера хеш-таблица.
-		// Огромный размер поэтому инициализация делается лишь единожды.
-		// размер от 0 до nnz включительно.
-		bool* hash_table = my_declaration_array<bool>(n_a[ilevel - 1], false, "hash_table");
-
+		
 
 		//#ifdef _NONAME_STUB29_10_2017
 #ifdef _OPENMP
@@ -8953,11 +9504,43 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			numberofcoarcenodes, iKnumber_thread,
 			hash_table_m, index_visit_m,
 			vector_sum_m, index_size_m,
-			nsizeA,n,nnz, ilevel,
+			nsizeA, n_a[ilevel-1], nnz, ilevel,
 			bprint_mesage_diagnostic, n_a, AccumulqtorA_m_SIZE8,
 			AccumulqtorA_m);
 
 #else
+
+		// Данные используемые для частичного формирователя суммы.
+		/*if (vector_sum != nullptr) {
+			free(vector_sum);
+			vector_sum = nullptr;
+		}
+		vector_sum = my_declaration_array<doublerealT>(n_a[ilevel - 1], 0.0, "vector_sum");*/
+
+
+		/*
+		// Храним индексы ненулевых элементов в отсортированном порядке.
+		if (index_visit != nullptr) {
+			free(index_visit);
+			index_visit = nullptr;
+		}
+		index_visit = my_declaration_array<integer>(n_a[ilevel - 1], 0, "index_visit");
+
+
+		// hash_table nnz+1
+		// Огромного размера хеш-таблица.
+		// Огромный размер поэтому инициализация делается лишь единожды.
+		// размер от 0 до nnz включительно.
+		bool* hash_table = my_declaration_array<bool>(n_a[ilevel - 1], false, "hash_table");
+		*/
+
+#pragma omp parallel for
+		for (integer i = 1; i <= n_a[ilevel - 1]; i++) {
+			vector_sum[i] = 0.0;
+			hash_table[i] = false;
+			index_visit[i] = 0;
+		}
+
 
 		// Умножение R*A. Результат пишется в А начиная с позиции istartAnew.
 		// P - это R, Amat - это А.
@@ -8969,10 +9552,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 #endif
 
 		
-		if (index_visit != nullptr) {
+		/*if (index_visit != nullptr) {
 			free(index_visit);
 			index_visit = nullptr;
-		}
+		}*/
 		if (row_ind_SR!=nullptr) {
 			free(row_ind_SR);
 			row_ind_SR = nullptr;
@@ -8982,10 +9565,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			row_ind_ER = nullptr;
 		}
 		
-		if (vector_sum != nullptr) {
+		/*if (vector_sum != nullptr) {
 			free(vector_sum);
 			vector_sum = nullptr;
-		}
+		}*/
 
 
 
@@ -9026,29 +9609,140 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		// Рабочая версия алгоритма Фреда Густавсона.
 		// IBM 1978 Sparse Matrix multiplication.
 
+		int isize21 = nnzR / 2;
+
+		int inth = number_cores();
+		if (inth > 1) {
+				omp_set_num_threads(inth);
+		}
+		//omp_set_num_threads(8);
+
 		// Сортировка обязательно требуется.
 		// Преобразование обоих матриц в формат CRS.
 		// Сортировка матрицы интерполяции по столбцам.
 		switch (imy_sort_algorithm) {
 		case MY_SORT_ALGORITHM::COUNTING_SORT:
-			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej);//подходит именно n_a[ilevel - 1]
+			//Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, false, n_a[ilevel - 1], indx_comparej);//подходит именно n_a[ilevel - 1]
+			if (inth == 1) {
+#pragma omp parallel for
+				for (integer i = 0; i <= n_a[ilevel - 1]; i++) {
+					C1[i] = 0; // инициализация.
+					//C2[i] = 0; // инициализация.
+				}
+				if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+					(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+				{
+					Counting_Sort_bmemo_false(P, 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej, C1, Bm1);//подходит именно n_a[ilevel - 1]
+				}
+				else {
+					Counting_Sort_bmemo_false(P, 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej, C1);//подходит именно n_a[ilevel - 1]
+				}
+			}
+			else {
+
+#pragma omp parallel for
+				for (integer i = 0; i <= n_a[ilevel - 1]; i++) {
+					C1[i] = 0; // инициализация.
+					C2[i] = 0; // инициализация.
+				}
+
+#pragma omp parallel sections
+				{
+#pragma omp section
+					{
+						if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+							(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+						{
+							Counting_Sort_bmemo_false(P, 1 + iaddR, isize21 + iaddR, n_a[ilevel - 1], indx_comparej, C1,Bm1);
+						}
+						else {
+							Counting_Sort_bmemo_false(P, 1 + iaddR, isize21 + iaddR, n_a[ilevel - 1], indx_comparej, C1);
+						}
+					}
+#pragma omp section
+					{
+						if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+							(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+						{
+							Counting_Sort_bmemo_false(P, isize21 + 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej, C2,Bm2);
+						}
+						else {
+							Counting_Sort_bmemo_false(P, isize21 + 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej, C2);
+						}
+					}
+				}
+				mergeTim_amg(P, 1 + iaddR, isize21 + iaddR, iaddR + nnzR - 1, indx_comparej);
+			}
 			break;
 		case MY_SORT_ALGORITHM::QUICK_SORT:
 			//qs_abbys_heigh = 0;
 			//qsj(P, 1 + iaddR, iaddR + nnzR - 1);
 			// Библиотечный алгоритм. O(nlog(n)).
 			// Не использует лишней памяти.
-			std::sort(P + 1 + iaddR, P + iaddR + nnzR - 1+1, compareAk1P);
+			if (inth == 1) {
+				std::sort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1P);
+			}
+			else {
+#pragma omp parallel sections
+				{
+#pragma omp section
+					{
+						std::sort(P + 1 + iaddR, P+ isize21 + iaddR, compareAk1P);
+					}
+#pragma omp section
+					{
+						std::sort(P + isize21 + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1P);
+					}
+				}
+				mergeTim_amg(P, 1 + iaddR, isize21 + iaddR, iaddR + nnzR - 1, indx_comparej);
+
+			}
 			break;
 		case MY_SORT_ALGORITHM::HEAP_SORT:
 			//HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 			//LeftistHeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
-			mySTDHeapSort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
+			if (inth == 1) {
+				mySTDHeapSort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
+			}
+			else {
+#pragma omp parallel sections
+				{
+#pragma omp section
+					{
+						mySTDHeapSort(P, 1 + iaddR, isize21 + iaddR, indx_comparej);
+					}
+#pragma omp section
+					{
+						mySTDHeapSort(P, isize21 + 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
+					}
+				}
+				mergeTim_amg(P, 1 + iaddR, isize21 + iaddR, iaddR + nnzR - 1, indx_comparej);
+			}
 			break;
 		case MY_SORT_ALGORITHM::TIM_SORT:
 			// Сортировка Тима Петерсома 2002.
 			//timSort_amg(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
-			gfx::timsort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1P);
+			 
+			if (inth == 1) {
+
+				gfx::timsort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1P);
+			}
+			else {
+				printf("number threads=%d\n", omp_get_max_threads());
+
+#pragma omp parallel sections
+				{
+#pragma omp section
+					{
+						gfx::timsort(P + 1 + iaddR, P + isize21 + iaddR, compareAk1P);
+					}
+#pragma omp section
+					{
+						gfx::timsort(P + isize21 + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1P);
+					}
+				}
+				mergeTim_amg(P, 1 + iaddR, isize21 + iaddR, iaddR + nnzR - 1, indx_comparej);
+			}
 			break;
 		default:
 			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej);//подходит именно n_a[ilevel - 1]
@@ -9120,33 +9814,13 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			}
 		}
 
-		// Накопитель результата.
-		//vector_sum = new doublerealT[numberofcoarcenodes + 1];
-		/*
-		// Память уже была освобождена выше по тексту программы.
-		if (vector_sum != nullptr) {
-			free(vector_sum);
-			vector_sum = nullptr;
-		}
-		*/
-		// Данные используемые для частичного формирователя суммы.
-		if (vector_sum != nullptr) {
-			free(vector_sum);
-			vector_sum = nullptr;
-		}
-		vector_sum = my_declaration_array<doublerealT>(numberofcoarcenodes, 0.0, "vector_sum");
+		//omp_set_num_threads(1);
 
-		//integer size_v = sizeof(doublerealT)*(1 + numberofcoarcenodes);
-		// Храним индексы ненулевых элементов в отсортированном порядке.
-		if (index_visit != nullptr) {
-			free(index_visit);
-			index_visit = nullptr;
-		}
-		index_visit = my_declaration_array<integer>(n_a[ilevel - 1], 0, "index_visit");
+		
 
-		if (index_visit != nullptr) {
-			index_visit[0] = 0;
-		}
+
+
+		
 
 		//#ifdef _NONAME_STUB29_10_2017
 #ifdef _OPENMP
@@ -9165,7 +9839,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			iKnumber_thread,
 			hash_table_m, index_visit_m,
 			vector_sum_m, index_size_m,
-			nsizeA, n, nnz, ilevel,
+			nsizeA, numberofcoarcenodes/*n*/, nnz, ilevel,
 			bprint_mesage_diagnostic,
 			n_a, AccumulqtorA_m_SIZE8,
 			AccumulqtorA_m, istartAnew2,
@@ -9175,6 +9849,45 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			bcontinue_global);
 
 #else
+
+		// Накопитель результата.
+		//vector_sum = new doublerealT[numberofcoarcenodes + 1];
+		/*
+		// Память уже была освобождена выше по тексту программы.
+		if (vector_sum != nullptr) {
+			free(vector_sum);
+			vector_sum = nullptr;
+		}
+		*//*
+		// Данные используемые для частичного формирователя суммы.
+		if (vector_sum != nullptr) {
+			free(vector_sum);
+			vector_sum = nullptr;
+		}
+		vector_sum = my_declaration_array<doublerealT>(numberofcoarcenodes, 0.0, "vector_sum");
+		*/
+
+		/*
+		//integer size_v = sizeof(doublerealT)*(1 + numberofcoarcenodes);
+		// Храним индексы ненулевых элементов в отсортированном порядке.
+		if (index_visit != nullptr) {
+			free(index_visit);
+			index_visit = nullptr;
+		}
+		index_visit = my_declaration_array<integer>(n_a[ilevel - 1], 0, "index_visit");
+
+		if (index_visit != nullptr) {
+			index_visit[0] = 0;
+		}*/
+
+		index_visit[0] = 0;
+
+#pragma omp parallel for
+		for (integer i = 1; i <= numberofcoarcenodes; i++) {
+			vector_sum[i] = 0.0;
+			hash_table[i] = false;
+			index_visit[i] = 0;
+		}
 
 		// Умножение разреженной матрицы A на разреженную матрицу P.
 		// Результат записывается в матрицу А начиная с позиции istartAnew2.
@@ -9190,7 +9903,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 #endif
 
 		
-		if (hash_table != nullptr) {
+		/*if (hash_table != nullptr) {
 			free(hash_table);
 			hash_table = nullptr;
 		}
@@ -9202,7 +9915,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		if (index_visit != nullptr) {
 			free(index_visit);
 			index_visit = nullptr;
-		}
+		}*/
 		
 		if (row_ind_AS != nullptr) {
 			free(row_ind_AS);
@@ -9229,7 +9942,11 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		//doublereal alphaH = 2.0*(mH - 1)*(mH - 1) / ((2.0*mH - 1.0)*(2.0*mH - 1.0));
 		//std::cout << "alphaH=" << alphaH << "\n";
 		integer i_1start1 = nnz_a[ilevel - 1] + 1 + iadd;
-		for (integer i_1 = i_1start1, i_2 = 1; i_2 <= nsize; i_1++, i_2++) {
+
+#pragma omp parallel for
+		for (integer i_2 = 1; i_2 <= nsize; i_2++)
+		{
+			integer i_1 = i_1start1 - 1 + i_2;
 			integer i_right_position = istartAnew - 1 + i_2;
 			//if (my_amg_manager.baglomeration_with_consistency_scaling > 0) {
 				// agglomeration with consistency scaling 24.05.2019
@@ -9266,9 +9983,17 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		// Использование упорядочивания типа F/C ускоряет сходимость вычислительного процесса,
 		// сокращая число V циклов требуемых для достижения сходимости.
 		integer iaddFCcolor = 0;
-		for (integer i_71 = 0; i_71 < ilevel - 1; i_71++) iaddFCcolor += n_a[i_71];
-		for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) {
-			F_false_C_true[iaddFCcolor + i_1] = true;
+#pragma omp parallel for reduction(+ : iaddFCcolor)
+		for (integer i_71 = 0; i_71 < ilevel - 1; i_71++) {
+			iaddFCcolor += n_a[i_71];
+		}
+		const integer istop_i_1 = n_a[ilevel - 1];
+#pragma omp parallel for 
+		for (integer i_1 = 1; i_1 <= istop_i_1; i_1++)
+		{
+			if (this_is_C_node[i_1]) {
+				F_false_C_true[iaddFCcolor + i_1] = true;
+			}
 		}
 
 		nnz_aRP[ilevel - 1] = nnzR - 1;
@@ -9289,6 +10014,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			// Освобождение ОЗУ.
 
 			// Обычный линейный список.
+			/*
 			if (hash_StrongTranspose_collection1 != nullptr) {
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 				//isize_memory_alloc_hash_StrongTranspose_collection1
@@ -9298,12 +10024,12 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 				delete[] hash_StrongTranspose_collection1;
 				hash_StrongTranspose_collection1 = nullptr;
-			}
+			}*/
 
-			if (isize_hash_StrongTranspose_collection != nullptr) {
+			/*if (isize_hash_StrongTranspose_collection != nullptr) {
 				delete[] isize_hash_StrongTranspose_collection;
 				isize_hash_StrongTranspose_collection = nullptr;
-			}
+			}*/
 		}
 
 	
@@ -9330,6 +10056,28 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		//проверка конец
 
 	} // иерархия сеток построена.
+
+	
+	delete[] hash_StrongTranspose_collection1Eco; // 10.06.2021
+	if (isize_hash_StrongTranspose_collection != nullptr) {
+		delete[] isize_hash_StrongTranspose_collection;
+		isize_hash_StrongTranspose_collection = nullptr;
+	}
+
+	if (vector_sum != nullptr) {
+		free(vector_sum);
+		vector_sum = nullptr;
+	}
+
+	if (index_visit != nullptr) {
+		free(index_visit);
+		index_visit = nullptr;
+	}
+
+	if (hash_table != nullptr) {
+		free(hash_table);
+		hash_table = nullptr;
+	}
 
 	if (bprint_mesage_diagnostic) {
 		std::cout << "   ***   CAMG ITERATOR   ***" << std::endl;
@@ -9373,7 +10121,18 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		ilevel--;
 	}
 
-	
+	//omp_set_num_threads(8);
+
+	// Эта память в два вектора длины n_a[0] была нужна для алгоритма сортировки CountingSort.
+	free(C1);
+	free(C2);
+
+	if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+		(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+	{
+		free(Bm1);
+		free(Bm2);
+	}
 
 	// Вычисляем и запоминаем grid complexity
 	// Операторная сложность.
@@ -9658,6 +10417,7 @@ void set_RUMBA_Classic_AMG_Setting(integer iVar)
 	case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
 	case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
 	case TURBULENT_KINETIK_ENERGY_STD_K_EPS: case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
+	case GAMMA_LANGTRY_MENTER: case RE_THETA_LANGTRY_MENTER:
 		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Speed);
 		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Speed;
 		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Speed;

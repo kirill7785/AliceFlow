@@ -67,7 +67,7 @@ const integer SS_SIDE = 10; // (double south)  двойной сосед с юга
 const integer BB_SIDE = 11; // (double bottom) двойной сосед снизу
 
 // Максимальное число соседей.
-const char MAX_NEIGHBOUR_COUNT = 250;
+const char MAX_NEIGHBOUR_COUNT = 127;
 
 // для хеш-таблицы.
 typedef struct THASH_POLE {
@@ -356,6 +356,7 @@ int*** hash_for_droblenie_xyz = nullptr;
 // Проект собран как стандартное консольное приложение windows.
 
 // Возвращает минимум из двух целых чисел.
+
 integer min(integer ia, integer ib) {
 	if (ia < ib) return ia;
 	return ib;
@@ -417,9 +418,6 @@ int binary_search_hash_key_alice33v0_experimental_not_stable(int istart, int ien
 // Стабильная версия. Быстрее 4.81% против 6.24%.
 int binary_search_hash_key_alice33v0(int istart, int iend, doublereal*& array,
 	doublereal epsTol, doublereal dkey) {
-
-	int istart1 = istart;
-	int iend1 = iend;
 
 	int i_vacant = -1;
 	while (istart <= iend) {
@@ -886,7 +884,7 @@ integer hash_key_alice33Q(integer inx7, integer iny7, integer inz7,
 	// двоичным поиском т.к. массивы упорядочены по возрастанию.
 
 	const bool blinear_search = true;// false;
-	doublereal mult = 1.0;
+	
 
 	// Поиск.
 	integer i_vacant = -1;
@@ -10112,7 +10110,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 													// Достигается сильная экономия числа ячеек расчётной сетки.
 
 													// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
-													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
+													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах модуль ВУМ с радиатором жидкостного охлаждения*.
 													// Вывод в том что вблизи входной и выходной границ желательно мельчить
 													// АЛИС сетку чтобы не пропустить эти границы.
 
@@ -10220,7 +10218,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 													// Достигается сильная экономия числа ячеек расчётной сетки.
 
 													// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
-													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
+													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах модуль ВУМ с радиатором жидкостного охлаждения*.
 													// Вывод в том что вблизи входной и выходной границ желательно мельчить
 													// АЛИС сетку чтобы не пропустить эти границы.
 
@@ -10328,7 +10326,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 													// Достигается сильная экономия числа ячеек расчётной сетки.
 
 													// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
-													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
+													// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах модуль ВУМ с радиатором жидкостного охлаждения*.
 													// Вывод в том что вблизи входной и выходной границ желательно мельчить
 													// АЛИС сетку чтобы не пропустить эти границы.
 
@@ -10392,6 +10390,199 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 
 					
+					// Здесь мы дробим вблизи границ чтобы получить качественный погран слой.
+					// Причем только на границе с Hollow блоком.
+					if (oc->dlist) {
+						if (BonLevelDrobim >= 0) {
+							
+							int j = miny - 1;
+							if (j>=0) 
+							{
+								if (oc->dlist) {
+									for (int k = minz; k < maxz; k++) {
+										for (int i = minx; i < maxx; i++) {
+											if (oc->dlist) {
+												if (ib83 != hash_for_droblenie_xyz[i][j][k])
+												{
+													if (b[hash_for_droblenie_xyz[i][j][k]].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
+														if (oc->ilevel < BonLevelDrobim) {
+															oc->dlist = false;// дробим.
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							else {
+								// находится на границе расчетной области
+								// Только если он сам не hollow блок.
+								if (b[ib83].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
+									if (oc->ilevel < BonLevelDrobim) {
+										oc->dlist = false;// дробим.
+									}
+								}
+							}
+
+							j = maxy;
+							if (j < iny)
+							{
+								if (oc->dlist) {
+									for (int k = minz; k < maxz; k++) {
+										for (int i = minx; i < maxx; i++) {
+											if (oc->dlist) {
+												if (ib83 != hash_for_droblenie_xyz[i][j][k])
+												{
+													if (b[hash_for_droblenie_xyz[i][j][k]].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
+														if (oc->ilevel < BonLevelDrobim) {
+															oc->dlist = false;// дробим.
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							else {
+								// находится на границе расчетной области
+								// Только если он сам не hollow блок.
+								if (b[ib83].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
+									if (oc->ilevel < BonLevelDrobim) {
+										oc->dlist = false;// дробим.
+									}
+								}
+							}
+
+							int i = minx - 1;
+							if (i >= 0) {
+								for (int j = miny; j < maxy; j++) {
+									if (oc->dlist) {
+										for (int k = minz; k < maxz; k++) {
+											 {
+												if (oc->dlist) {
+													if (ib83 != hash_for_droblenie_xyz[i][j][k])
+													{
+														if (b[hash_for_droblenie_xyz[i][j][k]].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
+															if (oc->ilevel < BonLevelDrobim) {
+																oc->dlist = false;// дробим.
+															}
+														}
+
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							else {
+								// находится на границе расчетной области
+								// Только если он сам не hollow блок.
+								if (b[ib83].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
+									if (oc->ilevel < BonLevelDrobim) {
+										oc->dlist = false;// дробим.
+									}
+								}
+							}
+
+							i = maxx;
+							if (i < inx) {
+								for (int j = miny; j < maxy; j++) {
+									if (oc->dlist) {
+										for (int k = minz; k < maxz; k++) {
+											 {
+												if (oc->dlist) {
+													if (ib83 != hash_for_droblenie_xyz[i][j][k])
+													{
+														if (b[hash_for_droblenie_xyz[i][j][k]].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
+															if (oc->ilevel < BonLevelDrobim) {
+																oc->dlist = false;// дробим.
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							else {
+								// находится на границе расчетной области
+								// Только если он сам не hollow блок.
+								if (b[ib83].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
+									if (oc->ilevel < BonLevelDrobim) {
+										oc->dlist = false;// дробим.
+									}
+								}
+							}
+
+							int k = minz - 1;
+							if (k >= 0) {
+								for (int j = miny; j < maxy; j++) {
+									if (oc->dlist) {
+										 {
+											for (int i = minx; i < maxx; i++) {
+												if (oc->dlist) {
+													if (ib83 != hash_for_droblenie_xyz[i][j][k])
+													{
+														if (b[hash_for_droblenie_xyz[i][j][k]].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
+															if (oc->ilevel < BonLevelDrobim) {
+																oc->dlist = false;// дробим.
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							else {
+								// находится на границе расчетной области
+								// Только если он сам не hollow блок.
+								if (b[ib83].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
+									if (oc->ilevel < BonLevelDrobim) {
+										oc->dlist = false;// дробим.
+									}
+								}
+							}
+
+						    k = maxz;
+							if (k < inz) {
+								for (int j = miny; j < maxy; j++) {
+									if (oc->dlist) {
+										 {
+											for (int i = minx; i < maxx; i++) {
+												if (oc->dlist) {
+													if (ib83 != hash_for_droblenie_xyz[i][j][k])
+													{
+														if (b[hash_for_droblenie_xyz[i][j][k]].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
+															if (oc->ilevel < BonLevelDrobim) {
+																oc->dlist = false;// дробим.
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							else {
+								// находится на границе расчетной области
+								// Только если он сам не hollow блок.
+								if (b[ib83].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
+									if (oc->ilevel < BonLevelDrobim) {
+										oc->dlist = false;// дробим.
+									}
+								}
+							}
+
+
+						}
+					}
 					
 				}
 
@@ -39546,12 +39737,12 @@ void marker_disbalnce_year2017_2(octree* &oc, doublereal* &xpos, doublereal* &yp
 						else if (abs(octree1->ilevel - octree1->linkE->ilevel) == 1) {
 							integer iml = octree1->ilevel;
 							doublereal viml = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
-							bool biml = true;
+							//bool biml = true;
 							if (octree1->linkE->ilevel > iml) {
 								iml = octree1->linkE->ilevel;
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
-								biml = false;
+								//biml = false;
 							}
 							if (fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz])>viml) {
 								// объём наибольшей ячейки.
@@ -42998,9 +43189,11 @@ void calculate_whot_is_block(octree*& oc, BLOCK*& b, integer lb) {
 				    p.y = 0.125 * (octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
 				    p.z = 0.125 * (octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
 				    integer ib;
-				    bool inDomain = false;
+				    //bool inDomain = false;
 
-			        inDomain=in_model_temp(p, ib, b, lb);
+					// Вычисляет ib. ib используется !!!
+			        //inDomain=in_model_temp(p, ib, b, lb);
+					in_model_temp(p, ib, b, lb);
 
 					// Определяем номер блока который присвоен ячейке АЛИС сетки.
 				    // Все клеточки ячейки данной АЛИС сетки имеют один и тот же номер блока.
@@ -43048,9 +43241,10 @@ void calculate_whot_is_block(octree*& oc, BLOCK*& b, integer lb) {
 						p.y = 0.125 * (octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
 						p.z = 0.125 * (octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
 						integer ib;
-						bool inDomain = false;
+						//bool inDomain = false;
 
-						inDomain = in_model_temp(p, ib, b, lb);
+						//inDomain = in_model_temp(p, ib, b, lb);
+						in_model_temp(p, ib, b, lb);
 
 						if (ib == -1) {
 							std::cout << "ERROR 3 : ib == -1\n";
@@ -43579,8 +43773,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					(block_indexes[i_1].iL >= block_indexes[i_1].iR)) {
 					printf("alice_mesh  function\n");
 					printf("violation of the order block_indexes\n");
-					printf("i=%lld iL=%lld iR=%lld\n", i_1, block_indexes[i_1].iL,
-						block_indexes[i_1].iR, xpos[block_indexes[i_1].iL]);
+					//printf("i=%lld iL=%lld iR=%lld position x left=%e\n", i_1, block_indexes[i_1].iL,
+						//block_indexes[i_1].iR, xpos[block_indexes[i_1].iL]);
+					std::cout << "i=" << i_1 << " iL=" << block_indexes[i_1].iL << " iR=" <<
+						block_indexes[i_1].iR << " position x left=" << xpos[block_indexes[i_1].iL] << std::endl;
 					system("pause");
 				}
 
@@ -43596,8 +43792,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					(block_indexes[i_1].jL >= block_indexes[i_1].jR)) {
 					printf("alice_mesh  function\n");
 					printf("violation of the order block_indexes\n");
-					printf("i=%lld jL=%lld jR=%lld\n", i_1, block_indexes[i_1].jL,
-						block_indexes[i_1].jR, ypos[block_indexes[i_1].jL] );
+					//printf("i=%lld jL=%lld jR=%lld position y left=%e\n", i_1, block_indexes[i_1].jL,
+						//block_indexes[i_1].jR, ypos[block_indexes[i_1].jL] );
+					std::cout << "i=" << i_1 << " jL=" << block_indexes[i_1].jL << " jR=" <<
+						block_indexes[i_1].jR << "position y left=" << ypos[block_indexes[i_1].jL] << std::endl;
 					system("pause");
 				}
 
@@ -44492,7 +44690,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		//system("PAUSE");
 		//is_b4N_found(oc_global); // находит , но почемуто печатает ситуацию dir Х далее.
 		//integer iret_97 = 1;
-		integer iscan_balance = 0;
+		//integer iscan_balance = 0;
 		if (DEBUG_ALICE_MESH) printf("function: shutdown_visit\n");
 		shutdown_visit(oc_global);
 		/*

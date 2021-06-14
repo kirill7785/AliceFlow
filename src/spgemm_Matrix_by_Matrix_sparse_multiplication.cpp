@@ -60,12 +60,14 @@ void my_parallel8_sparse_matrix_by_matrix_multiplication_RA(Ak2& Amat,
 	omp_set_num_threads(inum_core);
 	
 
+	const integer iSIZE =  n + 2;
+
 	// Данные используемые для частичного формирователя суммы.
 
 	for (int i_9 = 0; i_9 < iKnumber_thread; i_9++) {
 
 #pragma omp parallel for schedule (static)
-		for (integer i_91 = 0; i_91 < 10 * n + 1; i_91++) {
+		for (integer i_91 = 0; i_91 < iSIZE; i_91++) {
 			hash_table_m[i_9][i_91] = false;// inicialization
 		}
 		index_size_m[i_9] = 0;
@@ -269,7 +271,7 @@ void my_parallel8_sparse_matrix_by_matrix_multiplication_AP(Ak2& Amat,
 
 	for (int i_9 = 0; i_9 < iKnumber_thread; i_9++) {
 
-		integer ISIZE = 10 * n + 1;
+		integer ISIZE =  n + 2;
 
 #pragma omp parallel for
 		for (integer i_91 = 0; i_91 < ISIZE; i_91++) {

@@ -1,171 +1,118 @@
-// Файл MenterSST.cpp содержит 
-// сборку матрицы для уравнения турбулентности RANS
-// SST Ментера 1993 года.
-// Начало 13.00 03.10.2019. Окончание 19:00 10.10.2019.
-// Без нестационарного члена.
-// green_gauss_turbulent_kinetik_energy_MenterSST -> 13:13 03:10:2019. 
-// green_gauss_specific_dissipation_rate_omega_MenterSST -> 14:39 03:10:2019
-// my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D -> 17:00 03:10:2019 (27.12.2020 учёт нестационарного члена).
-// my_export_tecplot3 -> 19:03 03:10:2019
-// my_elmatr_quad -> 11:51 04:10:2019
-// my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D -> 13:37 04:10:2019
-// my_unsteady_temperature -> 16:04 04:10:2019.
-// my_elmatr_quad_kinetik_turbulence_energy_3D_bound -> 16:29 04:10:2019.
-// solve -> 16:29 05:10:2019.
-// fluent_residual_for_x -> 16:42 05:10:2019
-// my_linalg -> 17:02 05:10:2019
-// my_elmatr_quad_OmegaSSTMenter3D_bound -> 19:14 05:10:2019
-// Сделал как в cfd wiki 7:10:2019. Проверил 9:10:2019.
-// Тестирование модели турбулентности SST Ментера начало 19:15 05:10:2019 -> окончание 11:56 12:10:2019
+// Файл Langtry_Menter_Gamma_Retheta_SST.cpp модель ламинарно турбулентного перехода 
+// Langtry и Menterа.
+// Начало 12.01.2021 10.43.
+// 18.10  12.01.2021 Собрал уравнение для внутренних узлов для перемежаемости gamma : my_elmatr_quad_turbulent_Gamma_Langtry_Menter_SST_3D.
+// 13.37  13.01.2021 Собрал уравнение для внутренних узлов для  функции Re_Theta: my_elmatr_quad_turbulent_Re_Theta_Langtry_MenterSST_3D.
+// 14.43  13.01.2021 Собрал граничные условия для перемежаемости gamma в модели Лантгри Ментора: my_elmatr_quad_Gamma_Langtry_Mentor_3D_bound.
+// 15.28  13.01.2021 Собрал граничные условия для функции Re_theta_T в модели Лантгри Ментора: my_elmatr_quad_Re_Theta_T_Langtry_Mentor_3D_bound.
+// 15.44  13.01.2021 Отказ от вычисления градиентов для gamma и Re_theta_T т.к. их градиенты не используются в модели Ментора Лантгрии.
+// 16.44  13.01.2021 Ввел поправку в источниковые члены уравнения кинетической энергии турбулентности SST вызванные поправкой Ментора Лантгрии. 
+// Поправки к источниковым членам в уравнении кинетической энергии турбулентности включаются если флаг bMentor_Langtry = true.
+// 17.05 13.01.2021 Функция переключатель F1 модифицирована с учетом модели Ментора Лантгрии.
+// 15.00-19.00 14.01.2021 - 11.45 15.01.2021 Функция solve() в файле mysolverv0_03.c. 
+// 12.00 15.01.2021 fluent_residual_for_x. Файл my_linalg.cpp.
+// 12.47 15.01.2021  Файл my_linalg.cpp целиком.
+// 14.43 15.01.2021 Завершена модификация функции my_version_SIMPLE_Algorithm3D для модели Ментора Лантгрии.
+// 15.48 21.01.2021 my_unsteady_temperature.cpp
+// 15.56 21.01.2021 my_amgcl_alg.cpp
+// 16.34 21.01.2021 my_export_tecplot3 Не выводил на печать гамму и ReTheta. Сделал такуюже печать как в модели ментер SST, тех же функций.
+// 16.40 21.01.2021 inputlaplas.cpp
+// 16.49 21.01.2021 Mingw_input_laplas.cpp
+// 18.13 21.01.2021 constr_struct.cpp
+// 11.11 22.01.2021 classic_aglomerative_amg6_2018year.cpp
+// 11.18 22.01.2021 my_agregat_amg.cpp
 
 #pragma once
-#ifndef MY_MENTER_SST_CPP
-#define MY_MENTER_SST_CPP 1
+#ifndef LANGTRY_MENTER_GAMMA_RETHETA_SST_CPP
+#define LANGTRY_MENTER_GAMMA_RETHETA_SST_CPP 1
 
-// Определение лимитеров см. в файле AliceFlow_v0_48.cpp
 
-// из модели Ментора Лантгрии
-doublereal Re_theta_c(doublereal& Rethetat)
+doublereal F_length_1(doublereal &Rethetat)
 {
 	if (Rethetat < 0.0) {
 		Rethetat = 0.0;
 	}
 
-	if (Rethetat <= 1870.0) {
-		return (-396.035 * 1e-2) + (10120.656 * 1e-4) * Rethetat + (-868.230 * 1e-6) * Rethetat * Rethetat + (696.506 * 1e-9) * Rethetat * Rethetat * Rethetat + (-174.105 * 1e-12) * Rethetat * Rethetat * Rethetat * Rethetat;
+	if (Rethetat < 400.0) {
+
+		return 39.8189 + (-119.270 * 1e-4) * Rethetat + (-132.567 * 1e-6) * Rethetat * Rethetat;
+	}
+	else if ((Rethetat >= 400.0) && (Rethetat < 596)) {
+
+		return 263.404 + (-123.939 * 1e-2) * Rethetat + (194.548 * 1e-5) * Rethetat * Rethetat + (-101.695 * 1e-8) * Rethetat * Rethetat * Rethetat;
+	}
+	else if ((Rethetat >= 596) && (Rethetat < 1200.0)) {
+
+		return 0.5 - (3.0 * 1e-4) * (Rethetat - 596.0);
 	}
 	else {
-		return Rethetat - (593.11 + 0.482 * (Rethetat - 1870.0));
+		return 0.3188;
+	}
+} // F_length_1
+
+
+doublereal F_lambda_theta(doublereal &lambda_theta, doublereal &Tu_val)
+{
+	if (lambda_theta <= 0) {
+		return 1.0 + (12.986 * lambda_theta + 123.66 * lambda_theta * lambda_theta + 405.689 * lambda_theta * lambda_theta * lambda_theta) * exp(-pow(Tu_val / 1.5, 1.5));
+	}
+	else {
+		return 1.0 + 0.275 * (1.0 - exp(-35.0 * lambda_theta)) * exp(-Tu_val / 0.5);
+	}
+} // F_lambda_theta
+
+doublereal Re_theta_eq(doublereal& lambda_theta, doublereal& Tu_val)
+{
+	if (Tu_val < 1.0e-10) {
+		printf("error Langtry_Menter_Gamma_Retheta_SST.cpp in function Re_theta_eq()\n");
+		printf("negative or zero Tu\n");
+		system("pause");
+		//exit(1);
+		Tu_val = 1.0e-10;
 	}
 
+	if (Tu_val <= 1.3)
+	{
+		return (1173.51 - 589.428 * Tu_val + 0.2196 / (Tu_val * Tu_val))* F_lambda_theta(lambda_theta, Tu_val);
+	}
+	else
+	{
+		return 331.50 * pow(Tu_val - 0.5658, -0.671) * F_lambda_theta( lambda_theta, Tu_val);
+	}
+} // Re_theta_eq
 
-} // Re_theta_c
+// Re_theta_t в дальнем поле, на входной границе.
+doublereal Re_theta_T_farfield(doublereal& Tu_infinity) {
 
-
-doublereal sigmak_func(integer iP, doublereal**& potent, 
-	float** prop, doublereal*& distance_to_wall, 
-	doublereal rP, integer maxelm, bool bMentor_Langtry) {
-
-	doublereal sigmak = 0.85;
-
-	if ((iP > -1)&&(iP< maxelm)) {
-
-		doublereal multMenter = (2.0 * rP * eqin.fluidinfo[0].sigma_omega2) / fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-		doublereal Dkw = multMenter * (potent[GRADXTURBULENT_KINETIK_ENERGY][iP] * potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
-			potent[GRADYTURBULENT_KINETIK_ENERGY][iP] * potent[GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
-			potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-
-		doublereal CDkw = fmax(Dkw, 1.0e-10);
-		if (fabs(Dkw) < 1.0e-30) CDkw = 0.01;// 16.10.2020
-		doublereal F1;
-
-		doublereal part1 = sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]))
-			/ (eqin.fluidinfo[0].beta_zvezda * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) * distance_to_wall[iP]);
-		doublereal part2 = (500.0 * prop[MU_DYNAMIC_VISCOSITY][iP]) / (prop[RHO][iP] * distance_to_wall[iP] * distance_to_wall[iP]
-			* fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-		doublereal part3 = (4.0 * eqin.fluidinfo[0].sigma_omega2 * fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) /
-			(CDkw * distance_to_wall[iP] * distance_to_wall[iP]);
-		doublereal arg1 = fmin(fmax(part1, part2), part3);
-		F1 = tanh(arg1 * arg1 * arg1 * arg1);
-
-		if (bMentor_Langtry)
-		{
-			doublereal Ry = rP * distance_to_wall[iP] * sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) / prop[MU_DYNAMIC_VISCOSITY][iP];
-			doublereal F3 = exp(-(Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0));
-			F1 = fmax(F1, F3);
-
-		}
-
-
-		if ((F1 < 0.0) || (F1 > 1.0)) {
-			printf("F1 sigmak==%e\n", F1);
-			system("PAUSE");
-
-		}
-
-		sigmak = F1 * eqin.fluidinfo[0].sigma_k1 + (1.0 - F1) * eqin.fluidinfo[0].sigma_k2;
-
-		if ((sigmak > eqin.fluidinfo[0].sigma_k2) || (sigmak < eqin.fluidinfo[0].sigma_k1)) {
-
-			printf("sigmak==%e\n", sigmak);
-			system("PAUSE");
-		}
+	if (Tu_infinity < 1.0e-10) {
+		printf("error Langtry_Menter_Gamma_Retheta_SST.cpp in function Re_theta_T_farfield()\n");
+		printf("negative or zero Tu_infinity\n");
+		system("pause");
+		//exit(1);
+		Tu_infinity = 1.0e-10;
 	}
 
-	return sigmak;
-} // sigmak_func
-
-doublereal sigma_omega_func(integer iP, doublereal**& potent,
-	float** prop, doublereal*& distance_to_wall, 
-	doublereal rP, integer maxelm, bool bMentor_Langtry) {
-	doublereal sigma_omega = 0.5;
-
-	if ((iP > -1) && (iP < maxelm)) {
-
-		doublereal Dkw;
-
-		doublereal multMenter = (2.0 * rP * eqin.fluidinfo[0].sigma_omega2) / fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-		Dkw = multMenter * (potent[GRADXTURBULENT_KINETIK_ENERGY][iP] * potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
-			potent[GRADYTURBULENT_KINETIK_ENERGY][iP] * potent[GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
-			potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-
-		doublereal CDkw = fmax(Dkw, 1.0e-10);
-		if (fabs(Dkw) < 1.0e-30) CDkw = 0.01;// 16.10.2020
-		doublereal F1;
-
-		doublereal part1 = sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) /
-			(eqin.fluidinfo[0].beta_zvezda * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) * distance_to_wall[iP]);
-		doublereal part2 = (500.0 * prop[MU_DYNAMIC_VISCOSITY][iP]) / (prop[RHO][iP] * distance_to_wall[iP] * distance_to_wall[iP] *
-			fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-		doublereal part3 = (4.0 * eqin.fluidinfo[0].sigma_omega2 * fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) /
-			(CDkw * distance_to_wall[iP] * distance_to_wall[iP]);
-		doublereal arg1 = fmin(fmax(part1, part2), part3);
-		F1 = tanh(arg1 * arg1 * arg1 * arg1);
-
-		if (bMentor_Langtry)
-		{
-			doublereal Ry = rP * distance_to_wall[iP] * sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) / prop[MU_DYNAMIC_VISCOSITY][iP];
-			doublereal F3 = exp(-(Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0));
-			F1 = fmax(F1, F3);
-
-		}
-
-
-		if ((F1 < 0.0) || (F1 > 1.0)) {
-			printf("F1 sigmak==%e\n", F1);
-			system("PAUSE");
-
-		}
-
-		sigma_omega = F1 * eqin.fluidinfo[0].sigma_omega1 + (1.0 - F1) * eqin.fluidinfo[0].sigma_omega2;
-		if ((sigma_omega < 1.0e-30) || (sigma_omega > 2.0)) {
-			printf("sigma_omega=%e\n", sigma_omega);
-			system("PAUSE");
-		}
-
-		if ((sigma_omega > eqin.fluidinfo[0].sigma_omega2) || (sigma_omega < eqin.fluidinfo[0].sigma_omega1)) {
-
-			printf("sigma_omega==%e\n", sigma_omega);
-			system("PAUSE");
-		}
-
+	if (Tu_infinity <= 1.3) {
+		return (1173.51 - 589.428* Tu_infinity + 0.2196/(Tu_infinity* Tu_infinity));
+	}
+	else {
+		return 331.50 * pow(Tu_infinity - 0.5658,-0.671);
 	}
 
-	return sigma_omega;
-}
+} // Re_theta_T_farfield
+
 
 // собирает одно уравнение матрицы СЛАУ для обобщенного уравнения 
 // конвекции - диффузии, для определённого внутреннего контрольного объёма.
 // Для прямоугольной трёхмерной шестигранной Hex сетки.
-// Эта сборка применяется только для кинетической энергии турбулентных пульсаций.
-// 13.01.2021 если bMentor_Langtry=true то применяется модификация генерации и диссипации Ментора Лантгрии.
-void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
+// Эта сборка применяется только для перемежаемости (Gamma) в модели ламинарно турбулентного перехода Ментора Лентгрии.
+void my_elmatr_quad_turbulent_Gamma_Langtry_Menter_SST_3D(
 	integer iP,
 	BOUND* border_neighbor,
 	integer lw,
 	integer ls,
-	equation3D** &sl,
-	equation3D_bon** &slb,
+	equation3D**& sl,
+	equation3D_bon**& slb,
 	//doublereal** diag_coef,
 	//integer iVar,
 	bool btimedep,
@@ -185,7 +132,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	//doublereal dgz,
 	//doublereal dbeta, 
 	integer ishconvection,
-	doublereal* &kinetik_energy_old_time_step,
+	doublereal*& gamma_Langtry_Menter_old_time_step,
 	//bool bBussineskApproach,
 	//doublereal temp_ref,
 	//bool bfirst_start,
@@ -196,17 +143,16 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	BLOCK* b,
 	integer lb,
 	TPROP* matlist,
-	doublereal** &mf,
+	doublereal**& mf,
 	//bool bVERYStable,
 	//doublereal &sumanb,
-	integer *ilevel_alice,
-	doublereal* &distance_to_wall,
-	doublereal* &SInvariantStrainRateTensor,
+	integer* ilevel_alice,
+	doublereal*& distance_to_wall,
+	doublereal*& SInvariantStrainRateTensor,
 	bool brthdsd_ON,
 	TOCHKA*& center_coord_loc,
 	TOCHKA*& volume_loc,
-	integer maxbound,
-	bool bMentor_Langtry
+	integer maxbound
 ) {
 
 	// iP - номер внутреннего контрольного объёма
@@ -214,9 +160,9 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
 	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
 	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iE = iE; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iN = iN; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iT = iT;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iS = iS; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iW = iW; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iB = iB;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iP = iP;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iE = iE; sl[GAMMA_LANGTRY_MENTER_SL][iP].iN = iN; sl[GAMMA_LANGTRY_MENTER_SL][iP].iT = iT;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iS = iS; sl[GAMMA_LANGTRY_MENTER_SL][iP].iW = iW; sl[GAMMA_LANGTRY_MENTER_SL][iP].iB = iB;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iP = iP;
 
 	// 26.09.2016 Добавок для АЛИС сетки.
 	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
@@ -234,78 +180,78 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	}
 
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iE2 = iE2; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iN2 = iN2; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iT2 = iT2;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iS2 = iS2; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iW2 = iW2; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iB2 = iB2;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iE2 = iE2; sl[GAMMA_LANGTRY_MENTER_SL][iP].iN2 = iN2; sl[GAMMA_LANGTRY_MENTER_SL][iP].iT2 = iT2;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iS2 = iS2; sl[GAMMA_LANGTRY_MENTER_SL][iP].iW2 = iW2; sl[GAMMA_LANGTRY_MENTER_SL][iP].iB2 = iB2;
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iE3 = iE3; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iN3 = iN3; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iT3 = iT3;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iS3 = iS3; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iW3 = iW3; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iB3 = iB3;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iE3 = iE3; sl[GAMMA_LANGTRY_MENTER_SL][iP].iN3 = iN3; sl[GAMMA_LANGTRY_MENTER_SL][iP].iT3 = iT3;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iS3 = iS3; sl[GAMMA_LANGTRY_MENTER_SL][iP].iW3 = iW3; sl[GAMMA_LANGTRY_MENTER_SL][iP].iB3 = iB3;
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iE4 = iE4; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iN4 = iN4; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iT4 = iT4;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].iS4 = iS4; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iW4 = iW4; sl[TURBULENT_KINETIK_ENERGY_SL][iP].iB4 = iB4;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iE4 = iE4; sl[GAMMA_LANGTRY_MENTER_SL][iP].iN4 = iN4; sl[GAMMA_LANGTRY_MENTER_SL][iP].iT4 = iT4;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].iS4 = iS4; sl[GAMMA_LANGTRY_MENTER_SL][iP].iW4 = iW4; sl[GAMMA_LANGTRY_MENTER_SL][iP].iB4 = iB4;
 
 
 
 	// Инициализирующее обнуление.
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].an = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].as = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].at = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = 0.0;
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = 0.0;
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = 0.0;
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = 0.0;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = 0.0;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = 0.0;
 
 
 	// Признак присутствия связи.
 	// От булевых флагов можно избавиться в целях экономии памяти ЭВМ.
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].bE2 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bW2 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bS2 = false;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].bN2 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bB2 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bT2 = false;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].bE2 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bW2 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bS2 = false;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].bN2 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bB2 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bT2 = false;
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].bE3 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bW3 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bS3 = false;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].bN3 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bB3 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bT3 = false;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].bE3 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bW3 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bS3 = false;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].bN3 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bB3 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bT3 = false;
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].bE4 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bW4 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bS4 = false;
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].bN4 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bB4 = false; sl[TURBULENT_KINETIK_ENERGY_SL][iP].bT4 = false;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].bE4 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bW4 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bS4 = false;
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].bN4 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bB4 = false; sl[GAMMA_LANGTRY_MENTER_SL][iP].bT4 = false;
 
-	if (CHECK_NODE_FOR_EXISTENCE(iE2)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bE2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iW2)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bW2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iN2)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bN2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iS2)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bS2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iT2)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bT2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iB2)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bB2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE2)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bE2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW2)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bW2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN2)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bN2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS2)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bS2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT2)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bT2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB2)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bB2 = true;
 
-	if (CHECK_NODE_FOR_EXISTENCE(iE3)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bE3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iW3)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bW3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iN3)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bN3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iS3)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bS3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iT3)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bT3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iB3)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bB3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE3)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bE3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW3)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bW3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN3)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bN3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS3)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bS3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT3)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bT3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB3)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bB3 = true;
 
-	if (CHECK_NODE_FOR_EXISTENCE(iE4)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bE4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iW4)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bW4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iN4)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bN4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iS4)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bS4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iT4)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bT4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iB4)) sl[TURBULENT_KINETIK_ENERGY_SL][iP].bB4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE4)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bE4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW4)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bW4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN4)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bN4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS4)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bS4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT4)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bT4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB4)) sl[GAMMA_LANGTRY_MENTER_SL][iP].bB4 = true;
 
 	// Внутренний КО.	
 
@@ -359,173 +305,173 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	//printf("%.2f %.2f\n",dx,dy); // debug GOOD
 	//getchar();
 
-	doublereal dxe = 0.5*dx, dxw = 0.5*dx, dyn = 0.5*dy, dys = 0.5*dy, dzt = 0.5*dz, dzb = 0.5*dz;
+	doublereal dxe = 0.5 * dx, dxw = 0.5 * dx, dyn = 0.5 * dy, dys = 0.5 * dy, dzt = 0.5 * dz, dzb = 0.5 * dz;
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iE)) {
-		if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
-		if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bE) dxe = 0.5 * (pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
+		if (!bE) dxe -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iW)) {
-		if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
+		if (!bW) dxw = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW) dxw -= 0.5 * (pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
 	}
 	// y - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iN)) {
-		if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
-		if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bN) dyn = 0.5 * (pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
+		if (!bN) dyn -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iS)) {
-		if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
+		if (!bS) dys = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS) dys -= 0.5 * (pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
 	}
 	// z - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iT)) {
-		if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
-		if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bT) dzt = 0.5 * (pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
+		if (!bT) dzt -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iB)) {
-		if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
+		if (!bB) dzb = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB) dzb -= 0.5 * (pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
 	}
 
 
-	doublereal dxe2 = 0.5*dx, dxw2 = 0.5*dx, dyn2 = 0.5*dy, dys2 = 0.5*dy, dzt2 = 0.5*dz, dzb2 = 0.5*dz;
-	doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
-	doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
+	doublereal dxe2 = 0.5 * dx, dxw2 = 0.5 * dx, dyn2 = 0.5 * dy, dys2 = 0.5 * dy, dzt2 = 0.5 * dz, dzb2 = 0.5 * dz;
+	doublereal dxe3 = 0.5 * dx, dxw3 = 0.5 * dx, dyn3 = 0.5 * dy, dys3 = 0.5 * dy, dzt3 = 0.5 * dz, dzb3 = 0.5 * dz;
+	doublereal dxe4 = 0.5 * dx, dxw4 = 0.5 * dx, dyn4 = 0.5 * dy, dys4 = 0.5 * dy, dzt4 = 0.5 * dz, dzb4 = 0.5 * dz;
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iE2)) {
-		if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
-		if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bE2) dxe2 = 0.5 * (pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+		if (!bE2) dxe2 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iW2)) {
-		if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+		if (!bW2) dxw2 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW2) dxw2 -= 0.5 * (pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
 	}
 	// y - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iN2)) {
-		if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
-		if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bN2) dyn2 = 0.5 * (pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+		if (!bN2) dyn2 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iS2)) {
-		if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+		if (!bS2) dys2 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS2) dys2 -= 0.5 * (pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
 	}
 	// z - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iT2)) {
-		if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
-		if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bT2) dzt2 = 0.5 * (pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+		if (!bT2) dzt2 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iB2)) {
-		if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+		if (!bB2) dzb2 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB2) dzb2 -= 0.5 * (pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
 	}
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iE3)) {
-		if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
-		if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bE3) dxe3 = 0.5 * (pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+		if (!bE3) dxe3 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iW3)) {
-		if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+		if (!bW3) dxw3 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW3) dxw3 -= 0.5 * (pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
 	}
 	// y - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iN3)) {
-		if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
-		if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bN3) dyn3 = 0.5 * (pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+		if (!bN3) dyn3 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iS3)) {
-		if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+		if (!bS3) dys3 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS3) dys3 -= 0.5 * (pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
 	}
 	// z - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iT3)) {
-		if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
-		if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bT3) dzt3 = 0.5 * (pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+		if (!bT3) dzt3 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iB3)) {
-		if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+		if (!bB3) dzb3 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB3) dzb3 -= 0.5 * (pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
 	}
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iE4)) {
-		if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
-		if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bE4) dxe4 = 0.5 * (pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+		if (!bE4) dxe4 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iW4)) {
-		if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+		if (!bW4) dxw4 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW4) dxw4 -= 0.5 * (pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
 	}
 	// y - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iN4)) {
-		if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
-		if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bN4) dyn4 = 0.5 * (pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+		if (!bN4) dyn4 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iS4)) {
-		if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+		if (!bS4) dys4 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS4) dys4 -= 0.5 * (pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
 	}
 	// z - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iT4)) {
-		if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
-		if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bT4) dzt4 = 0.5 * (pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+		if (!bT4) dzt4 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iB4)) {
-		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+		if (!bB4) dzb4 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB4) dzb4 -= 0.5 * (pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
 	}
 
 
 	// Учёт неравномерности расчётной сетки:
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
 	// x-direction
-	feplus = 0.5*dx / dxe;
-	fwplus = 0.5*dx / dxw;
+	feplus = 0.5 * dx / dxe;
+	fwplus = 0.5 * dx / dxw;
 	// y-direction
-	fnplus = 0.5*dy / dyn;
-	fsplus = 0.5*dy / dys;
+	fnplus = 0.5 * dy / dyn;
+	fsplus = 0.5 * dy / dys;
 	// z-direction
-	ftplus = 0.5*dz / dzt;
-	fbplus = 0.5*dz / dzb;
+	ftplus = 0.5 * dz / dzt;
+	fbplus = 0.5 * dz / dzb;
 
 	doublereal feplus2, fwplus2, fnplus2, fsplus2, ftplus2, fbplus2;
 	// x-direction
-	feplus2 = 0.5*dx / dxe2;
-	fwplus2 = 0.5*dx / dxw2;
+	feplus2 = 0.5 * dx / dxe2;
+	fwplus2 = 0.5 * dx / dxw2;
 	// y-direction
-	fnplus2 = 0.5*dy / dyn2;
-	fsplus2 = 0.5*dy / dys2;
+	fnplus2 = 0.5 * dy / dyn2;
+	fsplus2 = 0.5 * dy / dys2;
 	// z-direction
-	ftplus2 = 0.5*dz / dzt2;
-	fbplus2 = 0.5*dz / dzb2;
+	ftplus2 = 0.5 * dz / dzt2;
+	fbplus2 = 0.5 * dz / dzb2;
 
 	doublereal feplus3, fwplus3, fnplus3, fsplus3, ftplus3, fbplus3;
 	// x-direction
-	feplus3 = 0.5*dx / dxe3;
-	fwplus3 = 0.5*dx / dxw3;
+	feplus3 = 0.5 * dx / dxe3;
+	fwplus3 = 0.5 * dx / dxw3;
 	// y-direction
-	fnplus3 = 0.5*dy / dyn3;
-	fsplus3 = 0.5*dy / dys3;
+	fnplus3 = 0.5 * dy / dyn3;
+	fsplus3 = 0.5 * dy / dys3;
 	// z-direction
-	ftplus3 = 0.5*dz / dzt3;
-	fbplus3 = 0.5*dz / dzb3;
+	ftplus3 = 0.5 * dz / dzt3;
+	fbplus3 = 0.5 * dz / dzb3;
 
 	doublereal feplus4, fwplus4, fnplus4, fsplus4, ftplus4, fbplus4;
 	// x-direction
-	feplus4 = 0.5*dx / dxe4;
-	fwplus4 = 0.5*dx / dxw4;
+	feplus4 = 0.5 * dx / dxe4;
+	fwplus4 = 0.5 * dx / dxw4;
 	// y-direction
-	fnplus4 = 0.5*dy / dyn4;
-	fsplus4 = 0.5*dy / dys4;
+	fnplus4 = 0.5 * dy / dyn4;
+	fsplus4 = 0.5 * dy / dys4;
 	// z-direction
-	ftplus4 = 0.5*dz / dzt4;
-	fbplus4 = 0.5*dz / dzb4;
+	ftplus4 = 0.5 * dz / dzt4;
+	fbplus4 = 0.5 * dz / dzb4;
 
 	//printf("%e %e %e %e %e %e\n",feplus, fwplus, fnplus, fsplus, ftplus, fbplus);
 	//getchar();
@@ -652,22 +598,22 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	// интерполяция плотности сделана так, чтобы выполнялись 
 	// предельные соотношения.
 	if (iE > -1) {
-		if (!bE) rhoe = rE * rP / (feplus*rE + (1.0 - feplus)*rP); else rhoe = rE; // проверено !
+		if (!bE) rhoe = rE * rP / (feplus * rE + (1.0 - feplus) * rP); else rhoe = rE; // проверено !
 	}
 	if (iW > -1) {
-		if (!bW) rhow = rW * rP / (fwplus*rW + (1.0 - fwplus)*rP); else rhow = rW;
+		if (!bW) rhow = rW * rP / (fwplus * rW + (1.0 - fwplus) * rP); else rhow = rW;
 	}
 	if (iN > -1) {
-		if (!bN) rhon = rN * rP / (fnplus*rN + (1.0 - fnplus)*rP); else rhon = rN;
+		if (!bN) rhon = rN * rP / (fnplus * rN + (1.0 - fnplus) * rP); else rhon = rN;
 	}
 	if (iS > -1) {
-		if (!bS) rhos = rS * rP / (fsplus*rS + (1.0 - fsplus)*rP); else rhos = rS;
+		if (!bS) rhos = rS * rP / (fsplus * rS + (1.0 - fsplus) * rP); else rhos = rS;
 	}
 	if (iT > -1) {
-		if (!bT) rhot = rT * rP / (ftplus*rT + (1.0 - ftplus)*rP); else rhot = rT;
+		if (!bT) rhot = rT * rP / (ftplus * rT + (1.0 - ftplus) * rP); else rhot = rT;
 	}
 	if (iB > -1) {
-		if (!bB) rhob = rB * rP / (fbplus*rB + (1.0 - fbplus)*rP); else rhob = rB;
+		if (!bB) rhob = rB * rP / (fbplus * rB + (1.0 - fbplus) * rP); else rhob = rB;
 	}
 
 	doublereal rhoe2 = 0.0, rhow2 = 0.0, rhon2 = 0.0, rhos2 = 0.0, rhot2 = 0.0, rhob2 = 0.0;
@@ -675,60 +621,60 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	doublereal rhoe4 = 0.0, rhow4 = 0.0, rhon4 = 0.0, rhos4 = 0.0, rhot4 = 0.0, rhob4 = 0.0;
 
 	if (iE2 > -1) {
-		if (!bE2)  rhoe2 = rE2 * rP / (feplus2*rE2 + (1.0 - feplus2)*rP); else rhoe2 = rE2; // проверено !
+		if (!bE2)  rhoe2 = rE2 * rP / (feplus2 * rE2 + (1.0 - feplus2) * rP); else rhoe2 = rE2; // проверено !
 	}
 	if (iW2 > -1) {
-		if (!bW2)  rhow2 = rW2 * rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP); else rhow2 = rW2;
+		if (!bW2)  rhow2 = rW2 * rP / (fwplus2 * rW2 + (1.0 - fwplus2) * rP); else rhow2 = rW2;
 	}
 	if (iN2 > -1) {
-		if (!bN2) rhon2 = rN2 * rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP); else rhon2 = rN2;
+		if (!bN2) rhon2 = rN2 * rP / (fnplus2 * rN2 + (1.0 - fnplus2) * rP); else rhon2 = rN2;
 	}
 	if (iS2 > -1) {
-		if (!bS2)  rhos2 = rS2 * rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP); else rhos2 = rS2;
+		if (!bS2)  rhos2 = rS2 * rP / (fsplus2 * rS2 + (1.0 - fsplus2) * rP); else rhos2 = rS2;
 	}
 	if (iT2 > -1) {
-		if (!bT2)  rhot2 = rT2 * rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP); else rhot2 = rT2;
+		if (!bT2)  rhot2 = rT2 * rP / (ftplus2 * rT2 + (1.0 - ftplus2) * rP); else rhot2 = rT2;
 	}
 	if (iB2 > -1) {
-		if (!bB2) rhob2 = rB2 * rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP); else rhob2 = rB2;
+		if (!bB2) rhob2 = rB2 * rP / (fbplus2 * rB2 + (1.0 - fbplus2) * rP); else rhob2 = rB2;
 	}
 
 	if (iE3 > -1) {
-		if (!bE3) rhoe3 = rE3 * rP / (feplus3*rE3 + (1.0 - feplus3)*rP); else rhoe3 = rE3;
+		if (!bE3) rhoe3 = rE3 * rP / (feplus3 * rE3 + (1.0 - feplus3) * rP); else rhoe3 = rE3;
 	}
 	if (iW3 > -1) {
-		if (!bW3) rhow3 = rW3 * rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP); else rhow3 = rW3;
+		if (!bW3) rhow3 = rW3 * rP / (fwplus3 * rW3 + (1.0 - fwplus3) * rP); else rhow3 = rW3;
 	}
 	if (iN3 > -1) {
-		if (!bN3) rhon3 = rN3 * rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP); else rhon3 = rN3;
+		if (!bN3) rhon3 = rN3 * rP / (fnplus3 * rN3 + (1.0 - fnplus3) * rP); else rhon3 = rN3;
 	}
 	if (iS3 > -1) {
-		if (!bS3) rhos3 = rS3 * rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP); else rhos3 = rS3;
+		if (!bS3) rhos3 = rS3 * rP / (fsplus3 * rS3 + (1.0 - fsplus3) * rP); else rhos3 = rS3;
 	}
 	if (iT3 > -1) {
-		if (!bT3) rhot3 = rT3 * rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP); else rhot3 = rT3;
+		if (!bT3) rhot3 = rT3 * rP / (ftplus3 * rT3 + (1.0 - ftplus3) * rP); else rhot3 = rT3;
 	}
 	if (iB3 > -1) {
-		if (!bB3) rhob3 = rB3 * rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP); else rhob3 = rB3;
+		if (!bB3) rhob3 = rB3 * rP / (fbplus3 * rB3 + (1.0 - fbplus3) * rP); else rhob3 = rB3;
 	}
 
 	if (iE4 > -1) {
-		if (!bE4) rhoe4 = rE4 * rP / (feplus4*rE4 + (1.0 - feplus4)*rP); else rhoe4 = rE4;
+		if (!bE4) rhoe4 = rE4 * rP / (feplus4 * rE4 + (1.0 - feplus4) * rP); else rhoe4 = rE4;
 	}
 	if (iW4 > -1) {
-		if (!bW4) rhow4 = rW4 * rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP); else rhow4 = rW4;
+		if (!bW4) rhow4 = rW4 * rP / (fwplus4 * rW4 + (1.0 - fwplus4) * rP); else rhow4 = rW4;
 	}
 	if (iN4 > -1) {
-		if (!bN4) rhon4 = rN4 * rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP); else rhon4 = rN4;
+		if (!bN4) rhon4 = rN4 * rP / (fnplus4 * rN4 + (1.0 - fnplus4) * rP); else rhon4 = rN4;
 	}
 	if (iS4 > -1) {
-		if (!bS4) rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP); else rhos4 = rS4;
+		if (!bS4) rhos4 = rS4 * rP / (fsplus4 * rS4 + (1.0 - fsplus4) * rP); else rhos4 = rS4;
 	}
 	if (iT4 > -1) {
-		if (!bT4) rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP); else rhot4 = rT4;
+		if (!bT4) rhot4 = rT4 * rP / (ftplus4 * rT4 + (1.0 - ftplus4) * rP); else rhot4 = rT4;
 	}
 	if (iB4 > -1) {
-		if (!bB4) rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP); else rhob4 = rB4;
+		if (!bB4) rhob4 = rB4 * rP / (fbplus4 * rB4 + (1.0 - fbplus4) * rP); else rhob4 = rB4;
 	}
 
 
@@ -751,7 +697,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	   SIMPLE (на момент непосредственного вычисления потоков коэффициенты берутся с текущей итерации, но
 	   дело в том что потом мы на следующей итерации используем вычисленные ранее потоки массы (которые были запомнены в памяти)
 	   и поэтому говорим что диагональные коэффициенты беруться с предыдущей итерации).
-	   требуется всеобъемлющая проверка... 
+	   требуется всеобъемлющая проверка...
 	   Особенно должна обрабатываться первая итерация, т.к. на ней диагональные коэффициенты
 	   для всех точек ещё не посчитаны. Поэтому предлагается включать интерполяцию Рхи-Чоу только
 	   со второй итерации алгоритма SIMPLE. На первой итерации стационарного солвера используется
@@ -796,7 +742,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iE > -1) {
 			if (bE) {
 				// граничный узел.
-				Fe = mf[iP][E_SIDE] * (border_neighbor[iE - maxelm].dS / (dy*dz));
+				Fe = mf[iP][E_SIDE] * (border_neighbor[iE - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -813,7 +759,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iW > -1) {
 			if (bW) {
 				// граничный узел.
-				Fw = mf[iP][W_SIDE] * (border_neighbor[iW - maxelm].dS / (dy*dz));
+				Fw = mf[iP][W_SIDE] * (border_neighbor[iW - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -830,7 +776,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iN > -1) {
 			if (bN) {
 				// граничный узел.
-				Fn = mf[iP][N_SIDE] * (border_neighbor[iN - maxelm].dS / (dx*dz));
+				Fn = mf[iP][N_SIDE] * (border_neighbor[iN - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -847,7 +793,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iS > -1) {
 			if (bS) {
 				// граничный узел.
-				Fs = mf[iP][S_SIDE] * (border_neighbor[iS - maxelm].dS / (dx*dz));
+				Fs = mf[iP][S_SIDE] * (border_neighbor[iS - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -864,7 +810,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iT > -1) {
 			if (bT) {
 				// граничный узел.
-				Ft = mf[iP][T_SIDE] * (border_neighbor[iT - maxelm].dS / (dx*dy));
+				Ft = mf[iP][T_SIDE] * (border_neighbor[iT - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -881,7 +827,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iB > -1) {
 			if (bB) {
 				// граничный узел.
-				Fb = mf[iP][B_SIDE] * (border_neighbor[iB - maxelm].dS / (dx*dy));
+				Fb = mf[iP][B_SIDE] * (border_neighbor[iB - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -898,7 +844,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iE2 > -1) {
 			if (bE2) {
 				// граничный узел.
-				Fe2 = mf[iP][E_SIDE] * (border_neighbor[iE2 - maxelm].dS / (dy*dz));
+				Fe2 = mf[iP][E_SIDE] * (border_neighbor[iE2 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -915,7 +861,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iW2 > -1) {
 			if (bW2) {
 				// граничный узел.
-				Fw2 = mf[iP][W_SIDE] * (border_neighbor[iW2 - maxelm].dS / (dy*dz));
+				Fw2 = mf[iP][W_SIDE] * (border_neighbor[iW2 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
@@ -932,7 +878,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iN2 > -1) {
 			if (bN2) {
 				// граничный узел.
-				Fn2 = mf[iP][N_SIDE] * (border_neighbor[iN2 - maxelm].dS / (dx*dz));
+				Fn2 = mf[iP][N_SIDE] * (border_neighbor[iN2 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -949,7 +895,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iS2 > -1) {
 			if (bS2) {
 				// граничный узел.
-				Fs2 = mf[iP][S_SIDE] * (border_neighbor[iS2 - maxelm].dS / (dx*dz));
+				Fs2 = mf[iP][S_SIDE] * (border_neighbor[iS2 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -966,7 +912,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iT2 > -1) {
 			if (bT2) {
 				// граничный узел.
-				Ft2 = mf[iP][T_SIDE] * (border_neighbor[iT2 - maxelm].dS / (dx*dy));
+				Ft2 = mf[iP][T_SIDE] * (border_neighbor[iT2 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -983,7 +929,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iB2 > -1) {
 			if (bB2) {
 				// граничный узел.
-				Fb2 = mf[iP][B_SIDE] * (border_neighbor[iB2 - maxelm].dS / (dx*dy));
+				Fb2 = mf[iP][B_SIDE] * (border_neighbor[iB2 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -1001,7 +947,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iE3 > -1) {
 			if (bE3) {
 				// граничный узел.
-				Fe3 = mf[iP][E_SIDE] * (border_neighbor[iE3 - maxelm].dS / (dy*dz));
+				Fe3 = mf[iP][E_SIDE] * (border_neighbor[iE3 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -1018,7 +964,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iW3 > -1) {
 			if (bW3) {
 				// граничный узел.
-				Fw3 = mf[iP][W_SIDE] * (border_neighbor[iW3 - maxelm].dS / (dy*dz));
+				Fw3 = mf[iP][W_SIDE] * (border_neighbor[iW3 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -1035,7 +981,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iN3 > -1) {
 			if (bN3) {
 				// граничный узел.
-				Fn3 = mf[iP][N_SIDE] * (border_neighbor[iN3 - maxelm].dS / (dx*dz));
+				Fn3 = mf[iP][N_SIDE] * (border_neighbor[iN3 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -1052,7 +998,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iS3 > -1) {
 			if (bS3) {
 				// граничный узел.
-				Fs3 = mf[iP][S_SIDE] * (border_neighbor[iS3 - maxelm].dS / (dx*dz));
+				Fs3 = mf[iP][S_SIDE] * (border_neighbor[iS3 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -1069,7 +1015,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iT3 > -1) {
 			if (bT3) {
 				// граничный узел.
-				Ft3 = mf[iP][T_SIDE] * (border_neighbor[iT3 - maxelm].dS / (dx*dy));
+				Ft3 = mf[iP][T_SIDE] * (border_neighbor[iT3 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -1086,7 +1032,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iB3 > -1) {
 			if (bB3) {
 				// граничный узел.
-				Fb3 = mf[iP][B_SIDE] * (border_neighbor[iB3 - maxelm].dS / (dx*dy));
+				Fb3 = mf[iP][B_SIDE] * (border_neighbor[iB3 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -1103,7 +1049,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iE4 > -1) {
 			if (bE4) {
 				// граничный узел.
-				Fe4 = mf[iP][E_SIDE] * (border_neighbor[iE4 - maxelm].dS / (dy*dz));
+				Fe4 = mf[iP][E_SIDE] * (border_neighbor[iE4 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -1120,7 +1066,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iW4 > -1) {
 			if (bW4) {
 				// граничный узел.
-				Fw4 = mf[iP][W_SIDE] * (border_neighbor[iW4 - maxelm].dS / (dy*dz));
+				Fw4 = mf[iP][W_SIDE] * (border_neighbor[iW4 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -1137,7 +1083,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iN4 > -1) {
 			if (bN4) {
 				// граничный узел.
-				Fn4 = mf[iP][N_SIDE] * (border_neighbor[iN4 - maxelm].dS / (dx*dz));
+				Fn4 = mf[iP][N_SIDE] * (border_neighbor[iN4 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -1154,7 +1100,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iS4 > -1) {
 			if (bS4) {
 				// граничный узел.
-				Fs4 = mf[iP][S_SIDE] * (border_neighbor[iS4 - maxelm].dS / (dx*dz));
+				Fs4 = mf[iP][S_SIDE] * (border_neighbor[iS4 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -1171,7 +1117,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iT4 > -1) {
 			if (bT4) {
 				// граничный узел.
-				Ft4 = mf[iP][T_SIDE] * (border_neighbor[iT4 - maxelm].dS / (dx*dy));
+				Ft4 = mf[iP][T_SIDE] * (border_neighbor[iT4 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -1188,7 +1134,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (iB4 > -1) {
 			if (bB4) {
 				// граничный узел.
-				Fb4 = mf[iP][B_SIDE] * (border_neighbor[iB4 - maxelm].dS / (dx*dy));
+				Fb4 = mf[iP][B_SIDE] * (border_neighbor[iB4 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -1217,239 +1163,200 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	doublereal  GE3, GW3, GN3, GS3, GT3, GB3;
 	doublereal  GE4, GW4, GN4, GS4, GT4, GB4;
 
-	doublereal Dkw;
 	
-	if (potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] < Omega_limiter_min) {
-		printf("omega=%e\n", potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-		system("PAUSE");
-	}
+	doublereal sigmaf = eqin.fluidinfo[0].sigmaf;
+
+	doublereal sigmafE = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafW = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafN = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafS = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafT = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafB = eqin.fluidinfo[0].sigmaf;
+
+	doublereal sigmafE2 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafW2 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafN2 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafS2 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafT2 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafB2 = eqin.fluidinfo[0].sigmaf;
+
+	doublereal sigmafE3 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafW3 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafN3 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafS3 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafT3 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafB3 = eqin.fluidinfo[0].sigmaf;
+
+	doublereal sigmafE4 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafW4 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafN4 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafS4 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafT4 = eqin.fluidinfo[0].sigmaf;
+	doublereal sigmafB4 = eqin.fluidinfo[0].sigmaf;
 
 
-	doublereal multMenter = (2.0*rP*eqin.fluidinfo[0].sigma_omega2) / fmax(Omega_limiter_min,potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-		Dkw = multMenter * (potent[GRADXTURBULENT_KINETIK_ENERGY][iP] * potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
-			potent[GRADYTURBULENT_KINETIK_ENERGY][iP] * potent[GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] + 
-			potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-	
-	doublereal CDkw = fmax(Dkw, 1.0e-10);
-	if (fabs(Dkw) < 1.0e-30) CDkw = 0.01;// 16.10.2020
-	doublereal F1;
-	
-	doublereal part1 = sqrt(fmax(K_limiter_min,potent[TURBULENT_KINETIK_ENERGY][iP]))
-			/ (eqin.fluidinfo[0].beta_zvezda*fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) * distance_to_wall[iP]);
-	doublereal part2 = (500.0*prop[MU_DYNAMIC_VISCOSITY][iP]) / (prop[RHO][iP] * distance_to_wall[iP] * distance_to_wall[iP]
-			* fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-	doublereal part3 = (4.0*eqin.fluidinfo[0].sigma_omega2*fmax(K_limiter_min,potent[TURBULENT_KINETIK_ENERGY][iP])) /
-			(CDkw*distance_to_wall[iP] * distance_to_wall[iP]);
-	doublereal arg1 = fmin(fmax(part1, part2), part3);
-		F1 = tanh(arg1*arg1*arg1*arg1);
-
-	if (bMentor_Langtry)
-	{
-		doublereal Ry = rP * distance_to_wall[iP] * sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) / prop[MU_DYNAMIC_VISCOSITY][iP];
-		doublereal F3 = exp(-(Ry/120.0)* (Ry / 120.0)* (Ry / 120.0)* (Ry / 120.0)* (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0));
-		F1 = fmax(F1, F3);
-
-    }
-	
-	//doublereal sigmak = F1 * eqin.fluidinfo[0].sigma_k1 + (1.0 - F1)*eqin.fluidinfo[0].sigma_k2;
-	doublereal sigmak= sigmak_func(iP, potent, prop, distance_to_wall, rP, maxelm, bMentor_Langtry);
-
-	doublereal sigmakE = sigmak_func(iE, potent, prop, distance_to_wall, rE, maxelm, bMentor_Langtry);
-	doublereal sigmakW = sigmak_func(iW, potent, prop, distance_to_wall, rW, maxelm, bMentor_Langtry);
-	doublereal sigmakN = sigmak_func(iN, potent, prop, distance_to_wall, rN, maxelm, bMentor_Langtry);
-	doublereal sigmakS = sigmak_func(iS, potent, prop, distance_to_wall, rS, maxelm, bMentor_Langtry);
-	doublereal sigmakT = sigmak_func(iT, potent, prop, distance_to_wall, rT, maxelm, bMentor_Langtry);
-	doublereal sigmakB = sigmak_func(iB, potent, prop, distance_to_wall, rB, maxelm, bMentor_Langtry);
-
-	doublereal sigmakE2 = sigmak_func(iE2, potent, prop, distance_to_wall, rE2, maxelm, bMentor_Langtry);
-	doublereal sigmakW2 = sigmak_func(iW2, potent, prop, distance_to_wall, rW2, maxelm, bMentor_Langtry);
-	doublereal sigmakN2 = sigmak_func(iN2, potent, prop, distance_to_wall, rN2, maxelm, bMentor_Langtry);
-	doublereal sigmakS2 = sigmak_func(iS2, potent, prop, distance_to_wall, rS2, maxelm, bMentor_Langtry);
-	doublereal sigmakT2 = sigmak_func(iT2, potent, prop, distance_to_wall, rT2, maxelm, bMentor_Langtry);
-	doublereal sigmakB2 = sigmak_func(iB2, potent, prop, distance_to_wall, rB2, maxelm, bMentor_Langtry);
-
-	doublereal sigmakE3 = sigmak_func(iE3, potent, prop, distance_to_wall, rE3, maxelm, bMentor_Langtry);
-	doublereal sigmakW3 = sigmak_func(iW3, potent, prop, distance_to_wall, rW3, maxelm, bMentor_Langtry);
-	doublereal sigmakN3 = sigmak_func(iN3, potent, prop, distance_to_wall, rN3, maxelm, bMentor_Langtry);
-	doublereal sigmakS3 = sigmak_func(iS3, potent, prop, distance_to_wall, rS3, maxelm, bMentor_Langtry);
-	doublereal sigmakT3 = sigmak_func(iT3, potent, prop, distance_to_wall, rT3, maxelm, bMentor_Langtry);
-	doublereal sigmakB3 = sigmak_func(iB3, potent, prop, distance_to_wall, rB3, maxelm, bMentor_Langtry);
-
-	doublereal sigmakE4 = sigmak_func(iE4, potent, prop, distance_to_wall, rE4, maxelm, bMentor_Langtry);
-	doublereal sigmakW4 = sigmak_func(iW4, potent, prop, distance_to_wall, rW4, maxelm, bMentor_Langtry);
-	doublereal sigmakN4 = sigmak_func(iN4, potent, prop, distance_to_wall, rN4, maxelm, bMentor_Langtry);
-	doublereal sigmakS4 = sigmak_func(iS4, potent, prop, distance_to_wall, rS4, maxelm, bMentor_Langtry);
-	doublereal sigmakT4 = sigmak_func(iT4, potent, prop, distance_to_wall, rT4, maxelm, bMentor_Langtry);
-	doublereal sigmakB4 = sigmak_func(iB4, potent, prop, distance_to_wall, rB4, maxelm, bMentor_Langtry);
-
-	// Данный код не вызвал повышения стабильности решения системы уравнений Рейнольдса.
-	// Сходится только метод сглаженной аггрегации.
-	//sigmak = sigmakE = sigmakW = sigmakN = sigmakS = sigmakT = sigmakB = 0.0;
-	//sigmakE2 = sigmakW2 = sigmakN2 = sigmakS2 = sigmakT2 = sigmakB2 = 0.0;
-	//sigmakE3 = sigmakW3 = sigmakN3 = sigmakS3 = sigmakT3 = sigmakB3 = 0.0;
-	//sigmakE4 = sigmakW4 = sigmakN4 = sigmakS4 = sigmakT4 = sigmakB4 = 0.0;
 
 	// Вычисление молекулярной диффузии:
-	GP = ((prop[MU_DYNAMIC_VISCOSITY][iP]) + fmax(0.0, sigmak*potent[MUT][iP])); // в центре внутреннего КО.
+	GP = ((prop[MU_DYNAMIC_VISCOSITY][iP]) + fmax(0.0,   potent[MUT][iP] / sigmaf)); // в центре внутреннего КО.
 	if (iE > -1) {
-		if (!bE) GE = ((prop[MU_DYNAMIC_VISCOSITY][iE]) + fmax(0.0, sigmakE*potent[MUT][iE])); else GE = ((prop_b[MU_DYNAMIC_VISCOSITY][iE - maxelm]) + fmax(0.0, sigmak * potent[MUT][iE]));
+		if (!bE) GE = ((prop[MU_DYNAMIC_VISCOSITY][iE]) + fmax(0.0, potent[MUT][iE] / sigmafE)); else GE = ((prop_b[MU_DYNAMIC_VISCOSITY][iE - maxelm]) + fmax(0.0, potent[MUT][iE] / sigmaf));
 	}
 	if (iN > -1) {
-		if (!bN) GN = ((prop[MU_DYNAMIC_VISCOSITY][iN]) + fmax(0.0, sigmakN*potent[MUT][iN])); else GN = ((prop_b[MU_DYNAMIC_VISCOSITY][iN - maxelm]) + fmax(0.0, sigmak * potent[MUT][iN]));
+		if (!bN) GN = ((prop[MU_DYNAMIC_VISCOSITY][iN]) + fmax(0.0, potent[MUT][iN] / sigmafN)); else GN = ((prop_b[MU_DYNAMIC_VISCOSITY][iN - maxelm]) + fmax(0.0,  potent[MUT][iN] / sigmaf));
 	}
 	if (iT > -1) {
-		if (!bT) GT = ((prop[MU_DYNAMIC_VISCOSITY][iT]) + fmax(0.0, sigmakT*potent[MUT][iT])); else GT = ((prop_b[MU_DYNAMIC_VISCOSITY][iT - maxelm]) + fmax(0.0, sigmak * potent[MUT][iT]));
+		if (!bT) GT = ((prop[MU_DYNAMIC_VISCOSITY][iT]) + fmax(0.0,  potent[MUT][iT] / sigmafT)); else GT = ((prop_b[MU_DYNAMIC_VISCOSITY][iT - maxelm]) + fmax(0.0, potent[MUT][iT] / sigmaf));
 	}
 	if (iW > -1) {
-		if (!bW) GW = ((prop[MU_DYNAMIC_VISCOSITY][iW]) + fmax(0.0, sigmakW*potent[MUT][iW])); else GW = ((prop_b[MU_DYNAMIC_VISCOSITY][iW - maxelm]) + fmax(0.0, sigmak * potent[MUT][iW]));
+		if (!bW) GW = ((prop[MU_DYNAMIC_VISCOSITY][iW]) + fmax(0.0,  potent[MUT][iW] / sigmafW)); else GW = ((prop_b[MU_DYNAMIC_VISCOSITY][iW - maxelm]) + fmax(0.0, potent[MUT][iW] / sigmaf));
 	}
 	if (iS > -1) {
-		if (!bS) GS = ((prop[MU_DYNAMIC_VISCOSITY][iS]) + fmax(0.0, sigmakS*potent[MUT][iS])); else GS = ((prop_b[MU_DYNAMIC_VISCOSITY][iS - maxelm]) + fmax(0.0, sigmak * potent[MUT][iS]));
+		if (!bS) GS = ((prop[MU_DYNAMIC_VISCOSITY][iS]) + fmax(0.0,  potent[MUT][iS] / sigmafS)); else GS = ((prop_b[MU_DYNAMIC_VISCOSITY][iS - maxelm]) + fmax(0.0, potent[MUT][iS] / sigmaf));
 	}
 	if (iB > -1) {
-		if (!bB) GB = ((prop[MU_DYNAMIC_VISCOSITY][iB]) + fmax(0.0, sigmakB*potent[MUT][iB])); else GB = ((prop_b[MU_DYNAMIC_VISCOSITY][iB - maxelm]) + fmax(0.0, sigmak * potent[MUT][iB]));
+		if (!bB) GB = ((prop[MU_DYNAMIC_VISCOSITY][iB]) + fmax(0.0,  potent[MUT][iB] / sigmafB)); else GB = ((prop_b[MU_DYNAMIC_VISCOSITY][iB - maxelm]) + fmax(0.0, potent[MUT][iB] / sigmaf));
 	}
 
 	if (iE2 > -1) {
-		if (!bE2) GE2 = ((prop[MU_DYNAMIC_VISCOSITY][iE2]) + fmax(0.0, sigmakE2*potent[MUT][iE2])); else GE2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iE2]));
+		if (!bE2) GE2 = ((prop[MU_DYNAMIC_VISCOSITY][iE2]) + fmax(0.0,  potent[MUT][iE2] / sigmafE2)); else GE2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE2 - maxelm]) + fmax(0.0,  potent[MUT][iE2] / sigmaf));
 	}
 	if (iN2 > -1) {
-		if (!bN2) GN2 = ((prop[MU_DYNAMIC_VISCOSITY][iN2]) + fmax(0.0, sigmakN2*potent[MUT][iN2])); else GN2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iN2]));
+		if (!bN2) GN2 = ((prop[MU_DYNAMIC_VISCOSITY][iN2]) + fmax(0.0, potent[MUT][iN2] / sigmafN2)); else GN2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN2 - maxelm]) + fmax(0.0,  potent[MUT][iN2] / sigmaf));
 	}
 	if (iT2 > -1) {
-		if (!bT2) GT2 = ((prop[MU_DYNAMIC_VISCOSITY][iT2]) + fmax(0.0, sigmakT2*potent[MUT][iT2])); else GT2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iT2]));
+		if (!bT2) GT2 = ((prop[MU_DYNAMIC_VISCOSITY][iT2]) + fmax(0.0,  potent[MUT][iT2] / sigmafT2)); else GT2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT2 - maxelm]) + fmax(0.0,  potent[MUT][iT2] / sigmaf));
 	}
 	if (iW2 > -1) {
-		if (!bW2) GW2 = ((prop[MU_DYNAMIC_VISCOSITY][iW2]) + fmax(0.0, sigmakW2*potent[MUT][iW2])); else GW2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iW2]));
+		if (!bW2) GW2 = ((prop[MU_DYNAMIC_VISCOSITY][iW2]) + fmax(0.0,  potent[MUT][iW2] / sigmafW2)); else GW2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW2 - maxelm]) + fmax(0.0,  potent[MUT][iW2] / sigmaf));
 	}
 	if (iS2 > -1) {
-		if (!bS2) GS2 = ((prop[MU_DYNAMIC_VISCOSITY][iS2]) + fmax(0.0, sigmakS2*potent[MUT][iS2])); else GS2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iS2]));
+		if (!bS2) GS2 = ((prop[MU_DYNAMIC_VISCOSITY][iS2]) + fmax(0.0, potent[MUT][iS2] / sigmafS2)); else GS2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS2 - maxelm]) + fmax(0.0,  potent[MUT][iS2] / sigmaf));
 	}
 	if (iB2 > -1) {
-		if (!bB2) GB2 = ((prop[MU_DYNAMIC_VISCOSITY][iB2]) + fmax(0.0, sigmakB2*potent[MUT][iB2])); else GB2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iB2]));
+		if (!bB2) GB2 = ((prop[MU_DYNAMIC_VISCOSITY][iB2]) + fmax(0.0,  potent[MUT][iB2] / sigmafB2)); else GB2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB2 - maxelm]) + fmax(0.0,  potent[MUT][iB2] / sigmaf));
 	}
 
 	if (iE3 > -1) {
-		if (!bE3) GE3 = ((prop[MU_DYNAMIC_VISCOSITY][iE3]) + fmax(0.0, sigmakE3*potent[MUT][iE3])); else GE3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iE3]));
+		if (!bE3) GE3 = ((prop[MU_DYNAMIC_VISCOSITY][iE3]) + fmax(0.0,  potent[MUT][iE3] / sigmafE3)); else GE3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE3 - maxelm]) + fmax(0.0,  potent[MUT][iE3] / sigmaf));
 	}
 	if (iN3 > -1) {
-		if (!bN3) GN3 = ((prop[MU_DYNAMIC_VISCOSITY][iN3]) + fmax(0.0, sigmakN3*potent[MUT][iN3])); else GN3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iN3]));
+		if (!bN3) GN3 = ((prop[MU_DYNAMIC_VISCOSITY][iN3]) + fmax(0.0,  potent[MUT][iN3] / sigmafN3)); else GN3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN3 - maxelm]) + fmax(0.0,  potent[MUT][iN3] / sigmaf));
 	}
 	if (iT3 > -1) {
-		if (!bT3) GT3 = ((prop[MU_DYNAMIC_VISCOSITY][iT3]) + fmax(0.0, sigmakT3*potent[MUT][iT3])); else GT3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iT3]));
+		if (!bT3) GT3 = ((prop[MU_DYNAMIC_VISCOSITY][iT3]) + fmax(0.0,  potent[MUT][iT3] / sigmafT3)); else GT3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT3 - maxelm]) + fmax(0.0,  potent[MUT][iT3] / sigmaf));
 	}
 	if (iW3 > -1) {
-		if (!bW3) GW3 = ((prop[MU_DYNAMIC_VISCOSITY][iW3]) + fmax(0.0, sigmakW3*potent[MUT][iW3])); else GW3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iW3]));
+		if (!bW3) GW3 = ((prop[MU_DYNAMIC_VISCOSITY][iW3]) + fmax(0.0,  potent[MUT][iW3] / sigmafW3)); else GW3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW3 - maxelm]) + fmax(0.0,  potent[MUT][iW3] / sigmaf));
 	}
 	if (iS3 > -1) {
-		if (!bS3) GS3 = ((prop[MU_DYNAMIC_VISCOSITY][iS3]) + fmax(0.0, sigmakS3*potent[MUT][iS3])); else GS3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iS3]));
+		if (!bS3) GS3 = ((prop[MU_DYNAMIC_VISCOSITY][iS3]) + fmax(0.0,  potent[MUT][iS3] / sigmafS3)); else GS3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS3 - maxelm]) + fmax(0.0, potent[MUT][iS3] / sigmaf));
 	}
 	if (iB3 > -1) {
-		if (!bB3) GB3 = ((prop[MU_DYNAMIC_VISCOSITY][iB3]) + fmax(0.0, sigmakB3*potent[MUT][iB3])); else GB3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iB3]));
+		if (!bB3) GB3 = ((prop[MU_DYNAMIC_VISCOSITY][iB3]) + fmax(0.0,  potent[MUT][iB3] / sigmafB3)); else GB3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB3 - maxelm]) + fmax(0.0, potent[MUT][iB3] / sigmaf));
 	}
 
 	if (iE4 > -1) {
-		if (!bE4) GE4 = ((prop[MU_DYNAMIC_VISCOSITY][iE4]) + fmax(0.0, sigmakE4*potent[MUT][iE4])); else GE4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iE4]));
+		if (!bE4) GE4 = ((prop[MU_DYNAMIC_VISCOSITY][iE4]) + fmax(0.0,  potent[MUT][iE4] / sigmafE4)); else GE4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE4 - maxelm]) + fmax(0.0,  potent[MUT][iE4] / sigmaf));
 	}
 	if (iN4 > -1) {
-		if (!bN4) GN4 = ((prop[MU_DYNAMIC_VISCOSITY][iN4]) + fmax(0.0, sigmakN4*potent[MUT][iN4])); else GN4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iN4]));
+		if (!bN4) GN4 = ((prop[MU_DYNAMIC_VISCOSITY][iN4]) + fmax(0.0,  potent[MUT][iN4] / sigmafN4)); else GN4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN4 - maxelm]) + fmax(0.0,  potent[MUT][iN4] / sigmaf));
 	}
 	if (iT4 > -1) {
-		if (!bT4) GT4 = ((prop[MU_DYNAMIC_VISCOSITY][iT4]) + fmax(0.0, sigmakT4*potent[MUT][iT4])); else GT4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iT4]));
+		if (!bT4) GT4 = ((prop[MU_DYNAMIC_VISCOSITY][iT4]) + fmax(0.0,  potent[MUT][iT4] / sigmafT4)); else GT4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT4 - maxelm]) + fmax(0.0,  potent[MUT][iT4] / sigmaf));
 	}
 	if (iW4 > -1) {
-		if (!bW4) GW4 = ((prop[MU_DYNAMIC_VISCOSITY][iW4]) + fmax(0.0, sigmakW4*potent[MUT][iW4])); else GW4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iW4]));
+		if (!bW4) GW4 = ((prop[MU_DYNAMIC_VISCOSITY][iW4]) + fmax(0.0,  potent[MUT][iW4] / sigmafW4)); else GW4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW4 - maxelm]) + fmax(0.0,  potent[MUT][iW4] / sigmaf));
 	}
 	if (iS4 > -1) {
-		if (!bS4) GS4 = ((prop[MU_DYNAMIC_VISCOSITY][iS4]) + fmax(0.0, sigmakS4*potent[MUT][iS4])); else GS4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iS4]));
+		if (!bS4) GS4 = ((prop[MU_DYNAMIC_VISCOSITY][iS4]) + fmax(0.0,  potent[MUT][iS4] / sigmafS4)); else GS4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS4 - maxelm]) + fmax(0.0,  potent[MUT][iS4] / sigmaf));
 	}
 	if (iB4 > -1) {
-		if (!bB4) GB4 = ((prop[MU_DYNAMIC_VISCOSITY][iB4]) + fmax(0.0, sigmakB4*potent[MUT][iB4])); else GB4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iB4]));
+		if (!bB4) GB4 = ((prop[MU_DYNAMIC_VISCOSITY][iB4]) + fmax(0.0,  potent[MUT][iB4] / sigmafB4)); else GB4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB4 - maxelm]) + fmax(0.0,  potent[MUT][iB4] / sigmaf));
 	}
 
 	doublereal Ge = GP, Gw = GP, Gn = GP, Gs = GP, Gt = GP, Gb = GP;
 	// Значение коэффициента диффузии на грани КО.
 	if (iE > -1) {
-		Ge = GE * GP / (feplus*GE + (1 - feplus)*GP); // проверено.
+		Ge = GE * GP / (feplus * GE + (1 - feplus) * GP); // проверено.
 	}
 	if (iW > -1) {
-		Gw = GW * GP / (fwplus*GW + (1 - fwplus)*GP);
+		Gw = GW * GP / (fwplus * GW + (1 - fwplus) * GP);
 	}
 	if (iN > -1) {
-		Gn = GN * GP / (fnplus*GN + (1 - fnplus)*GP);
+		Gn = GN * GP / (fnplus * GN + (1 - fnplus) * GP);
 	}
 	if (iS > -1) {
-		Gs = GS * GP / (fsplus*GS + (1 - fsplus)*GP);
+		Gs = GS * GP / (fsplus * GS + (1 - fsplus) * GP);
 	}
 	if (iT > -1) {
-		Gt = GT * GP / (ftplus*GT + (1 - ftplus)*GP);
+		Gt = GT * GP / (ftplus * GT + (1 - ftplus) * GP);
 	}
 	if (iB > -1) {
-		Gb = GB * GP / (fbplus*GB + (1 - fbplus)*GP);
+		Gb = GB * GP / (fbplus * GB + (1 - fbplus) * GP);
 	}
 
 	doublereal Ge2 = GP, Gw2 = GP, Gn2 = GP, Gs2 = GP, Gt2 = GP, Gb2 = GP;
 	// Значение коэффициента диффузии на грани КО.
 	if (iE2 > -1) {
-		Ge2 = GE2 * GP / (feplus2*GE2 + (1 - feplus2)*GP); // проверено.
+		Ge2 = GE2 * GP / (feplus2 * GE2 + (1 - feplus2) * GP); // проверено.
 	}
 	if (iW2 > -1) {
-		Gw2 = GW2 * GP / (fwplus2*GW2 + (1 - fwplus2)*GP);
+		Gw2 = GW2 * GP / (fwplus2 * GW2 + (1 - fwplus2) * GP);
 	}
 	if (iN2 > -1) {
-		Gn2 = GN2 * GP / (fnplus2*GN2 + (1 - fnplus2)*GP);
+		Gn2 = GN2 * GP / (fnplus2 * GN2 + (1 - fnplus2) * GP);
 	}
 	if (iS2 > -1) {
-		Gs2 = GS2 * GP / (fsplus2*GS2 + (1 - fsplus2)*GP);
+		Gs2 = GS2 * GP / (fsplus2 * GS2 + (1 - fsplus2) * GP);
 	}
 	if (iT2 > -1) {
-		Gt2 = GT2 * GP / (ftplus2*GT2 + (1 - ftplus2)*GP);
+		Gt2 = GT2 * GP / (ftplus2 * GT2 + (1 - ftplus2) * GP);
 	}
 	if (iB2 > -1) {
-		Gb2 = GB2 * GP / (fbplus2*GB2 + (1 - fbplus2)*GP);
+		Gb2 = GB2 * GP / (fbplus2 * GB2 + (1 - fbplus2) * GP);
 	}
 
 
 	doublereal Ge3 = GP, Gw3 = GP, Gn3 = GP, Gs3 = GP, Gt3 = GP, Gb3 = GP;
 	// Значение коэффициента диффузии на грани КО.
 	if (iE3 > -1) {
-		Ge3 = GE3 * GP / (feplus3*GE3 + (1 - feplus3)*GP); // проверено.
+		Ge3 = GE3 * GP / (feplus3 * GE3 + (1 - feplus3) * GP); // проверено.
 	}
 	if (iW3 > -1) {
-		Gw3 = GW3 * GP / (fwplus3*GW3 + (1 - fwplus3)*GP);
+		Gw3 = GW3 * GP / (fwplus3 * GW3 + (1 - fwplus3) * GP);
 	}
 	if (iN3 > -1) {
-		Gn3 = GN3 * GP / (fnplus3*GN3 + (1 - fnplus3)*GP);
+		Gn3 = GN3 * GP / (fnplus3 * GN3 + (1 - fnplus3) * GP);
 	}
 	if (iS3 > -1) {
-		Gs3 = GS3 * GP / (fsplus3*GS3 + (1 - fsplus3)*GP);
+		Gs3 = GS3 * GP / (fsplus3 * GS3 + (1 - fsplus3) * GP);
 	}
 	if (iT3 > -1) {
-		Gt3 = GT3 * GP / (ftplus3*GT3 + (1 - ftplus3)*GP);
+		Gt3 = GT3 * GP / (ftplus3 * GT3 + (1 - ftplus3) * GP);
 	}
 	if (iB3 > -1) {
-		Gb3 = GB3 * GP / (fbplus3*GB3 + (1 - fbplus3)*GP);
+		Gb3 = GB3 * GP / (fbplus3 * GB3 + (1 - fbplus3) * GP);
 	}
 
 	doublereal Ge4 = GP, Gw4 = GP, Gn4 = GP, Gs4 = GP, Gt4 = GP, Gb4 = GP;
 	// Значение коэффициента диффузии на грани КО.
 	if (iE4 > -1) {
-		Ge4 = GE4 * GP / (feplus4*GE4 + (1 - feplus4)*GP); // проверено.
+		Ge4 = GE4 * GP / (feplus4 * GE4 + (1 - feplus4) * GP); // проверено.
 	}
 	if (iW4 > -1) {
-		Gw4 = GW4 * GP / (fwplus4*GW4 + (1 - fwplus4)*GP);
+		Gw4 = GW4 * GP / (fwplus4 * GW4 + (1 - fwplus4) * GP);
 	}
 	if (iN4 > -1) {
-		Gn4 = GN4 * GP / (fnplus4*GN4 + (1 - fnplus4)*GP);
+		Gn4 = GN4 * GP / (fnplus4 * GN4 + (1 - fnplus4) * GP);
 	}
 	if (iS4 > -1) {
-		Gs4 = GS4 * GP / (fsplus4*GS4 + (1 - fsplus4)*GP);
+		Gs4 = GS4 * GP / (fsplus4 * GS4 + (1 - fsplus4) * GP);
 	}
 	if (iT4 > -1) {
-		Gt4 = GT4 * GP / (ftplus4*GT4 + (1 - ftplus4)*GP);
+		Gt4 = GT4 * GP / (ftplus4 * GT4 + (1 - ftplus4) * GP);
 	}
 	if (iB4 > -1) {
-		Gb4 = GB4 * GP / (fbplus4*GB4 + (1 - fbplus4)*GP);
+		Gb4 = GB4 * GP / (fbplus4 * GB4 + (1 - fbplus4) * GP);
 	}
 
 
@@ -1465,7 +1372,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
-				De = Ge * dy*dz / dxe;
+				De = Ge * dy * dz / dxe;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1477,7 +1384,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				De = Ge * dy_loc*dz_loc / dxe;
+				De = Ge * dy_loc * dz_loc / dxe;
 			}
 		}
 
@@ -1489,7 +1396,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
-				Dw = Gw * dy*dz / dxw;
+				Dw = Gw * dy * dz / dxw;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1501,7 +1408,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dw = Gw * dy_loc*dz_loc / dxw;
+				Dw = Gw * dy_loc * dz_loc / dxw;
 			}
 		}
 
@@ -1513,7 +1420,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
-				Dn = Gn * dx*dz / dyn;
+				Dn = Gn * dx * dz / dyn;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1525,7 +1432,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dn = Gn * dx_loc*dz_loc / dyn;
+				Dn = Gn * dx_loc * dz_loc / dyn;
 			}
 		}
 	}
@@ -1536,7 +1443,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
-				Ds = Gs * dx*dz / dys;
+				Ds = Gs * dx * dz / dys;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1548,7 +1455,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Ds = Gs * dx_loc*dz_loc / dys;
+				Ds = Gs * dx_loc * dz_loc / dys;
 			}
 		}
 	}
@@ -1559,7 +1466,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
-				Dt = Gt * dx*dy / dzt;
+				Dt = Gt * dx * dy / dzt;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1571,7 +1478,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dt = Gt * dx_loc*dy_loc / dzt;
+				Dt = Gt * dx_loc * dy_loc / dzt;
 			}
 		}
 
@@ -1584,7 +1491,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
-				Db = Gb * dx*dy / dzb;
+				Db = Gb * dx * dy / dzb;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1597,7 +1504,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dz_loc = pvol.z;
 
 
-				Db = Gb * dx_loc*dy_loc / dzb;
+				Db = Gb * dx_loc * dy_loc / dzb;
 			}
 		}
 
@@ -1613,7 +1520,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
-				De2 = Ge2 * dy*dz / dxe2;
+				De2 = Ge2 * dy * dz / dxe2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1626,7 +1533,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dz_loc = pvol.z;
 
 
-				De2 = Ge2 * dy_loc*dz_loc / dxe2;
+				De2 = Ge2 * dy_loc * dz_loc / dxe2;
 			}
 		}
 
@@ -1638,7 +1545,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
-				Dw2 = Gw2 * dy*dz / dxw2;
+				Dw2 = Gw2 * dy * dz / dxw2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1650,7 +1557,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dw2 = Gw2 * dy_loc*dz_loc / dxw2;
+				Dw2 = Gw2 * dy_loc * dz_loc / dxw2;
 			}
 		}
 
@@ -1662,7 +1569,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
-				Dn2 = Gn2 * dx*dz / dyn2;
+				Dn2 = Gn2 * dx * dz / dyn2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1674,7 +1581,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dn2 = Gn2 * dx_loc*dz_loc / dyn2;
+				Dn2 = Gn2 * dx_loc * dz_loc / dyn2;
 			}
 		}
 	}
@@ -1685,7 +1592,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
-				Ds2 = Gs2 * dx*dz / dys2;
+				Ds2 = Gs2 * dx * dz / dys2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1697,7 +1604,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Ds2 = Gs2 * dx_loc*dz_loc / dys2;
+				Ds2 = Gs2 * dx_loc * dz_loc / dys2;
 			}
 		}
 	}
@@ -1708,7 +1615,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
-				Dt2 = Gt2 * dx*dy / dzt2;
+				Dt2 = Gt2 * dx * dy / dzt2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1720,7 +1627,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dt2 = Gt2 * dx_loc*dy_loc / dzt2;
+				Dt2 = Gt2 * dx_loc * dy_loc / dzt2;
 			}
 		}
 
@@ -1733,7 +1640,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
-				Db2 = Gb2 * dx*dy / dzb2;
+				Db2 = Gb2 * dx * dy / dzb2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1745,7 +1652,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Db2 = Gb2 * dx_loc*dy_loc / dzb2;
+				Db2 = Gb2 * dx_loc * dy_loc / dzb2;
 			}
 		}
 
@@ -1761,7 +1668,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
-				De3 = Ge3 * dy*dz / dxe3;
+				De3 = Ge3 * dy * dz / dxe3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1773,7 +1680,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				De3 = Ge3 * dy_loc*dz_loc / dxe3;
+				De3 = Ge3 * dy_loc * dz_loc / dxe3;
 			}
 		}
 
@@ -1785,7 +1692,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
-				Dw3 = Gw3 * dy*dz / dxw3;
+				Dw3 = Gw3 * dy * dz / dxw3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1797,7 +1704,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dw3 = Gw3 * dy_loc*dz_loc / dxw3;
+				Dw3 = Gw3 * dy_loc * dz_loc / dxw3;
 			}
 		}
 
@@ -1809,7 +1716,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
-				Dn3 = Gn3 * dx*dz / dyn3;
+				Dn3 = Gn3 * dx * dz / dyn3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1821,7 +1728,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dn3 = Gn3 * dx_loc*dz_loc / dyn3;
+				Dn3 = Gn3 * dx_loc * dz_loc / dyn3;
 			}
 		}
 	}
@@ -1832,7 +1739,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
-				Ds3 = Gs3 * dx*dz / dys3;
+				Ds3 = Gs3 * dx * dz / dys3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1844,7 +1751,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Ds3 = Gs3 * dx_loc*dz_loc / dys3;
+				Ds3 = Gs3 * dx_loc * dz_loc / dys3;
 			}
 		}
 	}
@@ -1855,7 +1762,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
-				Dt3 = Gt3 * dx*dy / dzt3;
+				Dt3 = Gt3 * dx * dy / dzt3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1867,7 +1774,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dt3 = Gt3 * dx_loc*dy_loc / dzt3;
+				Dt3 = Gt3 * dx_loc * dy_loc / dzt3;
 			}
 		}
 
@@ -1880,7 +1787,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
-				Db3 = Gb3 * dx*dy / dzb3;
+				Db3 = Gb3 * dx * dy / dzb3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1892,7 +1799,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Db3 = Gb3 * dx_loc*dy_loc / dzb3;
+				Db3 = Gb3 * dx_loc * dy_loc / dzb3;
 			}
 		}
 
@@ -1908,7 +1815,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
-				De4 = Ge4 * dy*dz / dxe4;
+				De4 = Ge4 * dy * dz / dxe4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1921,7 +1828,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dz_loc = pvol.z;
 
 
-				De4 = Ge4 * dy_loc*dz_loc / dxe4;
+				De4 = Ge4 * dy_loc * dz_loc / dxe4;
 			}
 		}
 
@@ -1933,7 +1840,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
-				Dw4 = Gw4 * dy*dz / dxw4;
+				Dw4 = Gw4 * dy * dz / dxw4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1945,7 +1852,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dw4 = Gw4 * dy_loc*dz_loc / dxw4;
+				Dw4 = Gw4 * dy_loc * dz_loc / dxw4;
 			}
 		}
 
@@ -1957,7 +1864,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
-				Dn4 = Gn4 * dx*dz / dyn4;
+				Dn4 = Gn4 * dx * dz / dyn4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1969,7 +1876,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dn4 = Gn4 * dx_loc*dz_loc / dyn4;
+				Dn4 = Gn4 * dx_loc * dz_loc / dyn4;
 			}
 		}
 	}
@@ -1980,7 +1887,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
-				Ds4 = Gs4 * dx*dz / dys4;
+				Ds4 = Gs4 * dx * dz / dys4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -1992,7 +1899,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Ds4 = Gs4 * dx_loc*dz_loc / dys4;
+				Ds4 = Gs4 * dx_loc * dz_loc / dys4;
 			}
 		}
 	}
@@ -2003,7 +1910,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
-				Dt4 = Gt4 * dx*dy / dzt4;
+				Dt4 = Gt4 * dx * dy / dzt4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -2015,7 +1922,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dt4 = Gt4 * dx_loc*dy_loc / dzt4;
+				Dt4 = Gt4 * dx_loc * dy_loc / dzt4;
 			}
 		}
 
@@ -2028,7 +1935,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
-				Db4 = Gb4 * dx*dy / dzb4;
+				Db4 = Gb4 * dx * dy / dzb4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -2040,7 +1947,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Db4 = Gb4 * dx_loc*dy_loc / dzb4;
+				Db4 = Gb4 * dx_loc * dy_loc / dzb4;
 			}
 		}
 	}
@@ -2167,33 +2074,33 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	if (b_on_adaptive_local_refinement_mesh) {
 
 		// Инициализирующее обнуление.
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].an = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].as = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].at = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = 0.0;
 
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = 0.0;
 
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = 0.0;
 
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = 0.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = 0.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = 0.0;
 
 	}
 
@@ -2203,125 +2110,125 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			// Оставил как единственно верное и рекомендованное в литературе 7.05.2017. 
 			if (b_on_adaptive_local_refinement_mesh) {
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
 
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
 
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
 
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
 
 			}
 			else {
 				// 25 07 2015
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
-				//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap=sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
+				//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap=sl[GAMMA_LANGTRY_MENTER_SL][iP].ae+sl[GAMMA_LANGTRY_MENTER_SL][iP].aw+sl[GAMMA_LANGTRY_MENTER_SL][iP].an+sl[GAMMA_LANGTRY_MENTER_SL][iP].as+sl[GAMMA_LANGTRY_MENTER_SL][iP].at+sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 			}
 		}
 		else
 		{
 			// написано на замену вышезакомментированного 25 июля 2015.
 			if (!bE) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
 			}
 			else {
 				integer inumber = iE - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fabs(Fe);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fabs(Fe);
 				}
 				else {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
 				}
 			}
 			if (!bW) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
 			}
 			else {
 				integer inumber = iW - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fabs(Fw);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fabs(Fw);
 				}
 				else {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
 				}
 			}
 			if (!bN) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
 			}
 			else {
 				integer inumber = iN - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fabs(Fn);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fabs(Fn);
 				}
 				else {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
 				}
 			}
 			if (!bS) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
 			}
 			else {
 				integer inumber = iS - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fabs(Fs);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fabs(Fs);
 				}
 				else {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
 				}
 			}
 			if (!bT) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
 			}
 			else {
 				integer inumber = iT - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fabs(Ft);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fabs(Ft);
 				}
 				else {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
 				}
 			}
 			if (!bB) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
 			}
 			else
 			{
@@ -2329,10 +2236,10 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fabs(Fb);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fabs(Fb);
 				}
 				else {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
 				}
 			}
 
@@ -2340,77 +2247,77 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			if (b_on_adaptive_local_refinement_mesh) {
 
 				if (!bE2) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
 				}
 				else {
 					integer inumber = iE2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fabs(Fe2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fabs(Fe2);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
 					}
 				}
 				if (!bW2) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
 				}
 				else {
 					integer inumber = iW2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fabs(Fw2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fabs(Fw2);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
 					}
 				}
 				if (!bN2) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
 				}
 				else {
 					integer inumber = iN2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fabs(Fn2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fabs(Fn2);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
 					}
 				}
 				if (!bS2) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
 				}
 				else {
 					integer inumber = iS2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fabs(Fs2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fabs(Fs2);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
 					}
 				}
 				if (!bT2) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
 				}
 				else {
 					integer inumber = iT2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fabs(Ft2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fabs(Ft2);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
 					}
 				}
 				if (!bB2) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
 				}
 				else
 				{
@@ -2418,85 +2325,85 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fabs(Fb2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fabs(Fb2);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
 					}
 				}
 
 				if (!bE3) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
 				}
 				else {
 					integer inumber = iE3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fabs(Fe3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fabs(Fe3);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
 					}
 				}
 				if (!bW3) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
 				}
 				else {
 					integer inumber = iW3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fabs(Fw3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fabs(Fw3);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
 					}
 				}
 				if (!bN3) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
 				}
 				else {
 					integer inumber = iN3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fabs(Fn3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fabs(Fn3);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
 					}
 				}
 				if (!bS3) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
 				}
 				else {
 					integer inumber = iS3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fabs(Fs3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fabs(Fs3);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
 					}
 				}
 				if (!bT3) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
 				}
 				else {
 					integer inumber = iT3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fabs(Ft3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fabs(Ft3);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
 					}
 				}
 				if (!bB3) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
 				}
 				else
 				{
@@ -2504,85 +2411,85 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fabs(Fb3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fabs(Fb3);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
 					}
 				}
 
 				if (!bE4) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
 				}
 				else {
 					integer inumber = iE4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fabs(Fe4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fabs(Fe4);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
 					}
 				}
 				if (!bW4) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
 				}
 				else {
 					integer inumber = iW4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fabs(Fw4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fabs(Fw4);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
 					}
 				}
 				if (!bN4) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
 				}
 				else {
 					integer inumber = iN4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fabs(Fn4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fabs(Fn4);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
 					}
 				}
 				if (!bS4) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
 				}
 				else {
 					integer inumber = iS4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fabs(Fs4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fabs(Fs4);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
 					}
 				}
 				if (!bT4) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
 				}
 				else {
 					integer inumber = iT4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fabs(Ft4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fabs(Ft4);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
 					}
 				}
 				if (!bB4) {
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
 				}
 				else
 				{
@@ -2590,10 +2497,10 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fabs(Fb4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fabs(Fb4);
 					}
 					else {
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
 					}
 				}
 			}
@@ -2602,86 +2509,86 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 
 		// Вернул как единственно верное и описанное в литературе. 7.05.2017.
-		//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap=sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+		//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap=sl[GAMMA_LANGTRY_MENTER_SL][iP].ae+sl[GAMMA_LANGTRY_MENTER_SL][iP].aw+sl[GAMMA_LANGTRY_MENTER_SL][iP].an+sl[GAMMA_LANGTRY_MENTER_SL][iP].as+sl[GAMMA_LANGTRY_MENTER_SL][iP].at+sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 		// Моя наработка:
 		// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 		if (b_on_adaptive_local_refinement_mesh) {
 			// АЛИС 
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(+(Fe2), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(-(Fw2), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(+(Fn2), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(-(Fs2), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(+(Ft2), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(-(Fb2), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(+(Fe2), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(-(Fw2), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(+(Fn2), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(-(Fs2), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(+(Ft2), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(-(Fb2), 0);
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(+(Fe3), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(-(Fw3), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(+(Fn3), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(-(Fs3), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(+(Ft3), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(-(Fb3), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(+(Fe3), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(-(Fw3), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(+(Fn3), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(-(Fs3), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(+(Ft3), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(-(Fb3), 0);
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(+(Fe4), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(-(Fw4), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(+(Fn4), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(-(Fs4), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(+(Ft4), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(-(Fb4), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(+(Fe4), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(-(Fw4), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(+(Fn4), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(-(Fs4), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(+(Ft4), 0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(-(Fb4), 0);
 			/*
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae +  sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = sl[GAMMA_LANGTRY_MENTER_SL][iP].ae +  sl[GAMMA_LANGTRY_MENTER_SL][iP].aw + sl[GAMMA_LANGTRY_MENTER_SL][iP].an + sl[GAMMA_LANGTRY_MENTER_SL][iP].as + sl[GAMMA_LANGTRY_MENTER_SL][iP].at + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 			if (b_on_adaptive_local_refinement_mesh) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2;
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3;
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4;
 			}
 			*/
 		}
 		else {
-			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
-			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
-			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
-			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
-			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
-			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
+			//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
+			//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
+			//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
+			//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
+			//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
+			//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae +
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an +
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at +
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = sl[GAMMA_LANGTRY_MENTER_SL][iP].ae +
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw + sl[GAMMA_LANGTRY_MENTER_SL][iP].an +
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as + sl[GAMMA_LANGTRY_MENTER_SL][iP].at +
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 
 		}
 
 		// 13 августа 2016
 		// Это ошибочно. Это нигде не написано в литературе. Да конечно это усиливает диагональное преобладание, НО
 		// распределения получаются хоть и похожие, но не удовлетворяющие при более тщательном рассмотрении физическому смыслу задачи.
-		//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].an) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].as) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].at) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab);
+		//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ab);
 
-		
-		
 
-		if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap < 1.0e-36) {
-			printf("Zero diagonal coefficient in internal volume in my_elmatr_quad_turbulent_kinetik_energy_Menter3D.\n");
+
+
+		if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ap < 1.0e-36) {
+			printf("Zero diagonal coefficient in internal volume in my_elmatr_quad_turbulent_Gamma_Langtry_Menter_SST_3D.\n");
 #if doubleintprecision == 1
-			printf("ap=%e iP=%lld\n", sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap, iP);
+			printf("ap=%e iP=%lld\n", sl[GAMMA_LANGTRY_MENTER_SL][iP].ap, iP);
 #else
-			printf("ap=%e iP=%d\n", sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap, iP);
+			printf("ap=%e iP=%d\n", sl[GAMMA_LANGTRY_MENTER_SL][iP].ap, iP);
 #endif
 			if (b_on_adaptive_local_refinement_mesh) {
-				printf("ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae, sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw, sl[TURBULENT_KINETIK_ENERGY_SL][iP].an, sl[TURBULENT_KINETIK_ENERGY_SL][iP].as, sl[TURBULENT_KINETIK_ENERGY_SL][iP].at, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab);
-				printf("ae2=%e aw2=%e an2=%e as2=%e at2=%e ab2=%e\n", sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2, sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2, sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2, sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2, sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2);
-				printf("ae3=%e aw3=%e an3=%e as3=%e at3=%e ab3=%e\n", sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3, sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3, sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3, sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3, sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3);
-				printf("ae4=%e aw4=%e an4=%e as4=%e at4=%e ab4=%e\n", sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4, sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4, sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4, sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4, sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4);
+				printf("ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[GAMMA_LANGTRY_MENTER_SL][iP].ae, sl[GAMMA_LANGTRY_MENTER_SL][iP].aw, sl[GAMMA_LANGTRY_MENTER_SL][iP].an, sl[GAMMA_LANGTRY_MENTER_SL][iP].as, sl[GAMMA_LANGTRY_MENTER_SL][iP].at, sl[GAMMA_LANGTRY_MENTER_SL][iP].ab);
+				printf("ae2=%e aw2=%e an2=%e as2=%e at2=%e ab2=%e\n", sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2, sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2, sl[GAMMA_LANGTRY_MENTER_SL][iP].an2, sl[GAMMA_LANGTRY_MENTER_SL][iP].as2, sl[GAMMA_LANGTRY_MENTER_SL][iP].at2, sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2);
+				printf("ae3=%e aw3=%e an3=%e as3=%e at3=%e ab3=%e\n", sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3, sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3, sl[GAMMA_LANGTRY_MENTER_SL][iP].an3, sl[GAMMA_LANGTRY_MENTER_SL][iP].as3, sl[GAMMA_LANGTRY_MENTER_SL][iP].at3, sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3);
+				printf("ae4=%e aw4=%e an4=%e as4=%e at4=%e ab4=%e\n", sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4, sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4, sl[GAMMA_LANGTRY_MENTER_SL][iP].an4, sl[GAMMA_LANGTRY_MENTER_SL][iP].as4, sl[GAMMA_LANGTRY_MENTER_SL][iP].at4, sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4);
 			}
 			else {
-				printf("ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae, sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw, sl[TURBULENT_KINETIK_ENERGY_SL][iP].an, sl[TURBULENT_KINETIK_ENERGY_SL][iP].as, sl[TURBULENT_KINETIK_ENERGY_SL][iP].at, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab);
+				printf("ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[GAMMA_LANGTRY_MENTER_SL][iP].ae, sl[GAMMA_LANGTRY_MENTER_SL][iP].aw, sl[GAMMA_LANGTRY_MENTER_SL][iP].an, sl[GAMMA_LANGTRY_MENTER_SL][iP].as, sl[GAMMA_LANGTRY_MENTER_SL][iP].at, sl[GAMMA_LANGTRY_MENTER_SL][iP].ab);
 			}
 			system("pause");
 
@@ -2689,45 +2596,45 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			// Т.е. на данном этапе имеем нулевой диагональный элемент.
 			// Наверно нужно добавить Диффузии иначе нельзя будет вычислить псевдовремя, оно будет бесконечным.
 			// Но диффузию мы всё-таки ограничим применив схему Булгакова.
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De * ApproxConvective(fabs(Pe), BULG);//+fmax(-(Fe),0); 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), BULG);//+fmax(Fw,0); 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn * ApproxConvective(fabs(Pn), BULG);//+fmax(-(Fn),0); 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds * ApproxConvective(fabs(Ps), BULG);//+fmax(Fs,0); 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt * ApproxConvective(fabs(Pt), BULG);//+fmax(-(Ft),0); 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db * ApproxConvective(fabs(Pb), BULG);//+fmax(Fb,0); 
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), BULG);//+fmax(-(Fe),0); 
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), BULG);//+fmax(Fw,0); 
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), BULG);//+fmax(-(Fn),0); 
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), BULG);//+fmax(Fs,0); 
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), BULG);//+fmax(-(Ft),0); 
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), BULG);//+fmax(Fb,0); 
 			if (b_on_adaptive_local_refinement_mesh) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), BULG);//+fmax(-(Fe2),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), BULG);//+fmax(Fw2,0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), BULG);//+fmax(-(Fn2),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), BULG);//+fmax(Fs2,0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), BULG);//+fmax(-(Ft2),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), BULG);//+fmax(Fb2,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), BULG);//+fmax(-(Fe2),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), BULG);//+fmax(Fw2,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), BULG);//+fmax(-(Fn2),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), BULG);//+fmax(Fs2,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), BULG);//+fmax(-(Ft2),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), BULG);//+fmax(Fb2,0); 
 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), BULG);//+fmax(-(Fe3),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), BULG);//+fmax(Fw3,0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), BULG);//+fmax(-(Fn3),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), BULG);//+fmax(Fs3,0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), BULG);//+fmax(-(Ft3),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), BULG);//+fmax(Fb3,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), BULG);//+fmax(-(Fe3),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), BULG);//+fmax(Fw3,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), BULG);//+fmax(-(Fn3),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), BULG);//+fmax(Fs3,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), BULG);//+fmax(-(Ft3),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), BULG);//+fmax(Fb3,0); 
 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), BULG);//+fmax(-(Fe4),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), BULG);//+fmax(Fw4,0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), BULG);//+fmax(-(Fn4),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), BULG);//+fmax(Fs4,0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), BULG);//+fmax(-(Ft4),0); 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), BULG);//+fmax(Fb4,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), BULG);//+fmax(-(Fe4),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), BULG);//+fmax(Fw4,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), BULG);//+fmax(-(Fn4),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), BULG);//+fmax(Fs4,0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), BULG);//+fmax(-(Ft4),0); 
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), BULG);//+fmax(Fb4,0); 
 			}
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = sl[GAMMA_LANGTRY_MENTER_SL][iP].ae + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw + sl[GAMMA_LANGTRY_MENTER_SL][iP].an + sl[GAMMA_LANGTRY_MENTER_SL][iP].as + sl[GAMMA_LANGTRY_MENTER_SL][iP].at + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 			if (b_on_adaptive_local_refinement_mesh) {
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2;
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3;
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4;
 			}
 		}
 
 
 		// Вернул как единственно верное и описанное в литературе. 7.05.2017.
-		//sumanb=sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+		//sumanb=sl[GAMMA_LANGTRY_MENTER_SL][iP].ae+sl[GAMMA_LANGTRY_MENTER_SL][iP].aw+sl[GAMMA_LANGTRY_MENTER_SL][iP].an+sl[GAMMA_LANGTRY_MENTER_SL][iP].as+sl[GAMMA_LANGTRY_MENTER_SL][iP].at+sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 		// Моя наработка:
 		// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 		/*
@@ -2761,81 +2668,81 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		*/
 		//13 августа 2016.
-		//sumanb = fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].an) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].as) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].at) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab);
-		/*sumanb = sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+		//sumanb = fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ab);
+		/*sumanb = sl[GAMMA_LANGTRY_MENTER_SL][iP].ae + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw + sl[GAMMA_LANGTRY_MENTER_SL][iP].an + sl[GAMMA_LANGTRY_MENTER_SL][iP].as + sl[GAMMA_LANGTRY_MENTER_SL][iP].at + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 		if (b_on_adaptive_local_refinement_mesh) {
-			sumanb += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2;
-			sumanb += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3;
-			sumanb += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4;
+			sumanb += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2;
+			sumanb += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3;
+			sumanb += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4;
 		}*/
 
 	}
 	else if (ishconvection < QUICK)
 	{
-		
+
 		if (b_on_adaptive_local_refinement_mesh) {
 
 			// Вычисление коэффициентов дискретного аналога:
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
 
 			// Вычисление коэффициентов дискретного аналога:
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = -(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = (Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = -(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = (Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = -(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = (Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = -(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = (Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = -(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = (Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = -(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = (Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = -(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = (Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = -(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = (Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = -(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = (Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
-	
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = -(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = (Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = -(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = (Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = -(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = (Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = -(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = (Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = -(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = (Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = -(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = (Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
+
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = -(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = (Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = -(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = (Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = -(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = (Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
 
 			// 08.05.2017.
 			// Моя наработка:
 			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
 
 			/*
 			sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
@@ -2871,29 +2778,29 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		else
 		{
 			// Вычисление коэффициентов дискретного аналога:
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
-			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap=sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap=sl[GAMMA_LANGTRY_MENTER_SL][iP].ae+sl[GAMMA_LANGTRY_MENTER_SL][iP].aw+sl[GAMMA_LANGTRY_MENTER_SL][iP].an+sl[GAMMA_LANGTRY_MENTER_SL][iP].as+sl[GAMMA_LANGTRY_MENTER_SL][iP].at+sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 
 			// Вернул как единственно верное и описанное в литературе. 7.05.2017.
-			//sumanb=sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+			//sumanb=sl[GAMMA_LANGTRY_MENTER_SL][iP].ae+sl[GAMMA_LANGTRY_MENTER_SL][iP].aw+sl[GAMMA_LANGTRY_MENTER_SL][iP].an+sl[GAMMA_LANGTRY_MENTER_SL][iP].as+sl[GAMMA_LANGTRY_MENTER_SL][iP].at+sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 			//13 августа 2016.
-			//sumanb = fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].an) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].as) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].at) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab);
+			//sumanb = fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ab);
 
 			// 08.05.2017.
 			// Моя наработка:
 			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
 
 			/*
 			sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
@@ -2958,10 +2865,10 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		pointP = center_coord_loc[iP];
 
 		positionxP = pointP.x; positionyP = pointP.y; positionzP = pointP.z;
-		SpeedP = potent[TURBULENT_KINETIK_ENERGY][iP];
+		SpeedP = potent[GAMMA_LANGTRY_MENTER][iP];
 		// X - direction
 		if (!bE) {
-			SpeedE = potent[TURBULENT_KINETIK_ENERGY][iE];
+			SpeedE = potent[GAMMA_LANGTRY_MENTER][iE];
 			//center_cord3D(iE,nvtx,pa,pointP,E_SIDE);
 			pointP = center_coord_loc[iE];
 
@@ -2981,7 +2888,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			if ((iEE >= 0) && (iEE < maxelm)) {
 				// внутренний узел
-				SpeedEE = potent[TURBULENT_KINETIK_ENERGY][iEE];
+				SpeedEE = potent[GAMMA_LANGTRY_MENTER][iEE];
 				//center_cord3D(iEE,nvtx,pa,pointP,EE_SIDE);
 				pointP = center_coord_loc[iEE];
 				positionxEE = pointP.x;
@@ -2990,7 +2897,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			{
 				// граничный узел
 				if ((iEE >= maxelm) && (iEE < maxelm + maxbound)) {
-					SpeedEE = potent[TURBULENT_KINETIK_ENERGY][iEE];
+					SpeedEE = potent[GAMMA_LANGTRY_MENTER][iEE];
 				}
 				else {
 					SpeedEE = SpeedE;
@@ -3003,8 +2910,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			// это граничный узел
-			SpeedE = potent[TURBULENT_KINETIK_ENERGY][iE];
-			SpeedEE = potent[TURBULENT_KINETIK_ENERGY][iE];
+			SpeedE = potent[GAMMA_LANGTRY_MENTER][iE];
+			SpeedEE = potent[GAMMA_LANGTRY_MENTER][iE];
 			positionxe = positionxP + 0.5 * dx;
 			positionxE = positionxP + 0.5 * dx;
 			positionxEE = positionxP + dx; // этого узла не существует !
@@ -3015,7 +2922,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			pointP = center_coord_loc[iW];
 			positionxW = pointP.x;
 			positionxw = positionxP - 0.5 * dx;
-			SpeedW = potent[TURBULENT_KINETIK_ENERGY][iW];
+			SpeedW = potent[GAMMA_LANGTRY_MENTER][iW];
 
 			integer iWW = neighbors_for_the_internal_node[W_SIDE][0][iW];
 			if (iWW < 0) {
@@ -3030,7 +2937,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			if ((iWW >= 0) && (iWW < maxelm)) {
 				// внутренний узел
-				SpeedWW = potent[TURBULENT_KINETIK_ENERGY][iWW];
+				SpeedWW = potent[GAMMA_LANGTRY_MENTER][iWW];
 				//center_cord3D(iWW,nvtx,pa,pointP,WW_SIDE);
 				pointP = center_coord_loc[iWW];
 				positionxWW = pointP.x;
@@ -3039,7 +2946,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			{
 				// граничный узел
 				if ((iWW >= maxelm) && (iWW < maxelm + maxbound)) {
-					SpeedWW = potent[TURBULENT_KINETIK_ENERGY][iWW];
+					SpeedWW = potent[GAMMA_LANGTRY_MENTER][iWW];
 				}
 				else {
 					SpeedWW = SpeedW;
@@ -3052,8 +2959,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			// это граничный узел
-			SpeedW = potent[TURBULENT_KINETIK_ENERGY][iW]; // Attantion !! Debug
-			SpeedWW = potent[TURBULENT_KINETIK_ENERGY][iW];
+			SpeedW = potent[GAMMA_LANGTRY_MENTER][iW]; // Attantion !! Debug
+			SpeedWW = potent[GAMMA_LANGTRY_MENTER][iW];
 			//printf("SpeedW==%e\n",SpeedW); getchar();
 			positionxw = positionxP - 0.5 * dx;
 			positionxW = positionxP - 0.5 * dx;
@@ -3062,7 +2969,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 		// Y - direction
 		if (!bN) {
-			SpeedN = potent[TURBULENT_KINETIK_ENERGY][iN];
+			SpeedN = potent[GAMMA_LANGTRY_MENTER][iN];
 			//center_cord3D(iN,nvtx,pa,pointP,N_SIDE);
 			pointP = center_coord_loc[iN];
 			positionyN = pointP.y;
@@ -3081,7 +2988,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			if ((iNN >= 0) && (iNN < maxelm)) {
 				// внутренний узел
-				SpeedNN = potent[TURBULENT_KINETIK_ENERGY][iNN];
+				SpeedNN = potent[GAMMA_LANGTRY_MENTER][iNN];
 				//center_cord3D(iNN,nvtx,pa,pointP,NN_SIDE);
 				pointP = center_coord_loc[iNN];
 				positionyNN = pointP.y;
@@ -3090,7 +2997,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			{
 				// граничный узел
 				if ((iNN >= maxelm) && (iNN < maxelm + maxbound)) {
-					SpeedNN = potent[TURBULENT_KINETIK_ENERGY][iNN];
+					SpeedNN = potent[GAMMA_LANGTRY_MENTER][iNN];
 				}
 				else {
 					SpeedNN = SpeedN;
@@ -3103,15 +3010,15 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			// это граничный узел
-			SpeedN = potent[TURBULENT_KINETIK_ENERGY][iN];
-			SpeedNN = potent[TURBULENT_KINETIK_ENERGY][iN];
+			SpeedN = potent[GAMMA_LANGTRY_MENTER][iN];
+			SpeedNN = potent[GAMMA_LANGTRY_MENTER][iN];
 			positionyn = positionyP + 0.5 * dy;
 			positionyN = positionyP + 0.5 * dy;
 			positionyNN = positionyP + dy; // этого узла не существует !
 		}
 
 		if (!bS) {
-			SpeedS = potent[TURBULENT_KINETIK_ENERGY][iS];
+			SpeedS = potent[GAMMA_LANGTRY_MENTER][iS];
 			//center_cord3D(iS,nvtx,pa,pointP,S_SIDE);
 			pointP = center_coord_loc[iS];
 			positionyS = pointP.y;
@@ -3130,7 +3037,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			if ((iSS >= 0) && (iSS < maxelm)) {
 				// внутренний узел
-				SpeedSS = potent[TURBULENT_KINETIK_ENERGY][iSS];
+				SpeedSS = potent[GAMMA_LANGTRY_MENTER][iSS];
 				//center_cord3D(iSS,nvtx,pa,pointP,SS_SIDE);
 				pointP = center_coord_loc[iSS];
 				positionySS = pointP.y;
@@ -3139,7 +3046,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			{
 				// граничный узел
 				if ((iSS >= maxelm) && (iSS < maxelm + maxbound)) {
-					SpeedSS = potent[TURBULENT_KINETIK_ENERGY][iSS];
+					SpeedSS = potent[GAMMA_LANGTRY_MENTER][iSS];
 				}
 				else {
 					SpeedSS = SpeedS;
@@ -3152,8 +3059,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			// это граничный узел
-			SpeedS = potent[TURBULENT_KINETIK_ENERGY][iS]; // ATTANTION !!!!
-			SpeedSS = potent[TURBULENT_KINETIK_ENERGY][iS]; // нулевая скорость внутри твёрдого тела.
+			SpeedS = potent[GAMMA_LANGTRY_MENTER][iS]; // ATTANTION !!!!
+			SpeedSS = potent[GAMMA_LANGTRY_MENTER][iS]; // нулевая скорость внутри твёрдого тела.
 			positionys = positionyP - 0.5 * dy;
 			positionyS = positionyP - 0.5 * dy;
 			positionySS = positionyP - dy; // этого узла не существует !
@@ -3161,7 +3068,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 		// Z - direction
 		if (!bT) {
-			SpeedT = potent[TURBULENT_KINETIK_ENERGY][iT];
+			SpeedT = potent[GAMMA_LANGTRY_MENTER][iT];
 			//center_cord3D(iT,nvtx,pa,pointP,T_SIDE);
 			pointP = center_coord_loc[iT];
 			positionzT = pointP.z;
@@ -3180,7 +3087,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			if ((iTT >= 0) && (iTT < maxelm)) {
 				// внутренний узел
-				SpeedTT = potent[TURBULENT_KINETIK_ENERGY][iTT];
+				SpeedTT = potent[GAMMA_LANGTRY_MENTER][iTT];
 				//center_cord3D(iTT,nvtx,pa,pointP,TT_SIDE);
 				pointP = center_coord_loc[iTT];
 				positionzTT = pointP.z;
@@ -3190,7 +3097,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				// граничный узел
 				if ((iTT >= maxelm) && (iTT < maxelm + maxbound)) {
 
-					SpeedTT = potent[TURBULENT_KINETIK_ENERGY][iTT];
+					SpeedTT = potent[GAMMA_LANGTRY_MENTER][iTT];
 				}
 				else {
 					SpeedTT = SpeedT;
@@ -3203,15 +3110,15 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			// это граничный узел
-			SpeedT = potent[TURBULENT_KINETIK_ENERGY][iT];
-			SpeedTT = potent[TURBULENT_KINETIK_ENERGY][iT]; // скорость внутри твёрдого тела
+			SpeedT = potent[GAMMA_LANGTRY_MENTER][iT];
+			SpeedTT = potent[GAMMA_LANGTRY_MENTER][iT]; // скорость внутри твёрдого тела
 			positionzt = positionzP + 0.5 * dz;
 			positionzT = positionzP + 0.5 * dz;
 			positionzTT = positionzP + dz; // этого узла не существует !
 		}
 
 		if (!bB) {
-			SpeedB = potent[TURBULENT_KINETIK_ENERGY][iB];
+			SpeedB = potent[GAMMA_LANGTRY_MENTER][iB];
 			//center_cord3D(iB,nvtx,pa,pointP,B_SIDE);
 			pointP = center_coord_loc[iB];
 			positionzB = pointP.z;
@@ -3230,7 +3137,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			if ((iBB >= 0) && (iBB < maxelm)) {
 				// внутренний узел
-				SpeedBB = potent[TURBULENT_KINETIK_ENERGY][iBB];
+				SpeedBB = potent[GAMMA_LANGTRY_MENTER][iBB];
 				//center_cord3D(iBB,nvtx,pa,pointP,BB_SIDE);
 				pointP = center_coord_loc[iBB];
 				positionzBB = pointP.z;
@@ -3239,7 +3146,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			{
 				// граничный узел
 				if ((iBB >= maxelm) && (iBB < maxelm + maxbound)) {
-					SpeedBB = potent[TURBULENT_KINETIK_ENERGY][iBB];
+					SpeedBB = potent[GAMMA_LANGTRY_MENTER][iBB];
 				}
 				else {
 					SpeedBB = SpeedB;
@@ -3252,8 +3159,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			// это граничный узел
-			SpeedB = potent[TURBULENT_KINETIK_ENERGY][iB];
-			SpeedBB = potent[TURBULENT_KINETIK_ENERGY][iB]; // скорость внутри твёрдого тела
+			SpeedB = potent[GAMMA_LANGTRY_MENTER][iB];
+			SpeedBB = potent[GAMMA_LANGTRY_MENTER][iB]; // скорость внутри твёрдого тела
 			positionzb = positionzP - 0.5 * dz;
 			positionzB = positionzP - 0.5 * dz;
 			positionzBB = positionzP - dz; // этого узла не существует !
@@ -3264,7 +3171,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// X - direction
 			if ((!bE2) && (iE2 > -1)) {
-				SpeedE2 = potent[TURBULENT_KINETIK_ENERGY][iE2];
+				SpeedE2 = potent[GAMMA_LANGTRY_MENTER][iE2];
 				//center_cord3D(iE,nvtx,pa,pointP,E_SIDE);
 				pointP = center_coord_loc[iE2];
 
@@ -3283,7 +3190,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				}
 				if ((iEE2 >= 0) && (iEE2 < maxelm)) {
 					// внутренний узел
-					SpeedEE2 = potent[TURBULENT_KINETIK_ENERGY][iEE2];
+					SpeedEE2 = potent[GAMMA_LANGTRY_MENTER][iEE2];
 					//center_cord3D(iEE2,nvtx,pa,pointP,EE_SIDE);
 					pointP = center_coord_loc[iEE2];
 					positionxEE2 = pointP.x;
@@ -3292,7 +3199,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iEE2 >= maxelm) && (iEE2 < maxelm + maxbound)) {
-						SpeedEE2 = potent[TURBULENT_KINETIK_ENERGY][iEE2];
+						SpeedEE2 = potent[GAMMA_LANGTRY_MENTER][iEE2];
 					}
 					else {
 						SpeedEE2 = SpeedE2;
@@ -3308,12 +3215,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iE2 > -1) {
-					SpeedE2 = potent[TURBULENT_KINETIK_ENERGY][iE2];
-					SpeedEE2 = potent[TURBULENT_KINETIK_ENERGY][iE2];
+					SpeedE2 = potent[GAMMA_LANGTRY_MENTER][iE2];
+					SpeedEE2 = potent[GAMMA_LANGTRY_MENTER][iE2];
 				}
 				else {
-					SpeedE2 = potent[TURBULENT_KINETIK_ENERGY][iE];
-					SpeedEE2 = potent[TURBULENT_KINETIK_ENERGY][iE];
+					SpeedE2 = potent[GAMMA_LANGTRY_MENTER][iE];
+					SpeedEE2 = potent[GAMMA_LANGTRY_MENTER][iE];
 				}
 				positionxe2 = positionxP + 0.5 * dx;
 				positionxE2 = positionxP + 0.5 * dx;
@@ -3325,7 +3232,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				pointP = center_coord_loc[iW2];
 				positionxW2 = pointP.x;
 				positionxw2 = positionxP - 0.5 * dx;
-				SpeedW2 = potent[TURBULENT_KINETIK_ENERGY][iW2];
+				SpeedW2 = potent[GAMMA_LANGTRY_MENTER][iW2];
 
 				integer iWW2 = neighbors_for_the_internal_node[W_SIDE][0][iW2];
 				if (iWW2 < 0) {
@@ -3340,7 +3247,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iWW2 >= 0) && (iWW2 < maxelm)) {
 					// внутренний узел
-					SpeedWW2 = potent[TURBULENT_KINETIK_ENERGY][iWW2];
+					SpeedWW2 = potent[GAMMA_LANGTRY_MENTER][iWW2];
 					//center_cord3D(iWW2,nvtx,pa,pointP,WW_SIDE);
 					pointP = center_coord_loc[iWW2];
 					positionxWW2 = pointP.x;
@@ -3349,7 +3256,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iWW2 >= maxelm) && (iWW2 < maxelm + maxbound)) {
-						SpeedWW2 = potent[TURBULENT_KINETIK_ENERGY][iWW2];
+						SpeedWW2 = potent[GAMMA_LANGTRY_MENTER][iWW2];
 					}
 					else {
 
@@ -3366,12 +3273,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iW2 > -1) {
-					SpeedW2 = potent[TURBULENT_KINETIK_ENERGY][iW2];
-					SpeedWW2 = potent[TURBULENT_KINETIK_ENERGY][iW2];
+					SpeedW2 = potent[GAMMA_LANGTRY_MENTER][iW2];
+					SpeedWW2 = potent[GAMMA_LANGTRY_MENTER][iW2];
 				}
 				else {
-					SpeedW2 = potent[TURBULENT_KINETIK_ENERGY][iW];
-					SpeedWW2 = potent[TURBULENT_KINETIK_ENERGY][iW];
+					SpeedW2 = potent[GAMMA_LANGTRY_MENTER][iW];
+					SpeedWW2 = potent[GAMMA_LANGTRY_MENTER][iW];
 				}
 				//printf("SpeedW2==%e\n",SpeedW2); getchar();
 				positionxw2 = positionxP - 0.5 * dx;
@@ -3381,7 +3288,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// Y - direction
 			if ((!bN2) && (iN2 > -1)) {
-				SpeedN2 = potent[TURBULENT_KINETIK_ENERGY][iN2];
+				SpeedN2 = potent[GAMMA_LANGTRY_MENTER][iN2];
 				//center_cord3D(iN2,nvtx,pa,pointP,N_SIDE);
 				pointP = center_coord_loc[iN2];
 				positionyN2 = pointP.y;
@@ -3401,7 +3308,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iNN2 >= 0) && (iNN2 < maxelm)) {
 					// внутренний узел
-					SpeedNN2 = potent[TURBULENT_KINETIK_ENERGY][iNN2];
+					SpeedNN2 = potent[GAMMA_LANGTRY_MENTER][iNN2];
 					//center_cord3D(iNN2,nvtx,pa,pointP,NN_SIDE);
 					pointP = center_coord_loc[iNN2];
 					positionyNN2 = pointP.y;
@@ -3410,7 +3317,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iNN2 >= maxelm) && (iNN2 < maxelm + maxbound)) {
-						SpeedNN2 = potent[TURBULENT_KINETIK_ENERGY][iNN2];
+						SpeedNN2 = potent[GAMMA_LANGTRY_MENTER][iNN2];
 					}
 					else {
 						SpeedNN2 = SpeedN2;
@@ -3424,12 +3331,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iN2 > -1) {
-					SpeedN2 = potent[TURBULENT_KINETIK_ENERGY][iN2];
-					SpeedNN2 = potent[TURBULENT_KINETIK_ENERGY][iN2];
+					SpeedN2 = potent[GAMMA_LANGTRY_MENTER][iN2];
+					SpeedNN2 = potent[GAMMA_LANGTRY_MENTER][iN2];
 				}
 				else {
-					SpeedN2 = potent[TURBULENT_KINETIK_ENERGY][iN];
-					SpeedNN2 = potent[TURBULENT_KINETIK_ENERGY][iN];
+					SpeedN2 = potent[GAMMA_LANGTRY_MENTER][iN];
+					SpeedNN2 = potent[GAMMA_LANGTRY_MENTER][iN];
 				}
 				positionyn2 = positionyP + 0.5 * dy;
 				positionyN2 = positionyP + 0.5 * dy;
@@ -3437,7 +3344,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			}
 
 			if ((!bS2) && (iS2 > -1)) {
-				SpeedS2 = potent[TURBULENT_KINETIK_ENERGY][iS2];
+				SpeedS2 = potent[GAMMA_LANGTRY_MENTER][iS2];
 				//center_cord3D(iS2,nvtx,pa,pointP,S_SIDE);
 				pointP = center_coord_loc[iS2];
 				positionyS2 = pointP.y;
@@ -3456,7 +3363,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iSS2 >= 0) && (iSS2 < maxelm)) {
 					// внутренний узел
-					SpeedSS2 = potent[TURBULENT_KINETIK_ENERGY][iSS2];
+					SpeedSS2 = potent[GAMMA_LANGTRY_MENTER][iSS2];
 					//center_cord3D(iSS2,nvtx,pa,pointP,SS_SIDE);
 					pointP = center_coord_loc[iSS2];
 					positionySS2 = pointP.y;
@@ -3465,7 +3372,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iSS2 >= maxelm) && (iSS2 < maxelm + maxbound)) {
-						SpeedSS2 = potent[TURBULENT_KINETIK_ENERGY][iSS2];
+						SpeedSS2 = potent[GAMMA_LANGTRY_MENTER][iSS2];
 					}
 					else {
 						SpeedSS2 = SpeedS2;
@@ -3479,12 +3386,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iS2 > -1) {
-					SpeedS2 = potent[TURBULENT_KINETIK_ENERGY][iS2]; // ATTANTION !!!!
-					SpeedSS2 = potent[TURBULENT_KINETIK_ENERGY][iS2]; // нулевая скорость внутри твёрдого тела.
+					SpeedS2 = potent[GAMMA_LANGTRY_MENTER][iS2]; // ATTANTION !!!!
+					SpeedSS2 = potent[GAMMA_LANGTRY_MENTER][iS2]; // нулевая скорость внутри твёрдого тела.
 				}
 				else {
-					SpeedS2 = potent[TURBULENT_KINETIK_ENERGY][iS]; // ATTANTION !!!!
-					SpeedSS2 = potent[TURBULENT_KINETIK_ENERGY][iS]; // нулевая скорость внутри твёрдого тела.
+					SpeedS2 = potent[GAMMA_LANGTRY_MENTER][iS]; // ATTANTION !!!!
+					SpeedSS2 = potent[GAMMA_LANGTRY_MENTER][iS]; // нулевая скорость внутри твёрдого тела.
 				}
 				positionys2 = positionyP - 0.5 * dy;
 				positionyS2 = positionyP - 0.5 * dy;
@@ -3493,7 +3400,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// Z - direction
 			if ((!bT2) && (iT2 > -1)) {
-				SpeedT2 = potent[TURBULENT_KINETIK_ENERGY][iT2];
+				SpeedT2 = potent[GAMMA_LANGTRY_MENTER][iT2];
 				//center_cord3D(iT2,nvtx,pa,pointP,T_SIDE);
 				pointP = center_coord_loc[iT2];
 				positionzT2 = pointP.z;
@@ -3513,7 +3420,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iTT2 >= 0) && (iTT2 < maxelm)) {
 					// внутренний узел
-					SpeedTT2 = potent[TURBULENT_KINETIK_ENERGY][iTT2];
+					SpeedTT2 = potent[GAMMA_LANGTRY_MENTER][iTT2];
 					//center_cord3D(iTT2,nvtx,pa,pointP,TT_SIDE);
 					pointP = center_coord_loc[iTT2];
 					positionzTT2 = pointP.z;
@@ -3522,7 +3429,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iTT2 >= maxelm) && (iTT2 < maxelm + maxbound)) {
-						SpeedTT2 = potent[TURBULENT_KINETIK_ENERGY][iTT2];
+						SpeedTT2 = potent[GAMMA_LANGTRY_MENTER][iTT2];
 					}
 					else {
 						SpeedTT2 = SpeedT2;
@@ -3536,12 +3443,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iT2 > -1) {
-					SpeedT2 = potent[TURBULENT_KINETIK_ENERGY][iT2];
-					SpeedTT2 = potent[TURBULENT_KINETIK_ENERGY][iT2]; // скорость внутри твёрдого тела
+					SpeedT2 = potent[GAMMA_LANGTRY_MENTER][iT2];
+					SpeedTT2 = potent[GAMMA_LANGTRY_MENTER][iT2]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedT2 = potent[TURBULENT_KINETIK_ENERGY][iT];
-					SpeedTT2 = potent[TURBULENT_KINETIK_ENERGY][iT]; // скорость внутри твёрдого тела
+					SpeedT2 = potent[GAMMA_LANGTRY_MENTER][iT];
+					SpeedTT2 = potent[GAMMA_LANGTRY_MENTER][iT]; // скорость внутри твёрдого тела
 				}
 				positionzt2 = positionzP + 0.5 * dz;
 				positionzT2 = positionzP + 0.5 * dz;
@@ -3549,7 +3456,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			}
 
 			if ((!bB2) && (iB2 > -1)) {
-				SpeedB2 = potent[TURBULENT_KINETIK_ENERGY][iB2];
+				SpeedB2 = potent[GAMMA_LANGTRY_MENTER][iB2];
 				//center_cord3D(iB2,nvtx,pa,pointP,B_SIDE);
 				pointP = center_coord_loc[iB2];
 				positionzB2 = pointP.z;
@@ -3568,7 +3475,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iBB2 >= 0) && (iBB2 < maxelm)) {
 					// внутренний узел
-					SpeedBB2 = potent[TURBULENT_KINETIK_ENERGY][iBB2];
+					SpeedBB2 = potent[GAMMA_LANGTRY_MENTER][iBB2];
 					//center_cord3D(iBB2,nvtx,pa,pointP,BB_SIDE);
 					pointP = center_coord_loc[iBB2];
 					positionzBB2 = pointP.z;
@@ -3577,7 +3484,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iBB2 >= maxelm) && (iBB2 < maxelm + maxbound)) {
-						SpeedBB2 = potent[TURBULENT_KINETIK_ENERGY][iBB2];
+						SpeedBB2 = potent[GAMMA_LANGTRY_MENTER][iBB2];
 					}
 					else {
 						SpeedBB2 = SpeedB2;
@@ -3591,12 +3498,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iB2 > -1) {
-					SpeedB2 = potent[TURBULENT_KINETIK_ENERGY][iB2];
-					SpeedBB2 = potent[TURBULENT_KINETIK_ENERGY][iB2]; // скорость внутри твёрдого тела
+					SpeedB2 = potent[GAMMA_LANGTRY_MENTER][iB2];
+					SpeedBB2 = potent[GAMMA_LANGTRY_MENTER][iB2]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedB2 = potent[TURBULENT_KINETIK_ENERGY][iB];
-					SpeedBB2 = potent[TURBULENT_KINETIK_ENERGY][iB]; // скорость внутри твёрдого тела
+					SpeedB2 = potent[GAMMA_LANGTRY_MENTER][iB];
+					SpeedBB2 = potent[GAMMA_LANGTRY_MENTER][iB]; // скорость внутри твёрдого тела
 				}
 				positionzb2 = positionzP - 0.5 * dz;
 				positionzB2 = positionzP - 0.5 * dz;
@@ -3606,7 +3513,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// X - direction
 			if ((!bE3) && (iE3 > -1)) {
-				SpeedE3 = potent[TURBULENT_KINETIK_ENERGY][iE3];
+				SpeedE3 = potent[GAMMA_LANGTRY_MENTER][iE3];
 				//center_cord3D(iE3,nvtx,pa,pointP,E_SIDE);
 				pointP = center_coord_loc[iE3];
 
@@ -3626,7 +3533,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iEE3 >= 0) && (iEE3 < maxelm)) {
 					// внутренний узел
-					SpeedEE3 = potent[TURBULENT_KINETIK_ENERGY][iEE3];
+					SpeedEE3 = potent[GAMMA_LANGTRY_MENTER][iEE3];
 					//center_cord3D(iEE3,nvtx,pa,pointP,EE_SIDE);
 					pointP = center_coord_loc[iEE3];
 					positionxEE3 = pointP.x;
@@ -3635,7 +3542,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iEE3 >= maxelm) && (iEE3 < maxelm + maxbound)) {
-						SpeedEE3 = potent[TURBULENT_KINETIK_ENERGY][iEE3];
+						SpeedEE3 = potent[GAMMA_LANGTRY_MENTER][iEE3];
 					}
 					else {
 						SpeedEE3 = SpeedE3;
@@ -3649,12 +3556,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iE3 > -1) {
-					SpeedE3 = potent[TURBULENT_KINETIK_ENERGY][iE3];
-					SpeedEE3 = potent[TURBULENT_KINETIK_ENERGY][iE3];
+					SpeedE3 = potent[GAMMA_LANGTRY_MENTER][iE3];
+					SpeedEE3 = potent[GAMMA_LANGTRY_MENTER][iE3];
 				}
 				else {
-					SpeedE3 = potent[TURBULENT_KINETIK_ENERGY][iE];
-					SpeedEE3 = potent[TURBULENT_KINETIK_ENERGY][iE];
+					SpeedE3 = potent[GAMMA_LANGTRY_MENTER][iE];
+					SpeedEE3 = potent[GAMMA_LANGTRY_MENTER][iE];
 				}
 				positionxe3 = positionxP + 0.5 * dx;
 				positionxE3 = positionxP + 0.5 * dx;
@@ -3666,7 +3573,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				pointP = center_coord_loc[iW3];
 				positionxW3 = pointP.x;
 				positionxw3 = positionxP - 0.5 * dx;
-				SpeedW3 = potent[TURBULENT_KINETIK_ENERGY][iW3];
+				SpeedW3 = potent[GAMMA_LANGTRY_MENTER][iW3];
 
 				integer iWW3 = neighbors_for_the_internal_node[W_SIDE][0][iW3];
 				if (iWW3 < 0) {
@@ -3681,7 +3588,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iWW3 >= 0) && (iWW3 < maxelm)) {
 					// внутренний узел
-					SpeedWW3 = potent[TURBULENT_KINETIK_ENERGY][iWW3];
+					SpeedWW3 = potent[GAMMA_LANGTRY_MENTER][iWW3];
 					//center_cord3D(iWW3,nvtx,pa,pointP,WW_SIDE);
 					pointP = center_coord_loc[iWW3];
 					positionxWW3 = pointP.x;
@@ -3690,7 +3597,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iWW3 >= maxelm) && (iWW3 < maxelm + maxbound)) {
-						SpeedWW3 = potent[TURBULENT_KINETIK_ENERGY][iWW3];
+						SpeedWW3 = potent[GAMMA_LANGTRY_MENTER][iWW3];
 					}
 					else {
 						SpeedWW3 = SpeedW3;
@@ -3706,12 +3613,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iW3 > -1) {
-					SpeedW3 = potent[TURBULENT_KINETIK_ENERGY][iW3]; // Attantion !! Debug
-					SpeedWW3 = potent[TURBULENT_KINETIK_ENERGY][iW3];
+					SpeedW3 = potent[GAMMA_LANGTRY_MENTER][iW3]; // Attantion !! Debug
+					SpeedWW3 = potent[GAMMA_LANGTRY_MENTER][iW3];
 				}
 				else {
-					SpeedW3 = potent[TURBULENT_KINETIK_ENERGY][iW]; // Attantion !! Debug
-					SpeedWW3 = potent[TURBULENT_KINETIK_ENERGY][iW];
+					SpeedW3 = potent[GAMMA_LANGTRY_MENTER][iW]; // Attantion !! Debug
+					SpeedWW3 = potent[GAMMA_LANGTRY_MENTER][iW];
 				}
 				//printf("SpeedW3==%e\n",SpeedW3); getchar();
 				positionxw3 = positionxP - 0.5 * dx;
@@ -3721,7 +3628,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// Y - direction
 			if ((!bN3) && (iN3 > -1)) {
-				SpeedN3 = potent[TURBULENT_KINETIK_ENERGY][iN3];
+				SpeedN3 = potent[GAMMA_LANGTRY_MENTER][iN3];
 				//center_cord3D(iN3,nvtx,pa,pointP,N_SIDE);
 				pointP = center_coord_loc[iN3];
 				positionyN3 = pointP.y;
@@ -3740,7 +3647,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iNN3 >= 0) && (iNN3 < maxelm)) {
 					// внутренний узел
-					SpeedNN3 = potent[TURBULENT_KINETIK_ENERGY][iNN3];
+					SpeedNN3 = potent[GAMMA_LANGTRY_MENTER][iNN3];
 					//center_cord3D(iNN3,nvtx,pa,pointP,NN_SIDE);
 					pointP = center_coord_loc[iNN3];
 					positionyNN3 = pointP.y;
@@ -3749,7 +3656,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iNN3 >= maxelm) && (iNN3 < maxelm + maxbound)) {
-						SpeedNN3 = potent[TURBULENT_KINETIK_ENERGY][iNN3];
+						SpeedNN3 = potent[GAMMA_LANGTRY_MENTER][iNN3];
 					}
 					else {
 						SpeedNN3 = SpeedN3;
@@ -3763,12 +3670,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iN3 > -1) {
-					SpeedN3 = potent[TURBULENT_KINETIK_ENERGY][iN3];
-					SpeedNN3 = potent[TURBULENT_KINETIK_ENERGY][iN3];
+					SpeedN3 = potent[GAMMA_LANGTRY_MENTER][iN3];
+					SpeedNN3 = potent[GAMMA_LANGTRY_MENTER][iN3];
 				}
 				else {
-					SpeedN3 = potent[TURBULENT_KINETIK_ENERGY][iN];
-					SpeedNN3 = potent[TURBULENT_KINETIK_ENERGY][iN];
+					SpeedN3 = potent[GAMMA_LANGTRY_MENTER][iN];
+					SpeedNN3 = potent[GAMMA_LANGTRY_MENTER][iN];
 				}
 				positionyn3 = positionyP + 0.5 * dy;
 				positionyN3 = positionyP + 0.5 * dy;
@@ -3776,7 +3683,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			}
 
 			if ((!bS3) && (iS3 > -1)) {
-				SpeedS3 = potent[TURBULENT_KINETIK_ENERGY][iS3];
+				SpeedS3 = potent[GAMMA_LANGTRY_MENTER][iS3];
 				//center_cord3D(iS3,nvtx,pa,pointP,S_SIDE);
 				pointP = center_coord_loc[iS3];
 				positionyS3 = pointP.y;
@@ -3795,7 +3702,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iSS3 >= 0) && (iSS3 < maxelm)) {
 					// внутренний узел
-					SpeedSS3 = potent[TURBULENT_KINETIK_ENERGY][iSS3];
+					SpeedSS3 = potent[GAMMA_LANGTRY_MENTER][iSS3];
 					//center_cord3D(iSS3,nvtx,pa,pointP,SS_SIDE);
 					pointP = center_coord_loc[iSS3];
 					positionySS3 = pointP.y;
@@ -3804,7 +3711,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iSS3 >= maxelm) && (iSS3 < maxelm + maxbound)) {
-						SpeedSS3 = potent[TURBULENT_KINETIK_ENERGY][iSS3];
+						SpeedSS3 = potent[GAMMA_LANGTRY_MENTER][iSS3];
 					}
 					else {
 						SpeedSS3 = SpeedS3;
@@ -3818,12 +3725,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iS3 > -1) {
-					SpeedS3 = potent[TURBULENT_KINETIK_ENERGY][iS3]; // ATTANTION !!!!
-					SpeedSS3 = potent[TURBULENT_KINETIK_ENERGY][iS3]; // нулевая скорость внутри твёрдого тела.
+					SpeedS3 = potent[GAMMA_LANGTRY_MENTER][iS3]; // ATTANTION !!!!
+					SpeedSS3 = potent[GAMMA_LANGTRY_MENTER][iS3]; // нулевая скорость внутри твёрдого тела.
 				}
 				else {
-					SpeedS3 = potent[TURBULENT_KINETIK_ENERGY][iS]; // ATTANTION !!!!
-					SpeedSS3 = potent[TURBULENT_KINETIK_ENERGY][iS]; // нулевая скорость внутри твёрдого тела.
+					SpeedS3 = potent[GAMMA_LANGTRY_MENTER][iS]; // ATTANTION !!!!
+					SpeedSS3 = potent[GAMMA_LANGTRY_MENTER][iS]; // нулевая скорость внутри твёрдого тела.
 				}
 				positionys3 = positionyP - 0.5 * dy;
 				positionyS3 = positionyP - 0.5 * dy;
@@ -3832,7 +3739,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// Z - direction
 			if ((!bT3) && (iT3 > -1)) {
-				SpeedT3 = potent[TURBULENT_KINETIK_ENERGY][iT3];
+				SpeedT3 = potent[GAMMA_LANGTRY_MENTER][iT3];
 				//center_cord3D(iT3,nvtx,pa,pointP,T_SIDE);
 				pointP = center_coord_loc[iT3];
 				positionzT3 = pointP.z;
@@ -3851,7 +3758,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iTT3 >= 0) && (iTT3 < maxelm)) {
 					// внутренний узел
-					SpeedTT3 = potent[TURBULENT_KINETIK_ENERGY][iTT3];
+					SpeedTT3 = potent[GAMMA_LANGTRY_MENTER][iTT3];
 					//center_cord3D(iTT3,nvtx,pa,pointP,TT_SIDE);
 					pointP = center_coord_loc[iTT3];
 					positionzTT3 = pointP.z;
@@ -3860,7 +3767,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iTT3 >= maxelm) && (iTT3 < maxelm + maxbound)) {
-						SpeedTT3 = potent[TURBULENT_KINETIK_ENERGY][iTT3];
+						SpeedTT3 = potent[GAMMA_LANGTRY_MENTER][iTT3];
 					}
 					else {
 						SpeedTT3 = SpeedT3;
@@ -3874,12 +3781,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iT3 > -1) {
-					SpeedT3 = potent[TURBULENT_KINETIK_ENERGY][iT3];
-					SpeedTT3 = potent[TURBULENT_KINETIK_ENERGY][iT3]; // скорость внутри твёрдого тела
+					SpeedT3 = potent[GAMMA_LANGTRY_MENTER][iT3];
+					SpeedTT3 = potent[GAMMA_LANGTRY_MENTER][iT3]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedT3 = potent[TURBULENT_KINETIK_ENERGY][iT];
-					SpeedTT3 = potent[TURBULENT_KINETIK_ENERGY][iT]; // скорость внутри твёрдого тела
+					SpeedT3 = potent[GAMMA_LANGTRY_MENTER][iT];
+					SpeedTT3 = potent[GAMMA_LANGTRY_MENTER][iT]; // скорость внутри твёрдого тела
 				}
 				positionzt3 = positionzP + 0.5 * dz;
 				positionzT3 = positionzP + 0.5 * dz;
@@ -3887,7 +3794,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			}
 
 			if ((!bB3) && (iB3 > -1)) {
-				SpeedB3 = potent[TURBULENT_KINETIK_ENERGY][iB3];
+				SpeedB3 = potent[GAMMA_LANGTRY_MENTER][iB3];
 				//center_cord3D(iB3,nvtx,pa,pointP,B_SIDE);
 				pointP = center_coord_loc[iB3];
 				positionzB3 = pointP.z;
@@ -3906,7 +3813,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iBB3 >= 0) && (iBB3 < maxelm)) {
 					// внутренний узел
-					SpeedBB3 = potent[TURBULENT_KINETIK_ENERGY][iBB3];
+					SpeedBB3 = potent[GAMMA_LANGTRY_MENTER][iBB3];
 					//center_cord3D(iBB3,nvtx,pa,pointP,BB_SIDE);
 					pointP = center_coord_loc[iBB3];
 					positionzBB3 = pointP.z;
@@ -3915,7 +3822,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iBB3 >= maxelm) && (iBB3 < maxelm + maxbound)) {
-						SpeedBB3 = potent[TURBULENT_KINETIK_ENERGY][iBB3];
+						SpeedBB3 = potent[GAMMA_LANGTRY_MENTER][iBB3];
 					}
 					else {
 						SpeedBB3 = SpeedB3;
@@ -3929,12 +3836,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iB3 > -1) {
-					SpeedB3 = potent[TURBULENT_KINETIK_ENERGY][iB3];
-					SpeedBB3 = potent[TURBULENT_KINETIK_ENERGY][iB3]; // скорость внутри твёрдого тела
+					SpeedB3 = potent[GAMMA_LANGTRY_MENTER][iB3];
+					SpeedBB3 = potent[GAMMA_LANGTRY_MENTER][iB3]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedB3 = potent[TURBULENT_KINETIK_ENERGY][iB];
-					SpeedBB3 = potent[TURBULENT_KINETIK_ENERGY][iB]; // скорость внутри твёрдого тела
+					SpeedB3 = potent[GAMMA_LANGTRY_MENTER][iB];
+					SpeedBB3 = potent[GAMMA_LANGTRY_MENTER][iB]; // скорость внутри твёрдого тела
 				}
 				positionzb3 = positionzP - 0.5 * dz;
 				positionzB3 = positionzP - 0.5 * dz;
@@ -3943,7 +3850,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// X - direction
 			if ((!bE4) && (iE4 > -1)) {
-				SpeedE4 = potent[TURBULENT_KINETIK_ENERGY][iE4];
+				SpeedE4 = potent[GAMMA_LANGTRY_MENTER][iE4];
 				//center_cord3D(iE4,nvtx,pa,pointP,E_SIDE);
 				pointP = center_coord_loc[iE4];
 
@@ -3963,7 +3870,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iEE4 >= 0) && (iEE4 < maxelm)) {
 					// внутренний узел
-					SpeedEE4 = potent[TURBULENT_KINETIK_ENERGY][iEE4];
+					SpeedEE4 = potent[GAMMA_LANGTRY_MENTER][iEE4];
 					//center_cord3D(iEE4,nvtx,pa,pointP,EE_SIDE);
 					pointP = center_coord_loc[iEE4];
 					positionxEE4 = pointP.x;
@@ -3972,7 +3879,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iEE4 >= maxelm) && (iEE4 < maxelm + maxbound)) {
-						SpeedEE4 = potent[TURBULENT_KINETIK_ENERGY][iEE4];
+						SpeedEE4 = potent[GAMMA_LANGTRY_MENTER][iEE4];
 					}
 					else {
 						SpeedEE4 = SpeedE4;
@@ -3986,12 +3893,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iE4 > -1) {
-					SpeedE4 = potent[TURBULENT_KINETIK_ENERGY][iE4];
-					SpeedEE4 = potent[TURBULENT_KINETIK_ENERGY][iE4];
+					SpeedE4 = potent[GAMMA_LANGTRY_MENTER][iE4];
+					SpeedEE4 = potent[GAMMA_LANGTRY_MENTER][iE4];
 				}
 				else {
-					SpeedE4 = potent[TURBULENT_KINETIK_ENERGY][iE];
-					SpeedEE4 = potent[TURBULENT_KINETIK_ENERGY][iE];
+					SpeedE4 = potent[GAMMA_LANGTRY_MENTER][iE];
+					SpeedEE4 = potent[GAMMA_LANGTRY_MENTER][iE];
 				}
 				positionxe4 = positionxP + 0.5 * dx;
 				positionxE4 = positionxP + 0.5 * dx;
@@ -4003,7 +3910,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				pointP = center_coord_loc[iW4];
 				positionxW4 = pointP.x;
 				positionxw4 = positionxP - 0.5 * dx;
-				SpeedW4 = potent[TURBULENT_KINETIK_ENERGY][iW4];
+				SpeedW4 = potent[GAMMA_LANGTRY_MENTER][iW4];
 
 				integer iWW4 = neighbors_for_the_internal_node[W_SIDE][0][iW4];
 				if (iWW4 < 0) {
@@ -4018,7 +3925,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iWW4 >= 0) && (iWW4 < maxelm)) {
 					// внутренний узел
-					SpeedWW4 = potent[TURBULENT_KINETIK_ENERGY][iWW4];
+					SpeedWW4 = potent[GAMMA_LANGTRY_MENTER][iWW4];
 					//center_cord3D(iWW4,nvtx,pa,pointP,WW_SIDE);
 					pointP = center_coord_loc[iWW4];
 					positionxWW4 = pointP.x;
@@ -4027,7 +3934,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iWW4 >= maxelm) && (iWW4 < maxelm + maxbound)) {
-						SpeedWW4 = potent[TURBULENT_KINETIK_ENERGY][iWW4];
+						SpeedWW4 = potent[GAMMA_LANGTRY_MENTER][iWW4];
 					}
 					else {
 						SpeedWW4 = SpeedW4;
@@ -4043,12 +3950,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iW4 > -1) {
-					SpeedW4 = potent[TURBULENT_KINETIK_ENERGY][iW4]; // Attantion !! Debug
-					SpeedWW4 = potent[TURBULENT_KINETIK_ENERGY][iW4];
+					SpeedW4 = potent[GAMMA_LANGTRY_MENTER][iW4]; // Attantion !! Debug
+					SpeedWW4 = potent[GAMMA_LANGTRY_MENTER][iW4];
 				}
 				else {
-					SpeedW4 = potent[TURBULENT_KINETIK_ENERGY][iW]; // Attantion !! Debug
-					SpeedWW4 = potent[TURBULENT_KINETIK_ENERGY][iW];
+					SpeedW4 = potent[GAMMA_LANGTRY_MENTER][iW]; // Attantion !! Debug
+					SpeedWW4 = potent[GAMMA_LANGTRY_MENTER][iW];
 				}
 				//printf("SpeedW4==%e\n",SpeedW4); getchar();
 				positionxw4 = positionxP - 0.5 * dx;
@@ -4058,7 +3965,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// Y - direction
 			if ((!bN4) && (iN4 > -1)) {
-				SpeedN4 = potent[TURBULENT_KINETIK_ENERGY][iN4];
+				SpeedN4 = potent[GAMMA_LANGTRY_MENTER][iN4];
 				//center_cord3D(iN4,nvtx,pa,pointP,N_SIDE);
 				pointP = center_coord_loc[iN4];
 				positionyN4 = pointP.y;
@@ -4077,7 +3984,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iNN4 >= 0) && (iNN4 < maxelm)) {
 					// внутренний узел
-					SpeedNN4 = potent[TURBULENT_KINETIK_ENERGY][iNN4];
+					SpeedNN4 = potent[GAMMA_LANGTRY_MENTER][iNN4];
 					//center_cord3D(iNN4,nvtx,pa,pointP,NN_SIDE);
 					pointP = center_coord_loc[iNN4];
 					positionyNN4 = pointP.y;
@@ -4086,7 +3993,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iNN4 >= maxelm) && (iNN4 < maxelm + maxbound)) {
-						SpeedNN4 = potent[TURBULENT_KINETIK_ENERGY][iNN4];
+						SpeedNN4 = potent[GAMMA_LANGTRY_MENTER][iNN4];
 					}
 					else {
 						SpeedNN4 = SpeedN4;
@@ -4100,12 +4007,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iN4 > -1) {
-					SpeedN4 = potent[TURBULENT_KINETIK_ENERGY][iN4];
-					SpeedNN4 = potent[TURBULENT_KINETIK_ENERGY][iN4];
+					SpeedN4 = potent[GAMMA_LANGTRY_MENTER][iN4];
+					SpeedNN4 = potent[GAMMA_LANGTRY_MENTER][iN4];
 				}
 				else {
-					SpeedN4 = potent[TURBULENT_KINETIK_ENERGY][iN];
-					SpeedNN4 = potent[TURBULENT_KINETIK_ENERGY][iN];
+					SpeedN4 = potent[GAMMA_LANGTRY_MENTER][iN];
+					SpeedNN4 = potent[GAMMA_LANGTRY_MENTER][iN];
 				}
 				positionyn4 = positionyP + 0.5 * dy;
 				positionyN4 = positionyP + 0.5 * dy;
@@ -4113,7 +4020,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			}
 
 			if ((!bS4) && (iS4 > -1)) {
-				SpeedS4 = potent[TURBULENT_KINETIK_ENERGY][iS4];
+				SpeedS4 = potent[GAMMA_LANGTRY_MENTER][iS4];
 				//center_cord3D(iS4,nvtx,pa,pointP,S_SIDE);
 				pointP = center_coord_loc[iS4];
 				positionyS4 = pointP.y;
@@ -4132,7 +4039,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iSS4 >= 0) && (iSS4 < maxelm)) {
 					// внутренний узел
-					SpeedSS4 = potent[TURBULENT_KINETIK_ENERGY][iSS4];
+					SpeedSS4 = potent[GAMMA_LANGTRY_MENTER][iSS4];
 					//center_cord3D(iSS4,nvtx,pa,pointP,SS_SIDE);
 					pointP = center_coord_loc[iSS4];
 					positionySS4 = pointP.y;
@@ -4141,7 +4048,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iSS4 >= maxelm) && (iSS4 < maxelm + maxbound)) {
-						SpeedSS4 = potent[TURBULENT_KINETIK_ENERGY][iSS4];
+						SpeedSS4 = potent[GAMMA_LANGTRY_MENTER][iSS4];
 					}
 					else {
 						SpeedSS4 = SpeedS4;
@@ -4155,12 +4062,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iS4 > -1) {
-					SpeedS4 = potent[TURBULENT_KINETIK_ENERGY][iS4]; // ATTANTION !!!!
-					SpeedSS4 = potent[TURBULENT_KINETIK_ENERGY][iS4]; // нулевая скорость внутри твёрдого тела.
+					SpeedS4 = potent[GAMMA_LANGTRY_MENTER][iS4]; // ATTANTION !!!!
+					SpeedSS4 = potent[GAMMA_LANGTRY_MENTER][iS4]; // нулевая скорость внутри твёрдого тела.
 				}
 				else {
-					SpeedS4 = potent[TURBULENT_KINETIK_ENERGY][iS]; // ATTANTION !!!!
-					SpeedSS4 = potent[TURBULENT_KINETIK_ENERGY][iS]; // нулевая скорость внутри твёрдого тела.
+					SpeedS4 = potent[GAMMA_LANGTRY_MENTER][iS]; // ATTANTION !!!!
+					SpeedSS4 = potent[GAMMA_LANGTRY_MENTER][iS]; // нулевая скорость внутри твёрдого тела.
 				}
 				positionys4 = positionyP - 0.5 * dy;
 				positionyS4 = positionyP - 0.5 * dy;
@@ -4169,7 +4076,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			// Z - direction
 			if ((!bT4) && (iT4 > -1)) {
-				SpeedT4 = potent[TURBULENT_KINETIK_ENERGY][iT4];
+				SpeedT4 = potent[GAMMA_LANGTRY_MENTER][iT4];
 				//center_cord3D(iT4,nvtx,pa,pointP,T_SIDE);
 				pointP = center_coord_loc[iT4];
 				positionzT4 = pointP.z;
@@ -4188,7 +4095,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iTT4 >= 0) && (iTT4 < maxelm)) {
 					// внутренний узел
-					SpeedTT4 = potent[TURBULENT_KINETIK_ENERGY][iTT4];
+					SpeedTT4 = potent[GAMMA_LANGTRY_MENTER][iTT4];
 					//center_cord3D(iTT4,nvtx,pa,pointP,TT_SIDE);
 					pointP = center_coord_loc[iTT4];
 					positionzTT4 = pointP.z;
@@ -4197,7 +4104,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iTT4 >= maxelm) && (iTT4 < maxelm + maxbound)) {
-						SpeedTT4 = potent[TURBULENT_KINETIK_ENERGY][iTT4];
+						SpeedTT4 = potent[GAMMA_LANGTRY_MENTER][iTT4];
 					}
 					else {
 						SpeedTT4 = SpeedT4;
@@ -4211,12 +4118,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iT4 > -1) {
-					SpeedT4 = potent[TURBULENT_KINETIK_ENERGY][iT4];
-					SpeedTT4 = potent[TURBULENT_KINETIK_ENERGY][iT4]; // скорость внутри твёрдого тела
+					SpeedT4 = potent[GAMMA_LANGTRY_MENTER][iT4];
+					SpeedTT4 = potent[GAMMA_LANGTRY_MENTER][iT4]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedT4 = potent[TURBULENT_KINETIK_ENERGY][iT];
-					SpeedTT4 = potent[TURBULENT_KINETIK_ENERGY][iT]; // скорость внутри твёрдого тела
+					SpeedT4 = potent[GAMMA_LANGTRY_MENTER][iT];
+					SpeedTT4 = potent[GAMMA_LANGTRY_MENTER][iT]; // скорость внутри твёрдого тела
 				}
 				positionzt4 = positionzP + 0.5 * dz;
 				positionzT4 = positionzP + 0.5 * dz;
@@ -4224,7 +4131,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			}
 
 			if ((!bB4) && (iB4 > -1)) {
-				SpeedB4 = potent[TURBULENT_KINETIK_ENERGY][iB4];
+				SpeedB4 = potent[GAMMA_LANGTRY_MENTER][iB4];
 				//center_cord3D(iB4,nvtx,pa,pointP,B_SIDE);
 				pointP = center_coord_loc[iB4];
 				positionzB4 = pointP.z;
@@ -4243,7 +4150,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 				if ((iBB4 >= 0) && (iBB4 < maxelm)) {
 					// внутренний узел
-					SpeedBB4 = potent[TURBULENT_KINETIK_ENERGY][iBB4];
+					SpeedBB4 = potent[GAMMA_LANGTRY_MENTER][iBB4];
 					//center_cord3D(iBB4,nvtx,pa,pointP,BB_SIDE);
 					pointP = center_coord_loc[iBB4];
 					positionzBB4 = pointP.z;
@@ -4252,7 +4159,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				{
 					// граничный узел
 					if ((iBB4 >= maxelm) && (iBB4 < maxelm + maxbound)) {
-						SpeedBB4 = potent[TURBULENT_KINETIK_ENERGY][iBB4];
+						SpeedBB4 = potent[GAMMA_LANGTRY_MENTER][iBB4];
 					}
 					else {
 						SpeedBB4 = SpeedB4;
@@ -4266,12 +4173,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			else {
 				// это граничный узел
 				if (iB4 > -1) {
-					SpeedB4 = potent[TURBULENT_KINETIK_ENERGY][iB4];
-					SpeedBB4 = potent[TURBULENT_KINETIK_ENERGY][iB4]; // скорость внутри твёрдого тела
+					SpeedB4 = potent[GAMMA_LANGTRY_MENTER][iB4];
+					SpeedBB4 = potent[GAMMA_LANGTRY_MENTER][iB4]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedB4 = potent[TURBULENT_KINETIK_ENERGY][iB];
-					SpeedBB4 = potent[TURBULENT_KINETIK_ENERGY][iB]; // скорость внутри твёрдого тела
+					SpeedB4 = potent[GAMMA_LANGTRY_MENTER][iB];
+					SpeedBB4 = potent[GAMMA_LANGTRY_MENTER][iB]; // скорость внутри твёрдого тела
 				}
 				positionzb4 = positionzP - 0.5 * dz;
 				positionzB4 = positionzP - 0.5 * dz;
@@ -4402,14 +4309,14 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			if (ishconvection == UNEVENQUICK) {
 				// X - direction
-				Speede = workQUICK(dx, 2.0*(positionxE - positionxe), positionxW, positionxP, positionxE, positionxEE, SpeedW, SpeedP, SpeedE, SpeedEE, (Fe));
-				Speedw = workQUICK(2.0*(positionxw - positionxW), dx, positionxWW, positionxW, positionxP, positionxE, SpeedWW, SpeedW, SpeedP, SpeedE, (Fw));
+				Speede = workQUICK(dx, 2.0 * (positionxE - positionxe), positionxW, positionxP, positionxE, positionxEE, SpeedW, SpeedP, SpeedE, SpeedEE, (Fe));
+				Speedw = workQUICK(2.0 * (positionxw - positionxW), dx, positionxWW, positionxW, positionxP, positionxE, SpeedWW, SpeedW, SpeedP, SpeedE, (Fw));
 				// Y - direction
-				Speedn = workQUICK(dy, 2.0*(positionyN - positionyn), positionyS, positionyP, positionyN, positionyNN, SpeedS, SpeedP, SpeedN, SpeedNN, (Fn));
-				Speeds = workQUICK(2.0*(positionys - positionyS), dy, positionySS, positionyS, positionyP, positionyN, SpeedSS, SpeedS, SpeedP, SpeedN, (Fs));
+				Speedn = workQUICK(dy, 2.0 * (positionyN - positionyn), positionyS, positionyP, positionyN, positionyNN, SpeedS, SpeedP, SpeedN, SpeedNN, (Fn));
+				Speeds = workQUICK(2.0 * (positionys - positionyS), dy, positionySS, positionyS, positionyP, positionyN, SpeedSS, SpeedS, SpeedP, SpeedN, (Fs));
 				// Z - direction
-				Speedt = workQUICK(dz, 2.0*(positionzT - positionzt), positionzB, positionzP, positionzT, positionzTT, SpeedB, SpeedP, SpeedT, SpeedTT, (Ft));
-				Speedb = workQUICK(2.0*(positionzb - positionzB), dz, positionzBB, positionzB, positionzP, positionzT, SpeedBB, SpeedB, SpeedP, SpeedT, (Fb));
+				Speedt = workQUICK(dz, 2.0 * (positionzT - positionzt), positionzB, positionzP, positionzT, positionzTT, SpeedB, SpeedP, SpeedT, SpeedTT, (Ft));
+				Speedb = workQUICK(2.0 * (positionzb - positionzB), dz, positionzBB, positionzB, positionzP, positionzT, SpeedBB, SpeedB, SpeedP, SpeedT, (Fb));
 
 
 				if (b_on_adaptive_local_refinement_mesh) {
@@ -4523,34 +4430,34 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		if (1) {
 
 			/*
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae=De*fD(Pe, EXP2, true, feplus) + fmax(-(Fe),0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw=Dw*fD(Pw, EXP2, true, fwplus) + fmax((Fw),0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].an=Dn*fD(Pn, EXP2, true, fnplus) + fmax(-(Fn),0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].as=Ds*fD(Ps, EXP2, true, fsplus) + fmax((Fs),0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].at=Dt*fD(Pt, EXP2, true, ftplus) + fmax(-(Ft),0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab=Db*fD(Pb, EXP2, true, fbplus) + fmax((Fb),0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ae=De*fD(Pe, EXP2, true, feplus) + fmax(-(Fe),0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].aw=Dw*fD(Pw, EXP2, true, fwplus) + fmax((Fw),0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].an=Dn*fD(Pn, EXP2, true, fnplus) + fmax(-(Fn),0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].as=Ds*fD(Ps, EXP2, true, fsplus) + fmax((Fs),0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].at=Dt*fD(Pt, EXP2, true, ftplus) + fmax(-(Ft),0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ab=Db*fD(Pb, EXP2, true, fbplus) + fmax((Fb),0.0);
 			*/
 
 			// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
 			// Нужно просто UDS.
 			// так рекомендуют в интернетах.
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De + fmax(-(Fe), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw + fmax((Fw), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn + fmax(-(Fn), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds + fmax((Fs), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt + fmax(-(Ft), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db + fmax((Fb), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De + fmax(-(Fe), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw + fmax((Fw), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn + fmax(-(Fn), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds + fmax((Fs), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt + fmax(-(Ft), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db + fmax((Fb), 0.0);
 
 
 			// 08.05.2017.
 			// Моя наработка:
 			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = De + fmax(+(Fe), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw + fmax(-(Fw), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn + fmax(+(Fn), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds + fmax(-(Fs), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt + fmax(+(Ft), 0.0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db + fmax(-(Fb), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = De + fmax(+(Fe), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw + fmax(-(Fw), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn + fmax(+(Fn), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds + fmax(-(Fs), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt + fmax(+(Ft), 0.0);
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db + fmax(-(Fb), 0.0);
 
 			/*
 			sumanb = De + fmax(+(Fe), 0.0);
@@ -4567,23 +4474,23 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
 			 // Нужно просто UDS.
 			 // так рекомендуют в интернетах.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
 
 
 				// 08.05.2017.
 				// Моя наработка:
 				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += De2 + fmax(+(Fe2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw2 + fmax(-(Fw2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn2 + fmax(+(Fn2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds2 + fmax(-(Fs2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt2 + fmax(+(Ft2), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db2 + fmax(-(Fb2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += De2 + fmax(+(Fe2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw2 + fmax(-(Fw2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn2 + fmax(+(Fn2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds2 + fmax(-(Fs2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt2 + fmax(+(Ft2), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db2 + fmax(-(Fb2), 0.0);
 
 				/*
 				sumanb += De2 + fmax(+(Fe2), 0.0);
@@ -4598,25 +4505,25 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
 		   // Нужно просто UDS.
 		   // так рекомендуют в интернетах.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
 
 
 				// 08.05.2017.
 				// Моя наработка:
 				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += De3 + fmax(+(Fe3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw3 + fmax(-(Fw3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn3 + fmax(+(Fn3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds3 + fmax(-(Fs3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt3 + fmax(+(Ft3), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db3 + fmax(-(Fb3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += De3 + fmax(+(Fe3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw3 + fmax(-(Fw3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn3 + fmax(+(Fn3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds3 + fmax(-(Fs3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt3 + fmax(+(Ft3), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db3 + fmax(-(Fb3), 0.0);
 
-                /*
+				/*
 				sumanb += De3 + fmax(+(Fe3), 0.0);
 				sumanb += Dw3 + fmax(-(Fw3), 0.0);
 				sumanb += Dn3 + fmax(+(Fn3), 0.0);
@@ -4629,23 +4536,23 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
 		   // Нужно просто UDS.
 		   // так рекомендуют в интернетах.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
 
 
 				// 08.05.2017.
 				// Моя наработка:
 				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += De4 + fmax(+(Fe4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw4 + fmax(-(Fw4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn4 + fmax(+(Fn4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds4 + fmax(-(Fs4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt4 + fmax(+(Ft4), 0.0);
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db4 + fmax(-(Fb4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += De4 + fmax(+(Fe4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dw4 + fmax(-(Fw4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dn4 + fmax(+(Fn4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Ds4 + fmax(-(Fs4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Dt4 + fmax(+(Ft4), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += Db4 + fmax(-(Fb4), 0.0);
 
 				/*
 				sumanb += De4 + fmax(+(Fe4), 0.0);
@@ -4672,103 +4579,103 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		   // Вблизи стенки порядок схемы понижается до UDS.
 			if (!bE) {
 				// строго внутренняя.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De + fmax(-(Fe), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De + fmax(-(Fe), 0.0);
 			}
 			else {
 				integer inumber = iE - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De + fabs(Fe);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De + fabs(Fe);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De + fabs(Fe);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae = De + fabs(Fe);
 				}
 			}
 
 			if (!bW) {
 				// строго внутренняя.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw + fmax((Fw), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw + fmax((Fw), 0.0);
 			}
 			else {
 				integer inumber = iW - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw + fabs(Fw);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw + fabs(Fw);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw + fabs(Fw);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw = Dw + fabs(Fw);
 				}
 			}
 
 			if (!bN) {
 				// строго внутренняя.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn + fmax(-(Fn), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn + fmax(-(Fn), 0.0);
 			}
 			else {
 				integer inumber = iN - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn + fabs(Fn);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn + fabs(Fn);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an = Dn + fabs(Fn);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an = Dn + fabs(Fn);
 				}
 			}
 
 			if (!bS) {
 				// строго внутренняя.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds + fmax((Fs), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds + fmax((Fs), 0.0);
 			}
 			else {
 				integer inumber = iS - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds + fabs(Fs);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds + fabs(Fs);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as = Ds + fabs(Fs);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as = Ds + fabs(Fs);
 				}
 			}
 
 			if (!bT) {
 				// строго внутренняя.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt + fmax(-(Ft), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt + fmax(-(Ft), 0.0);
 			}
 			else {
 				integer inumber = iT - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt + fabs(Ft);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt + fabs(Ft);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at = Dt + fabs(Ft);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at = Dt + fabs(Ft);
 				}
 			}
 
 			if (!bB) {
 				// строго внутренняя.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db + fmax((Fb), 0.0);
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db + fmax((Fb), 0.0);
 			}
 			else {
 				integer inumber = iB - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db + fabs(Fb);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db + fabs(Fb);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab = Db + fabs(Fb);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab = Db + fabs(Fb);
 				}
 			}
 
@@ -4778,103 +4685,103 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				// Вблизи стенки порядок схемы понижается до UDS.
 				if (!bE2) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
 				}
 				else {
 					integer inumber = iE2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 + fabs(Fe2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 + fabs(Fe2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 = De2 + fabs(Fe2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 = De2 + fabs(Fe2);
 					}
 				}
 
 				if (!bW2) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
 				}
 				else {
 					integer inumber = iW2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 + fabs(Fw2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 + fabs(Fw2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 = Dw2 + fabs(Fw2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 + fabs(Fw2);
 					}
 				}
 
 				if (!bN2) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
 				}
 				else {
 					integer inumber = iN2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 + fabs(Fn2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 + fabs(Fn2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 = Dn2 + fabs(Fn2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 = Dn2 + fabs(Fn2);
 					}
 				}
 
 				if (!bS2) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
 				}
 				else {
 					integer inumber = iS2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 + fabs(Fs2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 + fabs(Fs2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 = Ds2 + fabs(Fs2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 = Ds2 + fabs(Fs2);
 					}
 				}
 
 				if (!bT2) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
 				}
 				else {
 					integer inumber = iT2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 + fabs(Ft2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 + fabs(Ft2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 = Dt2 + fabs(Ft2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 = Dt2 + fabs(Ft2);
 					}
 				}
 
 				if (!bB2) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
 				}
 				else {
 					integer inumber = iB2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 + fabs(Fb2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 + fabs(Fb2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 = Db2 + fabs(Fb2);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 = Db2 + fabs(Fb2);
 					}
 				}
 
@@ -4882,103 +4789,103 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				// Вблизи стенки порядок схемы понижается до UDS.
 				if (!bE3) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
 				}
 				else {
 					integer inumber = iE3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 + fabs(Fe3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 + fabs(Fe3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 = De3 + fabs(Fe3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 = De3 + fabs(Fe3);
 					}
 				}
 
 				if (!bW3) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
 				}
 				else {
 					integer inumber = iW3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 + fabs(Fw3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 + fabs(Fw3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 = Dw3 + fabs(Fw3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 + fabs(Fw3);
 					}
 				}
 
 				if (!bN3) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
 				}
 				else {
 					integer inumber = iN3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 + fabs(Fn3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 + fabs(Fn3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 = Dn3 + fabs(Fn3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 = Dn3 + fabs(Fn3);
 					}
 				}
 
 				if (!bS3) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
 				}
 				else {
 					integer inumber = iS3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 + fabs(Fs3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 + fabs(Fs3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 = Ds3 + fabs(Fs3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 = Ds3 + fabs(Fs3);
 					}
 				}
 
 				if (!bT3) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
 				}
 				else {
 					integer inumber = iT3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 + fabs(Ft3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 + fabs(Ft3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 = Dt3 + fabs(Ft3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 = Dt3 + fabs(Ft3);
 					}
 				}
 
 				if (!bB3) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
 				}
 				else {
 					integer inumber = iB3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 + fabs(Fb3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 + fabs(Fb3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 = Db3 + fabs(Fb3);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 = Db3 + fabs(Fb3);
 					}
 				}
 
@@ -4986,103 +4893,103 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 				// Вблизи стенки порядок схемы понижается до UDS.
 				if (!bE4) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
 				}
 				else {
 					integer inumber = iE4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 + fabs(Fe4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 + fabs(Fe4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 = De4 + fabs(Fe4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 = De4 + fabs(Fe4);
 					}
 				}
 
 				if (!bW4) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
 				}
 				else {
 					integer inumber = iW4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 + fabs(Fw4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 + fabs(Fw4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 = Dw4 + fabs(Fw4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 + fabs(Fw4);
 					}
 				}
 
 				if (!bN4) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
 				}
 				else {
 					integer inumber = iN4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 + fabs(Fn4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 + fabs(Fn4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 = Dn4 + fabs(Fn4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 = Dn4 + fabs(Fn4);
 					}
 				}
 
 				if (!bS4) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
 				}
 				else {
 					integer inumber = iS4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 + fabs(Fs4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 + fabs(Fs4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 = Ds4 + fabs(Fs4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 = Ds4 + fabs(Fs4);
 					}
 				}
 
 				if (!bT4) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
 				}
 				else {
 					integer inumber = iT4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 + fabs(Ft4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 + fabs(Ft4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 = Dt4 + fabs(Ft4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 = Dt4 + fabs(Ft4);
 					}
 				}
 
 				if (!bB4) {
 					// строго внутренняя.
-					sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
+					sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
 				}
 				else {
 					integer inumber = iB4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 + fabs(Fb4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 + fabs(Fb4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 = Db4 + fabs(Fb4);
+						sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 = Db4 + fabs(Fb4);
 					}
 				}
 
@@ -5092,25 +4999,25 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 
 			// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+			sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = sl[GAMMA_LANGTRY_MENTER_SL][iP].ae + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw + sl[GAMMA_LANGTRY_MENTER_SL][iP].an + sl[GAMMA_LANGTRY_MENTER_SL][iP].as + sl[GAMMA_LANGTRY_MENTER_SL][iP].at + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 
-			//sumanb = sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+			//sumanb = sl[GAMMA_LANGTRY_MENTER_SL][iP].ae + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw + sl[GAMMA_LANGTRY_MENTER_SL][iP].an + sl[GAMMA_LANGTRY_MENTER_SL][iP].as + sl[GAMMA_LANGTRY_MENTER_SL][iP].at + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 
 
 			if (b_on_adaptive_local_refinement_mesh) {
 
 				// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2;
 
-				//sumanb += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2;
+				//sumanb += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2;
 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3;
 
-				//sumanb += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3;
+				//sumanb += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3;
 
-				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4;
+				sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4;
 
-				//sumanb += sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 + sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4;
+				//sumanb += sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 + sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4;
 
 
 			}
@@ -5119,26 +5026,26 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 
 		// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
-		//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap=sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+		//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap=sl[GAMMA_LANGTRY_MENTER_SL][iP].ae+sl[GAMMA_LANGTRY_MENTER_SL][iP].aw+sl[GAMMA_LANGTRY_MENTER_SL][iP].an+sl[GAMMA_LANGTRY_MENTER_SL][iP].as+sl[GAMMA_LANGTRY_MENTER_SL][iP].at+sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 
-		//sumanb=sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae+sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw+sl[TURBULENT_KINETIK_ENERGY_SL][iP].an+sl[TURBULENT_KINETIK_ENERGY_SL][iP].as+sl[TURBULENT_KINETIK_ENERGY_SL][iP].at+sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+		//sumanb=sl[GAMMA_LANGTRY_MENTER_SL][iP].ae+sl[GAMMA_LANGTRY_MENTER_SL][iP].aw+sl[GAMMA_LANGTRY_MENTER_SL][iP].an+sl[GAMMA_LANGTRY_MENTER_SL][iP].as+sl[GAMMA_LANGTRY_MENTER_SL][iP].at+sl[GAMMA_LANGTRY_MENTER_SL][iP].ab;
 
 		//13 августа 2016.
-		//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].an) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].as) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].at) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab);
-		//sumanb = fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].an) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].as) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].at) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab);
+		//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ab);
+		//sumanb = fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ab);
 
 
 		if (1) {
 			// Вклад в правую часть (метод отложенной коррекции):
 			// X - direction
-			attrs += -fmax((Fe), 0)*(Speede - SpeedP) + fmax(-(Fe), 0)*(Speede - SpeedE);
-			attrs += -fmax(-(Fw), 0)*(Speedw - SpeedP) + fmax((Fw), 0)*(Speedw - SpeedW);
+			attrs += -fmax((Fe), 0) * (Speede - SpeedP) + fmax(-(Fe), 0) * (Speede - SpeedE);
+			attrs += -fmax(-(Fw), 0) * (Speedw - SpeedP) + fmax((Fw), 0) * (Speedw - SpeedW);
 			// Y - direction
-			attrs += -fmax((Fn), 0)*(Speedn - SpeedP) + fmax(-(Fn), 0)*(Speedn - SpeedN);
-			attrs += -fmax(-(Fs), 0)*(Speeds - SpeedP) + fmax((Fs), 0)*(Speeds - SpeedS);
+			attrs += -fmax((Fn), 0) * (Speedn - SpeedP) + fmax(-(Fn), 0) * (Speedn - SpeedN);
+			attrs += -fmax(-(Fs), 0) * (Speeds - SpeedP) + fmax((Fs), 0) * (Speeds - SpeedS);
 			// Z - direction
-			attrs += -fmax((Ft), 0)*(Speedt - SpeedP) + fmax(-(Ft), 0)*(Speedt - SpeedT);
-			attrs += -fmax(-(Fb), 0)*(Speedb - SpeedP) + fmax((Fb), 0)*(Speedb - SpeedB);
+			attrs += -fmax((Ft), 0) * (Speedt - SpeedP) + fmax(-(Ft), 0) * (Speedt - SpeedT);
+			attrs += -fmax(-(Fb), 0) * (Speedb - SpeedP) + fmax((Fb), 0) * (Speedb - SpeedB);
 
 
 			if (b_on_adaptive_local_refinement_mesh) {
@@ -5187,22 +5094,22 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		   // 
 		   // Вблизи стенки порядок схемы понижается до UDS.
 			if (!bE) {
-				attrs += -fmax((Fe), 0)*(Speede - SpeedP) + fmax(-(Fe), 0)*(Speede - SpeedE);
+				attrs += -fmax((Fe), 0) * (Speede - SpeedP) + fmax(-(Fe), 0) * (Speede - SpeedE);
 			}
 			if (!bW) {
-				attrs += -fmax(-(Fw), 0)*(Speedw - SpeedP) + fmax((Fw), 0)*(Speedw - SpeedW);
+				attrs += -fmax(-(Fw), 0) * (Speedw - SpeedP) + fmax((Fw), 0) * (Speedw - SpeedW);
 			}
 			if (!bN) {
-				attrs += -fmax((Fn), 0)*(Speedn - SpeedP) + fmax(-(Fn), 0)*(Speedn - SpeedN);
+				attrs += -fmax((Fn), 0) * (Speedn - SpeedP) + fmax(-(Fn), 0) * (Speedn - SpeedN);
 			}
 			if (!bS) {
-				attrs += -fmax(-(Fs), 0)*(Speeds - SpeedP) + fmax((Fs), 0)*(Speeds - SpeedS);
+				attrs += -fmax(-(Fs), 0) * (Speeds - SpeedP) + fmax((Fs), 0) * (Speeds - SpeedS);
 			}
 			if (!bT) {
-				attrs += -fmax((Ft), 0)*(Speedt - SpeedP) + fmax(-(Ft), 0)*(Speedt - SpeedT);
+				attrs += -fmax((Ft), 0) * (Speedt - SpeedP) + fmax(-(Ft), 0) * (Speedt - SpeedT);
 			}
 			if (!bB) {
-				attrs += -fmax(-(Fb), 0)*(Speedb - SpeedP) + fmax((Fb), 0)*(Speedb - SpeedB);
+				attrs += -fmax(-(Fb), 0) * (Speedb - SpeedP) + fmax((Fb), 0) * (Speedb - SpeedB);
 			}
 
 
@@ -5307,277 +5214,226 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		printf("ERROR deltaF=%e\n", deltaF);
 	}
 
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap) {
-		printf("ap!=ap assemble bug. Apriory deltaF. iP=%lld ap=%e\n", iP, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap);
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ap != sl[GAMMA_LANGTRY_MENTER_SL][iP].ap) {
+		printf("ap!=ap assemble bug. Apriory deltaF. iP=%lld ap=%e\n", iP, sl[GAMMA_LANGTRY_MENTER_SL][iP].ap);
 		system("pause");
 	}
-	//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += deltaF;//-->//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap) {
-		printf("ap!=ap assemble bug. Apost deltaF. iP=%lld ap=%e\n", iP, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap);
+	//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += deltaF;//-->//sl[GAMMA_LANGTRY_MENTER_SL][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ap != sl[GAMMA_LANGTRY_MENTER_SL][iP].ap) {
+		printf("ap!=ap assemble bug. Apost deltaF. iP=%lld ap=%e\n", iP, sl[GAMMA_LANGTRY_MENTER_SL][iP].ap);
 		system("pause");
 	}
 
 
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].b = attrs; // метод отложенной коррекции для схемы высокой разрешающей способности.
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].b != sl[TURBULENT_KINETIK_ENERGY_SL][iP].b) {
-		printf("exptsr+attrs error NAN or INF in control volume %lld TURBULENT_KINETIK_ENERGY\n", iP);
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].b = attrs; // метод отложенной коррекции для схемы высокой разрешающей способности.
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].b != sl[GAMMA_LANGTRY_MENTER_SL][iP].b) {
+		printf("exptsr+attrs error NAN or INF in control volume %lld GAMMA_LANGTRY_MENTER\n", iP);
 		system("pause");
 	}
 
 
 	// генерация
-	//doublereal mut = (rP*fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) / fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-	//doublereal mut = potent[MUT][iP];
-	doublereal Pk;// = fmin((mut)*SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP], 20.0*eqin.fluidinfo[0].beta_zvezda*rP*fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-	//Pk = fmin(potent[MUT][iP]*SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP], 10.0*eqin.fluidinfo[0].beta_zvezda*rP*fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
+
+	doublereal Re_theta_C = Re_theta_c(potent[RE_THETA_LANGTRY_MENTER][iP]);
+	doublereal ReV = rP * SInvariantStrainRateTensor[iP] * distance_to_wall[iP] * distance_to_wall[iP] / prop[MU_DYNAMIC_VISCOSITY][iP];
+	doublereal Fonset1 = ReV / (2.193 * Re_theta_C);
+	doublereal Fonset2 = fmin(fmax(Fonset1, Fonset1* Fonset1* Fonset1* Fonset1),2.0);
+	doublereal R_T = rP * fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) / 
+		(prop[MU_DYNAMIC_VISCOSITY][iP]* fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
+	doublereal Fonset3 = fmax(1.0-(R_T/2.5)* (R_T / 2.5)* (R_T / 2.5), 0.0);
+	doublereal Fonset = fmax(Fonset2 - Fonset3, 0.0);
+	doublereal Fturb = exp(-(R_T/4.0)* (R_T / 4.0)* (R_T / 4.0)* (R_T / 4.0));
+
+	doublereal Re_omega = rP* fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP])* distance_to_wall[iP] * distance_to_wall[iP]/ prop[MU_DYNAMIC_VISCOSITY][iP];
+	doublereal Fsublayer = exp(-(Re_omega/200.0)* (Re_omega / 200.0));
+	doublereal Flength = F_length_1(potent[RE_THETA_LANGTRY_MENTER][iP]) * (1.0 - Fsublayer) + 40.0 * Fsublayer;
+
+	doublereal Pgamma = Flength* eqin.fluidinfo[0].Ca1* rP* SInvariantStrainRateTensor[iP]*pow(fmin(1.0,fmax(0.0, potent[GAMMA_LANGTRY_MENTER][iP]))*Fonset,0.5)*
+		(1.0 - eqin.fluidinfo[0].Cepsilon1* fmin(1.0, fmax(0.0, potent[GAMMA_LANGTRY_MENTER][iP])));
+
+	// диссипация
+	doublereal Egamma = eqin.fluidinfo[0].Ca2 * rP * potent[CURL][iP] * fmin(1.0, fmax(0.0, potent[GAMMA_LANGTRY_MENTER][iP])) *
+		Fturb * (eqin.fluidinfo[0].Cepsilon2* fmin(1.0, fmax(0.0, potent[GAMMA_LANGTRY_MENTER][iP])) - 1.0);
+
+
 	
 
-	// Слишком малая величина, кинетическая энергия турбулентности k не генерируется.
-	doublereal Pgeneration = rP * potent[MUT][iP] * potent[CURL][iP] * potent[CURL][iP];
-
-	// На первых итерациях турбулентная вязкость сильно меньше молекулярной может быть на 7 или 8 порядков меньше,
-	// Поэтому здесь мы увеличим генерационный член.
-	Pgeneration = rP * (prop[MU_DYNAMIC_VISCOSITY][iP] + potent[MUT][iP]) * potent[CURL][iP] * potent[CURL][iP]; // Так гораздо ближе к эталону к Icepak.
-
-
-	Pgeneration = rP * (prop[MU_DYNAMIC_VISCOSITY][iP] + potent[MUT][iP]) * (
-		(potent[GRADXVX][iP]+ potent[GRADXVX][iP]-(2.0/3.0)*(potent[GRADXVX][iP]+ potent[GRADYVY][iP]+ potent[GRADZVZ][iP]))* potent[GRADXVX][iP] +
-		(potent[GRADXVY][iP] + potent[GRADYVX][iP] ) * potent[GRADYVX][iP] + 
-		(potent[GRADXVZ][iP] + potent[GRADZVX][iP] ) * potent[GRADZVX][iP] + 
-
-		
-		(potent[GRADXVY][iP] + potent[GRADYVX][iP]) * potent[GRADXVY][iP] +
-		(potent[GRADYVY][iP] + potent[GRADYVY][iP] - (2.0 / 3.0) * (potent[GRADXVX][iP] + potent[GRADYVY][iP] + potent[GRADZVZ][iP])) * potent[GRADYVY][iP] +
-		(potent[GRADYVZ][iP] + potent[GRADZVY][iP]) * potent[GRADZVY][iP] +
-
-		
-		(potent[GRADXVZ][iP] + potent[GRADZVX][iP]) * potent[GRADXVZ][iP] +
-		(potent[GRADYVZ][iP] + potent[GRADZVY][iP]) * potent[GRADYVZ][iP] +
-		(potent[GRADZVZ][iP] + potent[GRADZVZ][iP] - (2.0 / 3.0) * (potent[GRADXVX][iP] + potent[GRADYVY][iP] + potent[GRADZVZ][iP])) * potent[GRADZVZ][iP]
-		);
-
-	Pk = fmin(Pgeneration,
-		10.0*eqin.fluidinfo[0].beta_zvezda*rP*
-		fmax(K_limiter_min,	potent[TURBULENT_KINETIK_ENERGY][iP])
-		* fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-
 	if (brthdsd_ON) {
-
-		if (bMentor_Langtry) {
-
-			doublereal Dk_SST = eqin.fluidinfo[0].beta_zvezda * rP *
-				fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) *
-				fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-
-
-			// Модель Ментора Лантгрии
-			// 13.01.2021
-			doublereal R_T = rP * fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) /
-				(prop[MU_DYNAMIC_VISCOSITY][iP] * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-
-			doublereal ReV = rP * SInvariantStrainRateTensor[iP] * distance_to_wall[iP] * distance_to_wall[iP] / prop[MU_DYNAMIC_VISCOSITY][iP];
-
-			doublereal F_reattach = exp(-(R_T/20.0)* (R_T / 20.0)* (R_T / 20.0)* (R_T / 20.0));
-			doublereal Re_theta_C = fmax(1.0,Re_theta_c(potent[RE_THETA_LANGTRY_MENTER][iP]));
-
-
-			doublereal Usquare = fmax(1.0e-6, potent[VXCOR][iP] * potent[VXCOR][iP] + potent[VYCOR][iP] * potent[VYCOR][iP] + potent[VZCOR][iP] * potent[VZCOR][iP]);
-			doublereal delta = fmax(1.0e-9, 375.0 * potent[CURL][iP] * prop[MU_DYNAMIC_VISCOSITY][iP] * potent[RE_THETA_LANGTRY_MENTER][iP] * distance_to_wall[iP] / (rP * Usquare));
-
-
-			doublereal Re_omega = rP * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) * distance_to_wall[iP] * distance_to_wall[iP] / prop[MU_DYNAMIC_VISCOSITY][iP];
-			doublereal Fwake = exp(-(Re_omega / 1.0e5) * (Re_omega / 1.0e5));
-
-			doublereal F_Theta_T = fmin(fmax(Fwake * exp(-(distance_to_wall[iP] / delta) * (distance_to_wall[iP] / delta) * (distance_to_wall[iP] / delta) * (distance_to_wall[iP] / delta)), 1.0 - ((eqin.fluidinfo[0].Cepsilon2 * fmin(1.0, fmax(0.0, potent[GAMMA_LANGTRY_MENTER][iP])) - 1.0) / (eqin.fluidinfo[0].Cepsilon2 - 1.0)) * ((eqin.fluidinfo[0].Cepsilon2 * fmin(1.0, fmax(0.0, potent[GAMMA_LANGTRY_MENTER][iP])) - 1.0) / (eqin.fluidinfo[0].Cepsilon2 - 1.0))), 1.0);
-
-			doublereal gamma_sep = fmin(eqin.fluidinfo[0].s1*fmax(0.0,(ReV/(3.235* Re_theta_C))-1.0)* F_reattach,2.0)* F_Theta_T;
-			doublereal gamma_eff = fmax(potent[GAMMA_LANGTRY_MENTER][iP], gamma_sep);
-
-			dSc = gamma_eff * Pk;
-			dSc -= fmin(fmax(gamma_eff,0.1),1.0)* Dk_SST;
-
-		}
-		else {
-
-			dSc = Pk;
-			// диссипация
-			dSc -= eqin.fluidinfo[0].beta_zvezda * rP *
-				fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) *
-				fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-		}
+		dSc = Pgamma; // генерация.
+		// диссипация
+		dSc -= Egamma;
 	}
 	else {
 		dSc = 0.0;
 	}
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].b += dSc * dx*dy*dz; // генерация минус диссипация.
+	sl[GAMMA_LANGTRY_MENTER_SL][iP].b += dSc * dx * dy * dz; // генерация минус диссипация.
 
 
 	if (btimedep) {
 		// Учет нестационарного члена.
 		doublereal apzero = rP * dx * dy * dz / tauparam;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += apzero;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].b += apzero * kinetik_energy_old_time_step[iP];
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ap += apzero;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].b += apzero * gamma_Langtry_Menter_old_time_step[iP];
 	}
 
 
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].b != sl[TURBULENT_KINETIK_ENERGY_SL][iP].b) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].b != sl[GAMMA_LANGTRY_MENTER_SL][iP].b) {
 		printf("dSc*dx*dy*dz error NAN or INF in control volume %lld\n", iP);
-		printf("TURBULENT_KINETIK_ENERGY\n");
+		printf("GAMMA_LANGTRY_MENTER\n");
 		system("pause");
 	}
 
-	if (fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap) < 1.0e-30) {
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = 1.0;
-		sl[TURBULENT_KINETIK_ENERGY_SL][iP].b = potent[TURBULENT_KINETIK_ENERGY][iP];
+	if (fabs(sl[GAMMA_LANGTRY_MENTER_SL][iP].ap) < 1.0e-30) {
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].ap = 1.0;
+		sl[GAMMA_LANGTRY_MENTER_SL][iP].b = potent[GAMMA_LANGTRY_MENTER][iP];
 
-		if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].b != sl[TURBULENT_KINETIK_ENERGY_SL][iP].b) {
-			printf("Zero ap in TURBULENT_KINETIK_ENERGY component.\n");
+		if (sl[GAMMA_LANGTRY_MENTER_SL][iP].b != sl[GAMMA_LANGTRY_MENTER_SL][iP].b) {
+			printf("Zero ap in GAMMA_LANGTRY_MENTER component.\n");
 		}
 	}
 
 
 
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap) {
-		printf("ap!=ap assemble bug. iP=%lld ap=%e\n", iP, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap);
-		printf("TURBULENT_KINETIK_ENERGY \n");
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ap != sl[GAMMA_LANGTRY_MENTER_SL][iP].ap) {
+		printf("ap!=ap assemble bug. iP=%lld ap=%e\n", iP, sl[GAMMA_LANGTRY_MENTER_SL][iP].ap);
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ae != sl[GAMMA_LANGTRY_MENTER_SL][iP].ae) {
 		printf("ae!=ae assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw != sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].aw != sl[GAMMA_LANGTRY_MENTER_SL][iP].aw) {
 		printf("aw!=aw assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].an != sl[TURBULENT_KINETIK_ENERGY_SL][iP].an) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].an != sl[GAMMA_LANGTRY_MENTER_SL][iP].an) {
 		printf("an!=an assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].as != sl[TURBULENT_KINETIK_ENERGY_SL][iP].as) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].as != sl[GAMMA_LANGTRY_MENTER_SL][iP].as) {
 		printf("as!=as assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].at != sl[TURBULENT_KINETIK_ENERGY_SL][iP].at) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].at != sl[GAMMA_LANGTRY_MENTER_SL][iP].at) {
 		printf("at!=at assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ab != sl[GAMMA_LANGTRY_MENTER_SL][iP].ab) {
 		printf("ab!=ab assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2) {
-		printf("ae2!=ae2 assemble bug %e %e\n", sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae2);
-		printf("TURBULENT_KINETIK_ENERGY \n");
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2 != sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2) {
+		printf("ae2!=ae2 assemble bug %e %e\n", sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2, sl[GAMMA_LANGTRY_MENTER_SL][iP].ae2);
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw2) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2 != sl[GAMMA_LANGTRY_MENTER_SL][iP].aw2) {
 		printf("aw2!=aw2 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].an2) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].an2 != sl[GAMMA_LANGTRY_MENTER_SL][iP].an2) {
 		printf("an2!=an2 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].as2) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].as2 != sl[GAMMA_LANGTRY_MENTER_SL][iP].as2) {
 		printf("as2!=as2 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].at2) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].at2 != sl[GAMMA_LANGTRY_MENTER_SL][iP].at2) {
 		printf("at2!=at2 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab2) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2 != sl[GAMMA_LANGTRY_MENTER_SL][iP].ab2) {
 		printf("ab2!=ab2 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae3) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3 != sl[GAMMA_LANGTRY_MENTER_SL][iP].ae3) {
 		printf("ae3!=ae3 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw3) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3 != sl[GAMMA_LANGTRY_MENTER_SL][iP].aw3) {
 		printf("aw3!=aw3 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].an3) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].an3 != sl[GAMMA_LANGTRY_MENTER_SL][iP].an3) {
 		printf("an3!=an3 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].as3) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].as3 != sl[GAMMA_LANGTRY_MENTER_SL][iP].as3) {
 		printf("as3!=as3 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].at3) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].at3 != sl[GAMMA_LANGTRY_MENTER_SL][iP].at3) {
 		printf("at3!=at3 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab3) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3 != sl[GAMMA_LANGTRY_MENTER_SL][iP].ab3) {
 		printf("ab3!=ab3 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae4) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4 != sl[GAMMA_LANGTRY_MENTER_SL][iP].ae4) {
 		printf("ae4!=ae4 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw4) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4 != sl[GAMMA_LANGTRY_MENTER_SL][iP].aw4) {
 		printf("aw4!=aw4 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].an4) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].an4 != sl[GAMMA_LANGTRY_MENTER_SL][iP].an4) {
 		printf("an4!=an4 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].as4) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].as4 != sl[GAMMA_LANGTRY_MENTER_SL][iP].as4) {
 		printf("as4!=as4 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].at4) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].at4 != sl[GAMMA_LANGTRY_MENTER_SL][iP].at4) {
 		printf("at4!=at4 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4 != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab4) {
+	if (sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4 != sl[GAMMA_LANGTRY_MENTER_SL][iP].ab4) {
 		printf("ab4!=ab4 assemble bug\n");
-		printf("TURBULENT_KINETIK_ENERGY \n");
+		printf("GAMMA_LANGTRY_MENTER \n");
 		system("pause");
 	}
 
-} // my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D
+} // my_elmatr_quad_turbulent_Gamma_Langtry_Menter_SST_3D
 
 
 // собирает одно уравнение матрицы СЛАУ для обобщенного уравнения 
 // конвекции - диффузии, для определённого внутреннего контрольного объёма.
 // Для прямоугольной трёхмерной шестигранной Hex сетки.
-// Эта сборка применяется только для  удельной скорости диссипации 
-// кинетической энергии турбулентных пульсаций.
-void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
+// Эта сборка применяется только для величины Re_theta в модели Ментера Лантгрии.
+void my_elmatr_quad_turbulent_Re_Theta_Langtry_MenterSST_3D(
 	integer iP,
 	BOUND* border_neighbor,
 	integer lw,
 	integer ls,
-	equation3D** &sl,
-	equation3D_bon** &slb,
+	equation3D**& sl,
+	equation3D_bon**& slb,
 	//doublereal** diag_coef,
 	//integer iVar,
 	bool btimedep,
@@ -5597,7 +5453,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	//doublereal dgz,
 	//doublereal dbeta, 
 	integer ishconvection,
-	doublereal* & specific_dissipation_rate_old_time_step,
+	doublereal*& Re_Theta_Menter_Lantgry_old_time_step,
 	//bool bBussineskApproach,
 	//doublereal temp_ref,
 	//bool bfirst_start,
@@ -5608,17 +5464,16 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	BLOCK* b,
 	integer lb,
 	TPROP* matlist,
-	doublereal** &mf,
+	doublereal**& mf,
 	//bool bVERYStable,
 	//doublereal &sumanb,
-	integer *ilevel_alice,
-	doublereal* &distance_to_wall,
-	doublereal* &SInvariantStrainRateTensor,
+	integer* ilevel_alice,
+	doublereal*& distance_to_wall,
+	doublereal*& SInvariantStrainRateTensor,
 	bool brthdsd_ON,
 	TOCHKA*& center_coord_loc,
 	TOCHKA*& volume_loc,
-	integer maxbound,
-	bool bMentor_Langtry
+	integer maxbound
 ) {
 
 	// iP - номер внутреннего контрольного объёма
@@ -5626,18 +5481,17 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
 	iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
 	iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iE = iE; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iN = iN; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iT = iT;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iS = iS; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iW = iW; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iB = iB;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iP = iP;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iE = iE; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iN = iN; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iT = iT;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iS = iS; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iW = iW; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iB = iB;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iP = iP;
 
 	// 26.09.2016 Добавок для АЛИС сетки.
 	integer iE2 = -1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1; // номера соседних контрольных объёмов
 	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1; // номера соседних контрольных объёмов
 	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1; // номера соседних контрольных объёмов
 
-
-	 // NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
 	if (b_on_adaptive_local_refinement_mesh) {
+		// NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
 		iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
 		iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 		iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP]; iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
@@ -5646,78 +5500,79 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
 	}
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iE2 = iE2; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iN2 = iN2; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iT2 = iT2;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iS2 = iS2; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iW2 = iW2; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iB2 = iB2;
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iE3 = iE3; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iN3 = iN3; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iT3 = iT3;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iS3 = iS3; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iW3 = iW3; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iB3 = iB3;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iE2 = iE2; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iN2 = iN2; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iT2 = iT2;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iS2 = iS2; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iW2 = iW2; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iB2 = iB2;
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iE4 = iE4; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iN4 = iN4; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iT4 = iT4;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iS4 = iS4; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iW4 = iW4; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].iB4 = iB4;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iE3 = iE3; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iN3 = iN3; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iT3 = iT3;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iS3 = iS3; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iW3 = iW3; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iB3 = iB3;
+
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iE4 = iE4; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iN4 = iN4; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iT4 = iT4;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].iS4 = iS4; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iW4 = iW4; sl[RE_THETA_LANGTRY_MENTER_SL][iP].iB4 = iB4;
 
 
 
 	// Инициализирующее обнуление.
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = 0.0;
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = 0.0;
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = 0.0;
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = 0.0;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = 0.0;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = 0.0;
 
 
 	// Признак присутствия связи.
 	// От булевых флагов можно избавиться в целях экономии памяти ЭВМ.
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bE2 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bW2 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bS2 = false;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bN2 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bB2 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bT2 = false;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].bE2 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bW2 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bS2 = false;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].bN2 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bB2 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bT2 = false;
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bE3 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bW3 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bS3 = false;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bN3 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bB3 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bT3 = false;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].bE3 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bW3 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bS3 = false;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].bN3 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bB3 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bT3 = false;
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bE4 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bW4 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bS4 = false;
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bN4 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bB4 = false; sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bT4 = false;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].bE4 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bW4 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bS4 = false;
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].bN4 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bB4 = false; sl[RE_THETA_LANGTRY_MENTER_SL][iP].bT4 = false;
 
-	if (CHECK_NODE_FOR_EXISTENCE(iE2)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bE2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iW2)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bW2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iN2)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bN2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iS2)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bS2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iT2)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bT2 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iB2)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bB2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE2)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bE2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW2)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bW2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN2)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bN2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS2)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bS2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT2)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bT2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB2)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bB2 = true;
 
-	if (CHECK_NODE_FOR_EXISTENCE(iE3)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bE3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iW3)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bW3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iN3)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bN3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iS3)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bS3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iT3)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bT3 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iB3)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bB3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE3)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bE3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW3)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bW3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN3)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bN3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS3)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bS3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT3)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bT3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB3)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bB3 = true;
 
-	if (CHECK_NODE_FOR_EXISTENCE(iE4)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bE4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iW4)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bW4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iN4)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bN4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iS4)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bS4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iT4)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bT4 = true;
-	if (CHECK_NODE_FOR_EXISTENCE(iB4)) sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].bB4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE4)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bE4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW4)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bW4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN4)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bN4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS4)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bS4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT4)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bT4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB4)) sl[RE_THETA_LANGTRY_MENTER_SL][iP].bB4 = true;
 
 	// Внутренний КО.	
 
@@ -5768,177 +5623,176 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	dy = pvol.y;
 	dz = pvol.z;
 
-
 	//printf("%.2f %.2f\n",dx,dy); // debug GOOD
 	//getchar();
 
-	doublereal dxe = 0.5*dx, dxw = 0.5*dx, dyn = 0.5*dy, dys = 0.5*dy, dzt = 0.5*dz, dzb = 0.5*dz;
+	doublereal dxe = 0.5 * dx, dxw = 0.5 * dx, dyn = 0.5 * dy, dys = 0.5 * dy, dzt = 0.5 * dz, dzb = 0.5 * dz;
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iE)) {
-		if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
-		if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bE) dxe = 0.5 * (pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
+		if (!bE) dxe -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iW)) {
-		if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
+		if (!bW) dxw = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW) dxw -= 0.5 * (pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
 	}
 	// y - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iN)) {
-		if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
-		if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bN) dyn = 0.5 * (pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
+		if (!bN) dyn -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iS)) {
-		if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
+		if (!bS) dys = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS) dys -= 0.5 * (pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
 	}
 	// z - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iT)) {
-		if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
-		if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bT) dzt = 0.5 * (pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
+		if (!bT) dzt -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iB)) {
-		if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
+		if (!bB) dzb = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB) dzb -= 0.5 * (pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
 	}
 
 
-	doublereal dxe2 = 0.5*dx, dxw2 = 0.5*dx, dyn2 = 0.5*dy, dys2 = 0.5*dy, dzt2 = 0.5*dz, dzb2 = 0.5*dz;
-	doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
-	doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
+	doublereal dxe2 = 0.5 * dx, dxw2 = 0.5 * dx, dyn2 = 0.5 * dy, dys2 = 0.5 * dy, dzt2 = 0.5 * dz, dzb2 = 0.5 * dz;
+	doublereal dxe3 = 0.5 * dx, dxw3 = 0.5 * dx, dyn3 = 0.5 * dy, dys3 = 0.5 * dy, dzt3 = 0.5 * dz, dzb3 = 0.5 * dz;
+	doublereal dxe4 = 0.5 * dx, dxw4 = 0.5 * dx, dyn4 = 0.5 * dy, dys4 = 0.5 * dy, dzt4 = 0.5 * dz, dzb4 = 0.5 * dz;
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iE2)) {
-		if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
-		if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bE2) dxe2 = 0.5 * (pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+		if (!bE2) dxe2 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iW2)) {
-		if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+		if (!bW2) dxw2 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW2) dxw2 -= 0.5 * (pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
 	}
 	// y - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iN2)) {
-		if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
-		if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bN2) dyn2 = 0.5 * (pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+		if (!bN2) dyn2 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iS2)) {
-		if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+		if (!bS2) dys2 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS2) dys2 -= 0.5 * (pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
 	}
 	// z - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iT2)) {
-		if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
-		if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bT2) dzt2 = 0.5 * (pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+		if (!bT2) dzt2 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iB2)) {
-		if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+		if (!bB2) dzb2 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB2) dzb2 -= 0.5 * (pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
 	}
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iE3)) {
-		if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
-		if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bE3) dxe3 = 0.5 * (pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+		if (!bE3) dxe3 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iW3)) {
-		if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+		if (!bW3) dxw3 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW3) dxw3 -= 0.5 * (pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
 	}
 	// y - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iN3)) {
-		if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
-		if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bN3) dyn3 = 0.5 * (pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+		if (!bN3) dyn3 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iS3)) {
-		if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+		if (!bS3) dys3 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS3) dys3 -= 0.5 * (pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
 	}
 	// z - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iT3)) {
-		if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
-		if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bT3) dzt3 = 0.5 * (pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+		if (!bT3) dzt3 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iB3)) {
-		if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+		if (!bB3) dzb3 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB3) dzb3 -= 0.5 * (pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
 	}
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iE4)) {
-		if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
-		if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bE4) dxe4 = 0.5 * (pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+		if (!bE4) dxe4 -= 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iW4)) {
-		if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-		if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+		if (!bW4) dxw4 = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW4) dxw4 -= 0.5 * (pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
 	}
 	// y - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iN4)) {
-		if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
-		if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bN4) dyn4 = 0.5 * (pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+		if (!bN4) dyn4 -= 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iS4)) {
-		if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-		if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+		if (!bS4) dys4 = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS4) dys4 -= 0.5 * (pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
 	}
 	// z - direction
 	if (CHECK_NODE_FOR_EXISTENCE(iT4)) {
-		if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
-		if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bT4) dzt4 = 0.5 * (pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+		if (!bT4) dzt4 -= 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
 	if (CHECK_NODE_FOR_EXISTENCE(iB4)) {
-		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+		if (!bB4) dzb4 = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB4) dzb4 -= 0.5 * (pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
 	}
 
 
 	// Учёт неравномерности расчётной сетки:
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
 	// x-direction
-	feplus = 0.5*dx / dxe;
-	fwplus = 0.5*dx / dxw;
+	feplus = 0.5 * dx / dxe;
+	fwplus = 0.5 * dx / dxw;
 	// y-direction
-	fnplus = 0.5*dy / dyn;
-	fsplus = 0.5*dy / dys;
+	fnplus = 0.5 * dy / dyn;
+	fsplus = 0.5 * dy / dys;
 	// z-direction
-	ftplus = 0.5*dz / dzt;
-	fbplus = 0.5*dz / dzb;
+	ftplus = 0.5 * dz / dzt;
+	fbplus = 0.5 * dz / dzb;
 
 	doublereal feplus2, fwplus2, fnplus2, fsplus2, ftplus2, fbplus2;
 	// x-direction
-	feplus2 = 0.5*dx / dxe2;
-	fwplus2 = 0.5*dx / dxw2;
+	feplus2 = 0.5 * dx / dxe2;
+	fwplus2 = 0.5 * dx / dxw2;
 	// y-direction
-	fnplus2 = 0.5*dy / dyn2;
-	fsplus2 = 0.5*dy / dys2;
+	fnplus2 = 0.5 * dy / dyn2;
+	fsplus2 = 0.5 * dy / dys2;
 	// z-direction
-	ftplus2 = 0.5*dz / dzt2;
-	fbplus2 = 0.5*dz / dzb2;
+	ftplus2 = 0.5 * dz / dzt2;
+	fbplus2 = 0.5 * dz / dzb2;
 
 	doublereal feplus3, fwplus3, fnplus3, fsplus3, ftplus3, fbplus3;
 	// x-direction
-	feplus3 = 0.5*dx / dxe3;
-	fwplus3 = 0.5*dx / dxw3;
+	feplus3 = 0.5 * dx / dxe3;
+	fwplus3 = 0.5 * dx / dxw3;
 	// y-direction
-	fnplus3 = 0.5*dy / dyn3;
-	fsplus3 = 0.5*dy / dys3;
+	fnplus3 = 0.5 * dy / dyn3;
+	fsplus3 = 0.5 * dy / dys3;
 	// z-direction
-	ftplus3 = 0.5*dz / dzt3;
-	fbplus3 = 0.5*dz / dzb3;
+	ftplus3 = 0.5 * dz / dzt3;
+	fbplus3 = 0.5 * dz / dzb3;
 
 	doublereal feplus4, fwplus4, fnplus4, fsplus4, ftplus4, fbplus4;
 	// x-direction
-	feplus4 = 0.5*dx / dxe4;
-	fwplus4 = 0.5*dx / dxw4;
+	feplus4 = 0.5 * dx / dxe4;
+	fwplus4 = 0.5 * dx / dxw4;
 	// y-direction
-	fnplus4 = 0.5*dy / dyn4;
-	fsplus4 = 0.5*dy / dys4;
+	fnplus4 = 0.5 * dy / dyn4;
+	fsplus4 = 0.5 * dy / dys4;
 	// z-direction
-	ftplus4 = 0.5*dz / dzt4;
-	fbplus4 = 0.5*dz / dzb4;
+	ftplus4 = 0.5 * dz / dzt4;
+	fbplus4 = 0.5 * dz / dzb4;
 
 	//printf("%e %e %e %e %e %e\n",feplus, fwplus, fnplus, fsplus, ftplus, fbplus);
 	//getchar();
@@ -6065,22 +5919,22 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	// интерполяция плотности сделана так, чтобы выполнялись 
 	// предельные соотношения.
 	if (iE > -1) {
-		if (!bE) rhoe = rE * rP / (feplus*rE + (1.0 - feplus)*rP); else rhoe = rE; // проверено !
+		if (!bE) rhoe = rE * rP / (feplus * rE + (1.0 - feplus) * rP); else rhoe = rE; // проверено !
 	}
 	if (iW > -1) {
-		if (!bW) rhow = rW * rP / (fwplus*rW + (1.0 - fwplus)*rP); else rhow = rW;
+		if (!bW) rhow = rW * rP / (fwplus * rW + (1.0 - fwplus) * rP); else rhow = rW;
 	}
 	if (iN > -1) {
-		if (!bN) rhon = rN * rP / (fnplus*rN + (1.0 - fnplus)*rP); else rhon = rN;
+		if (!bN) rhon = rN * rP / (fnplus * rN + (1.0 - fnplus) * rP); else rhon = rN;
 	}
 	if (iS > -1) {
-		if (!bS) rhos = rS * rP / (fsplus*rS + (1.0 - fsplus)*rP); else rhos = rS;
+		if (!bS) rhos = rS * rP / (fsplus * rS + (1.0 - fsplus) * rP); else rhos = rS;
 	}
 	if (iT > -1) {
-		if (!bT) rhot = rT * rP / (ftplus*rT + (1.0 - ftplus)*rP); else rhot = rT;
+		if (!bT) rhot = rT * rP / (ftplus * rT + (1.0 - ftplus) * rP); else rhot = rT;
 	}
 	if (iB > -1) {
-		if (!bB) rhob = rB * rP / (fbplus*rB + (1.0 - fbplus)*rP); else rhob = rB;
+		if (!bB) rhob = rB * rP / (fbplus * rB + (1.0 - fbplus) * rP); else rhob = rB;
 	}
 
 	doublereal rhoe2 = 0.0, rhow2 = 0.0, rhon2 = 0.0, rhos2 = 0.0, rhot2 = 0.0, rhob2 = 0.0;
@@ -6088,60 +5942,60 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	doublereal rhoe4 = 0.0, rhow4 = 0.0, rhon4 = 0.0, rhos4 = 0.0, rhot4 = 0.0, rhob4 = 0.0;
 
 	if (iE2 > -1) {
-		if (!bE2)  rhoe2 = rE2 * rP / (feplus2*rE2 + (1.0 - feplus2)*rP); else rhoe2 = rE2; // проверено !
+		if (!bE2)  rhoe2 = rE2 * rP / (feplus2 * rE2 + (1.0 - feplus2) * rP); else rhoe2 = rE2; // проверено !
 	}
 	if (iW2 > -1) {
-		if (!bW2)  rhow2 = rW2 * rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP); else rhow2 = rW2;
+		if (!bW2)  rhow2 = rW2 * rP / (fwplus2 * rW2 + (1.0 - fwplus2) * rP); else rhow2 = rW2;
 	}
 	if (iN2 > -1) {
-		if (!bN2) rhon2 = rN2 * rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP); else rhon2 = rN2;
+		if (!bN2) rhon2 = rN2 * rP / (fnplus2 * rN2 + (1.0 - fnplus2) * rP); else rhon2 = rN2;
 	}
 	if (iS2 > -1) {
-		if (!bS2)  rhos2 = rS2 * rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP); else rhos2 = rS2;
+		if (!bS2)  rhos2 = rS2 * rP / (fsplus2 * rS2 + (1.0 - fsplus2) * rP); else rhos2 = rS2;
 	}
 	if (iT2 > -1) {
-		if (!bT2)  rhot2 = rT2 * rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP); else rhot2 = rT2;
+		if (!bT2)  rhot2 = rT2 * rP / (ftplus2 * rT2 + (1.0 - ftplus2) * rP); else rhot2 = rT2;
 	}
 	if (iB2 > -1) {
-		if (!bB2) rhob2 = rB2 * rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP); else rhob2 = rB2;
+		if (!bB2) rhob2 = rB2 * rP / (fbplus2 * rB2 + (1.0 - fbplus2) * rP); else rhob2 = rB2;
 	}
 
 	if (iE3 > -1) {
-		if (!bE3) rhoe3 = rE3 * rP / (feplus3*rE3 + (1.0 - feplus3)*rP); else rhoe3 = rE3;
+		if (!bE3) rhoe3 = rE3 * rP / (feplus3 * rE3 + (1.0 - feplus3) * rP); else rhoe3 = rE3;
 	}
 	if (iW3 > -1) {
-		if (!bW3) rhow3 = rW3 * rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP); else rhow3 = rW3;
+		if (!bW3) rhow3 = rW3 * rP / (fwplus3 * rW3 + (1.0 - fwplus3) * rP); else rhow3 = rW3;
 	}
 	if (iN3 > -1) {
-		if (!bN3) rhon3 = rN3 * rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP); else rhon3 = rN3;
+		if (!bN3) rhon3 = rN3 * rP / (fnplus3 * rN3 + (1.0 - fnplus3) * rP); else rhon3 = rN3;
 	}
 	if (iS3 > -1) {
-		if (!bS3) rhos3 = rS3 * rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP); else rhos3 = rS3;
+		if (!bS3) rhos3 = rS3 * rP / (fsplus3 * rS3 + (1.0 - fsplus3) * rP); else rhos3 = rS3;
 	}
 	if (iT3 > -1) {
-		if (!bT3) rhot3 = rT3 * rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP); else rhot3 = rT3;
+		if (!bT3) rhot3 = rT3 * rP / (ftplus3 * rT3 + (1.0 - ftplus3) * rP); else rhot3 = rT3;
 	}
 	if (iB3 > -1) {
-		if (!bB3) rhob3 = rB3 * rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP); else rhob3 = rB3;
+		if (!bB3) rhob3 = rB3 * rP / (fbplus3 * rB3 + (1.0 - fbplus3) * rP); else rhob3 = rB3;
 	}
 
 	if (iE4 > -1) {
-		if (!bE4) rhoe4 = rE4 * rP / (feplus4*rE4 + (1.0 - feplus4)*rP); else rhoe4 = rE4;
+		if (!bE4) rhoe4 = rE4 * rP / (feplus4 * rE4 + (1.0 - feplus4) * rP); else rhoe4 = rE4;
 	}
 	if (iW4 > -1) {
-		if (!bW4) rhow4 = rW4 * rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP); else rhow4 = rW4;
+		if (!bW4) rhow4 = rW4 * rP / (fwplus4 * rW4 + (1.0 - fwplus4) * rP); else rhow4 = rW4;
 	}
 	if (iN4 > -1) {
-		if (!bN4) rhon4 = rN4 * rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP); else rhon4 = rN4;
+		if (!bN4) rhon4 = rN4 * rP / (fnplus4 * rN4 + (1.0 - fnplus4) * rP); else rhon4 = rN4;
 	}
 	if (iS4 > -1) {
-		if (!bS4) rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP); else rhos4 = rS4;
+		if (!bS4) rhos4 = rS4 * rP / (fsplus4 * rS4 + (1.0 - fsplus4) * rP); else rhos4 = rS4;
 	}
 	if (iT4 > -1) {
-		if (!bT4) rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP); else rhot4 = rT4;
+		if (!bT4) rhot4 = rT4 * rP / (ftplus4 * rT4 + (1.0 - ftplus4) * rP); else rhot4 = rT4;
 	}
 	if (iB4 > -1) {
-		if (!bB4) rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP); else rhob4 = rB4;
+		if (!bB4) rhob4 = rB4 * rP / (fbplus4 * rB4 + (1.0 - fbplus4) * rP); else rhob4 = rB4;
 	}
 
 
@@ -6164,7 +6018,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	   SIMPLE (на момент непосредственного вычисления потоков коэффициенты берутся с текущей итерации, но
 	   дело в том что потом мы на следующей итерации используем вычисленные ранее потоки массы (которые были запомнены в памяти)
 	   и поэтому говорим что диагональные коэффициенты беруться с предыдущей итерации).
-	   требуется всеобъемлющая проверка... 
+	   требуется всеобъемлющая проверка...
 	   Особенно должна обрабатываться первая итерация, т.к. на ней диагональные коэффициенты
 	   для всех точек ещё не посчитаны. Поэтому предлагается включать интерполяцию Рхи-Чоу только
 	   со второй итерации алгоритма SIMPLE. На первой итерации стационарного солвера используется
@@ -6204,12 +6058,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		Fb = mf[iP][B_SIDE];
 	}
 	else {
-		//  поток на АЛИС. 24.11.2018
+		// поток на АЛИС. 24.11.2018
 
 		if (iE > -1) {
 			if (bE) {
 				// граничный узел.
-				Fe = mf[iP][E_SIDE] * (border_neighbor[iE - maxelm].dS / (dy*dz));
+				Fe = mf[iP][E_SIDE] * (border_neighbor[iE - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -6226,7 +6080,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iW > -1) {
 			if (bW) {
 				// граничный узел.
-				Fw = mf[iP][W_SIDE] * (border_neighbor[iW - maxelm].dS / (dy*dz));
+				Fw = mf[iP][W_SIDE] * (border_neighbor[iW - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -6243,7 +6097,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iN > -1) {
 			if (bN) {
 				// граничный узел.
-				Fn = mf[iP][N_SIDE] * (border_neighbor[iN - maxelm].dS / (dx*dz));
+				Fn = mf[iP][N_SIDE] * (border_neighbor[iN - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -6260,7 +6114,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iS > -1) {
 			if (bS) {
 				// граничный узел.
-				Fs = mf[iP][S_SIDE] * (border_neighbor[iS - maxelm].dS / (dx*dz));
+				Fs = mf[iP][S_SIDE] * (border_neighbor[iS - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -6277,7 +6131,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iT > -1) {
 			if (bT) {
 				// граничный узел.
-				Ft = mf[iP][T_SIDE] * (border_neighbor[iT - maxelm].dS / (dx*dy));
+				Ft = mf[iP][T_SIDE] * (border_neighbor[iT - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -6294,7 +6148,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iB > -1) {
 			if (bB) {
 				// граничный узел.
-				Fb = mf[iP][B_SIDE] * (border_neighbor[iB - maxelm].dS / (dx*dy));
+				Fb = mf[iP][B_SIDE] * (border_neighbor[iB - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -6311,7 +6165,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iE2 > -1) {
 			if (bE2) {
 				// граничный узел.
-				Fe2 = mf[iP][E_SIDE] * (border_neighbor[iE2 - maxelm].dS / (dy*dz));
+				Fe2 = mf[iP][E_SIDE] * (border_neighbor[iE2 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -6328,7 +6182,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iW2 > -1) {
 			if (bW2) {
 				// граничный узел.
-				Fw2 = mf[iP][W_SIDE] * (border_neighbor[iW2 - maxelm].dS / (dy*dz));
+				Fw2 = mf[iP][W_SIDE] * (border_neighbor[iW2 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
@@ -6345,7 +6199,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iN2 > -1) {
 			if (bN2) {
 				// граничный узел.
-				Fn2 = mf[iP][N_SIDE] * (border_neighbor[iN2 - maxelm].dS / (dx*dz));
+				Fn2 = mf[iP][N_SIDE] * (border_neighbor[iN2 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -6362,7 +6216,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iS2 > -1) {
 			if (bS2) {
 				// граничный узел.
-				Fs2 = mf[iP][S_SIDE] * (border_neighbor[iS2 - maxelm].dS / (dx*dz));
+				Fs2 = mf[iP][S_SIDE] * (border_neighbor[iS2 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -6379,7 +6233,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iT2 > -1) {
 			if (bT2) {
 				// граничный узел.
-				Ft2 = mf[iP][T_SIDE] * (border_neighbor[iT2 - maxelm].dS / (dx*dy));
+				Ft2 = mf[iP][T_SIDE] * (border_neighbor[iT2 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -6396,7 +6250,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iB2 > -1) {
 			if (bB2) {
 				// граничный узел.
-				Fb2 = mf[iP][B_SIDE] * (border_neighbor[iB2 - maxelm].dS / (dx*dy));
+				Fb2 = mf[iP][B_SIDE] * (border_neighbor[iB2 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -6414,7 +6268,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iE3 > -1) {
 			if (bE3) {
 				// граничный узел.
-				Fe3 = mf[iP][E_SIDE] * (border_neighbor[iE3 - maxelm].dS / (dy*dz));
+				Fe3 = mf[iP][E_SIDE] * (border_neighbor[iE3 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -6431,7 +6285,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iW3 > -1) {
 			if (bW3) {
 				// граничный узел.
-				Fw3 = mf[iP][W_SIDE] * (border_neighbor[iW3 - maxelm].dS / (dy*dz));
+				Fw3 = mf[iP][W_SIDE] * (border_neighbor[iW3 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -6448,7 +6302,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iN3 > -1) {
 			if (bN3) {
 				// граничный узел.
-				Fn3 = mf[iP][N_SIDE] * (border_neighbor[iN3 - maxelm].dS / (dx*dz));
+				Fn3 = mf[iP][N_SIDE] * (border_neighbor[iN3 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -6465,7 +6319,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iS3 > -1) {
 			if (bS3) {
 				// граничный узел.
-				Fs3 = mf[iP][S_SIDE] * (border_neighbor[iS3 - maxelm].dS / (dx*dz));
+				Fs3 = mf[iP][S_SIDE] * (border_neighbor[iS3 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -6482,7 +6336,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iT3 > -1) {
 			if (bT3) {
 				// граничный узел.
-				Ft3 = mf[iP][T_SIDE] * (border_neighbor[iT3 - maxelm].dS / (dx*dy));
+				Ft3 = mf[iP][T_SIDE] * (border_neighbor[iT3 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -6499,7 +6353,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iB3 > -1) {
 			if (bB3) {
 				// граничный узел.
-				Fb3 = mf[iP][B_SIDE] * (border_neighbor[iB3 - maxelm].dS / (dx*dy));
+				Fb3 = mf[iP][B_SIDE] * (border_neighbor[iB3 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -6516,7 +6370,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iE4 > -1) {
 			if (bE4) {
 				// граничный узел.
-				Fe4 = mf[iP][E_SIDE] * (border_neighbor[iE4 - maxelm].dS / (dy*dz));
+				Fe4 = mf[iP][E_SIDE] * (border_neighbor[iE4 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -6533,7 +6387,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iW4 > -1) {
 			if (bW4) {
 				// граничный узел.
-				Fw4 = mf[iP][W_SIDE] * (border_neighbor[iW4 - maxelm].dS / (dy*dz));
+				Fw4 = mf[iP][W_SIDE] * (border_neighbor[iW4 - maxelm].dS / (dy * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -6550,7 +6404,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iN4 > -1) {
 			if (bN4) {
 				// граничный узел.
-				Fn4 = mf[iP][N_SIDE] * (border_neighbor[iN4 - maxelm].dS / (dx*dz));
+				Fn4 = mf[iP][N_SIDE] * (border_neighbor[iN4 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -6567,7 +6421,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iS4 > -1) {
 			if (bS4) {
 				// граничный узел.
-				Fs4 = mf[iP][S_SIDE] * (border_neighbor[iS4 - maxelm].dS / (dx*dz));
+				Fs4 = mf[iP][S_SIDE] * (border_neighbor[iS4 - maxelm].dS / (dx * dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -6584,7 +6438,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iT4 > -1) {
 			if (bT4) {
 				// граничный узел.
-				Ft4 = mf[iP][T_SIDE] * (border_neighbor[iT4 - maxelm].dS / (dx*dy));
+				Ft4 = mf[iP][T_SIDE] * (border_neighbor[iT4 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -6601,7 +6455,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (iB4 > -1) {
 			if (bB4) {
 				// граничный узел.
-				Fb4 = mf[iP][B_SIDE] * (border_neighbor[iB4 - maxelm].dS / (dx*dy));
+				Fb4 = mf[iP][B_SIDE] * (border_neighbor[iB4 - maxelm].dS / (dx * dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -6614,7 +6468,6 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				}
 			}
 		}
-
 
 
 	}
@@ -6630,236 +6483,200 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	doublereal  GE3, GW3, GN3, GS3, GT3, GB3;
 	doublereal  GE4, GW4, GN4, GS4, GT4, GB4;
 
-
-	doublereal Dkw;
 	
-	doublereal multMenter = (2.0*rP*eqin.fluidinfo[0].sigma_omega2) / fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-	Dkw = multMenter * (potent[GRADXTURBULENT_KINETIK_ENERGY][iP] * potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
-		potent[GRADYTURBULENT_KINETIK_ENERGY][iP] * potent[GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] + 
-		potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
+	doublereal sigma_theta_T = eqin.fluidinfo[0].sigma_theta_T;
+
+	doublereal sigma_theta_TE = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TW = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TN = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TS = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TT = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TB = eqin.fluidinfo[0].sigma_theta_T;
+
+	doublereal sigma_theta_TE2 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TW2 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TN2 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TS2 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TT2 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TB2 = eqin.fluidinfo[0].sigma_theta_T;
+
+	doublereal sigma_theta_TE3 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TW3 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TN3 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TS3 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TT3 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TB3 = eqin.fluidinfo[0].sigma_theta_T;
+
+	doublereal sigma_theta_TE4 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TW4 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TN4 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TS4 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TT4 = eqin.fluidinfo[0].sigma_theta_T;
+	doublereal sigma_theta_TB4 = eqin.fluidinfo[0].sigma_theta_T;
+
 	
-	doublereal CDkw = fmax(Dkw, 1.0e-10);
-	if (fabs(Dkw) < 1.0e-30) CDkw = 0.01;// 16.10.2020
-	doublereal F1;
-	
-	doublereal part1 = sqrt(fmax(K_limiter_min,potent[TURBULENT_KINETIK_ENERGY][iP])) / 
-		(eqin.fluidinfo[0].beta_zvezda*fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) * distance_to_wall[iP]);
-	doublereal part2 = (500.0*prop[MU_DYNAMIC_VISCOSITY][iP]) / (prop[RHO][iP] * distance_to_wall[iP] * distance_to_wall[iP] *
-		fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-	doublereal part3 = (4.0*eqin.fluidinfo[0].sigma_omega2*fmax(K_limiter_min,potent[TURBULENT_KINETIK_ENERGY][iP])) / 
-		(CDkw*distance_to_wall[iP] * distance_to_wall[iP]);
-	doublereal arg1 = fmin(fmax(part1, part2), part3);
-	F1 = tanh(arg1*arg1*arg1*arg1);
-
-	if (bMentor_Langtry)
-	{
-		doublereal Ry = rP * distance_to_wall[iP] * sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) / prop[MU_DYNAMIC_VISCOSITY][iP];
-		doublereal F3 = exp(-(Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0) * (Ry / 120.0));
-		F1 = fmax(F1, F3);
-
-	}
-
-	
-	//doublereal sigma_omega = F1 * eqin.fluidinfo[0].sigma_omega1 + (1.0 - F1)*eqin.fluidinfo[0].sigma_omega2;
-
-	doublereal sigma_omega = sigma_omega_func(iP, potent, prop, distance_to_wall, rP, maxelm, bMentor_Langtry);
-
-	doublereal sigma_omegaE = sigma_omega_func(iE, potent, prop, distance_to_wall, rE, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaW = sigma_omega_func(iW, potent, prop, distance_to_wall, rW, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaN = sigma_omega_func(iN, potent, prop, distance_to_wall, rN, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaS = sigma_omega_func(iS, potent, prop, distance_to_wall, rS, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaT = sigma_omega_func(iT, potent, prop, distance_to_wall, rT, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaB = sigma_omega_func(iB, potent, prop, distance_to_wall, rB, maxelm, bMentor_Langtry);
-
-	doublereal sigma_omegaE2 = sigma_omega_func(iE2, potent, prop, distance_to_wall, rE2, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaW2 = sigma_omega_func(iW2, potent, prop, distance_to_wall, rW2, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaN2 = sigma_omega_func(iN2, potent, prop, distance_to_wall, rN2, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaS2 = sigma_omega_func(iS2, potent, prop, distance_to_wall, rS2, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaT2 = sigma_omega_func(iT2, potent, prop, distance_to_wall, rT2, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaB2 = sigma_omega_func(iB2, potent, prop, distance_to_wall, rB2, maxelm, bMentor_Langtry);
-
-	doublereal sigma_omegaE3 = sigma_omega_func(iE3, potent, prop, distance_to_wall, rE3, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaW3 = sigma_omega_func(iW3, potent, prop, distance_to_wall, rW3, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaN3 = sigma_omega_func(iN3, potent, prop, distance_to_wall, rN3, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaS3 = sigma_omega_func(iS3, potent, prop, distance_to_wall, rS3, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaT3 = sigma_omega_func(iT3, potent, prop, distance_to_wall, rT3, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaB3 = sigma_omega_func(iB3, potent, prop, distance_to_wall, rB3, maxelm, bMentor_Langtry);
-
-	doublereal sigma_omegaE4 = sigma_omega_func(iE4, potent, prop, distance_to_wall, rE4, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaW4 = sigma_omega_func(iW4, potent, prop, distance_to_wall, rW4, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaN4 = sigma_omega_func(iN4, potent, prop, distance_to_wall, rN4, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaS4 = sigma_omega_func(iS4, potent, prop, distance_to_wall, rS4, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaT4 = sigma_omega_func(iT4, potent, prop, distance_to_wall, rT4, maxelm, bMentor_Langtry);
-	doublereal sigma_omegaB4 = sigma_omega_func(iB4, potent, prop, distance_to_wall, rB4, maxelm, bMentor_Langtry);
-
-	// Данный код не вызвал повышения стабильности решения системы уравнений Рейнольдса.
-	// Сходится только метод сглаженной аггрегации.
-	//sigma_omega = sigma_omegaE = sigma_omegaW = sigma_omegaN = sigma_omegaS = sigma_omegaT = sigma_omegaB = 0.0;
-	//sigma_omegaE2 = sigma_omegaW2 = sigma_omegaN2 = sigma_omegaS2 = sigma_omegaT2 = sigma_omegaB2 = 0.0;
-	//sigma_omegaE3 = sigma_omegaW3 = sigma_omegaN3 = sigma_omegaS3 = sigma_omegaT3 = sigma_omegaB3 = 0.0;
-	//sigma_omegaE4 = sigma_omegaW4 = sigma_omegaN4 = sigma_omegaS4 = sigma_omegaT4 = sigma_omegaB4 = 0.0;
 
 	// Вычисление молекулярной диффузии:
-	GP = ((prop[MU_DYNAMIC_VISCOSITY][iP]) + fmax(0.0, sigma_omega*potent[MUT][iP])); // в центре внутреннего КО.
+	GP = ((sigma_theta_T*prop[MU_DYNAMIC_VISCOSITY][iP]) + fmax(0.0, sigma_theta_T * potent[MUT][iP])); // в центре внутреннего КО.
 	if (iE > -1) {
-		if (!bE) GE = ((prop[MU_DYNAMIC_VISCOSITY][iE]) + fmax(0.0, sigma_omegaE*potent[MUT][iE])); else GE = ((prop_b[MU_DYNAMIC_VISCOSITY][iE - maxelm]) + sigma_omega * potent[MUT][iE]);
+		if (!bE) GE = ((sigma_theta_TE*prop[MU_DYNAMIC_VISCOSITY][iE]) + fmax(0.0, sigma_theta_TE * potent[MUT][iE])); else GE = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iE - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iE]));
 	}
 	if (iN > -1) {
-		if (!bN) GN = ((prop[MU_DYNAMIC_VISCOSITY][iN]) + fmax(0.0, sigma_omegaN*potent[MUT][iN])); else GN = ((prop_b[MU_DYNAMIC_VISCOSITY][iN - maxelm]) + sigma_omega * potent[MUT][iN]);
+		if (!bN) GN = ((sigma_theta_TN*prop[MU_DYNAMIC_VISCOSITY][iN]) + fmax(0.0, sigma_theta_TN * potent[MUT][iN])); else GN = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iN - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iN]));
 	}
 	if (iT > -1) {
-		if (!bT) GT = ((prop[MU_DYNAMIC_VISCOSITY][iT]) + fmax(0.0, sigma_omegaT*potent[MUT][iT])); else GT = ((prop_b[MU_DYNAMIC_VISCOSITY][iT - maxelm]) + sigma_omega * potent[MUT][iT]);
+		if (!bT) GT = ((sigma_theta_TT*prop[MU_DYNAMIC_VISCOSITY][iT]) + fmax(0.0, sigma_theta_TT * potent[MUT][iT])); else GT = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iT - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iT]));
 	}
 	if (iW > -1) {
-		if (!bW) GW = ((prop[MU_DYNAMIC_VISCOSITY][iW]) + fmax(0.0, sigma_omegaW*potent[MUT][iW])); else GW = ((prop_b[MU_DYNAMIC_VISCOSITY][iW - maxelm]) + sigma_omega * potent[MUT][iW]);
+		if (!bW) GW = ((sigma_theta_TW*prop[MU_DYNAMIC_VISCOSITY][iW]) + fmax(0.0, sigma_theta_TW * potent[MUT][iW])); else GW = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iW - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iW]));
 	}
 	if (iS > -1) {
-		if (!bS) GS = ((prop[MU_DYNAMIC_VISCOSITY][iS]) + fmax(0.0, sigma_omegaS*potent[MUT][iS])); else GS = ((prop_b[MU_DYNAMIC_VISCOSITY][iS - maxelm]) + sigma_omega * potent[MUT][iS]);
+		if (!bS) GS = ((sigma_theta_TS*prop[MU_DYNAMIC_VISCOSITY][iS]) + fmax(0.0, sigma_theta_TS * potent[MUT][iS])); else GS = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iS - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iS]));
 	}
 	if (iB > -1) {
-		if (!bB) GB = ((prop[MU_DYNAMIC_VISCOSITY][iB]) + fmax(0.0, sigma_omegaB*potent[MUT][iB])); else GB = ((prop_b[MU_DYNAMIC_VISCOSITY][iB - maxelm]) + sigma_omega * potent[MUT][iB]);
+		if (!bB) GB = ((sigma_theta_TB*prop[MU_DYNAMIC_VISCOSITY][iB]) + fmax(0.0, sigma_theta_TB * potent[MUT][iB])); else GB = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iB - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iB]));
 	}
 
 	if (iE2 > -1) {
-		if (!bE2) GE2 = ((prop[MU_DYNAMIC_VISCOSITY][iE2]) + fmax(0.0, sigma_omegaE2*potent[MUT][iE2])); else GE2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE2 - maxelm]) + sigma_omega * potent[MUT][iE2]);
+		if (!bE2) GE2 = ((sigma_theta_TE2 * prop[MU_DYNAMIC_VISCOSITY][iE2]) + fmax(0.0, sigma_theta_TE2 * potent[MUT][iE2])); else GE2 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iE2 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iE2]));
 	}
 	if (iN2 > -1) {
-		if (!bN2) GN2 = ((prop[MU_DYNAMIC_VISCOSITY][iN2]) + fmax(0.0, sigma_omegaN2*potent[MUT][iN2])); else GN2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN2 - maxelm]) + sigma_omega * potent[MUT][iN2]);
+		if (!bN2) GN2 = ((sigma_theta_TN2 * prop[MU_DYNAMIC_VISCOSITY][iN2]) + fmax(0.0, sigma_theta_TN2 * potent[MUT][iN2])); else GN2 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iN2 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iN2]));
 	}
 	if (iT2 > -1) {
-		if (!bT2) GT2 = ((prop[MU_DYNAMIC_VISCOSITY][iT2]) + fmax(0.0, sigma_omegaT2*potent[MUT][iT2])); else GT2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT2 - maxelm]) + sigma_omega * potent[MUT][iT2]);
+		if (!bT2) GT2 = ((sigma_theta_TT2 * prop[MU_DYNAMIC_VISCOSITY][iT2]) + fmax(0.0, sigma_theta_TT2 * potent[MUT][iT2])); else GT2 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iT2 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iT2]));
 	}
 	if (iW2 > -1) {
-		if (!bW2) GW2 = ((prop[MU_DYNAMIC_VISCOSITY][iW2]) + fmax(0.0, sigma_omegaW2*potent[MUT][iW2])); else GW2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW2 - maxelm]) + sigma_omega * potent[MUT][iW2]);
+		if (!bW2) GW2 = ((sigma_theta_TW2 * prop[MU_DYNAMIC_VISCOSITY][iW2]) + fmax(0.0, sigma_theta_TW2 * potent[MUT][iW2])); else GW2 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iW2 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iW2]));
 	}
 	if (iS2 > -1) {
-		if (!bS2) GS2 = ((prop[MU_DYNAMIC_VISCOSITY][iS2]) + fmax(0.0, sigma_omegaS2*potent[MUT][iS2])); else GS2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS2 - maxelm]) + sigma_omega * potent[MUT][iS2]);
+		if (!bS2) GS2 = ((sigma_theta_TS2 * prop[MU_DYNAMIC_VISCOSITY][iS2]) + fmax(0.0, sigma_theta_TS2 * potent[MUT][iS2])); else GS2 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iS2 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iS2]));
 	}
 	if (iB2 > -1) {
-		if (!bB2) GB2 = ((prop[MU_DYNAMIC_VISCOSITY][iB2]) + fmax(0.0, sigma_omegaB2*potent[MUT][iB2])); else GB2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB2 - maxelm]) + sigma_omega * potent[MUT][iB2]);
+		if (!bB2) GB2 = ((sigma_theta_TB2 * prop[MU_DYNAMIC_VISCOSITY][iB2]) + fmax(0.0, sigma_theta_TB2 * potent[MUT][iB2])); else GB2 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iB2 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iB2]));
 	}
 
 	if (iE3 > -1) {
-		if (!bE3) GE3 = ((prop[MU_DYNAMIC_VISCOSITY][iE3]) + fmax(0.0, sigma_omegaE3*potent[MUT][iE3])); else GE3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE3 - maxelm]) + sigma_omega * potent[MUT][iE3]);
+		if (!bE3) GE3 = ((sigma_theta_TE3 * prop[MU_DYNAMIC_VISCOSITY][iE3]) + fmax(0.0, sigma_theta_TE3 * potent[MUT][iE3])); else GE3 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iE3 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iE3]));
 	}
 	if (iN3 > -1) {
-		if (!bN3) GN3 = ((prop[MU_DYNAMIC_VISCOSITY][iN3]) + fmax(0.0, sigma_omegaN3*potent[MUT][iN3])); else GN3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN3 - maxelm]) + sigma_omega * potent[MUT][iN3]);
+		if (!bN3) GN3 = ((sigma_theta_TN3 * prop[MU_DYNAMIC_VISCOSITY][iN3]) + fmax(0.0, sigma_theta_TN3 * potent[MUT][iN3])); else GN3 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iN3 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iN3]));
 	}
 	if (iT3 > -1) {
-		if (!bT3) GT3 = ((prop[MU_DYNAMIC_VISCOSITY][iT3]) + fmax(0.0, sigma_omegaT3*potent[MUT][iT3])); else GT3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT3 - maxelm]) + sigma_omega * potent[MUT][iT3]);
+		if (!bT3) GT3 = ((sigma_theta_TT3 * prop[MU_DYNAMIC_VISCOSITY][iT3]) + fmax(0.0, sigma_theta_TT3 * potent[MUT][iT3])); else GT3 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iT3 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iT3]));
 	}
 	if (iW3 > -1) {
-		if (!bW3) GW3 = ((prop[MU_DYNAMIC_VISCOSITY][iW3]) + fmax(0.0, sigma_omegaW3*potent[MUT][iW3])); else GW3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW3 - maxelm]) + sigma_omega * potent[MUT][iW3]);
+		if (!bW3) GW3 = ((sigma_theta_TW3 * prop[MU_DYNAMIC_VISCOSITY][iW3]) + fmax(0.0, sigma_theta_TW3 * potent[MUT][iW3])); else GW3 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iW3 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iW3]));
 	}
 	if (iS3 > -1) {
-		if (!bS3) GS3 = ((prop[MU_DYNAMIC_VISCOSITY][iS3]) + fmax(0.0, sigma_omegaS3*potent[MUT][iS3])); else GS3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS3 - maxelm]) + sigma_omega * potent[MUT][iS3]);
+		if (!bS3) GS3 = ((sigma_theta_TS3 * prop[MU_DYNAMIC_VISCOSITY][iS3]) + fmax(0.0, sigma_theta_TS3 * potent[MUT][iS3])); else GS3 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iS3 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iS3]));
 	}
 	if (iB3 > -1) {
-		if (!bB3) GB3 = ((prop[MU_DYNAMIC_VISCOSITY][iB3]) + fmax(0.0, sigma_omegaB3*potent[MUT][iB3])); else GB3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB3 - maxelm]) + sigma_omega * potent[MUT][iB3]);
+		if (!bB3) GB3 = ((sigma_theta_TB3 * prop[MU_DYNAMIC_VISCOSITY][iB3]) + fmax(0.0, sigma_theta_TB3 * potent[MUT][iB3])); else GB3 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iB3 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iB3]));
 	}
 
 	if (iE4 > -1) {
-		if (!bE4) GE4 = ((prop[MU_DYNAMIC_VISCOSITY][iE4]) + fmax(0.0, sigma_omegaE4*potent[MUT][iE4])); else GE4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE4 - maxelm]) + sigma_omega * potent[MUT][iE4]);
+		if (!bE4) GE4 = ((sigma_theta_TE4 * prop[MU_DYNAMIC_VISCOSITY][iE4]) + fmax(0.0, sigma_theta_TE4 * potent[MUT][iE4])); else GE4 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iE4 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iE4]));
 	}
 	if (iN4 > -1) {
-		if (!bN4) GN4 = ((prop[MU_DYNAMIC_VISCOSITY][iN4]) + fmax(0.0, sigma_omegaN4*potent[MUT][iN4])); else GN4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN4 - maxelm]) + sigma_omega * potent[MUT][iN4]);
+		if (!bN4) GN4 = ((sigma_theta_TN4 * prop[MU_DYNAMIC_VISCOSITY][iN4]) + fmax(0.0, sigma_theta_TN4 * potent[MUT][iN4])); else GN4 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iN4 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iN4]));
 	}
 	if (iT4 > -1) {
-		if (!bT4) GT4 = ((prop[MU_DYNAMIC_VISCOSITY][iT4]) + fmax(0.0, sigma_omegaT4*potent[MUT][iT4])); else GT4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT4 - maxelm]) + sigma_omega * potent[MUT][iT4]);
+		if (!bT4) GT4 = ((sigma_theta_TT4 * prop[MU_DYNAMIC_VISCOSITY][iT4]) + fmax(0.0, sigma_theta_TT4 * potent[MUT][iT4])); else GT4 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iT4 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iT4]));
 	}
 	if (iW4 > -1) {
-		if (!bW4) GW4 = ((prop[MU_DYNAMIC_VISCOSITY][iW4]) + fmax(0.0, sigma_omegaW4*potent[MUT][iW4])); else GW4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW4 - maxelm]) + sigma_omega * potent[MUT][iW4]);
+		if (!bW4) GW4 = ((sigma_theta_TW4 * prop[MU_DYNAMIC_VISCOSITY][iW4]) + fmax(0.0, sigma_theta_TW4 * potent[MUT][iW4])); else GW4 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iW4 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iW4]));
 	}
 	if (iS4 > -1) {
-		if (!bS4) GS4 = ((prop[MU_DYNAMIC_VISCOSITY][iS4]) + fmax(0.0, sigma_omegaS4*potent[MUT][iS4])); else GS4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS4 - maxelm]) + sigma_omega * potent[MUT][iS4]);
+		if (!bS4) GS4 = ((sigma_theta_TS4 * prop[MU_DYNAMIC_VISCOSITY][iS4]) + fmax(0.0, sigma_theta_TS4 * potent[MUT][iS4])); else GS4 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iS4 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iS4]));
 	}
 	if (iB4 > -1) {
-		if (!bB4) GB4 = ((prop[MU_DYNAMIC_VISCOSITY][iB4]) + fmax(0.0, sigma_omegaB4*potent[MUT][iB4])); else GB4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB4 - maxelm]) + sigma_omega * potent[MUT][iB4]);
+		if (!bB4) GB4 = ((sigma_theta_TB4 * prop[MU_DYNAMIC_VISCOSITY][iB4]) + fmax(0.0, sigma_theta_TB4 * potent[MUT][iB4])); else GB4 = ((sigma_theta_T * prop_b[MU_DYNAMIC_VISCOSITY][iB4 - maxelm]) + fmax(0.0, sigma_theta_T * potent[MUT][iB4]));
 	}
 
 	doublereal Ge = GP, Gw = GP, Gn = GP, Gs = GP, Gt = GP, Gb = GP;
 	// Значение коэффициента диффузии на грани КО.
 	if (iE > -1) {
-		Ge = GE * GP / (feplus*GE + (1 - feplus)*GP); // проверено.
+		Ge = GE * GP / (feplus * GE + (1 - feplus) * GP); // проверено.
 	}
 	if (iW > -1) {
-		Gw = GW * GP / (fwplus*GW + (1 - fwplus)*GP);
+		Gw = GW * GP / (fwplus * GW + (1 - fwplus) * GP);
 	}
 	if (iN > -1) {
-		Gn = GN * GP / (fnplus*GN + (1 - fnplus)*GP);
+		Gn = GN * GP / (fnplus * GN + (1 - fnplus) * GP);
 	}
 	if (iS > -1) {
-		Gs = GS * GP / (fsplus*GS + (1 - fsplus)*GP);
+		Gs = GS * GP / (fsplus * GS + (1 - fsplus) * GP);
 	}
 	if (iT > -1) {
-		Gt = GT * GP / (ftplus*GT + (1 - ftplus)*GP);
+		Gt = GT * GP / (ftplus * GT + (1 - ftplus) * GP);
 	}
 	if (iB > -1) {
-		Gb = GB * GP / (fbplus*GB + (1 - fbplus)*GP);
+		Gb = GB * GP / (fbplus * GB + (1 - fbplus) * GP);
 	}
 
 	doublereal Ge2 = GP, Gw2 = GP, Gn2 = GP, Gs2 = GP, Gt2 = GP, Gb2 = GP;
 	// Значение коэффициента диффузии на грани КО.
 	if (iE2 > -1) {
-		Ge2 = GE2 * GP / (feplus2*GE2 + (1 - feplus2)*GP); // проверено.
+		Ge2 = GE2 * GP / (feplus2 * GE2 + (1 - feplus2) * GP); // проверено.
 	}
 	if (iW2 > -1) {
-		Gw2 = GW2 * GP / (fwplus2*GW2 + (1 - fwplus2)*GP);
+		Gw2 = GW2 * GP / (fwplus2 * GW2 + (1 - fwplus2) * GP);
 	}
 	if (iN2 > -1) {
-		Gn2 = GN2 * GP / (fnplus2*GN2 + (1 - fnplus2)*GP);
+		Gn2 = GN2 * GP / (fnplus2 * GN2 + (1 - fnplus2) * GP);
 	}
 	if (iS2 > -1) {
-		Gs2 = GS2 * GP / (fsplus2*GS2 + (1 - fsplus2)*GP);
+		Gs2 = GS2 * GP / (fsplus2 * GS2 + (1 - fsplus2) * GP);
 	}
 	if (iT2 > -1) {
-		Gt2 = GT2 * GP / (ftplus2*GT2 + (1 - ftplus2)*GP);
+		Gt2 = GT2 * GP / (ftplus2 * GT2 + (1 - ftplus2) * GP);
 	}
 	if (iB2 > -1) {
-		Gb2 = GB2 * GP / (fbplus2*GB2 + (1 - fbplus2)*GP);
+		Gb2 = GB2 * GP / (fbplus2 * GB2 + (1 - fbplus2) * GP);
 	}
 
 
 	doublereal Ge3 = GP, Gw3 = GP, Gn3 = GP, Gs3 = GP, Gt3 = GP, Gb3 = GP;
 	// Значение коэффициента диффузии на грани КО.
 	if (iE3 > -1) {
-		Ge3 = GE3 * GP / (feplus3*GE3 + (1 - feplus3)*GP); // проверено.
+		Ge3 = GE3 * GP / (feplus3 * GE3 + (1 - feplus3) * GP); // проверено.
 	}
 	if (iW3 > -1) {
-		Gw3 = GW3 * GP / (fwplus3*GW3 + (1 - fwplus3)*GP);
+		Gw3 = GW3 * GP / (fwplus3 * GW3 + (1 - fwplus3) * GP);
 	}
 	if (iN3 > -1) {
-		Gn3 = GN3 * GP / (fnplus3*GN3 + (1 - fnplus3)*GP);
+		Gn3 = GN3 * GP / (fnplus3 * GN3 + (1 - fnplus3) * GP);
 	}
 	if (iS3 > -1) {
-		Gs3 = GS3 * GP / (fsplus3*GS3 + (1 - fsplus3)*GP);
+		Gs3 = GS3 * GP / (fsplus3 * GS3 + (1 - fsplus3) * GP);
 	}
 	if (iT3 > -1) {
-		Gt3 = GT3 * GP / (ftplus3*GT3 + (1 - ftplus3)*GP);
+		Gt3 = GT3 * GP / (ftplus3 * GT3 + (1 - ftplus3) * GP);
 	}
 	if (iB3 > -1) {
-		Gb3 = GB3 * GP / (fbplus3*GB3 + (1 - fbplus3)*GP);
+		Gb3 = GB3 * GP / (fbplus3 * GB3 + (1 - fbplus3) * GP);
 	}
 
 	doublereal Ge4 = GP, Gw4 = GP, Gn4 = GP, Gs4 = GP, Gt4 = GP, Gb4 = GP;
 	// Значение коэффициента диффузии на грани КО.
 	if (iE4 > -1) {
-		Ge4 = GE4 * GP / (feplus4*GE4 + (1 - feplus4)*GP); // проверено.
+		Ge4 = GE4 * GP / (feplus4 * GE4 + (1 - feplus4) * GP); // проверено.
 	}
 	if (iW4 > -1) {
-		Gw4 = GW4 * GP / (fwplus4*GW4 + (1 - fwplus4)*GP);
+		Gw4 = GW4 * GP / (fwplus4 * GW4 + (1 - fwplus4) * GP);
 	}
 	if (iN4 > -1) {
-		Gn4 = GN4 * GP / (fnplus4*GN4 + (1 - fnplus4)*GP);
+		Gn4 = GN4 * GP / (fnplus4 * GN4 + (1 - fnplus4) * GP);
 	}
 	if (iS4 > -1) {
-		Gs4 = GS4 * GP / (fsplus4*GS4 + (1 - fsplus4)*GP);
+		Gs4 = GS4 * GP / (fsplus4 * GS4 + (1 - fsplus4) * GP);
 	}
 	if (iT4 > -1) {
-		Gt4 = GT4 * GP / (ftplus4*GT4 + (1 - ftplus4)*GP);
+		Gt4 = GT4 * GP / (ftplus4 * GT4 + (1 - ftplus4) * GP);
 	}
 	if (iB4 > -1) {
-		Gb4 = GB4 * GP / (fbplus4*GB4 + (1 - fbplus4)*GP);
+		Gb4 = GB4 * GP / (fbplus4 * GB4 + (1 - fbplus4) * GP);
 	}
 
 
@@ -6875,7 +6692,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
-				De = Ge * dy*dz / dxe;
+				De = Ge * dy * dz / dxe;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -6887,7 +6704,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				De = Ge * dy_loc*dz_loc / dxe;
+				De = Ge * dy_loc * dz_loc / dxe;
 			}
 		}
 
@@ -6899,7 +6716,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
-				Dw = Gw * dy*dz / dxw;
+				Dw = Gw * dy * dz / dxw;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -6911,7 +6728,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dw = Gw * dy_loc*dz_loc / dxw;
+				Dw = Gw * dy_loc * dz_loc / dxw;
 			}
 		}
 
@@ -6923,7 +6740,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
-				Dn = Gn * dx*dz / dyn;
+				Dn = Gn * dx * dz / dyn;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -6935,7 +6752,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dn = Gn * dx_loc*dz_loc / dyn;
+				Dn = Gn * dx_loc * dz_loc / dyn;
 			}
 		}
 	}
@@ -6946,7 +6763,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
-				Ds = Gs * dx*dz / dys;
+				Ds = Gs * dx * dz / dys;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -6958,7 +6775,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Ds = Gs * dx_loc*dz_loc / dys;
+				Ds = Gs * dx_loc * dz_loc / dys;
 			}
 		}
 	}
@@ -6969,7 +6786,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
-				Dt = Gt * dx*dy / dzt;
+				Dt = Gt * dx * dy / dzt;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -6981,7 +6798,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dt = Gt * dx_loc*dy_loc / dzt;
+				Dt = Gt * dx_loc * dy_loc / dzt;
 			}
 		}
 
@@ -6994,7 +6811,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
-				Db = Gb * dx*dy / dzb;
+				Db = Gb * dx * dy / dzb;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7006,7 +6823,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Db = Gb * dx_loc*dy_loc / dzb;
+
+				Db = Gb * dx_loc * dy_loc / dzb;
 			}
 		}
 
@@ -7022,7 +6840,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
-				De2 = Ge2 * dy*dz / dxe2;
+				De2 = Ge2 * dy * dz / dxe2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7034,7 +6852,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				De2 = Ge2 * dy_loc*dz_loc / dxe2;
+
+				De2 = Ge2 * dy_loc * dz_loc / dxe2;
 			}
 		}
 
@@ -7046,7 +6865,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
-				Dw2 = Gw2 * dy*dz / dxw2;
+				Dw2 = Gw2 * dy * dz / dxw2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7058,7 +6877,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dw2 = Gw2 * dy_loc*dz_loc / dxw2;
+				Dw2 = Gw2 * dy_loc * dz_loc / dxw2;
 			}
 		}
 
@@ -7070,7 +6889,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
-				Dn2 = Gn2 * dx*dz / dyn2;
+				Dn2 = Gn2 * dx * dz / dyn2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7082,7 +6901,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dn2 = Gn2 * dx_loc*dz_loc / dyn2;
+				Dn2 = Gn2 * dx_loc * dz_loc / dyn2;
 			}
 		}
 	}
@@ -7093,7 +6912,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
-				Ds2 = Gs2 * dx*dz / dys2;
+				Ds2 = Gs2 * dx * dz / dys2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7105,8 +6924,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-
-				Ds2 = Gs2 * dx_loc*dz_loc / dys2;
+				Ds2 = Gs2 * dx_loc * dz_loc / dys2;
 			}
 		}
 	}
@@ -7117,20 +6935,19 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
-				Dt2 = Gt2 * dx*dy / dzt2;
+				Dt2 = Gt2 * dx * dy / dzt2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				//volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-
 				pvol = volume_loc[iT2];
 				dx_loc = pvol.x;
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dt2 = Gt2 * dx_loc*dy_loc / dzt2;
+				Dt2 = Gt2 * dx_loc * dy_loc / dzt2;
 			}
 		}
 
@@ -7143,7 +6960,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
-				Db2 = Gb2 * dx*dy / dzb2;
+				Db2 = Gb2 * dx * dy / dzb2;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7155,7 +6972,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Db2 = Gb2 * dx_loc*dy_loc / dzb2;
+				Db2 = Gb2 * dx_loc * dy_loc / dzb2;
 			}
 		}
 
@@ -7171,7 +6988,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
-				De3 = Ge3 * dy*dz / dxe3;
+				De3 = Ge3 * dy * dz / dxe3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7183,7 +7000,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				De3 = Ge3 * dy_loc*dz_loc / dxe3;
+				De3 = Ge3 * dy_loc * dz_loc / dxe3;
 			}
 		}
 
@@ -7195,20 +7012,19 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
-				Dw3 = Gw3 * dy*dz / dxw3;
+				Dw3 = Gw3 * dy * dz / dxw3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				//volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-
 				pvol = volume_loc[iW3];
 				dx_loc = pvol.x;
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dw3 = Gw3 * dy_loc*dz_loc / dxw3;
+				Dw3 = Gw3 * dy_loc * dz_loc / dxw3;
 			}
 		}
 
@@ -7220,7 +7036,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
-				Dn3 = Gn3 * dx*dz / dyn3;
+				Dn3 = Gn3 * dx * dz / dyn3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7232,7 +7048,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dn3 = Gn3 * dx_loc*dz_loc / dyn3;
+				Dn3 = Gn3 * dx_loc * dz_loc / dyn3;
 			}
 		}
 	}
@@ -7243,7 +7059,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
-				Ds3 = Gs3 * dx*dz / dys3;
+				Ds3 = Gs3 * dx * dz / dys3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7255,7 +7071,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Ds3 = Gs3 * dx_loc*dz_loc / dys3;
+				Ds3 = Gs3 * dx_loc * dz_loc / dys3;
 			}
 		}
 	}
@@ -7266,7 +7082,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
-				Dt3 = Gt3 * dx*dy / dzt3;
+				Dt3 = Gt3 * dx * dy / dzt3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7278,7 +7094,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dt3 = Gt3 * dx_loc*dy_loc / dzt3;
+				Dt3 = Gt3 * dx_loc * dy_loc / dzt3;
 			}
 		}
 
@@ -7291,7 +7107,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
-				Db3 = Gb3 * dx*dy / dzb3;
+				Db3 = Gb3 * dx * dy / dzb3;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7303,7 +7119,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Db3 = Gb3 * dx_loc*dy_loc / dzb3;
+				Db3 = Gb3 * dx_loc * dy_loc / dzb3;
 			}
 		}
 
@@ -7319,7 +7135,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
-				De4 = Ge4 * dy*dz / dxe4;
+				De4 = Ge4 * dy * dz / dxe4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7331,7 +7147,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				De4 = Ge4 * dy_loc*dz_loc / dxe4;
+
+				De4 = Ge4 * dy_loc * dz_loc / dxe4;
 			}
 		}
 
@@ -7343,7 +7160,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
-				Dw4 = Gw4 * dy*dz / dxw4;
+				Dw4 = Gw4 * dy * dz / dxw4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7355,7 +7172,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dw4 = Gw4 * dy_loc*dz_loc / dxw4;
+				Dw4 = Gw4 * dy_loc * dz_loc / dxw4;
 			}
 		}
 
@@ -7367,20 +7184,19 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
-				Dn4 = Gn4 * dx*dz / dyn4;
+				Dn4 = Gn4 * dx * dz / dyn4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				//volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-
 				pvol = volume_loc[iN4];
 				dx_loc = pvol.x;
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dn4 = Gn4 * dx_loc*dz_loc / dyn4;
+				Dn4 = Gn4 * dx_loc * dz_loc / dyn4;
 			}
 		}
 	}
@@ -7391,7 +7207,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
-				Ds4 = Gs4 * dx*dz / dys4;
+				Ds4 = Gs4 * dx * dz / dys4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7403,8 +7219,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-
-				Ds4 = Gs4 * dx_loc*dz_loc / dys4;
+				Ds4 = Gs4 * dx_loc * dz_loc / dys4;
 			}
 		}
 	}
@@ -7415,20 +7230,19 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
-				Dt4 = Gt4 * dx*dy / dzt4;
+				Dt4 = Gt4 * dx * dy / dzt4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
 				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				//volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
-
 				pvol = volume_loc[iT4];
 				dx_loc = pvol.x;
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Dt4 = Gt4 * dx_loc*dy_loc / dzt4;
+				Dt4 = Gt4 * dx_loc * dy_loc / dzt4;
 			}
 		}
 
@@ -7441,7 +7255,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
-				Db4 = Gb4 * dx*dy / dzb4;
+				Db4 = Gb4 * dx * dy / dzb4;
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
@@ -7453,7 +7267,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				dy_loc = pvol.y;
 				dz_loc = pvol.z;
 
-				Db4 = Gb4 * dx_loc*dy_loc / dzb4;
+				Db4 = Gb4 * dx_loc * dy_loc / dzb4;
 			}
 		}
 	}
@@ -7580,33 +7394,33 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	if (b_on_adaptive_local_refinement_mesh) {
 
 		// Инициализирующее обнуление.
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = 0.0;
 
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = 0.0;
 
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = 0.0;
 
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = 0.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = 0.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = 0.0;
 
 	}
 
@@ -7616,125 +7430,125 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			// Оставил как единственно верное и рекомендованное в литературе 7.05.2017. 
 			if (b_on_adaptive_local_refinement_mesh) {
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
 
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
 
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
 
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
 
 			}
 			else {
-				//  25 07 2015
+				// 25 07 2015
 				// Вычисление коэффициентов дискретного аналога:
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
-				//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap=sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
+				//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap=sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae+sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw+sl[RE_THETA_LANGTRY_MENTER_SL][iP].an+sl[RE_THETA_LANGTRY_MENTER_SL][iP].as+sl[RE_THETA_LANGTRY_MENTER_SL][iP].at+sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 			}
 		}
 		else
 		{
 			// написано на замену вышезакомментированного 25 июля 2015.
 			if (!bE) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
 			}
 			else {
 				integer inumber = iE - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fabs(Fe);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fabs(Fe);
 				}
 				else {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
 				}
 			}
 			if (!bW) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
 			}
 			else {
 				integer inumber = iW - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fabs(Fw);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fabs(Fw);
 				}
 				else {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
 				}
 			}
 			if (!bN) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
 			}
 			else {
 				integer inumber = iN - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fabs(Fn);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fabs(Fn);
 				}
 				else {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(-(Fn), 0);
 				}
 			}
 			if (!bS) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
 			}
 			else {
 				integer inumber = iS - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fabs(Fs);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fabs(Fs);
 				}
 				else {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(Fs, 0);
 				}
 			}
 			if (!bT) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
 			}
 			else {
 				integer inumber = iT - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fabs(Ft);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fabs(Ft);
 				}
 				else {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(-(Ft), 0);
 				}
 			}
 			if (!bB) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
 			}
 			else
 			{
@@ -7742,87 +7556,88 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fabs(Fb);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fabs(Fb);
 				}
 				else {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0);
 				}
 			}
+
 
 			if (b_on_adaptive_local_refinement_mesh) {
 
 				if (!bE2) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
 				}
 				else {
 					integer inumber = iE2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fabs(Fe2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fabs(Fe2);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(-(Fe2), 0);
 					}
 				}
 				if (!bW2) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
 				}
 				else {
 					integer inumber = iW2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fabs(Fw2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fabs(Fw2);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(Fw2, 0);
 					}
 				}
 				if (!bN2) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
 				}
 				else {
 					integer inumber = iN2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fabs(Fn2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fabs(Fn2);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(-(Fn2), 0);
 					}
 				}
 				if (!bS2) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
 				}
 				else {
 					integer inumber = iS2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fabs(Fs2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fabs(Fs2);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(Fs2, 0);
 					}
 				}
 				if (!bT2) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
 				}
 				else {
 					integer inumber = iT2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fabs(Ft2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fabs(Ft2);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(-(Ft2), 0);
 					}
 				}
 				if (!bB2) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
 				}
 				else
 				{
@@ -7830,85 +7645,85 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fabs(Fb2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fabs(Fb2);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(Fb2, 0);
 					}
 				}
 
 				if (!bE3) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
 				}
 				else {
 					integer inumber = iE3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fabs(Fe3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fabs(Fe3);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(-(Fe3), 0);
 					}
 				}
 				if (!bW3) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
 				}
 				else {
 					integer inumber = iW3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fabs(Fw3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fabs(Fw3);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(Fw3, 0);
 					}
 				}
 				if (!bN3) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
 				}
 				else {
 					integer inumber = iN3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fabs(Fn3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fabs(Fn3);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(-(Fn3), 0);
 					}
 				}
 				if (!bS3) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
 				}
 				else {
 					integer inumber = iS3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fabs(Fs3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fabs(Fs3);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(Fs3, 0);
 					}
 				}
 				if (!bT3) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
 				}
 				else {
 					integer inumber = iT3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fabs(Ft3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fabs(Ft3);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(-(Ft3), 0);
 					}
 				}
 				if (!bB3) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
 				}
 				else
 				{
@@ -7916,85 +7731,85 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fabs(Fb3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fabs(Fb3);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(Fb3, 0);
 					}
 				}
 
 				if (!bE4) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
 				}
 				else {
 					integer inumber = iE4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fabs(Fe4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fabs(Fe4);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(-(Fe4), 0);
 					}
 				}
 				if (!bW4) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
 				}
 				else {
 					integer inumber = iW4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fabs(Fw4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fabs(Fw4);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(Fw4, 0);
 					}
 				}
 				if (!bN4) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
 				}
 				else {
 					integer inumber = iN4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fabs(Fn4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fabs(Fn4);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(-(Fn4), 0);
 					}
 				}
 				if (!bS4) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
 				}
 				else {
 					integer inumber = iS4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fabs(Fs4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fabs(Fs4);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(Fs4, 0);
 					}
 				}
 				if (!bT4) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
 				}
 				else {
 					integer inumber = iT4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fabs(Ft4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fabs(Ft4);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(-(Ft4), 0);
 					}
 				}
 				if (!bB4) {
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
 				}
 				else
 				{
@@ -8002,98 +7817,98 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fabs(Fb4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fabs(Fb4);
 					}
 					else {
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(Fb4, 0);
 					}
 				}
 			}
 
+
 		}
 
 		// Вернул как единственно верное и описанное в литературе. 7.05.2017.
-		//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap=sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+		//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap=sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae+sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw+sl[RE_THETA_LANGTRY_MENTER_SL][iP].an+sl[RE_THETA_LANGTRY_MENTER_SL][iP].as+sl[RE_THETA_LANGTRY_MENTER_SL][iP].at+sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 		// Моя наработка:
 		// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 		if (b_on_adaptive_local_refinement_mesh) {
 			// АЛИС 
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(+(Fe2), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(-(Fw2), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(+(Fn2), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(-(Fs2), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(+(Ft2), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(-(Fb2), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += De2 * ApproxConvective(fabs(Pe2), ishconvection) + fmax(+(Fe2), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw2 * ApproxConvective(fabs(Pw2), ishconvection) + fmax(-(Fw2), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn2 * ApproxConvective(fabs(Pn2), ishconvection) + fmax(+(Fn2), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds2 * ApproxConvective(fabs(Ps2), ishconvection) + fmax(-(Fs2), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt2 * ApproxConvective(fabs(Pt2), ishconvection) + fmax(+(Ft2), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db2 * ApproxConvective(fabs(Pb2), ishconvection) + fmax(-(Fb2), 0);
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(+(Fe3), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(-(Fw3), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(+(Fn3), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(-(Fs3), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(+(Ft3), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(-(Fb3), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += De3 * ApproxConvective(fabs(Pe3), ishconvection) + fmax(+(Fe3), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw3 * ApproxConvective(fabs(Pw3), ishconvection) + fmax(-(Fw3), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn3 * ApproxConvective(fabs(Pn3), ishconvection) + fmax(+(Fn3), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds3 * ApproxConvective(fabs(Ps3), ishconvection) + fmax(-(Fs3), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt3 * ApproxConvective(fabs(Pt3), ishconvection) + fmax(+(Ft3), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db3 * ApproxConvective(fabs(Pb3), ishconvection) + fmax(-(Fb3), 0);
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(+(Fe4), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(-(Fw4), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(+(Fn4), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(-(Fs4), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(+(Ft4), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(-(Fb4), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += De4 * ApproxConvective(fabs(Pe4), ishconvection) + fmax(+(Fe4), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw4 * ApproxConvective(fabs(Pw4), ishconvection) + fmax(-(Fw4), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn4 * ApproxConvective(fabs(Pn4), ishconvection) + fmax(+(Fn4), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(-(Fs4), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(+(Ft4), 0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(-(Fb4), 0);
 			/*
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae +  sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae +  sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 			if (b_on_adaptive_local_refinement_mesh) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2;
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3;
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4;
 			}
 			*/
 		}
 		else {
-			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
-			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
-			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
-			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
-			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
-			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
+			//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
+			//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
+			//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
+			//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
+			//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
+			//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
 
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae +
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an +
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at +
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae +
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an +
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at +
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
 		}
 
-
-		
 		// 13 августа 2016
 		// Это ошибочно. Это нигде не написано в литературе. Да конечно это усиливает диагональное преобладание, НО
 		// распределения получаются хоть и похожие, но не удовлетворяющие при более тщательном рассмотрении физическому смыслу задачи.
-		//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab);
+		//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab);
 
 
 
-		if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap < 1.0e-36) {
-			printf("Zero diagonal coefficient in internal volume in my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D.\n");
+
+		if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap < 1.0e-36) {
+			printf("Zero diagonal coefficient in internal volume in my_elmatr_quad_turbulent_Re_Theta_Langtry_MenterSST_3D.\n");
 #if doubleintprecision == 1
-			printf("ap=%e iP=%lld\n", sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap, iP);
+			printf("ap=%e iP=%lld\n", sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap, iP);
 #else
-			printf("ap=%e iP=%d\n", sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap, iP);
+			printf("ap=%e iP=%d\n", sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap, iP);
 #endif
 			if (b_on_adaptive_local_refinement_mesh) {
-				printf("ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab);
-				printf("ae2=%e aw2=%e an2=%e as2=%e at2=%e ab2=%e\n", sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2);
-				printf("ae3=%e aw3=%e an3=%e as3=%e at3=%e ab3=%e\n", sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3);
-				printf("ae4=%e aw4=%e an4=%e as4=%e at4=%e ab4=%e\n", sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4);
+				printf("ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae, sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw, sl[RE_THETA_LANGTRY_MENTER_SL][iP].an, sl[RE_THETA_LANGTRY_MENTER_SL][iP].as, sl[RE_THETA_LANGTRY_MENTER_SL][iP].at, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab);
+				printf("ae2=%e aw2=%e an2=%e as2=%e at2=%e ab2=%e\n", sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2, sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2, sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2, sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2, sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2);
+				printf("ae3=%e aw3=%e an3=%e as3=%e at3=%e ab3=%e\n", sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3, sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3, sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3, sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3, sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3);
+				printf("ae4=%e aw4=%e an4=%e as4=%e at4=%e ab4=%e\n", sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4, sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4, sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4, sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4, sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4);
 			}
 			else {
-				printf("ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab);
+				printf("ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae, sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw, sl[RE_THETA_LANGTRY_MENTER_SL][iP].an, sl[RE_THETA_LANGTRY_MENTER_SL][iP].as, sl[RE_THETA_LANGTRY_MENTER_SL][iP].at, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab);
 			}
 			system("pause");
 
@@ -8101,45 +7916,45 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			// Т.е. на данном этапе имеем нулевой диагональный элемент.
 			// Наверно нужно добавить Диффузии иначе нельзя будет вычислить псевдовремя, оно будет бесконечным.
 			// Но диффузию мы всё-таки ограничим применив схему Булгакова.
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De * ApproxConvective(fabs(Pe), BULG);//+fmax(-(Fe),0); 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), BULG);//+fmax(Fw,0); 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn * ApproxConvective(fabs(Pn), BULG);//+fmax(-(Fn),0); 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds * ApproxConvective(fabs(Ps), BULG);//+fmax(Fs,0); 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt * ApproxConvective(fabs(Pt), BULG);//+fmax(-(Ft),0); 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db * ApproxConvective(fabs(Pb), BULG);//+fmax(Fb,0); 
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De * ApproxConvective(fabs(Pe), BULG);//+fmax(-(Fe),0); 
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), BULG);//+fmax(Fw,0); 
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn * ApproxConvective(fabs(Pn), BULG);//+fmax(-(Fn),0); 
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds * ApproxConvective(fabs(Ps), BULG);//+fmax(Fs,0); 
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt * ApproxConvective(fabs(Pt), BULG);//+fmax(-(Ft),0); 
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db * ApproxConvective(fabs(Pb), BULG);//+fmax(Fb,0); 
 			if (b_on_adaptive_local_refinement_mesh) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), BULG);//+fmax(-(Fe2),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), BULG);//+fmax(Fw2,0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), BULG);//+fmax(-(Fn2),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), BULG);//+fmax(Fs2,0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), BULG);//+fmax(-(Ft2),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), BULG);//+fmax(Fb2,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 * ApproxConvective(fabs(Pe2), BULG);//+fmax(-(Fe2),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 * ApproxConvective(fabs(Pw2), BULG);//+fmax(Fw2,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 * ApproxConvective(fabs(Pn2), BULG);//+fmax(-(Fn2),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 * ApproxConvective(fabs(Ps2), BULG);//+fmax(Fs2,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 * ApproxConvective(fabs(Pt2), BULG);//+fmax(-(Ft2),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 * ApproxConvective(fabs(Pb2), BULG);//+fmax(Fb2,0); 
 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), BULG);//+fmax(-(Fe3),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), BULG);//+fmax(Fw3,0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), BULG);//+fmax(-(Fn3),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), BULG);//+fmax(Fs3,0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), BULG);//+fmax(-(Ft3),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), BULG);//+fmax(Fb3,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 * ApproxConvective(fabs(Pe3), BULG);//+fmax(-(Fe3),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 * ApproxConvective(fabs(Pw3), BULG);//+fmax(Fw3,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 * ApproxConvective(fabs(Pn3), BULG);//+fmax(-(Fn3),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 * ApproxConvective(fabs(Ps3), BULG);//+fmax(Fs3,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 * ApproxConvective(fabs(Pt3), BULG);//+fmax(-(Ft3),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 * ApproxConvective(fabs(Pb3), BULG);//+fmax(Fb3,0); 
 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), BULG);//+fmax(-(Fe4),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), BULG);//+fmax(Fw4,0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), BULG);//+fmax(-(Fn4),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), BULG);//+fmax(Fs4,0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), BULG);//+fmax(-(Ft4),0); 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), BULG);//+fmax(Fb4,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 * ApproxConvective(fabs(Pe4), BULG);//+fmax(-(Fe4),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 * ApproxConvective(fabs(Pw4), BULG);//+fmax(Fw4,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 * ApproxConvective(fabs(Pn4), BULG);//+fmax(-(Fn4),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 * ApproxConvective(fabs(Ps4), BULG);//+fmax(Fs4,0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 * ApproxConvective(fabs(Pt4), BULG);//+fmax(-(Ft4),0); 
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 * ApproxConvective(fabs(Pb4), BULG);//+fmax(Fb4,0); 
 			}
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 			if (b_on_adaptive_local_refinement_mesh) {
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2;
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3;
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4;
 			}
 		}
 
 
 		// Вернул как единственно верное и описанное в литературе. 7.05.2017.
-		//sumanb=sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+		//sumanb=sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae+sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw+sl[RE_THETA_LANGTRY_MENTER_SL][iP].an+sl[RE_THETA_LANGTRY_MENTER_SL][iP].as+sl[RE_THETA_LANGTRY_MENTER_SL][iP].at+sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 		// Моя наработка:
 		// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 		/*
@@ -8173,82 +7988,81 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		*/
 		//13 августа 2016.
-		//sumanb = fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab);
-		/*sumanb = sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+		//sumanb = fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab);
+		/*sumanb = sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 		if (b_on_adaptive_local_refinement_mesh) {
-			sumanb += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2;
-			sumanb += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3;
-			sumanb += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4;
+			sumanb += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2;
+			sumanb += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3;
+			sumanb += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4;
 		}*/
 
 	}
 	else if (ishconvection < QUICK)
 	{
 
-
 		if (b_on_adaptive_local_refinement_mesh) {
 
 			// Вычисление коэффициентов дискретного аналога:
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
 
 			// Вычисление коэффициентов дискретного аналога:
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = -(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = (Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = -(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = (Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = -(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = (Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = -(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = (Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = -(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = (Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = -(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = (Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = -(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = (Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = -(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = (Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = -(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = (Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = -(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = (Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = -(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = (Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = -(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = (Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = -(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = (Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = -(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = (Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = -(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = (Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = -(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = (Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = -(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = (Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = -(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = (Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
 
 			// 08.05.2017.
 			// Моя наработка:
 			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Fe2)*fC(Pe2, ishconvection, true, feplus2) + De2 * fD(Pe2, ishconvection, true, feplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fw2)*fC(Pw2, ishconvection, true, fwplus2) + Dw2 * fD(Pw2, ishconvection, true, fwplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Fn2)*fC(Pn2, ishconvection, true, fnplus2) + Dn2 * fD(Pn2, ishconvection, true, fnplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fs2)*fC(Ps2, ishconvection, true, fsplus2) + Ds2 * fD(Ps2, ishconvection, true, fsplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Ft2)*fC(Pt2, ishconvection, true, ftplus2) + Dt2 * fD(Pt2, ishconvection, true, ftplus2);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fb2)*fC(Pb2, ishconvection, true, fbplus2) + Db2 * fD(Pb2, ishconvection, true, fbplus2);
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Fe3)*fC(Pe3, ishconvection, true, feplus3) + De3 * fD(Pe3, ishconvection, true, feplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fw3)*fC(Pw3, ishconvection, true, fwplus3) + Dw3 * fD(Pw3, ishconvection, true, fwplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Fn3)*fC(Pn3, ishconvection, true, fnplus3) + Dn3 * fD(Pn3, ishconvection, true, fnplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fs3)*fC(Ps3, ishconvection, true, fsplus3) + Ds3 * fD(Ps3, ishconvection, true, fsplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Ft3)*fC(Pt3, ishconvection, true, ftplus3) + Dt3 * fD(Pt3, ishconvection, true, ftplus3);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fb3)*fC(Pb3, ishconvection, true, fbplus3) + Db3 * fD(Pb3, ishconvection, true, fbplus3);
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Fe4)*fC(Pe4, ishconvection, true, feplus4) + De4 * fD(Pe4, ishconvection, true, feplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fw4)*fC(Pw4, ishconvection, true, fwplus4) + Dw4 * fD(Pw4, ishconvection, true, fwplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Fn4)*fC(Pn4, ishconvection, true, fnplus4) + Dn4 * fD(Pn4, ishconvection, true, fnplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fs4)*fC(Ps4, ishconvection, true, fsplus4) + Ds4 * fD(Ps4, ishconvection, true, fsplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Ft4)*fC(Pt4, ishconvection, true, ftplus4) + Dt4 * fD(Pt4, ishconvection, true, ftplus4);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fb4)*fC(Pb4, ishconvection, true, fbplus4) + Db4 * fD(Pb4, ishconvection, true, fbplus4);
 
 			/*
 			sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
@@ -8281,32 +8095,32 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			*/
 
 		}
-		else {
-
+		else
+		{
 			// Вычисление коэффициентов дискретного аналога:
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
-			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap=sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = -(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = (Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = -(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = (Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = -(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = (Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap=sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae+sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw+sl[RE_THETA_LANGTRY_MENTER_SL][iP].an+sl[RE_THETA_LANGTRY_MENTER_SL][iP].as+sl[RE_THETA_LANGTRY_MENTER_SL][iP].at+sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 
 			// Вернул как единственно верное и описанное в литературе. 7.05.2017.
-			//sumanb=sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+			//sumanb=sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae+sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw+sl[RE_THETA_LANGTRY_MENTER_SL][iP].an+sl[RE_THETA_LANGTRY_MENTER_SL][iP].as+sl[RE_THETA_LANGTRY_MENTER_SL][iP].at+sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 			//13 августа 2016.
-			//sumanb = fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab);
+			//sumanb = fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab);
 
 			// 08.05.2017.
 			// Моя наработка:
 			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fw)*fC(Pw, ishconvection, true, fwplus) + Dw * fD(Pw, ishconvection, true, fwplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Fn)*fC(Pn, ishconvection, true, fnplus) + Dn * fD(Pn, ishconvection, true, fnplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fs)*fC(Ps, ishconvection, true, fsplus) + Ds * fD(Ps, ishconvection, true, fsplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += +(Ft)*fC(Pt, ishconvection, true, ftplus) + Dt * fD(Pt, ishconvection, true, ftplus);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += -(Fb)*fC(Pb, ishconvection, true, fbplus) + Db * fD(Pb, ishconvection, true, fbplus);
 
 			/*
 			sumanb = +(Fe)*fC(Pe, ishconvection, true, feplus) + De * fD(Pe, ishconvection, true, feplus);
@@ -8366,15 +8180,15 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		// Z - direction
 		doublereal  positionzT4, positionzB4, positionzTT4, positionzBB4, positionzt4, positionzb4;
 
-
 		TOCHKA pointP;
 		//center_cord3D(iP, nvtx, pa, pointP, 100);
 		pointP = center_coord_loc[iP];
+
 		positionxP = pointP.x; positionyP = pointP.y; positionzP = pointP.z;
-		SpeedP = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP];
+		SpeedP = potent[RE_THETA_LANGTRY_MENTER][iP];
 		// X - direction
 		if (!bE) {
-			SpeedE = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
+			SpeedE = potent[RE_THETA_LANGTRY_MENTER][iE];
 			//center_cord3D(iE,nvtx,pa,pointP,E_SIDE);
 			pointP = center_coord_loc[iE];
 
@@ -8394,7 +8208,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			if ((iEE >= 0) && (iEE < maxelm)) {
 				// внутренний узел
-				SpeedEE = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iEE];
+				SpeedEE = potent[RE_THETA_LANGTRY_MENTER][iEE];
 				//center_cord3D(iEE,nvtx,pa,pointP,EE_SIDE);
 				pointP = center_coord_loc[iEE];
 				positionxEE = pointP.x;
@@ -8403,7 +8217,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			{
 				// граничный узел
 				if ((iEE >= maxelm) && (iEE < maxelm + maxbound)) {
-					SpeedEE = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iEE];
+					SpeedEE = potent[RE_THETA_LANGTRY_MENTER][iEE];
 				}
 				else {
 					SpeedEE = SpeedE;
@@ -8416,8 +8230,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			// это граничный узел
-			SpeedE = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
-			SpeedEE = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
+			SpeedE = potent[RE_THETA_LANGTRY_MENTER][iE];
+			SpeedEE = potent[RE_THETA_LANGTRY_MENTER][iE];
 			positionxe = positionxP + 0.5 * dx;
 			positionxE = positionxP + 0.5 * dx;
 			positionxEE = positionxP + dx; // этого узла не существует !
@@ -8428,7 +8242,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			pointP = center_coord_loc[iW];
 			positionxW = pointP.x;
 			positionxw = positionxP - 0.5 * dx;
-			SpeedW = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW];
+			SpeedW = potent[RE_THETA_LANGTRY_MENTER][iW];
 
 			integer iWW = neighbors_for_the_internal_node[W_SIDE][0][iW];
 			if (iWW < 0) {
@@ -8443,7 +8257,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			if ((iWW >= 0) && (iWW < maxelm)) {
 				// внутренний узел
-				SpeedWW = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iWW];
+				SpeedWW = potent[RE_THETA_LANGTRY_MENTER][iWW];
 				//center_cord3D(iWW,nvtx,pa,pointP,WW_SIDE);
 				pointP = center_coord_loc[iWW];
 				positionxWW = pointP.x;
@@ -8452,7 +8266,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			{
 				// граничный узел
 				if ((iWW >= maxelm) && (iWW < maxelm + maxbound)) {
-					SpeedWW = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iWW];
+					SpeedWW = potent[RE_THETA_LANGTRY_MENTER][iWW];
 				}
 				else {
 					SpeedWW = SpeedW;
@@ -8465,8 +8279,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			// это граничный узел
-			SpeedW = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW]; // Attantion !! Debug
-			SpeedWW = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW];
+			SpeedW = potent[RE_THETA_LANGTRY_MENTER][iW]; // Attantion !! Debug
+			SpeedWW = potent[RE_THETA_LANGTRY_MENTER][iW];
 			//printf("SpeedW==%e\n",SpeedW); getchar();
 			positionxw = positionxP - 0.5 * dx;
 			positionxW = positionxP - 0.5 * dx;
@@ -8475,7 +8289,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 		// Y - direction
 		if (!bN) {
-			SpeedN = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
+			SpeedN = potent[RE_THETA_LANGTRY_MENTER][iN];
 			//center_cord3D(iN,nvtx,pa,pointP,N_SIDE);
 			pointP = center_coord_loc[iN];
 			positionyN = pointP.y;
@@ -8494,7 +8308,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			if ((iNN >= 0) && (iNN < maxelm)) {
 				// внутренний узел
-				SpeedNN = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iNN];
+				SpeedNN = potent[RE_THETA_LANGTRY_MENTER][iNN];
 				//center_cord3D(iNN,nvtx,pa,pointP,NN_SIDE);
 				pointP = center_coord_loc[iNN];
 				positionyNN = pointP.y;
@@ -8503,7 +8317,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			{
 				// граничный узел
 				if ((iNN >= maxelm) && (iNN < maxelm + maxbound)) {
-					SpeedNN = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iNN];
+					SpeedNN = potent[RE_THETA_LANGTRY_MENTER][iNN];
 				}
 				else {
 					SpeedNN = SpeedN;
@@ -8516,15 +8330,15 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			// это граничный узел
-			SpeedN = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
-			SpeedNN = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
+			SpeedN = potent[RE_THETA_LANGTRY_MENTER][iN];
+			SpeedNN = potent[RE_THETA_LANGTRY_MENTER][iN];
 			positionyn = positionyP + 0.5 * dy;
 			positionyN = positionyP + 0.5 * dy;
 			positionyNN = positionyP + dy; // этого узла не существует !
 		}
 
 		if (!bS) {
-			SpeedS = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS];
+			SpeedS = potent[RE_THETA_LANGTRY_MENTER][iS];
 			//center_cord3D(iS,nvtx,pa,pointP,S_SIDE);
 			pointP = center_coord_loc[iS];
 			positionyS = pointP.y;
@@ -8543,7 +8357,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			if ((iSS >= 0) && (iSS < maxelm)) {
 				// внутренний узел
-				SpeedSS = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iSS];
+				SpeedSS = potent[RE_THETA_LANGTRY_MENTER][iSS];
 				//center_cord3D(iSS,nvtx,pa,pointP,SS_SIDE);
 				pointP = center_coord_loc[iSS];
 				positionySS = pointP.y;
@@ -8552,7 +8366,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			{
 				// граничный узел
 				if ((iSS >= maxelm) && (iSS < maxelm + maxbound)) {
-					SpeedSS = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iSS];
+					SpeedSS = potent[RE_THETA_LANGTRY_MENTER][iSS];
 				}
 				else {
 					SpeedSS = SpeedS;
@@ -8565,8 +8379,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			// это граничный узел
-			SpeedS = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // ATTANTION !!!!
-			SpeedSS = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // нулевая скорость внутри твёрдого тела.
+			SpeedS = potent[RE_THETA_LANGTRY_MENTER][iS]; // ATTANTION !!!!
+			SpeedSS = potent[RE_THETA_LANGTRY_MENTER][iS]; // нулевая скорость внутри твёрдого тела.
 			positionys = positionyP - 0.5 * dy;
 			positionyS = positionyP - 0.5 * dy;
 			positionySS = positionyP - dy; // этого узла не существует !
@@ -8574,7 +8388,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 		// Z - direction
 		if (!bT) {
-			SpeedT = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT];
+			SpeedT = potent[RE_THETA_LANGTRY_MENTER][iT];
 			//center_cord3D(iT,nvtx,pa,pointP,T_SIDE);
 			pointP = center_coord_loc[iT];
 			positionzT = pointP.z;
@@ -8593,7 +8407,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			if ((iTT >= 0) && (iTT < maxelm)) {
 				// внутренний узел
-				SpeedTT = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iTT];
+				SpeedTT = potent[RE_THETA_LANGTRY_MENTER][iTT];
 				//center_cord3D(iTT,nvtx,pa,pointP,TT_SIDE);
 				pointP = center_coord_loc[iTT];
 				positionzTT = pointP.z;
@@ -8603,7 +8417,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				// граничный узел
 				if ((iTT >= maxelm) && (iTT < maxelm + maxbound)) {
 
-					SpeedTT = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iTT];
+					SpeedTT = potent[RE_THETA_LANGTRY_MENTER][iTT];
 				}
 				else {
 					SpeedTT = SpeedT;
@@ -8616,15 +8430,15 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			// это граничный узел
-			SpeedT = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT];
-			SpeedTT = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT]; // скорость внутри твёрдого тела
+			SpeedT = potent[RE_THETA_LANGTRY_MENTER][iT];
+			SpeedTT = potent[RE_THETA_LANGTRY_MENTER][iT]; // скорость внутри твёрдого тела
 			positionzt = positionzP + 0.5 * dz;
 			positionzT = positionzP + 0.5 * dz;
 			positionzTT = positionzP + dz; // этого узла не существует !
 		}
 
 		if (!bB) {
-			SpeedB = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB];
+			SpeedB = potent[RE_THETA_LANGTRY_MENTER][iB];
 			//center_cord3D(iB,nvtx,pa,pointP,B_SIDE);
 			pointP = center_coord_loc[iB];
 			positionzB = pointP.z;
@@ -8643,7 +8457,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			if ((iBB >= 0) && (iBB < maxelm)) {
 				// внутренний узел
-				SpeedBB = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iBB];
+				SpeedBB = potent[RE_THETA_LANGTRY_MENTER][iBB];
 				//center_cord3D(iBB,nvtx,pa,pointP,BB_SIDE);
 				pointP = center_coord_loc[iBB];
 				positionzBB = pointP.z;
@@ -8652,7 +8466,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			{
 				// граничный узел
 				if ((iBB >= maxelm) && (iBB < maxelm + maxbound)) {
-					SpeedBB = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iBB];
+					SpeedBB = potent[RE_THETA_LANGTRY_MENTER][iBB];
 				}
 				else {
 					SpeedBB = SpeedB;
@@ -8665,8 +8479,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			// это граничный узел
-			SpeedB = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB];
-			SpeedBB = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB]; // скорость внутри твёрдого тела
+			SpeedB = potent[RE_THETA_LANGTRY_MENTER][iB];
+			SpeedBB = potent[RE_THETA_LANGTRY_MENTER][iB]; // скорость внутри твёрдого тела
 			positionzb = positionzP - 0.5 * dz;
 			positionzB = positionzP - 0.5 * dz;
 			positionzBB = positionzP - dz; // этого узла не существует !
@@ -8677,7 +8491,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// X - direction
 			if ((!bE2) && (iE2 > -1)) {
-				SpeedE2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE2];
+				SpeedE2 = potent[RE_THETA_LANGTRY_MENTER][iE2];
 				//center_cord3D(iE,nvtx,pa,pointP,E_SIDE);
 				pointP = center_coord_loc[iE2];
 
@@ -8696,7 +8510,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				}
 				if ((iEE2 >= 0) && (iEE2 < maxelm)) {
 					// внутренний узел
-					SpeedEE2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iEE2];
+					SpeedEE2 = potent[RE_THETA_LANGTRY_MENTER][iEE2];
 					//center_cord3D(iEE2,nvtx,pa,pointP,EE_SIDE);
 					pointP = center_coord_loc[iEE2];
 					positionxEE2 = pointP.x;
@@ -8705,7 +8519,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iEE2 >= maxelm) && (iEE2 < maxelm + maxbound)) {
-						SpeedEE2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iEE2];
+						SpeedEE2 = potent[RE_THETA_LANGTRY_MENTER][iEE2];
 					}
 					else {
 						SpeedEE2 = SpeedE2;
@@ -8721,12 +8535,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iE2 > -1) {
-					SpeedE2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE2];
-					SpeedEE2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE2];
+					SpeedE2 = potent[RE_THETA_LANGTRY_MENTER][iE2];
+					SpeedEE2 = potent[RE_THETA_LANGTRY_MENTER][iE2];
 				}
 				else {
-					SpeedE2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
-					SpeedEE2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
+					SpeedE2 = potent[RE_THETA_LANGTRY_MENTER][iE];
+					SpeedEE2 = potent[RE_THETA_LANGTRY_MENTER][iE];
 				}
 				positionxe2 = positionxP + 0.5 * dx;
 				positionxE2 = positionxP + 0.5 * dx;
@@ -8738,7 +8552,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				pointP = center_coord_loc[iW2];
 				positionxW2 = pointP.x;
 				positionxw2 = positionxP - 0.5 * dx;
-				SpeedW2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW2];
+				SpeedW2 = potent[RE_THETA_LANGTRY_MENTER][iW2];
 
 				integer iWW2 = neighbors_for_the_internal_node[W_SIDE][0][iW2];
 				if (iWW2 < 0) {
@@ -8753,7 +8567,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iWW2 >= 0) && (iWW2 < maxelm)) {
 					// внутренний узел
-					SpeedWW2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iWW2];
+					SpeedWW2 = potent[RE_THETA_LANGTRY_MENTER][iWW2];
 					//center_cord3D(iWW2,nvtx,pa,pointP,WW_SIDE);
 					pointP = center_coord_loc[iWW2];
 					positionxWW2 = pointP.x;
@@ -8762,7 +8576,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iWW2 >= maxelm) && (iWW2 < maxelm + maxbound)) {
-						SpeedWW2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iWW2];
+						SpeedWW2 = potent[RE_THETA_LANGTRY_MENTER][iWW2];
 					}
 					else {
 
@@ -8779,12 +8593,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iW2 > -1) {
-					SpeedW2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW2];
-					SpeedWW2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW2];
+					SpeedW2 = potent[RE_THETA_LANGTRY_MENTER][iW2];
+					SpeedWW2 = potent[RE_THETA_LANGTRY_MENTER][iW2];
 				}
 				else {
-					SpeedW2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW];
-					SpeedWW2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW];
+					SpeedW2 = potent[RE_THETA_LANGTRY_MENTER][iW];
+					SpeedWW2 = potent[RE_THETA_LANGTRY_MENTER][iW];
 				}
 				//printf("SpeedW2==%e\n",SpeedW2); getchar();
 				positionxw2 = positionxP - 0.5 * dx;
@@ -8794,7 +8608,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// Y - direction
 			if ((!bN2) && (iN2 > -1)) {
-				SpeedN2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN2];
+				SpeedN2 = potent[RE_THETA_LANGTRY_MENTER][iN2];
 				//center_cord3D(iN2,nvtx,pa,pointP,N_SIDE);
 				pointP = center_coord_loc[iN2];
 				positionyN2 = pointP.y;
@@ -8814,7 +8628,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iNN2 >= 0) && (iNN2 < maxelm)) {
 					// внутренний узел
-					SpeedNN2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iNN2];
+					SpeedNN2 = potent[RE_THETA_LANGTRY_MENTER][iNN2];
 					//center_cord3D(iNN2,nvtx,pa,pointP,NN_SIDE);
 					pointP = center_coord_loc[iNN2];
 					positionyNN2 = pointP.y;
@@ -8823,7 +8637,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iNN2 >= maxelm) && (iNN2 < maxelm + maxbound)) {
-						SpeedNN2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iNN2];
+						SpeedNN2 = potent[RE_THETA_LANGTRY_MENTER][iNN2];
 					}
 					else {
 						SpeedNN2 = SpeedN2;
@@ -8837,12 +8651,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iN2 > -1) {
-					SpeedN2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN2];
-					SpeedNN2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN2];
+					SpeedN2 = potent[RE_THETA_LANGTRY_MENTER][iN2];
+					SpeedNN2 = potent[RE_THETA_LANGTRY_MENTER][iN2];
 				}
 				else {
-					SpeedN2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
-					SpeedNN2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
+					SpeedN2 = potent[RE_THETA_LANGTRY_MENTER][iN];
+					SpeedNN2 = potent[RE_THETA_LANGTRY_MENTER][iN];
 				}
 				positionyn2 = positionyP + 0.5 * dy;
 				positionyN2 = positionyP + 0.5 * dy;
@@ -8850,7 +8664,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			}
 
 			if ((!bS2) && (iS2 > -1)) {
-				SpeedS2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS2];
+				SpeedS2 = potent[RE_THETA_LANGTRY_MENTER][iS2];
 				//center_cord3D(iS2,nvtx,pa,pointP,S_SIDE);
 				pointP = center_coord_loc[iS2];
 				positionyS2 = pointP.y;
@@ -8869,7 +8683,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iSS2 >= 0) && (iSS2 < maxelm)) {
 					// внутренний узел
-					SpeedSS2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iSS2];
+					SpeedSS2 = potent[RE_THETA_LANGTRY_MENTER][iSS2];
 					//center_cord3D(iSS2,nvtx,pa,pointP,SS_SIDE);
 					pointP = center_coord_loc[iSS2];
 					positionySS2 = pointP.y;
@@ -8878,7 +8692,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iSS2 >= maxelm) && (iSS2 < maxelm + maxbound)) {
-						SpeedSS2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iSS2];
+						SpeedSS2 = potent[RE_THETA_LANGTRY_MENTER][iSS2];
 					}
 					else {
 						SpeedSS2 = SpeedS2;
@@ -8892,12 +8706,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iS2 > -1) {
-					SpeedS2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS2]; // ATTANTION !!!!
-					SpeedSS2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS2]; // нулевая скорость внутри твёрдого тела.
+					SpeedS2 = potent[RE_THETA_LANGTRY_MENTER][iS2]; // ATTANTION !!!!
+					SpeedSS2 = potent[RE_THETA_LANGTRY_MENTER][iS2]; // нулевая скорость внутри твёрдого тела.
 				}
 				else {
-					SpeedS2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // ATTANTION !!!!
-					SpeedSS2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // нулевая скорость внутри твёрдого тела.
+					SpeedS2 = potent[RE_THETA_LANGTRY_MENTER][iS]; // ATTANTION !!!!
+					SpeedSS2 = potent[RE_THETA_LANGTRY_MENTER][iS]; // нулевая скорость внутри твёрдого тела.
 				}
 				positionys2 = positionyP - 0.5 * dy;
 				positionyS2 = positionyP - 0.5 * dy;
@@ -8906,7 +8720,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// Z - direction
 			if ((!bT2) && (iT2 > -1)) {
-				SpeedT2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT2];
+				SpeedT2 = potent[RE_THETA_LANGTRY_MENTER][iT2];
 				//center_cord3D(iT2,nvtx,pa,pointP,T_SIDE);
 				pointP = center_coord_loc[iT2];
 				positionzT2 = pointP.z;
@@ -8926,7 +8740,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iTT2 >= 0) && (iTT2 < maxelm)) {
 					// внутренний узел
-					SpeedTT2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iTT2];
+					SpeedTT2 = potent[RE_THETA_LANGTRY_MENTER][iTT2];
 					//center_cord3D(iTT2,nvtx,pa,pointP,TT_SIDE);
 					pointP = center_coord_loc[iTT2];
 					positionzTT2 = pointP.z;
@@ -8935,7 +8749,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iTT2 >= maxelm) && (iTT2 < maxelm + maxbound)) {
-						SpeedTT2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iTT2];
+						SpeedTT2 = potent[RE_THETA_LANGTRY_MENTER][iTT2];
 					}
 					else {
 						SpeedTT2 = SpeedT2;
@@ -8949,12 +8763,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iT2 > -1) {
-					SpeedT2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT2];
-					SpeedTT2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT2]; // скорость внутри твёрдого тела
+					SpeedT2 = potent[RE_THETA_LANGTRY_MENTER][iT2];
+					SpeedTT2 = potent[RE_THETA_LANGTRY_MENTER][iT2]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedT2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT];
-					SpeedTT2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT]; // скорость внутри твёрдого тела
+					SpeedT2 = potent[RE_THETA_LANGTRY_MENTER][iT];
+					SpeedTT2 = potent[RE_THETA_LANGTRY_MENTER][iT]; // скорость внутри твёрдого тела
 				}
 				positionzt2 = positionzP + 0.5 * dz;
 				positionzT2 = positionzP + 0.5 * dz;
@@ -8962,7 +8776,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			}
 
 			if ((!bB2) && (iB2 > -1)) {
-				SpeedB2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB2];
+				SpeedB2 = potent[RE_THETA_LANGTRY_MENTER][iB2];
 				//center_cord3D(iB2,nvtx,pa,pointP,B_SIDE);
 				pointP = center_coord_loc[iB2];
 				positionzB2 = pointP.z;
@@ -8981,7 +8795,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iBB2 >= 0) && (iBB2 < maxelm)) {
 					// внутренний узел
-					SpeedBB2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iBB2];
+					SpeedBB2 = potent[RE_THETA_LANGTRY_MENTER][iBB2];
 					//center_cord3D(iBB2,nvtx,pa,pointP,BB_SIDE);
 					pointP = center_coord_loc[iBB2];
 					positionzBB2 = pointP.z;
@@ -8990,7 +8804,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iBB2 >= maxelm) && (iBB2 < maxelm + maxbound)) {
-						SpeedBB2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iBB2];
+						SpeedBB2 = potent[RE_THETA_LANGTRY_MENTER][iBB2];
 					}
 					else {
 						SpeedBB2 = SpeedB2;
@@ -9004,12 +8818,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iB2 > -1) {
-					SpeedB2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB2];
-					SpeedBB2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB2]; // скорость внутри твёрдого тела
+					SpeedB2 = potent[RE_THETA_LANGTRY_MENTER][iB2];
+					SpeedBB2 = potent[RE_THETA_LANGTRY_MENTER][iB2]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedB2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB];
-					SpeedBB2 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB]; // скорость внутри твёрдого тела
+					SpeedB2 = potent[RE_THETA_LANGTRY_MENTER][iB];
+					SpeedBB2 = potent[RE_THETA_LANGTRY_MENTER][iB]; // скорость внутри твёрдого тела
 				}
 				positionzb2 = positionzP - 0.5 * dz;
 				positionzB2 = positionzP - 0.5 * dz;
@@ -9019,7 +8833,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// X - direction
 			if ((!bE3) && (iE3 > -1)) {
-				SpeedE3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE3];
+				SpeedE3 = potent[RE_THETA_LANGTRY_MENTER][iE3];
 				//center_cord3D(iE3,nvtx,pa,pointP,E_SIDE);
 				pointP = center_coord_loc[iE3];
 
@@ -9039,7 +8853,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iEE3 >= 0) && (iEE3 < maxelm)) {
 					// внутренний узел
-					SpeedEE3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iEE3];
+					SpeedEE3 = potent[RE_THETA_LANGTRY_MENTER][iEE3];
 					//center_cord3D(iEE3,nvtx,pa,pointP,EE_SIDE);
 					pointP = center_coord_loc[iEE3];
 					positionxEE3 = pointP.x;
@@ -9048,7 +8862,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iEE3 >= maxelm) && (iEE3 < maxelm + maxbound)) {
-						SpeedEE3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iEE3];
+						SpeedEE3 = potent[RE_THETA_LANGTRY_MENTER][iEE3];
 					}
 					else {
 						SpeedEE3 = SpeedE3;
@@ -9062,12 +8876,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iE3 > -1) {
-					SpeedE3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE3];
-					SpeedEE3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE3];
+					SpeedE3 = potent[RE_THETA_LANGTRY_MENTER][iE3];
+					SpeedEE3 = potent[RE_THETA_LANGTRY_MENTER][iE3];
 				}
 				else {
-					SpeedE3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
-					SpeedEE3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
+					SpeedE3 = potent[RE_THETA_LANGTRY_MENTER][iE];
+					SpeedEE3 = potent[RE_THETA_LANGTRY_MENTER][iE];
 				}
 				positionxe3 = positionxP + 0.5 * dx;
 				positionxE3 = positionxP + 0.5 * dx;
@@ -9079,7 +8893,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				pointP = center_coord_loc[iW3];
 				positionxW3 = pointP.x;
 				positionxw3 = positionxP - 0.5 * dx;
-				SpeedW3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW3];
+				SpeedW3 = potent[RE_THETA_LANGTRY_MENTER][iW3];
 
 				integer iWW3 = neighbors_for_the_internal_node[W_SIDE][0][iW3];
 				if (iWW3 < 0) {
@@ -9094,7 +8908,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iWW3 >= 0) && (iWW3 < maxelm)) {
 					// внутренний узел
-					SpeedWW3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iWW3];
+					SpeedWW3 = potent[RE_THETA_LANGTRY_MENTER][iWW3];
 					//center_cord3D(iWW3,nvtx,pa,pointP,WW_SIDE);
 					pointP = center_coord_loc[iWW3];
 					positionxWW3 = pointP.x;
@@ -9103,7 +8917,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iWW3 >= maxelm) && (iWW3 < maxelm + maxbound)) {
-						SpeedWW3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iWW3];
+						SpeedWW3 = potent[RE_THETA_LANGTRY_MENTER][iWW3];
 					}
 					else {
 						SpeedWW3 = SpeedW3;
@@ -9119,12 +8933,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iW3 > -1) {
-					SpeedW3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW3]; // Attantion !! Debug
-					SpeedWW3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW3];
+					SpeedW3 = potent[RE_THETA_LANGTRY_MENTER][iW3]; // Attantion !! Debug
+					SpeedWW3 = potent[RE_THETA_LANGTRY_MENTER][iW3];
 				}
 				else {
-					SpeedW3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW]; // Attantion !! Debug
-					SpeedWW3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW];
+					SpeedW3 = potent[RE_THETA_LANGTRY_MENTER][iW]; // Attantion !! Debug
+					SpeedWW3 = potent[RE_THETA_LANGTRY_MENTER][iW];
 				}
 				//printf("SpeedW3==%e\n",SpeedW3); getchar();
 				positionxw3 = positionxP - 0.5 * dx;
@@ -9134,7 +8948,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// Y - direction
 			if ((!bN3) && (iN3 > -1)) {
-				SpeedN3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN3];
+				SpeedN3 = potent[RE_THETA_LANGTRY_MENTER][iN3];
 				//center_cord3D(iN3,nvtx,pa,pointP,N_SIDE);
 				pointP = center_coord_loc[iN3];
 				positionyN3 = pointP.y;
@@ -9153,7 +8967,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iNN3 >= 0) && (iNN3 < maxelm)) {
 					// внутренний узел
-					SpeedNN3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iNN3];
+					SpeedNN3 = potent[RE_THETA_LANGTRY_MENTER][iNN3];
 					//center_cord3D(iNN3,nvtx,pa,pointP,NN_SIDE);
 					pointP = center_coord_loc[iNN3];
 					positionyNN3 = pointP.y;
@@ -9162,7 +8976,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iNN3 >= maxelm) && (iNN3 < maxelm + maxbound)) {
-						SpeedNN3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iNN3];
+						SpeedNN3 = potent[RE_THETA_LANGTRY_MENTER][iNN3];
 					}
 					else {
 						SpeedNN3 = SpeedN3;
@@ -9176,12 +8990,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iN3 > -1) {
-					SpeedN3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN3];
-					SpeedNN3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN3];
+					SpeedN3 = potent[RE_THETA_LANGTRY_MENTER][iN3];
+					SpeedNN3 = potent[RE_THETA_LANGTRY_MENTER][iN3];
 				}
 				else {
-					SpeedN3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
-					SpeedNN3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
+					SpeedN3 = potent[RE_THETA_LANGTRY_MENTER][iN];
+					SpeedNN3 = potent[RE_THETA_LANGTRY_MENTER][iN];
 				}
 				positionyn3 = positionyP + 0.5 * dy;
 				positionyN3 = positionyP + 0.5 * dy;
@@ -9189,7 +9003,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			}
 
 			if ((!bS3) && (iS3 > -1)) {
-				SpeedS3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS3];
+				SpeedS3 = potent[RE_THETA_LANGTRY_MENTER][iS3];
 				//center_cord3D(iS3,nvtx,pa,pointP,S_SIDE);
 				pointP = center_coord_loc[iS3];
 				positionyS3 = pointP.y;
@@ -9208,7 +9022,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iSS3 >= 0) && (iSS3 < maxelm)) {
 					// внутренний узел
-					SpeedSS3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iSS3];
+					SpeedSS3 = potent[RE_THETA_LANGTRY_MENTER][iSS3];
 					//center_cord3D(iSS3,nvtx,pa,pointP,SS_SIDE);
 					pointP = center_coord_loc[iSS3];
 					positionySS3 = pointP.y;
@@ -9217,7 +9031,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iSS3 >= maxelm) && (iSS3 < maxelm + maxbound)) {
-						SpeedSS3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iSS3];
+						SpeedSS3 = potent[RE_THETA_LANGTRY_MENTER][iSS3];
 					}
 					else {
 						SpeedSS3 = SpeedS3;
@@ -9231,12 +9045,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iS3 > -1) {
-					SpeedS3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS3]; // ATTANTION !!!!
-					SpeedSS3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS3]; // нулевая скорость внутри твёрдого тела.
+					SpeedS3 = potent[RE_THETA_LANGTRY_MENTER][iS3]; // ATTANTION !!!!
+					SpeedSS3 = potent[RE_THETA_LANGTRY_MENTER][iS3]; // нулевая скорость внутри твёрдого тела.
 				}
 				else {
-					SpeedS3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // ATTANTION !!!!
-					SpeedSS3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // нулевая скорость внутри твёрдого тела.
+					SpeedS3 = potent[RE_THETA_LANGTRY_MENTER][iS]; // ATTANTION !!!!
+					SpeedSS3 = potent[RE_THETA_LANGTRY_MENTER][iS]; // нулевая скорость внутри твёрдого тела.
 				}
 				positionys3 = positionyP - 0.5 * dy;
 				positionyS3 = positionyP - 0.5 * dy;
@@ -9245,7 +9059,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// Z - direction
 			if ((!bT3) && (iT3 > -1)) {
-				SpeedT3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT3];
+				SpeedT3 = potent[RE_THETA_LANGTRY_MENTER][iT3];
 				//center_cord3D(iT3,nvtx,pa,pointP,T_SIDE);
 				pointP = center_coord_loc[iT3];
 				positionzT3 = pointP.z;
@@ -9264,7 +9078,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iTT3 >= 0) && (iTT3 < maxelm)) {
 					// внутренний узел
-					SpeedTT3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iTT3];
+					SpeedTT3 = potent[RE_THETA_LANGTRY_MENTER][iTT3];
 					//center_cord3D(iTT3,nvtx,pa,pointP,TT_SIDE);
 					pointP = center_coord_loc[iTT3];
 					positionzTT3 = pointP.z;
@@ -9273,7 +9087,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iTT3 >= maxelm) && (iTT3 < maxelm + maxbound)) {
-						SpeedTT3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iTT3];
+						SpeedTT3 = potent[RE_THETA_LANGTRY_MENTER][iTT3];
 					}
 					else {
 						SpeedTT3 = SpeedT3;
@@ -9287,12 +9101,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iT3 > -1) {
-					SpeedT3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT3];
-					SpeedTT3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT3]; // скорость внутри твёрдого тела
+					SpeedT3 = potent[RE_THETA_LANGTRY_MENTER][iT3];
+					SpeedTT3 = potent[RE_THETA_LANGTRY_MENTER][iT3]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedT3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT];
-					SpeedTT3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT]; // скорость внутри твёрдого тела
+					SpeedT3 = potent[RE_THETA_LANGTRY_MENTER][iT];
+					SpeedTT3 = potent[RE_THETA_LANGTRY_MENTER][iT]; // скорость внутри твёрдого тела
 				}
 				positionzt3 = positionzP + 0.5 * dz;
 				positionzT3 = positionzP + 0.5 * dz;
@@ -9300,7 +9114,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			}
 
 			if ((!bB3) && (iB3 > -1)) {
-				SpeedB3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB3];
+				SpeedB3 = potent[RE_THETA_LANGTRY_MENTER][iB3];
 				//center_cord3D(iB3,nvtx,pa,pointP,B_SIDE);
 				pointP = center_coord_loc[iB3];
 				positionzB3 = pointP.z;
@@ -9319,7 +9133,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iBB3 >= 0) && (iBB3 < maxelm)) {
 					// внутренний узел
-					SpeedBB3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iBB3];
+					SpeedBB3 = potent[RE_THETA_LANGTRY_MENTER][iBB3];
 					//center_cord3D(iBB3,nvtx,pa,pointP,BB_SIDE);
 					pointP = center_coord_loc[iBB3];
 					positionzBB3 = pointP.z;
@@ -9328,7 +9142,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iBB3 >= maxelm) && (iBB3 < maxelm + maxbound)) {
-						SpeedBB3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iBB3];
+						SpeedBB3 = potent[RE_THETA_LANGTRY_MENTER][iBB3];
 					}
 					else {
 						SpeedBB3 = SpeedB3;
@@ -9342,12 +9156,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iB3 > -1) {
-					SpeedB3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB3];
-					SpeedBB3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB3]; // скорость внутри твёрдого тела
+					SpeedB3 = potent[RE_THETA_LANGTRY_MENTER][iB3];
+					SpeedBB3 = potent[RE_THETA_LANGTRY_MENTER][iB3]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedB3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB];
-					SpeedBB3 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB]; // скорость внутри твёрдого тела
+					SpeedB3 = potent[RE_THETA_LANGTRY_MENTER][iB];
+					SpeedBB3 = potent[RE_THETA_LANGTRY_MENTER][iB]; // скорость внутри твёрдого тела
 				}
 				positionzb3 = positionzP - 0.5 * dz;
 				positionzB3 = positionzP - 0.5 * dz;
@@ -9356,7 +9170,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// X - direction
 			if ((!bE4) && (iE4 > -1)) {
-				SpeedE4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE4];
+				SpeedE4 = potent[RE_THETA_LANGTRY_MENTER][iE4];
 				//center_cord3D(iE4,nvtx,pa,pointP,E_SIDE);
 				pointP = center_coord_loc[iE4];
 
@@ -9376,7 +9190,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iEE4 >= 0) && (iEE4 < maxelm)) {
 					// внутренний узел
-					SpeedEE4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iEE4];
+					SpeedEE4 = potent[RE_THETA_LANGTRY_MENTER][iEE4];
 					//center_cord3D(iEE4,nvtx,pa,pointP,EE_SIDE);
 					pointP = center_coord_loc[iEE4];
 					positionxEE4 = pointP.x;
@@ -9385,7 +9199,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iEE4 >= maxelm) && (iEE4 < maxelm + maxbound)) {
-						SpeedEE4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iEE4];
+						SpeedEE4 = potent[RE_THETA_LANGTRY_MENTER][iEE4];
 					}
 					else {
 						SpeedEE4 = SpeedE4;
@@ -9399,12 +9213,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iE4 > -1) {
-					SpeedE4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE4];
-					SpeedEE4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE4];
+					SpeedE4 = potent[RE_THETA_LANGTRY_MENTER][iE4];
+					SpeedEE4 = potent[RE_THETA_LANGTRY_MENTER][iE4];
 				}
 				else {
-					SpeedE4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
-					SpeedEE4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE];
+					SpeedE4 = potent[RE_THETA_LANGTRY_MENTER][iE];
+					SpeedEE4 = potent[RE_THETA_LANGTRY_MENTER][iE];
 				}
 				positionxe4 = positionxP + 0.5 * dx;
 				positionxE4 = positionxP + 0.5 * dx;
@@ -9416,7 +9230,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				pointP = center_coord_loc[iW4];
 				positionxW4 = pointP.x;
 				positionxw4 = positionxP - 0.5 * dx;
-				SpeedW4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW4];
+				SpeedW4 = potent[RE_THETA_LANGTRY_MENTER][iW4];
 
 				integer iWW4 = neighbors_for_the_internal_node[W_SIDE][0][iW4];
 				if (iWW4 < 0) {
@@ -9431,7 +9245,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iWW4 >= 0) && (iWW4 < maxelm)) {
 					// внутренний узел
-					SpeedWW4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iWW4];
+					SpeedWW4 = potent[RE_THETA_LANGTRY_MENTER][iWW4];
 					//center_cord3D(iWW4,nvtx,pa,pointP,WW_SIDE);
 					pointP = center_coord_loc[iWW4];
 					positionxWW4 = pointP.x;
@@ -9440,7 +9254,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iWW4 >= maxelm) && (iWW4 < maxelm + maxbound)) {
-						SpeedWW4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iWW4];
+						SpeedWW4 = potent[RE_THETA_LANGTRY_MENTER][iWW4];
 					}
 					else {
 						SpeedWW4 = SpeedW4;
@@ -9456,12 +9270,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iW4 > -1) {
-					SpeedW4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW4]; // Attantion !! Debug
-					SpeedWW4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW4];
+					SpeedW4 = potent[RE_THETA_LANGTRY_MENTER][iW4]; // Attantion !! Debug
+					SpeedWW4 = potent[RE_THETA_LANGTRY_MENTER][iW4];
 				}
 				else {
-					SpeedW4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW]; // Attantion !! Debug
-					SpeedWW4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW];
+					SpeedW4 = potent[RE_THETA_LANGTRY_MENTER][iW]; // Attantion !! Debug
+					SpeedWW4 = potent[RE_THETA_LANGTRY_MENTER][iW];
 				}
 				//printf("SpeedW4==%e\n",SpeedW4); getchar();
 				positionxw4 = positionxP - 0.5 * dx;
@@ -9471,7 +9285,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// Y - direction
 			if ((!bN4) && (iN4 > -1)) {
-				SpeedN4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN4];
+				SpeedN4 = potent[RE_THETA_LANGTRY_MENTER][iN4];
 				//center_cord3D(iN4,nvtx,pa,pointP,N_SIDE);
 				pointP = center_coord_loc[iN4];
 				positionyN4 = pointP.y;
@@ -9490,7 +9304,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iNN4 >= 0) && (iNN4 < maxelm)) {
 					// внутренний узел
-					SpeedNN4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iNN4];
+					SpeedNN4 = potent[RE_THETA_LANGTRY_MENTER][iNN4];
 					//center_cord3D(iNN4,nvtx,pa,pointP,NN_SIDE);
 					pointP = center_coord_loc[iNN4];
 					positionyNN4 = pointP.y;
@@ -9499,7 +9313,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iNN4 >= maxelm) && (iNN4 < maxelm + maxbound)) {
-						SpeedNN4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iNN4];
+						SpeedNN4 = potent[RE_THETA_LANGTRY_MENTER][iNN4];
 					}
 					else {
 						SpeedNN4 = SpeedN4;
@@ -9513,12 +9327,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iN4 > -1) {
-					SpeedN4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN4];
-					SpeedNN4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN4];
+					SpeedN4 = potent[RE_THETA_LANGTRY_MENTER][iN4];
+					SpeedNN4 = potent[RE_THETA_LANGTRY_MENTER][iN4];
 				}
 				else {
-					SpeedN4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
-					SpeedNN4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
+					SpeedN4 = potent[RE_THETA_LANGTRY_MENTER][iN];
+					SpeedNN4 = potent[RE_THETA_LANGTRY_MENTER][iN];
 				}
 				positionyn4 = positionyP + 0.5 * dy;
 				positionyN4 = positionyP + 0.5 * dy;
@@ -9526,7 +9340,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			}
 
 			if ((!bS4) && (iS4 > -1)) {
-				SpeedS4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS4];
+				SpeedS4 = potent[RE_THETA_LANGTRY_MENTER][iS4];
 				//center_cord3D(iS4,nvtx,pa,pointP,S_SIDE);
 				pointP = center_coord_loc[iS4];
 				positionyS4 = pointP.y;
@@ -9545,7 +9359,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iSS4 >= 0) && (iSS4 < maxelm)) {
 					// внутренний узел
-					SpeedSS4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iSS4];
+					SpeedSS4 = potent[RE_THETA_LANGTRY_MENTER][iSS4];
 					//center_cord3D(iSS4,nvtx,pa,pointP,SS_SIDE);
 					pointP = center_coord_loc[iSS4];
 					positionySS4 = pointP.y;
@@ -9554,7 +9368,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iSS4 >= maxelm) && (iSS4 < maxelm + maxbound)) {
-						SpeedSS4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iSS4];
+						SpeedSS4 = potent[RE_THETA_LANGTRY_MENTER][iSS4];
 					}
 					else {
 						SpeedSS4 = SpeedS4;
@@ -9568,12 +9382,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iS4 > -1) {
-					SpeedS4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS4]; // ATTANTION !!!!
-					SpeedSS4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS4]; // нулевая скорость внутри твёрдого тела.
+					SpeedS4 = potent[RE_THETA_LANGTRY_MENTER][iS4]; // ATTANTION !!!!
+					SpeedSS4 = potent[RE_THETA_LANGTRY_MENTER][iS4]; // нулевая скорость внутри твёрдого тела.
 				}
 				else {
-					SpeedS4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // ATTANTION !!!!
-					SpeedSS4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // нулевая скорость внутри твёрдого тела.
+					SpeedS4 = potent[RE_THETA_LANGTRY_MENTER][iS]; // ATTANTION !!!!
+					SpeedSS4 = potent[RE_THETA_LANGTRY_MENTER][iS]; // нулевая скорость внутри твёрдого тела.
 				}
 				positionys4 = positionyP - 0.5 * dy;
 				positionyS4 = positionyP - 0.5 * dy;
@@ -9582,7 +9396,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			// Z - direction
 			if ((!bT4) && (iT4 > -1)) {
-				SpeedT4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT4];
+				SpeedT4 = potent[RE_THETA_LANGTRY_MENTER][iT4];
 				//center_cord3D(iT4,nvtx,pa,pointP,T_SIDE);
 				pointP = center_coord_loc[iT4];
 				positionzT4 = pointP.z;
@@ -9601,7 +9415,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iTT4 >= 0) && (iTT4 < maxelm)) {
 					// внутренний узел
-					SpeedTT4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iTT4];
+					SpeedTT4 = potent[RE_THETA_LANGTRY_MENTER][iTT4];
 					//center_cord3D(iTT4,nvtx,pa,pointP,TT_SIDE);
 					pointP = center_coord_loc[iTT4];
 					positionzTT4 = pointP.z;
@@ -9610,7 +9424,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iTT4 >= maxelm) && (iTT4 < maxelm + maxbound)) {
-						SpeedTT4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iTT4];
+						SpeedTT4 = potent[RE_THETA_LANGTRY_MENTER][iTT4];
 					}
 					else {
 						SpeedTT4 = SpeedT4;
@@ -9624,12 +9438,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iT4 > -1) {
-					SpeedT4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT4];
-					SpeedTT4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT4]; // скорость внутри твёрдого тела
+					SpeedT4 = potent[RE_THETA_LANGTRY_MENTER][iT4];
+					SpeedTT4 = potent[RE_THETA_LANGTRY_MENTER][iT4]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedT4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT];
-					SpeedTT4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iT]; // скорость внутри твёрдого тела
+					SpeedT4 = potent[RE_THETA_LANGTRY_MENTER][iT];
+					SpeedTT4 = potent[RE_THETA_LANGTRY_MENTER][iT]; // скорость внутри твёрдого тела
 				}
 				positionzt4 = positionzP + 0.5 * dz;
 				positionzT4 = positionzP + 0.5 * dz;
@@ -9637,7 +9451,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			}
 
 			if ((!bB4) && (iB4 > -1)) {
-				SpeedB4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB4];
+				SpeedB4 = potent[RE_THETA_LANGTRY_MENTER][iB4];
 				//center_cord3D(iB4,nvtx,pa,pointP,B_SIDE);
 				pointP = center_coord_loc[iB4];
 				positionzB4 = pointP.z;
@@ -9656,7 +9470,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 				if ((iBB4 >= 0) && (iBB4 < maxelm)) {
 					// внутренний узел
-					SpeedBB4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iBB4];
+					SpeedBB4 = potent[RE_THETA_LANGTRY_MENTER][iBB4];
 					//center_cord3D(iBB4,nvtx,pa,pointP,BB_SIDE);
 					pointP = center_coord_loc[iBB4];
 					positionzBB4 = pointP.z;
@@ -9665,7 +9479,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				{
 					// граничный узел
 					if ((iBB4 >= maxelm) && (iBB4 < maxelm + maxbound)) {
-						SpeedBB4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iBB4];
+						SpeedBB4 = potent[RE_THETA_LANGTRY_MENTER][iBB4];
 					}
 					else {
 						SpeedBB4 = SpeedB4;
@@ -9679,12 +9493,12 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			else {
 				// это граничный узел
 				if (iB4 > -1) {
-					SpeedB4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB4];
-					SpeedBB4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB4]; // скорость внутри твёрдого тела
+					SpeedB4 = potent[RE_THETA_LANGTRY_MENTER][iB4];
+					SpeedBB4 = potent[RE_THETA_LANGTRY_MENTER][iB4]; // скорость внутри твёрдого тела
 				}
 				else {
-					SpeedB4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB];
-					SpeedBB4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iB]; // скорость внутри твёрдого тела
+					SpeedB4 = potent[RE_THETA_LANGTRY_MENTER][iB];
+					SpeedBB4 = potent[RE_THETA_LANGTRY_MENTER][iB]; // скорость внутри твёрдого тела
 				}
 				positionzb4 = positionzP - 0.5 * dz;
 				positionzB4 = positionzP - 0.5 * dz;
@@ -9692,6 +9506,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			}
 
 		}
+
 
 
 		if ((ishconvection >= QUICK) && (ishconvection <= FROMM)) {
@@ -9743,7 +9558,6 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				Speedb4 = cell_face_value_global(ishconvection, (Fb4), SpeedBB4, SpeedB4, SpeedP, SpeedT4);
 
 			}
-
 
 		}
 
@@ -9815,14 +9629,14 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			if (ishconvection == UNEVENQUICK) {
 				// X - direction
-				Speede = workQUICK(dx, 2.0*(positionxE - positionxe), positionxW, positionxP, positionxE, positionxEE, SpeedW, SpeedP, SpeedE, SpeedEE, (Fe));
-				Speedw = workQUICK(2.0*(positionxw - positionxW), dx, positionxWW, positionxW, positionxP, positionxE, SpeedWW, SpeedW, SpeedP, SpeedE, (Fw));
+				Speede = workQUICK(dx, 2.0 * (positionxE - positionxe), positionxW, positionxP, positionxE, positionxEE, SpeedW, SpeedP, SpeedE, SpeedEE, (Fe));
+				Speedw = workQUICK(2.0 * (positionxw - positionxW), dx, positionxWW, positionxW, positionxP, positionxE, SpeedWW, SpeedW, SpeedP, SpeedE, (Fw));
 				// Y - direction
-				Speedn = workQUICK(dy, 2.0*(positionyN - positionyn), positionyS, positionyP, positionyN, positionyNN, SpeedS, SpeedP, SpeedN, SpeedNN, (Fn));
-				Speeds = workQUICK(2.0*(positionys - positionyS), dy, positionySS, positionyS, positionyP, positionyN, SpeedSS, SpeedS, SpeedP, SpeedN, (Fs));
+				Speedn = workQUICK(dy, 2.0 * (positionyN - positionyn), positionyS, positionyP, positionyN, positionyNN, SpeedS, SpeedP, SpeedN, SpeedNN, (Fn));
+				Speeds = workQUICK(2.0 * (positionys - positionyS), dy, positionySS, positionyS, positionyP, positionyN, SpeedSS, SpeedS, SpeedP, SpeedN, (Fs));
 				// Z - direction
-				Speedt = workQUICK(dz, 2.0*(positionzT - positionzt), positionzB, positionzP, positionzT, positionzTT, SpeedB, SpeedP, SpeedT, SpeedTT, (Ft));
-				Speedb = workQUICK(2.0*(positionzb - positionzB), dz, positionzBB, positionzB, positionzP, positionzT, SpeedBB, SpeedB, SpeedP, SpeedT, (Fb));
+				Speedt = workQUICK(dz, 2.0 * (positionzT - positionzt), positionzB, positionzP, positionzT, positionzTT, SpeedB, SpeedP, SpeedT, SpeedTT, (Ft));
+				Speedb = workQUICK(2.0 * (positionzb - positionzB), dz, positionzBB, positionzB, positionzP, positionzT, SpeedBB, SpeedB, SpeedP, SpeedT, (Fb));
 
 
 				if (b_on_adaptive_local_refinement_mesh) {
@@ -9882,6 +9696,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				//printf("%f, %f, %f, %f, %f, %f\n",Speede,Speedw,Speedn,Speeds,Speedt,Speedb);
 				//getchar();
 
+
 				if (b_on_adaptive_local_refinement_mesh) {
 
 					// X - direction
@@ -9935,34 +9750,34 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		if (1) {
 
 			/*
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae=De*fD(Pe, EXP2, true, feplus) + fmax(-(Fe),0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw=Dw*fD(Pw, EXP2, true, fwplus) + fmax((Fw),0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an=Dn*fD(Pn, EXP2, true, fnplus) + fmax(-(Fn),0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as=Ds*fD(Ps, EXP2, true, fsplus) + fmax((Fs),0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at=Dt*fD(Pt, EXP2, true, ftplus) + fmax(-(Ft),0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab=Db*fD(Pb, EXP2, true, fbplus) + fmax((Fb),0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae=De*fD(Pe, EXP2, true, feplus) + fmax(-(Fe),0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw=Dw*fD(Pw, EXP2, true, fwplus) + fmax((Fw),0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].an=Dn*fD(Pn, EXP2, true, fnplus) + fmax(-(Fn),0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].as=Ds*fD(Ps, EXP2, true, fsplus) + fmax((Fs),0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].at=Dt*fD(Pt, EXP2, true, ftplus) + fmax(-(Ft),0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab=Db*fD(Pb, EXP2, true, fbplus) + fmax((Fb),0.0);
 			*/
 
 			// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
 			// Нужно просто UDS.
 			// так рекомендуют в интернетах.
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De + fmax(-(Fe), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw + fmax((Fw), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn + fmax(-(Fn), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds + fmax((Fs), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt + fmax(-(Ft), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db + fmax((Fb), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De + fmax(-(Fe), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw + fmax((Fw), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn + fmax(-(Fn), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds + fmax((Fs), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt + fmax(-(Ft), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db + fmax((Fb), 0.0);
 
 
 			// 08.05.2017.
 			// Моя наработка:
 			// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = De + fmax(+(Fe), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw + fmax(-(Fw), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn + fmax(+(Fn), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds + fmax(-(Fs), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt + fmax(+(Ft), 0.0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db + fmax(-(Fb), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = De + fmax(+(Fe), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw + fmax(-(Fw), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn + fmax(+(Fn), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds + fmax(-(Fs), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt + fmax(+(Ft), 0.0);
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db + fmax(-(Fb), 0.0);
 
 			/*
 			sumanb = De + fmax(+(Fe), 0.0);
@@ -9973,28 +9788,29 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			sumanb += Db + fmax(-(Fb), 0.0);
 			*/
 
+
 			if (b_on_adaptive_local_refinement_mesh) {
 
 				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
 			 // Нужно просто UDS.
 			 // так рекомендуют в интернетах.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
 
 
 				// 08.05.2017.
 				// Моя наработка:
 				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += De2 + fmax(+(Fe2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw2 + fmax(-(Fw2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn2 + fmax(+(Fn2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds2 + fmax(-(Fs2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt2 + fmax(+(Ft2), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db2 + fmax(-(Fb2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += De2 + fmax(+(Fe2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw2 + fmax(-(Fw2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn2 + fmax(+(Fn2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds2 + fmax(-(Fs2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt2 + fmax(+(Ft2), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db2 + fmax(-(Fb2), 0.0);
 
 				/*
 				sumanb += De2 + fmax(+(Fe2), 0.0);
@@ -10009,23 +9825,23 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
 		   // Нужно просто UDS.
 		   // так рекомендуют в интернетах.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
 
 
 				// 08.05.2017.
 				// Моя наработка:
 				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += De3 + fmax(+(Fe3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw3 + fmax(-(Fw3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn3 + fmax(+(Fn3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds3 + fmax(-(Fs3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt3 + fmax(+(Ft3), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db3 + fmax(-(Fb3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += De3 + fmax(+(Fe3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw3 + fmax(-(Fw3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn3 + fmax(+(Fn3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds3 + fmax(-(Fs3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt3 + fmax(+(Ft3), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db3 + fmax(-(Fb3), 0.0);
 
 				/*
 				sumanb += De3 + fmax(+(Fe3), 0.0);
@@ -10040,23 +9856,23 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				// Оставил как единственно верное и рекомендуемое в литературе 7.05.2017.
 		   // Нужно просто UDS.
 		   // так рекомендуют в интернетах.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
 
 
 				// 08.05.2017.
 				// Моя наработка:
 				// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += De4 + fmax(+(Fe4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw4 + fmax(-(Fw4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn4 + fmax(+(Fn4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds4 + fmax(-(Fs4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt4 + fmax(+(Ft4), 0.0);
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db4 + fmax(-(Fb4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += De4 + fmax(+(Fe4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dw4 + fmax(-(Fw4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dn4 + fmax(+(Fn4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Ds4 + fmax(-(Fs4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Dt4 + fmax(+(Ft4), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += Db4 + fmax(-(Fb4), 0.0);
 
 				/*
 				sumanb += De4 + fmax(+(Fe4), 0.0);
@@ -10083,208 +9899,209 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		   // Вблизи стенки порядок схемы понижается до UDS.
 			if (!bE) {
 				// строго внутренняя.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De + fmax(-(Fe), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De + fmax(-(Fe), 0.0);
 			}
 			else {
 				integer inumber = iE - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De + fabs(Fe);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De + fabs(Fe);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De + fabs(Fe);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae = De + fabs(Fe);
 				}
 			}
 
 			if (!bW) {
 				// строго внутренняя.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw + fmax((Fw), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw + fmax((Fw), 0.0);
 			}
 			else {
 				integer inumber = iW - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw + fabs(Fw);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw + fabs(Fw);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw + fabs(Fw);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw = Dw + fabs(Fw);
 				}
 			}
 
 			if (!bN) {
 				// строго внутренняя.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn + fmax(-(Fn), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn + fmax(-(Fn), 0.0);
 			}
 			else {
 				integer inumber = iN - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn + fabs(Fn);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn + fabs(Fn);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an = Dn + fabs(Fn);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an = Dn + fabs(Fn);
 				}
 			}
 
 			if (!bS) {
 				// строго внутренняя.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds + fmax((Fs), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds + fmax((Fs), 0.0);
 			}
 			else {
 				integer inumber = iS - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds + fabs(Fs);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds + fabs(Fs);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as = Ds + fabs(Fs);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as = Ds + fabs(Fs);
 				}
 			}
 
 			if (!bT) {
 				// строго внутренняя.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt + fmax(-(Ft), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt + fmax(-(Ft), 0.0);
 			}
 			else {
 				integer inumber = iT - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt + fabs(Ft);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt + fabs(Ft);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at = Dt + fabs(Ft);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at = Dt + fabs(Ft);
 				}
 			}
 
 			if (!bB) {
 				// строго внутренняя.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db + fmax((Fb), 0.0);
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db + fmax((Fb), 0.0);
 			}
 			else {
 				integer inumber = iB - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db + fabs(Fb);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db + fabs(Fb);
 				}
 				else {
 					// Во всех остальных случаях также снижаем порядок до первого.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab = Db + fabs(Fb);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab = Db + fabs(Fb);
 				}
 			}
+
 
 			if (b_on_adaptive_local_refinement_mesh) {
 
 				// Вблизи стенки порядок схемы понижается до UDS.
 				if (!bE2) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 + fmax(-(Fe2), 0.0);
 				}
 				else {
 					integer inumber = iE2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 + fabs(Fe2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 + fabs(Fe2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 = De2 + fabs(Fe2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 = De2 + fabs(Fe2);
 					}
 				}
 
 				if (!bW2) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 + fmax((Fw2), 0.0);
 				}
 				else {
 					integer inumber = iW2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 + fabs(Fw2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 + fabs(Fw2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 = Dw2 + fabs(Fw2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 = Dw2 + fabs(Fw2);
 					}
 				}
 
 				if (!bN2) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 + fmax(-(Fn2), 0.0);
 				}
 				else {
 					integer inumber = iN2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 + fabs(Fn2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 + fabs(Fn2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 = Dn2 + fabs(Fn2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 = Dn2 + fabs(Fn2);
 					}
 				}
 
 				if (!bS2) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 + fmax((Fs2), 0.0);
 				}
 				else {
 					integer inumber = iS2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 + fabs(Fs2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 + fabs(Fs2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 = Ds2 + fabs(Fs2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 = Ds2 + fabs(Fs2);
 					}
 				}
 
 				if (!bT2) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 + fmax(-(Ft2), 0.0);
 				}
 				else {
 					integer inumber = iT2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 + fabs(Ft2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 + fabs(Ft2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 = Dt2 + fabs(Ft2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 = Dt2 + fabs(Ft2);
 					}
 				}
 
 				if (!bB2) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 + fmax((Fb2), 0.0);
 				}
 				else {
 					integer inumber = iB2 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 + fabs(Fb2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 + fabs(Fb2);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 = Db2 + fabs(Fb2);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 = Db2 + fabs(Fb2);
 					}
 				}
 
@@ -10292,103 +10109,103 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				// Вблизи стенки порядок схемы понижается до UDS.
 				if (!bE3) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 + fmax(-(Fe3), 0.0);
 				}
 				else {
 					integer inumber = iE3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 + fabs(Fe3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 + fabs(Fe3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 = De3 + fabs(Fe3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 = De3 + fabs(Fe3);
 					}
 				}
 
 				if (!bW3) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 + fmax((Fw3), 0.0);
 				}
 				else {
 					integer inumber = iW3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 + fabs(Fw3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 + fabs(Fw3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 = Dw3 + fabs(Fw3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 = Dw3 + fabs(Fw3);
 					}
 				}
 
 				if (!bN3) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 + fmax(-(Fn3), 0.0);
 				}
 				else {
 					integer inumber = iN3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 + fabs(Fn3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 + fabs(Fn3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 = Dn3 + fabs(Fn3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 = Dn3 + fabs(Fn3);
 					}
 				}
 
 				if (!bS3) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 + fmax((Fs3), 0.0);
 				}
 				else {
 					integer inumber = iS3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 + fabs(Fs3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 + fabs(Fs3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 = Ds3 + fabs(Fs3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 = Ds3 + fabs(Fs3);
 					}
 				}
 
 				if (!bT3) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 + fmax(-(Ft3), 0.0);
 				}
 				else {
 					integer inumber = iT3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 + fabs(Ft3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 + fabs(Ft3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 = Dt3 + fabs(Ft3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 = Dt3 + fabs(Ft3);
 					}
 				}
 
 				if (!bB3) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 + fmax((Fb3), 0.0);
 				}
 				else {
 					integer inumber = iB3 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 + fabs(Fb3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 + fabs(Fb3);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 = Db3 + fabs(Fb3);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 = Db3 + fabs(Fb3);
 					}
 				}
 
@@ -10396,103 +10213,103 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 				// Вблизи стенки порядок схемы понижается до UDS.
 				if (!bE4) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 + fmax(-(Fe4), 0.0);
 				}
 				else {
 					integer inumber = iE4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 + fabs(Fe4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 + fabs(Fe4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 = De4 + fabs(Fe4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 = De4 + fabs(Fe4);
 					}
 				}
 
 				if (!bW4) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 + fmax((Fw4), 0.0);
 				}
 				else {
 					integer inumber = iW4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 + fabs(Fw4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 + fabs(Fw4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 = Dw4 + fabs(Fw4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 = Dw4 + fabs(Fw4);
 					}
 				}
 
 				if (!bN4) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 + fmax(-(Fn4), 0.0);
 				}
 				else {
 					integer inumber = iN4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 + fabs(Fn4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 + fabs(Fn4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 = Dn4 + fabs(Fn4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 = Dn4 + fabs(Fn4);
 					}
 				}
 
 				if (!bS4) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 + fmax((Fs4), 0.0);
 				}
 				else {
 					integer inumber = iS4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 + fabs(Fs4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 + fabs(Fs4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 = Ds4 + fabs(Fs4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 = Ds4 + fabs(Fs4);
 					}
 				}
 
 				if (!bT4) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 + fmax(-(Ft4), 0.0);
 				}
 				else {
 					integer inumber = iT4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 + fabs(Ft4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 + fabs(Ft4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 = Dt4 + fabs(Ft4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 = Dt4 + fabs(Ft4);
 					}
 				}
 
 				if (!bB4) {
 					// строго внутренняя.
-					sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
+					sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 + fmax((Fb4), 0.0);
 				}
 				else {
 					integer inumber = iB4 - maxelm;
 					if (border_neighbor[inumber].MCB == (ls + lw)) {
 						// условие по умолчанию: твёрдая стенка.
 						// усиление влияния нуля на границе, нам же нужно влияние стенки.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 + fabs(Fb4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 + fabs(Fb4);
 					}
 					else {
 						// Во всех остальных случаях также снижаем порядок до первого.
-						sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 = Db4 + fabs(Fb4);
+						sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 = Db4 + fabs(Fb4);
 					}
 				}
 
@@ -10502,25 +10319,25 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 
 			// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+			sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 
-			//sumanb = sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+			//sumanb = sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 
 
 			if (b_on_adaptive_local_refinement_mesh) {
 
 				// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2;
 
-				//sumanb += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2;
+				//sumanb += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2;
 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3;
 
-				//sumanb += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3;
+				//sumanb += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3;
 
-				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4;
+				sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4;
 
-				//sumanb += sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4;
+				//sumanb += sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 + sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4;
 
 
 			}
@@ -10529,26 +10346,26 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 
 		// 7.05.2017 Оставил как единственно верное и рекомендованное в литературе.
-		//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap=sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+		//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap=sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae+sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw+sl[RE_THETA_LANGTRY_MENTER_SL][iP].an+sl[RE_THETA_LANGTRY_MENTER_SL][iP].as+sl[RE_THETA_LANGTRY_MENTER_SL][iP].at+sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 
-		//sumanb=sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at+sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
+		//sumanb=sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae+sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw+sl[RE_THETA_LANGTRY_MENTER_SL][iP].an+sl[RE_THETA_LANGTRY_MENTER_SL][iP].as+sl[RE_THETA_LANGTRY_MENTER_SL][iP].at+sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab;
 
 		//13 августа 2016.
-		//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab);
-		//sumanb = fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at) + fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab);
+		//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab);
+		//sumanb = fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].an) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].as) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].at) + fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab);
 
 
 		if (1) {
 			// Вклад в правую часть (метод отложенной коррекции):
 			// X - direction
-			attrs += -fmax((Fe), 0)*(Speede - SpeedP) + fmax(-(Fe), 0)*(Speede - SpeedE);
-			attrs += -fmax(-(Fw), 0)*(Speedw - SpeedP) + fmax((Fw), 0)*(Speedw - SpeedW);
+			attrs += -fmax((Fe), 0) * (Speede - SpeedP) + fmax(-(Fe), 0) * (Speede - SpeedE);
+			attrs += -fmax(-(Fw), 0) * (Speedw - SpeedP) + fmax((Fw), 0) * (Speedw - SpeedW);
 			// Y - direction
-			attrs += -fmax((Fn), 0)*(Speedn - SpeedP) + fmax(-(Fn), 0)*(Speedn - SpeedN);
-			attrs += -fmax(-(Fs), 0)*(Speeds - SpeedP) + fmax((Fs), 0)*(Speeds - SpeedS);
+			attrs += -fmax((Fn), 0) * (Speedn - SpeedP) + fmax(-(Fn), 0) * (Speedn - SpeedN);
+			attrs += -fmax(-(Fs), 0) * (Speeds - SpeedP) + fmax((Fs), 0) * (Speeds - SpeedS);
 			// Z - direction
-			attrs += -fmax((Ft), 0)*(Speedt - SpeedP) + fmax(-(Ft), 0)*(Speedt - SpeedT);
-			attrs += -fmax(-(Fb), 0)*(Speedb - SpeedP) + fmax((Fb), 0)*(Speedb - SpeedB);
+			attrs += -fmax((Ft), 0) * (Speedt - SpeedP) + fmax(-(Ft), 0) * (Speedt - SpeedT);
+			attrs += -fmax(-(Fb), 0) * (Speedb - SpeedP) + fmax((Fb), 0) * (Speedb - SpeedB);
 
 
 			if (b_on_adaptive_local_refinement_mesh) {
@@ -10597,23 +10414,24 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		   // 
 		   // Вблизи стенки порядок схемы понижается до UDS.
 			if (!bE) {
-				attrs += -fmax((Fe), 0)*(Speede - SpeedP) + fmax(-(Fe), 0)*(Speede - SpeedE);
+				attrs += -fmax((Fe), 0) * (Speede - SpeedP) + fmax(-(Fe), 0) * (Speede - SpeedE);
 			}
 			if (!bW) {
-				attrs += -fmax(-(Fw), 0)*(Speedw - SpeedP) + fmax((Fw), 0)*(Speedw - SpeedW);
+				attrs += -fmax(-(Fw), 0) * (Speedw - SpeedP) + fmax((Fw), 0) * (Speedw - SpeedW);
 			}
 			if (!bN) {
-				attrs += -fmax((Fn), 0)*(Speedn - SpeedP) + fmax(-(Fn), 0)*(Speedn - SpeedN);
+				attrs += -fmax((Fn), 0) * (Speedn - SpeedP) + fmax(-(Fn), 0) * (Speedn - SpeedN);
 			}
 			if (!bS) {
-				attrs += -fmax(-(Fs), 0)*(Speeds - SpeedP) + fmax((Fs), 0)*(Speeds - SpeedS);
+				attrs += -fmax(-(Fs), 0) * (Speeds - SpeedP) + fmax((Fs), 0) * (Speeds - SpeedS);
 			}
 			if (!bT) {
-				attrs += -fmax((Ft), 0)*(Speedt - SpeedP) + fmax(-(Ft), 0)*(Speedt - SpeedT);
+				attrs += -fmax((Ft), 0) * (Speedt - SpeedP) + fmax(-(Ft), 0) * (Speedt - SpeedT);
 			}
 			if (!bB) {
-				attrs += -fmax(-(Fb), 0)*(Speedb - SpeedP) + fmax((Fb), 0)*(Speedb - SpeedB);
+				attrs += -fmax(-(Fb), 0) * (Speedb - SpeedP) + fmax((Fb), 0) * (Speedb - SpeedB);
 			}
+
 
 			if (b_on_adaptive_local_refinement_mesh) {
 
@@ -10678,6 +10496,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			}
 
+
 		}
 
 		//attrs=0.0; // сброс схемы высокой разрешающей способности (например схемы Леонарда).
@@ -10715,224 +10534,253 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		printf("ERROR deltaF=%e\n", deltaF);
 	}
 
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap) {
-		printf("ap!=ap assemble bug. Apriory deltaF. iP=%lld ap=%e\n", iP, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap);
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap) {
+		printf("ap!=ap assemble bug. Apriory deltaF. iP=%lld ap=%e\n", iP, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap);
 		system("pause");
 	}
-	//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += deltaF;//-->//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap) {
-		printf("ap!=ap assemble bug. Apost deltaF. iP=%lld ap=%e\n", iP, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap);
+	//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += deltaF;//-->//sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap) {
+		printf("ap!=ap assemble bug. Apost deltaF. iP=%lld ap=%e\n", iP, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap);
 		system("pause");
 	}
 
 
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b = attrs; // метод отложенной коррекции для схемы высокой разрешающей способности.
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b) {
-		printf("exptsr+attrs error NAN or INF in control volume %lld TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA\n", iP);
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].b = attrs; // метод отложенной коррекции для схемы высокой разрешающей способности.
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].b != sl[RE_THETA_LANGTRY_MENTER_SL][iP].b) {
+		printf("exptsr+attrs error NAN or INF in control volume %lld RE_THETA_LANGTRY_MENTER\n", iP);
 		system("pause");
 	}
 
 
 	// генерация
-	//doublereal mut = (rP*fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) / fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-	//doublereal mut = potent[MUT][iP];
-	//doublereal Pk;// = fmin((mut)*SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP], 20.0*eqin.fluidinfo[0].beta_zvezda*rP*fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-	//Pk = fmin(prop[MU][iP]*SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP], 10.0*eqin.fluidinfo[0].beta_zvezda*rP*fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-	//doublereal Pk_omega = (0.555*F1 + 0.44*(1.0 - F1))*rP*SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP];// alpha*S^2
-	doublereal alpha_om = (eqin.fluidinfo[0].alpha1*F1 + eqin.fluidinfo[0].alpha2*(1.0 - F1));
-	doublereal Pk_omega = alpha_om*rP*potent[CURL][iP] * potent[CURL][iP];
-	//Pk_omega = fmin(Pk_omega, 10.0*(F1*eqin.fluidinfo[0].beta1 + (1.0 - F1)*eqin.fluidinfo[0].beta2)*rP*
-		//fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) *
-		//fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-	// Попробовать еще k*Omega.
+
+	doublereal P_Theta_T=0.0;
+
+	
+
+	doublereal Usquare = fmax(1.0e-6,potent[VXCOR][iP] * potent[VXCOR][iP] + potent[VYCOR][iP] * potent[VYCOR][iP] + potent[VZCOR][iP] * potent[VZCOR][iP]);
+	doublereal T_val = (500.0 * prop[MU_DYNAMIC_VISCOSITY][iP]) / (rP*Usquare);
+
+	doublereal delta = fmax(1.0e-9, 375.0 * potent[CURL][iP] * prop[MU_DYNAMIC_VISCOSITY][iP] * potent[RE_THETA_LANGTRY_MENTER][iP] * distance_to_wall[iP] / (rP* Usquare));
+
+	doublereal Re_omega = rP * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) * distance_to_wall[iP] * distance_to_wall[iP] / prop[MU_DYNAMIC_VISCOSITY][iP];
+	doublereal Fwake = exp(-(Re_omega /1.0e5)*(Re_omega /1.0e5));
+
+	doublereal F_Theta_T = fmin(fmax(Fwake*exp(-(distance_to_wall[iP]/ delta)* (distance_to_wall[iP] / delta)* (distance_to_wall[iP] / delta)* (distance_to_wall[iP] / delta)),1.0-((eqin.fluidinfo[0].Cepsilon2* fmin(1.0, fmax(0.0, potent[GAMMA_LANGTRY_MENTER][iP])) -1.0)/(eqin.fluidinfo[0].Cepsilon2  -1.0))*((eqin.fluidinfo[0].Cepsilon2 * fmin(1.0, fmax(0.0, potent[GAMMA_LANGTRY_MENTER][iP])) - 1.0) / (eqin.fluidinfo[0].Cepsilon2 - 1.0))),1.0);
+
+	doublereal Tu = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][iP] / (3.0 * Usquare));
+	if (Tu < 0.027) {
+		Tu = 0.027;
+	}
+
+	doublereal dU_na_ds = (1.0 / Usquare) * (potent[VELOCITY_X_COMPONENT][iP]*potent[VELOCITY_X_COMPONENT][iP]*potent[GRADXVX][iP]+
+		potent[VELOCITY_X_COMPONENT][iP] * potent[VELOCITY_Y_COMPONENT][iP] * potent[GRADYVX][iP] + 
+		potent[VELOCITY_X_COMPONENT][iP] * potent[VELOCITY_Z_COMPONENT][iP] * potent[GRADZVX][iP] + 
+		potent[VELOCITY_Y_COMPONENT][iP] * potent[VELOCITY_X_COMPONENT][iP] * potent[GRADXVY][iP] +
+		potent[VELOCITY_Y_COMPONENT][iP] * potent[VELOCITY_Y_COMPONENT][iP] * potent[GRADYVY][iP] +
+		potent[VELOCITY_Y_COMPONENT][iP] * potent[VELOCITY_Z_COMPONENT][iP] * potent[GRADZVY][iP] + 
+		potent[VELOCITY_Z_COMPONENT][iP] * potent[VELOCITY_X_COMPONENT][iP] * potent[GRADXVZ][iP] +
+		potent[VELOCITY_Z_COMPONENT][iP] * potent[VELOCITY_Y_COMPONENT][iP] * potent[GRADYVZ][iP] +
+		potent[VELOCITY_Z_COMPONENT][iP] * potent[VELOCITY_Z_COMPONENT][iP] * potent[GRADZVZ][iP]);
+
+	doublereal thetaT = 0.1; // Требует итерационного решения для нахождения.
+	doublereal lambda_theta, Re_theta_T_eq;
+
+	// 100 итераций.
+	for (integer iter_loc = 0; iter_loc < 100; iter_loc++) 
+	{
+		lambda_theta = (rP * thetaT * thetaT / prop[MU_DYNAMIC_VISCOSITY][iP]) * dU_na_ds;
+		if (lambda_theta > 0.1) {
+			lambda_theta = 0.1;
+		}
+		if (lambda_theta < -0.1) {
+			lambda_theta = -0.1;
+		}
+
+		Re_theta_T_eq = Re_theta_eq(lambda_theta, Tu);
+		if (Re_theta_T_eq < 20.0) {
+			Re_theta_T_eq = 20.0;
+		}
+
+		// Нижняя релаксация: 0,2.
+		thetaT = 0.2 * ((Re_theta_T_eq * prop[MU_DYNAMIC_VISCOSITY][iP]) / (rP * sqrt(Usquare))) + 0.8 * thetaT;
+	}
+
+
+	P_Theta_T = eqin.fluidinfo[0].CthetaT * (rP / (T_val)) * (Re_theta_T_eq - potent[RE_THETA_LANGTRY_MENTER][iP]) * (1.0 - F_Theta_T);
 	
 	if (brthdsd_ON) {
-		//doublereal gamma = (F1*eqin.fluidinfo[0].beta1 + (1.0 - F1)*eqin.fluidinfo[0].beta2) / eqin.fluidinfo[0].beta_zvezda;
-		//dSc = gamma * rP*Pk / fmax(potent[MUT][iP], 0.01*prop[MU][iP]); // Генерация.
-		dSc = Pk_omega;
-		// диссипация
-		dSc -= (F1 * eqin.fluidinfo[0].beta1 + (1.0 - F1) * eqin.fluidinfo[0].beta2) * rP *
-			fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) *
-			fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-		// cross-diffusion term
-		//dSc += (1.0 - F1)*Dkw;
-		dSc += (1.0 - F1) * CDkw;// Всегда больше нуля.
+		dSc = P_Theta_T;
+		// диссипация отсутствует.		
 	}
 	else {
 		dSc = 0.0;
 	}
-		if (dSc != dSc) {
-			//printf("Pk=%e generation=%e\n", Pk, gamma * rP*Pk / fmax(potent[MUT][iP], 0.01*prop[MU][iP]));
-			printf("Pk_omega=%e\n", Pk_omega);
-			printf("cross diffusion=%e\n", (1.0 - F1)*Dkw);
-			printf("dissipation=%e\n", (F1*eqin.fluidinfo[0].beta1 + (1.0 - F1)*eqin.fluidinfo[0].beta2)*rP*
-				fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) *
-				fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
-		}
-	
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b += dSc * dx*dy*dz; // Архимедова сила всплытия. (тест Валь Девиса, задача Релея-Бенара.)
+	sl[RE_THETA_LANGTRY_MENTER_SL][iP].b += dSc * dx * dy * dz; // генерация минус диссипация.
 
 
 	if (btimedep) {
-		doublereal apzero=rP*dx*dy*dz/tauparam;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += apzero;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b += apzero*specific_dissipation_rate_old_time_step[iP];
+		// Учет нестационарного члена.
+		doublereal apzero = rP * dx * dy * dz / tauparam;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap += apzero;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].b += apzero * Re_Theta_Menter_Lantgry_old_time_step[iP];
 	}
 
 
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].b != sl[RE_THETA_LANGTRY_MENTER_SL][iP].b) {
 		printf("dSc*dx*dy*dz error NAN or INF in control volume %lld\n", iP);
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA\n");
+		printf("RE_THETA_LANGTRY_MENTER\n");
 		system("pause");
 	}
 
-	if (fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap) < 1.0e-30) {
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = 1.0;
-		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP];
-		printf("Error! negative ap\n");
-		system("pause");
-		if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b) {
-			printf("Zero ap in TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA component.\n");
+	if (fabs(sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap) < 1.0e-30) {
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap = 1.0;
+		sl[RE_THETA_LANGTRY_MENTER_SL][iP].b = potent[RE_THETA_LANGTRY_MENTER][iP];
+
+		if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].b != sl[RE_THETA_LANGTRY_MENTER_SL][iP].b) {
+			printf("Zero ap in RE_THETA_LANGTRY_MENTER component.\n");
 		}
 	}
 
 
 
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap) {
-		printf("ap!=ap assemble bug. iP=%lld ap=%e\n", iP, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap);
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap) {
+		printf("ap!=ap assemble bug. iP=%lld ap=%e\n", iP, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ap);
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae) {
 		printf("ae!=ae assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw != sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw) {
 		printf("aw!=aw assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].an != sl[RE_THETA_LANGTRY_MENTER_SL][iP].an) {
 		printf("an!=an assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].as != sl[RE_THETA_LANGTRY_MENTER_SL][iP].as) {
 		printf("as!=as assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].at != sl[RE_THETA_LANGTRY_MENTER_SL][iP].at) {
 		printf("at!=at assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab) {
 		printf("ab!=ab assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2) {
-		printf("ae2!=ae2 assemble bug %e %e\n", sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae2);
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2) {
+		printf("ae2!=ae2 assemble bug %e %e\n", sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2, sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae2);
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw2) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw2) {
 		printf("aw2!=aw2 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an2) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].an2) {
 		printf("an2!=an2 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as2) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].as2) {
 		printf("as2!=as2 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at2) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].at2) {
 		printf("at2!=at2 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab2) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab2) {
 		printf("ab2!=ab2 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae3) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae3) {
 		printf("ae3!=ae3 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw3) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw3) {
 		printf("aw3!=aw3 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an3) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].an3) {
 		printf("an3!=an3 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as3) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].as3) {
 		printf("as3!=as3 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at3) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].at3) {
 		printf("at3!=at3 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab3) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab3) {
 		printf("ab3!=ab3 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae4) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ae4) {
 		printf("ae4!=ae4 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw4) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].aw4) {
 		printf("aw4!=aw4 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an4) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].an4) {
 		printf("an4!=an4 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as4) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].as4) {
 		printf("as4!=as4 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at4) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].at4) {
 		printf("at4!=at4 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
-	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4 != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab4) {
+	if (sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4 != sl[RE_THETA_LANGTRY_MENTER_SL][iP].ab4) {
 		printf("ab4!=ab4 assemble bug\n");
-		printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");
+		printf("RE_THETA_LANGTRY_MENTER \n");
 		system("pause");
 	}
 
-} // my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D
+} // my_elmatr_quad_turbulent_Re_Theta_Langtry_MenterSST_3D
 
-// учёт граничных условий для кинетической энергии турбулентных пульсаций.
-void my_elmatr_quad_kinetik_turbulence_energy_3D_bound(integer inumber, integer maxelm,
+
+
+// учёт граничных условий для функции перемежаемости gamma в модели Ментора Лентгри.
+void my_elmatr_quad_Gamma_Langtry_Mentor_3D_bound(integer inumber, integer maxelm,
 	bool bDirichlet, BOUND* border_neighbor, integer ls, integer lw,
 	WALL* w,
 	//integer iVar,
-	equation3D_bon* &slb,
-	TOCHKA* pa, int** nvtx, 
+	equation3D_bon*& slb,
+	TOCHKA* pa, int** nvtx,
 	float** prop_b, float** prop,
 	doublereal** potent
 	//, integer iflowregime
@@ -10960,20 +10808,18 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound(integer inumber, integer 
 
    // Алгоритм.
    /* 1. Условие дирихле.
-		 Это обязательно стенка.
-		 условие симметрии и не выходная граница bpressure.
+		 Это обязательно только в дальнем поле, т.е. на входной границе потока.
+		 НЕ условие симметрии и не выходная граница bpressure.
 		 и не opening в случае вытекания потока.
-	  2. Условие дирихле. это источник тепла или твёрдая стенка.
+	  2. Условие Неймана. это твёрдая стенка, граница симметрии или выходная граница.
    */
 
-   // Параметр для множителя для значения на входной границе потока.
-	const doublereal multiplyer_coeff_turbulent_nu_input = 2.0; // от одного до пяти.
-	const doublereal Kinf_om = 1.0;
-	const doublereal Kturm_k = 1.0e-5;
+   
 
-   // Сначала запишем граничные условия Дирихле
-  //if (bDirichlet && (border_neighbor[inumber].MCB<(ls + lw)) && (border_neighbor[inumber].MCB >= ls) && (!w[border_neighbor[inumber].MCB - ls].bopening) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[border_neighbor[inumber].MCB - ls].bpressure)) {
-	if (bDirichlet && (border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((!w[border_neighbor[inumber].MCB - ls].bpressure) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry))) {
+	// Сначала запишем граничные условия Дирихле
+   //if (bDirichlet && (border_neighbor[inumber].MCB<(ls + lw)) && (border_neighbor[inumber].MCB >= ls) && (!w[border_neighbor[inumber].MCB - ls].bopening) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[border_neighbor[inumber].MCB - ls].bpressure)) {
+	if (bDirichlet && (border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) &&
+		((!w[border_neighbor[inumber].MCB - ls].bpressure) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry))) {
 
 		//system("PAUSE");
 
@@ -10986,79 +10832,40 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound(integer inumber, integer 
 
 		//border_neighbor[inumber].Norm - внутренняя нормаль.
 		if (w[border_neighbor[inumber].MCB - ls].bopening) {
-			if  (((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
-				 ((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
-				 ((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
+			if (((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
 			{
 
-				doublereal omega_inf = 0.0;
-				if ((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE)) {
-					omega_inf = Kinf_om*fabs(potent[VXCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS)*(w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS) + (w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS)*(w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS));
-				}
-				if ((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE)) {
-					omega_inf = Kinf_om*fabs(potent[VYCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS)*(w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS) + (w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS)*(w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS));
-				}
-				if ((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE)) {
-					omega_inf = Kinf_om*fabs(potent[VZCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS)*(w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS) + (w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS)*(w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS));
-				}
-
-				if (0) {
-
-					if ((border_neighbor[inumber].Norm == E_SIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
-						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
-					}
-					if ((border_neighbor[inumber].Norm == W_SIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
-						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
-					}
-					if ((border_neighbor[inumber].Norm == N_SIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
-						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
-					}
-					if ((border_neighbor[inumber].Norm == S_SIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
-						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
-					}
-					if ((border_neighbor[inumber].Norm == T_SIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
-						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
-					}
-					if ((border_neighbor[inumber].Norm == B_SIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
-						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
-					}
-
-				}
-				else {
+				
 					// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
 					// 10.10.2019
 
 					if ((border_neighbor[inumber].Norm == E_SIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
 						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*( potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
+						slb[inumber].b = 1.0;
 					}
 					if ((border_neighbor[inumber].Norm == W_SIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
 						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
+						slb[inumber].b = 1.0;
 					}
 					if ((border_neighbor[inumber].Norm == N_SIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
 						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
+						slb[inumber].b = 1.0;
 					}
 					if ((border_neighbor[inumber].Norm == S_SIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
 						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
+						slb[inumber].b = 1.0;
 					}
 					if ((border_neighbor[inumber].Norm == T_SIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
 						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
+						slb[inumber].b = 1.0;
 					}
 					if ((border_neighbor[inumber].Norm == B_SIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
 						// Входная граница потока
-						slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
+						slb[inumber].b = 1.0;
 					}
-				}
+				
 
 			}
 		}
@@ -11067,74 +10874,35 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound(integer inumber, integer 
 			((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vz) > 1.0e-20))
 		{
 
-			doublereal omega_inf = 0.0;
-			if ((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE)) {
-				omega_inf = Kinf_om*fabs(potent[VXCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS)*(w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS) + (w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS)*(w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS));
-			}
-			if ((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE)) {
-				omega_inf = Kinf_om*fabs(potent[VYCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS)*(w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS) + (w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS)*(w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS));
-			}
-			if ((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE)) {
-				omega_inf = Kinf_om*fabs(potent[VZCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS)*(w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS) + (w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS)*(w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS));
-			}
-
-			if (0) {
+			
+				
+				// Перемежаемость единица (gamma=1.0), течение полностью турбулентное.
 
 				if ((border_neighbor[inumber].Norm == E_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vx > 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = Kturm_k*omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
+					slb[inumber].b = 1.0;
 				}
 				if ((border_neighbor[inumber].Norm == W_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vx < 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
+					slb[inumber].b = 1.0;
 				}
 				if ((border_neighbor[inumber].Norm == N_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vy > 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
+					slb[inumber].b = 1.0;
 				}
 				if ((border_neighbor[inumber].Norm == S_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vy < 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
+					slb[inumber].b = 1.0;
 				}
 				if ((border_neighbor[inumber].Norm == T_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vz > 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
+					slb[inumber].b = 1.0;
 				}
 				if ((border_neighbor[inumber].Norm == B_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vz < 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(multiplyer_coeff_turbulent_nu_input * prop_b[MU_DYNAMIC_VISCOSITY][inumber] / prop_b[RHO][inumber]);
+					slb[inumber].b = 1.0;
 				}
-
-			}
-			else {
-				// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
-				// 10.10.2019
-
-				if ((border_neighbor[inumber].Norm == E_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vx > 0.0)) {
-					// Входная граница потока
-					slb[inumber].b = Kturm_k*omega_inf*( potent[MUT][maxelm + inumber]/ prop_b[RHO][inumber]);
-				}
-				if ((border_neighbor[inumber].Norm == W_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vx < 0.0)) {
-					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
-				}
-				if ((border_neighbor[inumber].Norm == N_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vy > 0.0)) {
-					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
-				}
-				if ((border_neighbor[inumber].Norm == S_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vy < 0.0)) {
-					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
-				}
-				if ((border_neighbor[inumber].Norm == T_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vz > 0.0)) {
-					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
-				}
-				if ((border_neighbor[inumber].Norm == B_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vz < 0.0)) {
-					// Входная граница потока
-					slb[inumber].b = Kturm_k * omega_inf*(potent[MUT][maxelm + inumber] / prop_b[RHO][inumber]);
-				}
-			}
+			
 
 		}
 		else {
@@ -11160,26 +10928,15 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound(integer inumber, integer 
 		slb[inumber].iW3 = NON_EXISTENT_NODE;
 		slb[inumber].iW4 = NON_EXISTENT_NODE;
 	}
-	else if (bDirichlet && ((border_neighbor[inumber].MCB == (ls + lw)) || (border_neighbor[inumber].MCB < ls))) { // 
+	else if (!bDirichlet && ((border_neighbor[inumber].MCB == (ls + lw)) || (border_neighbor[inumber].MCB < ls))) {
 		// источник тоже является твёрдой стенкой.
 		// либо твёрдая стенка. твёрдая стенка распознаётся по условию (border_neighbor[inumber].MCB==(ls+lw)).
 
-		// граничное условие Дирихле
-		// Задана условие прилипания на твёрдой стенке.
-
-		slb[inumber].aw = 1.0;
-		slb[inumber].ai = 0.0;
-		slb[inumber].b = 0.0; // нулевая кинетическая энергия турбулентных пульсаций.
-		slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
-		slb[inumber].iW = border_neighbor[inumber].iB;
-
-		// Это условие Дирихле:
-		// только диагональный элемент 
-		// не равен нулю.
-		slb[inumber].iW1 = NON_EXISTENT_NODE;
-		slb[inumber].iW2 = NON_EXISTENT_NODE;
-		slb[inumber].iW3 = NON_EXISTENT_NODE;
-		slb[inumber].iW4 = NON_EXISTENT_NODE;
+		// граничное условие Неймана для перемежаемости gamma.
+		// Задано условие прилипания на твёрдой стенке.
+		// if (!bDirichlet) обязательно
+		Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
+		
 	}
 	else if ((border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((w[border_neighbor[inumber].MCB - ls].bpressure) || (w[border_neighbor[inumber].MCB - ls].bsymmetry)/*|| ((w[border_neighbor[inumber].MCB - ls].bopening))*/)) {
 
@@ -11268,22 +11025,22 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound(integer inumber, integer 
 		}
 	}
 
-} // my_elmatr_quad_kinetik_turbulence_energy_3D_bound
+} // my_elmatr_quad_Gamma_Langtry_Mentor_3D_bound
 
 
-// учёт граничных условий для удельной скорости диссипации кинетической энергии
-// турбулентных пульсаций.
-void my_elmatr_quad_OmegaSSTMenter3D_bound(integer inumber, integer maxelm,
+// учёт граничных условий для функции Re_Theta_T в модели Ментора Лентгри.
+void my_elmatr_quad_Re_Theta_T_Langtry_Mentor_3D_bound(integer inumber, integer maxelm,
 	bool bDirichlet, BOUND* border_neighbor, integer ls, integer lw,
 	WALL* w,
 	//integer iVar,
-	equation3D_bon* &slb,
-	TOCHKA* pa, int** nvtx, float** prop_b, float** prop,
+	equation3D_bon*& slb,
+	TOCHKA* pa, int** nvtx,
+	float** prop_b, float** prop,
 	doublereal** potent
 	//, integer iflowregime
 ) {
 
-	// hx, hy, hz - размер ближайшей внутренней ячейки сетки покрывающей расчётную область.
+
 
 	// bDirichlet   осуществляется сборка только граничных условий Дирихле.
 	// bDirichlet == false осуществляется сборка только однородных условий Неймана.
@@ -11305,19 +11062,19 @@ void my_elmatr_quad_OmegaSSTMenter3D_bound(integer inumber, integer maxelm,
 
    // Алгоритм.
    /* 1. Условие дирихле.
-		 Это обязательно стенка.
-		 условие симметрии и не выходная граница bpressure.
+         Течение полностью турбулентно на входной границе.
+		 Это обязательно только в дальнем поле, т.е. на входной границе потока.
+		 НЕ условие симметрии и не выходная граница bpressure.
 		 и не opening в случае вытекания потока.
-	  2. Условие дирихле. это источник тепла или твёрдая стенка.
+	  2. Условие Неймана. это твёрдая стенка, граница симметрии или выходная граница.
    */
 
-   // Параметр для множителя для значения на входной границе потока.
-	const doublereal multiplyer_coeff_turbulent_nu_input = 2.0; // от одного до пяти.
-	const doublereal Kinf_om = 1.0;
+
 
    // Сначала запишем граничные условия Дирихле
   //if (bDirichlet && (border_neighbor[inumber].MCB<(ls + lw)) && (border_neighbor[inumber].MCB >= ls) && (!w[border_neighbor[inumber].MCB - ls].bopening) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[border_neighbor[inumber].MCB - ls].bpressure)) {
-	if (bDirichlet && (border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((!w[border_neighbor[inumber].MCB - ls].bpressure) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry))) {
+	if (bDirichlet && (border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) &&
+		((!w[border_neighbor[inumber].MCB - ls].bpressure) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry))) {
 
 		//system("PAUSE");
 
@@ -11335,42 +11092,41 @@ void my_elmatr_quad_OmegaSSTMenter3D_bound(integer inumber, integer maxelm,
 				((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
 			{
 
-				
-				doublereal omega_inf = 0.0;
-				if ((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE)) {
-					omega_inf = Kinf_om*fabs(potent[VXCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS)*(w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS) + (w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS)*(w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS));
-				}
-				if ((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE)) {
-					omega_inf = Kinf_om*fabs(potent[VYCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS)*(w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS) + (w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS)*(w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS));
-				}
-				if ((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE)) {
-					omega_inf = Kinf_om*fabs(potent[VZCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS)*(w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS) + (w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS)*(w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS));
-				}
+
+				// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
+				// 10.10.2019
 
 				if ((border_neighbor[inumber].Norm == E_SIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = omega_inf;
+					doublereal Tu_infinity = 100.0*sqrt(2.0*potent[TURBULENT_KINETIK_ENERGY][maxelm+inumber]/3.0)/fabs(potent[VXCOR][maxelm + inumber]);
+					slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 				}
 				if ((border_neighbor[inumber].Norm == W_SIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = omega_inf;
+					doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(potent[VXCOR][maxelm + inumber]);
+					slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 				}
 				if ((border_neighbor[inumber].Norm == N_SIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = omega_inf;
+					doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(potent[VYCOR][maxelm + inumber]);
+					slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 				}
 				if ((border_neighbor[inumber].Norm == S_SIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = omega_inf;
+					doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(potent[VYCOR][maxelm + inumber]);
+					slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 				}
 				if ((border_neighbor[inumber].Norm == T_SIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = omega_inf;
+					doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(potent[VZCOR][maxelm + inumber]);
+					slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 				}
 				if ((border_neighbor[inumber].Norm == B_SIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
 					// Входная граница потока
-					slb[inumber].b = omega_inf;
+					doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(potent[VZCOR][maxelm + inumber]);
+					slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 				}
+
 
 			}
 		}
@@ -11379,89 +11135,48 @@ void my_elmatr_quad_OmegaSSTMenter3D_bound(integer inumber, integer maxelm,
 			((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vz) > 1.0e-20))
 		{
 
-			doublereal omega_inf = 0.0;
-			if ((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE)) {
-				omega_inf = Kinf_om*fabs(potent[VXCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS)*(w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS) + (w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS)*(w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS));
-			}
-			if ((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE)) {
-				omega_inf = Kinf_om*fabs(potent[VYCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS)*(w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS) + (w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS)*(w[border_neighbor[inumber].MCB - ls].g.zE - w[border_neighbor[inumber].MCB - ls].g.zS));
-			}
-			if ((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE)) {
-				omega_inf = Kinf_om*fabs(potent[VZCOR][maxelm + inumber]) / sqrt((w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS)*(w[border_neighbor[inumber].MCB - ls].g.yE - w[border_neighbor[inumber].MCB - ls].g.yS) + (w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS)*(w[border_neighbor[inumber].MCB - ls].g.xE - w[border_neighbor[inumber].MCB - ls].g.xS));
-			}
+
+
+			// Перемежаемость единица (gamma=1.0), течение полностью турбулентное.
 
 			if ((border_neighbor[inumber].Norm == E_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vx > 0.0)) {
 				// Входная граница потока
-				slb[inumber].b = omega_inf;
+				doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(w[border_neighbor[inumber].MCB - ls].Vx);
+				slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 			}
 			if ((border_neighbor[inumber].Norm == W_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vx < 0.0)) {
 				// Входная граница потока
-				slb[inumber].b = omega_inf;
+				doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(w[border_neighbor[inumber].MCB - ls].Vx);
+				slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 			}
 			if ((border_neighbor[inumber].Norm == N_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vy > 0.0)) {
 				// Входная граница потока
-				slb[inumber].b = omega_inf;
+				doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(w[border_neighbor[inumber].MCB - ls].Vy);
+				slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 			}
 			if ((border_neighbor[inumber].Norm == S_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vy < 0.0)) {
 				// Входная граница потока
-				slb[inumber].b = omega_inf;
+				doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(w[border_neighbor[inumber].MCB - ls].Vy);
+				slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 			}
 			if ((border_neighbor[inumber].Norm == T_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vz > 0.0)) {
 				// Входная граница потока
-				slb[inumber].b = omega_inf;
+				doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(w[border_neighbor[inumber].MCB - ls].Vz);
+				slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 			}
 			if ((border_neighbor[inumber].Norm == B_SIDE) && (w[border_neighbor[inumber].MCB - ls].Vz < 0.0)) {
 				// Входная граница потока
-				slb[inumber].b = omega_inf;
+				doublereal Tu_infinity = 100.0 * sqrt(2.0 * potent[TURBULENT_KINETIK_ENERGY][maxelm + inumber] / 3.0) / fabs(w[border_neighbor[inumber].MCB - ls].Vz);
+				slb[inumber].b = Re_theta_T_farfield(Tu_infinity);
 			}
+
 
 		}
 		else {
-			// Вычисление шага сетки, ближайшего к стенке.
-			doublereal hx = 0.0, hy = 0.0, hz = 0.0;// объём текущего контрольного объёма
-			volume3D(border_neighbor[inumber].iI, nvtx, pa, hx, hy, hz);
 			// Неподвижная стенка.
-			/*
-			if ((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE)) {
-				slb[inumber].b = 10.0*(6.0*(prop_b[MU_DYNAMIC_VISCOSITY][inumber] + potent[MUT][maxelm + inumber])/ prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*0.5*hx*0.5*hx);
-			}
-			else if ((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE)) {
-				slb[inumber].b = 10.0*(6.0*(prop_b[MU_DYNAMIC_VISCOSITY][inumber] + potent[MUT][maxelm + inumber]) / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*0.5*hy*0.5*hy);
-			} 
-			else if ((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE)) {
-				slb[inumber].b = 10.0*(6.0*(prop_b[MU_DYNAMIC_VISCOSITY][inumber] + potent[MUT][maxelm + inumber]) / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*0.5*hz*0.5*hz);
-			}
-			*/
-
-			// Неподвижная стенка.
-			if ((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE)) {
-				doublereal omega_vis = (6.0 * (prop_b[MU_DYNAMIC_VISCOSITY][inumber] /*+ potent[MUT][maxelm + inumber]*/) / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1 * 0.5 * hx * 0.5 * hx);
-				//slb[inumber].b = 10.0 * omega_vis;
-				integer iP = border_neighbor[inumber].iI;
-				doublereal omega_log = (prop_b[MU_DYNAMIC_VISCOSITY][inumber]/* + potent[MUT][maxelm + inumber]*/) * sqrt((potent[GRADXVY][iP]) * (potent[GRADXVY][iP]) + (potent[GRADXVZ][iP]) * (potent[GRADXVZ][iP])) /
-					(sqrt(sqrt(eqin.fluidinfo->C_mu_std_ke)) * eqin.fluidinfo->karman * 0.5 * hx);
-				slb[inumber].b = 10.0*sqrt(omega_vis * omega_vis + omega_log * omega_log); // смешение mix
-			}
-			else if ((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE)) {
-				doublereal omega_vis = (6.0 * (prop_b[MU_DYNAMIC_VISCOSITY][inumber] /*+ potent[MUT][maxelm + inumber]*/) / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1 * 0.5 * hy * 0.5 * hy);
-				//slb[inumber].b = 10.0 * omega_vis;
-				integer iP = border_neighbor[inumber].iI;
-				doublereal omega_log = (prop_b[MU_DYNAMIC_VISCOSITY][inumber]/* + potent[MUT][maxelm + inumber]*/) * sqrt((potent[GRADYVX][iP]) * (potent[GRADYVX][iP]) + (potent[GRADYVZ][iP]) * (potent[GRADYVZ][iP])) /
-					(sqrt(sqrt(eqin.fluidinfo->C_mu_std_ke)) * eqin.fluidinfo->karman * 0.5 * hy);
-				slb[inumber].b = 10.0*sqrt(omega_vis * omega_vis + omega_log * omega_log); // смешение mix
-			}
-			else if ((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE)) {
-				doublereal omega_vis = (6.0 * (prop_b[MU_DYNAMIC_VISCOSITY][inumber] /*+ potent[MUT][maxelm + inumber]*/) / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1 * 0.5 * hz * 0.5 * hz);
-
-				//slb[inumber].b = 10.0* omega_vis
-				integer iP = border_neighbor[inumber].iI;
-				doublereal omega_log = (prop_b[MU_DYNAMIC_VISCOSITY][inumber]/* + potent[MUT][maxelm + inumber]*/) * sqrt((potent[GRADZVX][iP]) * (potent[GRADZVX][iP]) + (potent[GRADZVY][iP]) * (potent[GRADZVY][iP])) /
-					(sqrt(sqrt(eqin.fluidinfo->C_mu_std_ke)) * eqin.fluidinfo->karman * 0.5 * hz);
-				slb[inumber].b = 10.0*sqrt(omega_vis * omega_vis + omega_log * omega_log); // смешение mix
-			}
+			// Кинетическая энергия турбулентных пульсаций на твердой неподвижной стенке равна нулю.
+			slb[inumber].b = 0.0;
 		}
-
-		
 
 		slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
 		slb[inumber].iW = border_neighbor[inumber].iB;
@@ -11480,63 +11195,19 @@ void my_elmatr_quad_OmegaSSTMenter3D_bound(integer inumber, integer maxelm,
 		slb[inumber].iW3 = NON_EXISTENT_NODE;
 		slb[inumber].iW4 = NON_EXISTENT_NODE;
 	}
-	else if (bDirichlet && ((border_neighbor[inumber].MCB == (ls + lw)) || (border_neighbor[inumber].MCB < ls))) { // 
+	else if (!bDirichlet && ((border_neighbor[inumber].MCB == (ls + lw)) || (border_neighbor[inumber].MCB < ls))) {
 		// источник тоже является твёрдой стенкой.
 		// либо твёрдая стенка. твёрдая стенка распознаётся по условию (border_neighbor[inumber].MCB==(ls+lw)).
 
-		// граничное условие Дирихле
-		// Задана условие прилипания на твёрдой стенке.
-
-		slb[inumber].aw = 1.0;
-		slb[inumber].ai = 0.0;
-		// Вычисление шага сетки, ближайшего к стенке.
-		doublereal hx = 0.0, hy = 0.0, hz = 0.0;// объём текущего контрольного объёма
-		volume3D(border_neighbor[inumber].iI, nvtx, pa, hx, hy, hz);
-
-		// Неподвижная стенка.
-		// удельная скорость диссипации кинетической энергии турбулентных пульсаций на стенке.
-		if ((border_neighbor[inumber].Norm == E_SIDE || border_neighbor[inumber].Norm == W_SIDE)) {
-			doublereal omega_vis= (6.0 * (prop_b[MU_DYNAMIC_VISCOSITY][inumber] /*+ potent[MUT][maxelm + inumber]*/) / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1 * 0.5 * hx * 0.5 * hx);
-			//slb[inumber].b = 10.0 * omega_vis;
-			integer iP = border_neighbor[inumber].iI;
-			doublereal omega_log = (prop_b[MU_DYNAMIC_VISCOSITY][inumber]/* + potent[MUT][maxelm + inumber]*/) * sqrt((potent[GRADXVY][iP])*(potent[GRADXVY][iP])+(potent[GRADXVZ][iP])*(potent[GRADXVZ][iP]))/
-				(sqrt(sqrt(eqin.fluidinfo->C_mu_std_ke))*eqin.fluidinfo->karman*0.5*hx);
-			slb[inumber].b = 10.0*sqrt(omega_vis* omega_vis+ omega_log* omega_log); // смешение mix
-		}
-		else if ((border_neighbor[inumber].Norm == N_SIDE || border_neighbor[inumber].Norm == S_SIDE)) {
-			doublereal omega_vis = (6.0 * (prop_b[MU_DYNAMIC_VISCOSITY][inumber] /*+ potent[MUT][maxelm + inumber]*/) / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1 * 0.5 * hy * 0.5 * hy);
-			//slb[inumber].b = 10.0 * omega_vis;
-			integer iP = border_neighbor[inumber].iI;
-			doublereal omega_log = (prop_b[MU_DYNAMIC_VISCOSITY][inumber]/* + potent[MUT][maxelm + inumber]*/) * sqrt((potent[GRADYVX][iP]) * (potent[GRADYVX][iP]) + (potent[GRADYVZ][iP]) * (potent[GRADYVZ][iP])) /
-				(sqrt(sqrt(eqin.fluidinfo->C_mu_std_ke)) * eqin.fluidinfo->karman * 0.5 * hy);
-			slb[inumber].b = 10.0*sqrt(omega_vis * omega_vis + omega_log * omega_log); // смешение mix
-		}
-		else if ((border_neighbor[inumber].Norm == T_SIDE || border_neighbor[inumber].Norm == B_SIDE)) {
-			doublereal omega_vis = (6.0 * (prop_b[MU_DYNAMIC_VISCOSITY][inumber] /*+ potent[MUT][maxelm + inumber]*/) / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1 * 0.5 * hz * 0.5 * hz);
-			
-			//slb[inumber].b = 10.0* omega_vis
-			integer iP = border_neighbor[inumber].iI;
-			doublereal omega_log = (prop_b[MU_DYNAMIC_VISCOSITY][inumber]/* + potent[MUT][maxelm + inumber]*/) * sqrt((potent[GRADZVX][iP]) * (potent[GRADZVX][iP]) + (potent[GRADZVY][iP]) * (potent[GRADZVY][iP])) /
-				(sqrt(sqrt(eqin.fluidinfo->C_mu_std_ke)) * eqin.fluidinfo->karman * 0.5 * hz);
-			slb[inumber].b = 10.0*sqrt(omega_vis * omega_vis + omega_log * omega_log); // смешение mix
-		} 
-		slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
-		slb[inumber].iW = border_neighbor[inumber].iB;
-
-
+		// граничное условие Неймана для перемежаемости gamma.
+		// Задано условие прилипания на твёрдой стенке.
+		// if (!bDirichlet) // обязательно
+		Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 		
-
-		// Это условие Дирихле:
-		// только диагональный элемент 
-		// не равен нулю.
-		slb[inumber].iW1 = NON_EXISTENT_NODE;
-		slb[inumber].iW2 = NON_EXISTENT_NODE;
-		slb[inumber].iW3 = NON_EXISTENT_NODE;
-		slb[inumber].iW4 = NON_EXISTENT_NODE;
 	}
 	else if ((border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((w[border_neighbor[inumber].MCB - ls].bpressure) || (w[border_neighbor[inumber].MCB - ls].bsymmetry)/*|| ((w[border_neighbor[inumber].MCB - ls].bopening))*/)) {
 
-		// Выходная граница потока или граница симметрии.
+		// Выходная граница потока.
 
 
 		if (!bDirichlet) {
@@ -11621,10 +11292,7 @@ void my_elmatr_quad_OmegaSSTMenter3D_bound(integer inumber, integer maxelm,
 		}
 	}
 
-} // my_elmatr_quad_OmegaSSTMenter3D_bound 
+} // my_elmatr_quad_Re_Theta_T_Langtry_Mentor_3D_bound
 
-// Модель ламинарно турбулентного перехода Лантгрии и Ментора.
-// 15.46 13.01.2021 Присоединение к проекту кода реализующего модель Лантгрии и Ментора.
-#include "Langtry_Menter_Gamma_Retheta_SST.cpp"
 
 #endif

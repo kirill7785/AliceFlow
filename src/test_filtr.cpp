@@ -1426,11 +1426,17 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 	delta_test_filtr=new doublereal[f.maxelm]; // ширина тестового фильтра.
 	for (integer i=0; i<f.maxelm; i++) delta_test_filtr[i]=0.0;
 
-    // Вычисление дважды отфильтрованных компонент Strain Rate Tensor`а.
-	// Внимание ! фильтр от производной некоторой величины не равен производной от этой фильтрованной величины.
-	// Для вычисления значений на границе области применяется квадратичная интерполяция изнутри области наружу.
-	double_average_potent(StRT[MODULEStRt], StRT_filtr[MODULEStRt], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
+	if (StRT != nullptr) {
+		// Вычисление дважды отфильтрованных компонент Strain Rate Tensor`а.
+		// Внимание ! фильтр от производной некоторой величины не равен производной от этой фильтрованной величины.
+		// Для вычисления значений на границе области применяется квадратичная интерполяция изнутри области наружу.
+		double_average_potent(StRT[MODULEStRt], StRT_filtr[MODULEStRt], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node,
+			f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor, 2);
+	}
+	else {
+		std::cout << "Error! StRT == nullptr: call function double_average_potent\n";
+		system("pause");
+	}
 
 	if (StRT != nullptr) {
 		for (integer i = 0; i < 10; i++) {

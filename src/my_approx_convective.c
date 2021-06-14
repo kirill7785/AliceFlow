@@ -60,6 +60,7 @@ doublereal ApproxConvective(doublereal fabsPe, integer ishconvection) {
 					// С. Патанкаром схему со степенным законом.
 					if ((fabsPe >= 1.0) && (fabsPe < 10.0)) r = rpoly5;
 					else r = 0.0; // при числах Пекле больших 10.0 аппроксимация нулём.
+					
 				}
 			    break;
 		case UDS: // с разностями против потока

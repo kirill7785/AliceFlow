@@ -75,6 +75,7 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 			printf("bad diagonal in string %lld ap=%e\n", i, sl[i].ap);
 		}
 
+		/*
 		if (1.00005 * sl[i].ap < sl[i].ab + sl[i].at + sl[i].ae + sl[i].aw + sl[i].an + sl[i].as +
 			sl[i].ab2 + sl[i].at2 + sl[i].ae2 + sl[i].aw2 + sl[i].an2 + sl[i].as2 +
 			sl[i].ab3 + sl[i].at3 + sl[i].ae3 + sl[i].aw3 + sl[i].an3 + sl[i].as3 +
@@ -86,6 +87,7 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 				sl[i].ab3 + sl[i].at3 + sl[i].ae3 + sl[i].aw3 + sl[i].an3 + sl[i].as3 +
 				sl[i].ab4 + sl[i].at4 + sl[i].ae4 + sl[i].aw4 + sl[i].an4 + sl[i].as4);
 		}
+		*/
 
 		if ((sl[i].iB > -1) && (fabs(sl[i].ab) > nonzeroEPS)) (nna)++;
 		if (sl[i].ab < -nonzeroEPS) {
@@ -217,15 +219,15 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 
 	typedef doublereal    ScalarType;  // feel free to change this to double if supported by your device
 									   //typedef float    ScalarType;
-	typedef int indextype;
+	typedef int Myindextype;
 
 
 	/**
 	* Set up the matrices and vectors for the iterative solvers (cf. iterative.cpp)
 	**/
-	//indextype my_rows = static_cast<indextype>(nnu);
-	//indextype cols = static_cast<indextype>(nnu);
-	//indextype nonzeros = static_cast<indextype>(nna);
+	//Myindextype my_rows = static_cast<Myindextype>(nnu);
+	//Myindextype cols = static_cast<Myindextype>(nnu);
+	//Myindextype nonzeros = static_cast<Myindextype>(nna);
 
 
 	// Прочитать матрицу:
@@ -244,60 +246,60 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 		rhs[i] = dV[i];
 	}
 
-	row_jumper[nnu] = static_cast<indextype>(nna);
+	row_jumper[nnu] = static_cast<Myindextype>(nna);
 	// initialize matrix entries on host
 	nna = 0;
 	//Ah.row_indices[0] = 0; Ah.column_indices[0] = 0; Ah.values[0] = 10.0; // demo interface
 	for (integer i = 0; i < maxelm; i++) {
-		row_jumper[i] = static_cast<indextype>(nna);
+		row_jumper[i] = static_cast<Myindextype>(nna);
 
 		// внутренность матрицы.
 		if ((sl[i].iP > -1) && (fabs(sl[i].ap) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iP; Ah.values[nna] = sl[i].ap / alpharelax;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iP) = static_cast<ScalarType> (sl[i].ap / alpharelax);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iP);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iP);
 			elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
 			(nna)++;
 		}
 		if ((sl[i].iB > -1) && (fabs(sl[i].ab) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iB; Ah.values[nna] = -sl[i].ab;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iB) = static_cast<ScalarType> (-sl[i].ab);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iB);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iB);
 			elements[nna] = static_cast<ScalarType> (-sl[i].ab);
 			(nna)++;
 		}
 		if ((sl[i].iE > -1) && (fabs(sl[i].ae) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iE; Ah.values[nna] = -sl[i].ae;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iE) = static_cast<ScalarType> (-sl[i].ae);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iE);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iE);
 			elements[nna] = static_cast<ScalarType> (-sl[i].ae);
 			(nna)++;
 		}
 		if ((sl[i].iN > -1) && (fabs(sl[i].an) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iN; Ah.values[nna] = -sl[i].an;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iN) = static_cast<ScalarType> (-sl[i].an);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iN);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iN);
 			elements[nna] = static_cast<ScalarType> (-sl[i].an);
 			(nna)++;
 		}
 		if ((sl[i].iS > -1) && (fabs(sl[i].as) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iS; Ah.values[nna] = -sl[i].as;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iS) = static_cast<ScalarType> (-sl[i].as);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iS);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iS);
 			elements[nna] = static_cast<ScalarType> (-sl[i].as);
 			(nna)++;
 		}
 		if ((sl[i].iT > -1) && (fabs(sl[i].at) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iT; Ah.values[nna] = -sl[i].at;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iT) = static_cast<ScalarType> (-sl[i].at);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iT);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iT);
 			elements[nna] = static_cast<ScalarType> (-sl[i].at);
 			(nna)++;
 		}
 		if ((sl[i].iW > -1) && (fabs(sl[i].aw) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iW; Ah.values[nna] = -sl[i].aw;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iW) = static_cast<ScalarType> (-sl[i].aw);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iW);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iW);
 			elements[nna] = static_cast<ScalarType> (-sl[i].aw);
 			(nna)++;
 		}
@@ -305,42 +307,42 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 		if ((sl[i].iB2 > -1) && (fabs(sl[i].ab2) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iB2; Ah.values[nna] = -sl[i].ab2;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iB2) = static_cast<ScalarType> (-sl[i].ab2);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iB2);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iB2);
 			elements[nna] = static_cast<ScalarType> (-sl[i].ab2);
 			(nna)++;
 		}
 		if ((sl[i].iE2 > -1) && (fabs(sl[i].ae2) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iE2; Ah.values[nna] = -sl[i].ae2;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iE2) = static_cast<ScalarType> (-sl[i].ae2);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iE2);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iE2);
 			elements[nna] = static_cast<ScalarType> (-sl[i].ae2);
 			(nna)++;
 		}
 		if ((sl[i].iN2 > -1) && (fabs(sl[i].an2) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iN2; Ah.values[nna] = -sl[i].an2;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iN2) = static_cast<ScalarType> (-sl[i].an2);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iN2);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iN2);
 			elements[nna] = static_cast<ScalarType> (-sl[i].an2);
 			(nna)++;
 		}
 		if ((sl[i].iS2 > -1) && (fabs(sl[i].as2) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iS2; Ah.values[nna] = -sl[i].as2;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iS2) = static_cast<ScalarType>( -sl[i].as2);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iS2);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iS2);
 			elements[nna] = static_cast<ScalarType> (-sl[i].as2);
 			(nna)++;
 		}
 		if ((sl[i].iT2 > -1) && (fabs(sl[i].at2) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iT2; Ah.values[nna] = -sl[i].at2;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iT2) = static_cast<ScalarType> (-sl[i].at2);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iT2);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iT2);
 			elements[nna] = static_cast<ScalarType> (-sl[i].at2);
 			(nna)++;
 		}
 		if ((sl[i].iW2 > -1) && (fabs(sl[i].aw2) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iW2; Ah.values[nna] = -sl[i].aw2;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iW2) = static_cast<ScalarType> (-sl[i].aw2);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iW2);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iW2);
 			elements[nna] = static_cast<ScalarType> (-sl[i].aw2);
 			(nna)++;
 		}
@@ -348,42 +350,42 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 		if ((sl[i].iB3 > -1) && (fabs(sl[i].ab3) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iB3; Ah.values[nna] = -sl[i].ab3;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iB3) = static_cast<ScalarType>(-sl[i].ab3);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iB3);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iB3);
 			elements[nna] = static_cast<ScalarType> (-sl[i].ab3);
 			(nna)++;
 		}
 		if ((sl[i].iE3 > -1) && (fabs(sl[i].ae3) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iE3; Ah.values[nna] = -sl[i].ae3;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iE3) = static_cast<ScalarType>(-sl[i].ae3);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iE3);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iE3);
 			elements[nna] = static_cast<ScalarType> (-sl[i].ae3);
 			(nna)++;
 		}
 		if ((sl[i].iN3 > -1) && (fabs(sl[i].an3) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iN3; Ah.values[nna] = -sl[i].an3;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iN3) = static_cast<ScalarType> (-sl[i].an3);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iN3);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iN3);
 			elements[nna] = static_cast<ScalarType> (-sl[i].an3);
 			(nna)++;
 		}
 		if ((sl[i].iS3 > -1) && (fabs(sl[i].as3) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iS3; Ah.values[nna] = -sl[i].as3;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iS3) = static_cast<ScalarType>(-sl[i].as3);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iS3);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iS3);
 			elements[nna] = static_cast<ScalarType> (-sl[i].as3);
 			(nna)++;
 		}
 		if ((sl[i].iT3 > -1) && (fabs(sl[i].at3) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iT3; Ah.values[nna] = -sl[i].at3;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iT3) = static_cast<ScalarType>(-sl[i].at3);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iT3);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iT3);
 			elements[nna] = static_cast<ScalarType> (-sl[i].at3);
 			(nna)++;
 		}
 		if ((sl[i].iW3 > -1) && (fabs(sl[i].aw3) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iW3; Ah.values[nna] = -sl[i].aw3;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iW3) = static_cast<ScalarType>(-sl[i].aw3);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iW3);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iW3);
 			elements[nna] = static_cast<ScalarType> (-sl[i].aw3);
 			(nna)++;
 		}
@@ -391,42 +393,42 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 		if ((sl[i].iB4 > -1) && (fabs(sl[i].ab4) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iB4; Ah.values[nna] = -sl[i].ab4;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iB4) = static_cast<ScalarType>(-sl[i].ab4);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iB4);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iB4);
 			elements[nna] = static_cast<ScalarType> (-sl[i].ab4);
 			(nna)++;
 		}
 		if ((sl[i].iE4 > -1) && (fabs(sl[i].ae4) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iE4; Ah.values[nna] = -sl[i].ae4;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iE4) = static_cast<ScalarType>(-sl[i].ae4);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iE4);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iE4);
 			elements[nna] = static_cast<ScalarType> (-sl[i].ae4);
 			(nna)++;
 		}
 		if ((sl[i].iN4 > -1) && (fabs(sl[i].an4) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iN4; Ah.values[nna] = -sl[i].an4;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iN4) = static_cast<ScalarType>(-sl[i].an4);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iN4);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iN4);
 			elements[nna] = static_cast<ScalarType> (-sl[i].an4);
 			(nna)++;
 		}
 		if ((sl[i].iS4 > -1) && (fabs(sl[i].as4) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iS4; Ah.values[nna] = -sl[i].as4;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iS4) = static_cast<ScalarType>(-sl[i].as4);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iS4);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iS4);
 			elements[nna] = static_cast<ScalarType> (-sl[i].as4);
 			(nna)++;
 		}
 		if ((sl[i].iT4 > -1) && (fabs(sl[i].at4) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iT4; Ah.values[nna] = -sl[i].at4;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iT4) = static_cast<ScalarType>(-sl[i].at4);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iT4);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iT4);
 			elements[nna] = static_cast<ScalarType> (-sl[i].at4);
 			(nna)++;
 		}
 		if ((sl[i].iW4 > -1) && (fabs(sl[i].aw4) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iW4; Ah.values[nna] = -sl[i].aw4;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iW4) = static_cast<ScalarType>(-sl[i].aw4);
-			col_buffer[nna] = static_cast<indextype> (sl[i].iW4);
+			col_buffer[nna] = static_cast<Myindextype> (sl[i].iW4);
 			elements[nna] = static_cast<ScalarType> (-sl[i].aw4);
 			(nna)++;
 		}
@@ -435,19 +437,19 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 	}
 
 	for (integer i = 0; i < maxbound; i++) {
-		row_jumper[maxelm + i] = static_cast<indextype>(nna);
+		row_jumper[maxelm + i] = static_cast<Myindextype>(nna);
 		// граничные узлы.
 		if ((slb[i].iW > -1) && (fabs(slb[i].aw) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = slb[i].iW; Ah.column_indices[nna] = slb[i].iW; Ah.values[nna] = slb[i].aw;
 			//vcl_compressed_matrix1(slb[i].iW, slb[i].iW) = static_cast<ScalarType> (slb[i].aw);
-			col_buffer[nna] = static_cast<indextype> (slb[i].iW);
+			col_buffer[nna] = static_cast<Myindextype> (slb[i].iW);
 			elements[nna] = static_cast<ScalarType> (slb[i].aw);
 			(nna)++;
 		}
 		if ((slb[i].iI > -1) && (fabs(slb[i].ai) > nonzeroEPS)) {
 			//Ah.row_indices[nna] = slb[i].iW; Ah.column_indices[nna] = slb[i].iI; Ah.values[nna] = -slb[i].ai;
 			//vcl_compressed_matrix1(slb[i].iW, slb[i].iI) = static_cast<ScalarType>(-slb[i].ai);
-			col_buffer[nna] = static_cast<indextype> (slb[i].iI);
+			col_buffer[nna] = static_cast<Myindextype> (slb[i].iI);
 			elements[nna] = static_cast<ScalarType> (-slb[i].ai);
 			(nna)++;
 		}
@@ -455,7 +457,7 @@ void amgcl_solver(equation3D*& sl, equation3D_bon*& slb,
 
 	printf("Matrix load succsefull...\n");
 
-	int n = static_cast<indextype>(nnu);
+	int n = static_cast<Myindextype>(nnu);
 
 	typedef amgcl::backend::builtin<double> Backend;
 

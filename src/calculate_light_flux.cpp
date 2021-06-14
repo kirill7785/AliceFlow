@@ -2196,6 +2196,12 @@ void calculate_light_flux(doublereal*& myF, TEMPER& t,
 		size_cell[i] = kR_size_cell * volume3D_ray_tracing(i, t.nvtx, t.pa);
 		if (b[t.whot_is_block[i]].itype != PHYSICS_TYPE_IN_BODY::FLUID) bray_tracing_fluid_only = false;
 	}
+
+
+#ifdef _OPENMP 
+	omp_set_num_threads(inumcore); // установка числа потоков
+#endif
+
 	for (integer ibid = 0; ibid < lb; ibid++) {
 		for (integer i = 0; i < t.maxelm; i++) {
 			distance[i] = 1.0e30;
@@ -2217,14 +2223,17 @@ void calculate_light_flux(doublereal*& myF, TEMPER& t,
 			for (integer i = 0; i < t.maxelm; i++) {
 				TOCHKA p2;
 				center_cord3D(i, t.nvtx, t.pa, p2, 100);
-				if (sqrt((p2.x - x0) * (p2.x - x0) + (p2.y - y0) * (p2.y - y0) + (p2.z - z0) * (p2.z - z0)) < dist32) {
-					dist32 = sqrt((p2.x - x0) * (p2.x - x0) + (p2.y - y0) * (p2.y - y0) + (p2.z - z0) * (p2.z - z0));
+				doublereal distance = sqrt((p2.x - x0) * (p2.x - x0) + (p2.y - y0) * (p2.y - y0) + (p2.z - z0) * (p2.z - z0));
+
+				if (distance < dist32) {
+					dist32 = distance;
 					p0 = p2;
 					i0 = i;
 				}
 			}
 			// В p0 хранится центр текущего диода.
 
+#pragma omp parallel for
 			for (integer i = 0; i < t.maxelm; i++) {
 				TOCHKA p1;
 				center_cord3D(i, t.nvtx, t.pa, p1, 100);
@@ -2246,6 +2255,11 @@ void calculate_light_flux(doublereal*& myF, TEMPER& t,
 			}
 		}
 	}
+
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка одного потока.
+#endif
+
 	delete[] distance;
 	delete[] stack_ray_trayser;
 	delete[] size_cell;

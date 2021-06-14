@@ -1301,106 +1301,137 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 	}
 	else {
 
-		// внимание ! требуется указать точку через которую будет проходить линия и плоскость которой данная линия будет перпендикулярна.
-		TOCHKA p;
-		doublereal epsilon=1e30;
-		doublereal dist;
-		doublereal x=-13.25e-6, y=0.0e-6, z=0.0e-6; // точка через которую проходит линия
-		integer iPf=0;
-		integer iplane=XY; // плоскость перпендикулярная линии.
-		
-		for (integer iP=0; iP<t.maxelm; iP++) {
-			center_cord3D(iP, t.nvtx, t.pa, p); // вычисление координат центра КО.
-			dist=sqrt(fabs(x-p.x)*fabs(x-p.x)+fabs(y-p.y)*fabs(y-p.y)+fabs(z-p.z)*fabs(z-p.z));
-			if (dist<epsilon) {
-				epsilon=dist;
-				iPf=iP;
+		FILE* fp1;
+		errno_t err1;
+		if ((err1 = fopen_s(&fp1, "xyplotT1.PLT", "w")) != 0) {
+			printf("Create File xyplot Error\n");
+			getchar();
+
+		}
+		else {
+
+			// внимание ! требуется указать точку через которую будет проходить линия и плоскость которой данная линия будет перпендикулярна.
+			TOCHKA p;
+			doublereal epsilon = 1e30;
+			doublereal dist;
+			doublereal x = -13.25e-6, y = 0.0e-6, z = 0.0e-6; // точка через которую проходит линия
+			integer iPf = 0;
+			integer iplane = XY; // плоскость перпендикулярная линии.
+
+			for (integer iP = 0; iP < t.maxelm; iP++) {
+				center_cord3D(iP, t.nvtx, t.pa, p); // вычисление координат центра КО.
+				dist = sqrt(fabs(x - p.x) * fabs(x - p.x) + fabs(y - p.y) * fabs(y - p.y) + fabs(z - p.z) * fabs(z - p.z));
+				if (dist < epsilon) {
+					epsilon = dist;
+					iPf = iP;
+				}
+			}
+
+			// перемотка в начало 
+			switch (iplane) {
+			case XY: while (t.neighbors_for_the_internal_node[B][iPf].iNODE1 < t.maxelm) iPf = t.neighbors_for_the_internal_node[B][iPf].iNODE1; break;
+			case XZ: while (t.neighbors_for_the_internal_node[S][iPf].iNODE1 < t.maxelm) iPf = t.neighbors_for_the_internal_node[S][iPf].iNODE1; break;
+			case YZ: while (t.neighbors_for_the_internal_node[W][iPf].iNODE1 < t.maxelm) iPf = t.neighbors_for_the_internal_node[W][iPf].iNODE1; break;
+			}
+
+			integer G;
+			switch (iplane) {
+			case XY: G = T;  break;
+			case XZ: G = N;  break;
+			case YZ: G = E;  break;
+			}
+
+
+			fprintf(fp, "position,\ttemperature,\ttemperature_avg\n");
+			fprintf(fp1, "VARIABLE= position temperature\n");
+			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+			volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
+			center_cord3D(iPf, t.nvtx, t.pa, p); // вычисление координат центра КО.
+			switch (iplane) {
+			case XY: fprintf(fp, "%+.16f %+.16f %+.16f\n",
+				p.z - 0.5 * dz, t.potent[t.neighbors_for_the_internal_node[B][iPf].iNODE1],
+				tempfiltr[t.neighbors_for_the_internal_node[B][iPf].iNODE1]);
+				fprintf(fp1, "%+.16f %+.16f\n",
+					p.z - 0.5 * dz, t.potent[t.neighbors_for_the_internal_node[B][iPf].iNODE1]);
+				break;
+			case XZ:  fprintf(fp, "%+.16f %+.16f %+.16f\n",
+				p.y - 0.5 * dy, t.potent[t.neighbors_for_the_internal_node[S][iPf].iNODE1],
+				tempfiltr[t.neighbors_for_the_internal_node[S][iPf].iNODE1]);
+				fprintf(fp1, "%+.16f %+.16f\n",
+					p.y - 0.5 * dy, t.potent[t.neighbors_for_the_internal_node[S][iPf].iNODE1]);
+				break;
+			case YZ:  fprintf(fp, "%+.16f %+.16f %+.16f\n",
+				p.x - 0.5 * dx, t.potent[t.neighbors_for_the_internal_node[W][iPf].iNODE1],
+				tempfiltr[t.neighbors_for_the_internal_node[W][iPf].iNODE1]);
+				fprintf(fp1, "%+.16f %+.16f\n",
+					p.x - 0.5 * dx, t.potent[t.neighbors_for_the_internal_node[W][iPf].iNODE1]);
+				break;
+			}
+			switch (iplane) {
+			case XY: while (iPf < t.maxelm) {
+				center_cord3D(iPf, t.nvtx, t.pa, p);
+				fprintf(fp, "%+.16f %+.16f %+.16f\n",
+					p.z, t.potent[iPf],
+					tempfiltr[iPf]);
+				fprintf(fp1, "%+.16f %+.16f\n",
+					p.z, t.potent[iPf]);
+				if (t.neighbors_for_the_internal_node[T][iPf].iNODE1 >= t.maxelm) {
+					volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
+					fprintf(fp, "%+.16f %+.16f %+.16f\n",
+						p.z + 0.5 * dz, t.potent[t.neighbors_for_the_internal_node[T][iPf].iNODE1],
+						tempfiltr[t.neighbors_for_the_internal_node[T][iPf].iNODE1]);
+					fprintf(fp1, "%+.16f %+.16f\n",
+						p.z + 0.5 * dz, t.potent[t.neighbors_for_the_internal_node[T][iPf].iNODE1]);
+
+				}
+				iPf = t.neighbors_for_the_internal_node[T][iPf].iNODE1;
+			} break;
+			case XZ: while (iPf < t.maxelm) {
+				center_cord3D(iPf, t.nvtx, t.pa, p);
+				fprintf(fp, "%+.16f %+.16f %+.16f\n",
+					p.y, t.potent[iPf],
+					tempfiltr[iPf]);
+				fprintf(fp1, "%+.16f %+.16f\n",
+					p.y, t.potent[iPf]);
+				if (t.neighbors_for_the_internal_node[N][iPf].iNODE1 >= t.maxelm) {
+					volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
+					fprintf(fp, "%+.16f %+.16f %+.16f\n",
+						p.y + 0.5 * dy, t.potent[t.neighbors_for_the_internal_node[N][iPf].iNODE1],
+						tempfiltr[t.neighbors_for_the_internal_node[N][iPf].iNODE1]);
+					fprintf(fp1, "%+.16f %+.16f\n",
+						p.y + 0.5 * dy, t.potent[t.neighbors_for_the_internal_node[N][iPf].iNODE1]);
+				}
+				/*
+				// Узнаём последовательность узлов для отладки.
+				printf("iPf=%d\n",iPf);
+				if (fglobal[ifi].neighbors_for_the_internal_node[N][iPf].iNODE1>=fglobal[ifi].maxelm) {
+					printf("iPffinish=%d\n",fglobal[ifi].neighbors_for_the_internal_node[N][iPf].iNODE1);
+					getchar();
+				}
+				*/
+				iPf = t.neighbors_for_the_internal_node[N][iPf].iNODE1;
+			} break;
+			case YZ: while (iPf < t.maxelm) {
+				center_cord3D(iPf, t.nvtx, t.pa, p);
+				fprintf(fp, "%+.16f %+.16f %+.16f\n",
+					p.y, t.potent[iPf],
+					tempfiltr[iPf]);
+				fprintf(fp1, "%+.16f %+.16f\n",
+					p.y, t.potent[iPf]);
+				if (t.neighbors_for_the_internal_node[E][iPf].iNODE1 >= t.maxelm) {
+					volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
+					fprintf(fp, "%+.16f %+.16f %+.16f\n",
+						p.x + 0.5 * dx, t.potent[t.neighbors_for_the_internal_node[E][iPf].iNODE1],
+						tempfiltr[t.neighbors_for_the_internal_node[E][iPf].iNODE1]);
+					fprintf(fp1, "%+.16f %+.16f\n",
+						p.x + 0.5 * dx, t.potent[t.neighbors_for_the_internal_node[E][iPf].iNODE1]);
+				}
+				iPf = t.neighbors_for_the_internal_node[E][iPf].iNODE1;
+			} break;
 			}
 		}
-		
-		// перемотка в начало 
-		switch (iplane) {
-		case XY: while (t.neighbors_for_the_internal_node[B][iPf].iNODE1<t.maxelm) iPf = t.neighbors_for_the_internal_node[B][iPf].iNODE1; break;
-		case XZ: while (t.neighbors_for_the_internal_node[S][iPf].iNODE1<t.maxelm) iPf = t.neighbors_for_the_internal_node[S][iPf].iNODE1; break;
-		case YZ: while (t.neighbors_for_the_internal_node[W][iPf].iNODE1<t.maxelm) iPf = t.neighbors_for_the_internal_node[W][iPf].iNODE1; break;
-		}
-
-		integer G;
-		switch (iplane) {
-		  case XY: G=T;  break;
-		  case XZ: G=N;  break;
-		  case YZ: G=E;  break;
-		}
-		
-		
-		fprintf(fp, "position,\ttemperature,\ttemperature_avg\n");
-		doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
-	    volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
-        center_cord3D(iPf, t.nvtx, t.pa, p); // вычисление координат центра КО.
-		switch (iplane) {
-		  case XY: fprintf(fp, "%+.16f %+.16f %+.16f\n",
-			  p.z - 0.5*dz, t.potent[t.neighbors_for_the_internal_node[B][iPf].iNODE1],
-			  tempfiltr[t.neighbors_for_the_internal_node[B][iPf].iNODE1]);
-			              break;
-		  case XZ:  fprintf(fp,"%+.16f %+.16f %+.16f\n",
-			  p.y - 0.5*dy, t.potent[t.neighbors_for_the_internal_node[S][iPf].iNODE1],
-			  tempfiltr[t.neighbors_for_the_internal_node[S][iPf].iNODE1]);
-			              break;
-		  case YZ:  fprintf(fp, "%+.16f %+.16f %+.16f\n",
-			  p.x - 0.5*dx, t.potent[t.neighbors_for_the_internal_node[W][iPf].iNODE1],
-			  tempfiltr[t.neighbors_for_the_internal_node[W][iPf].iNODE1]);
-			              break;
-		}
-		switch (iplane) {
-		  case XY: while (iPf<t.maxelm) {
-			        center_cord3D(iPf, t.nvtx,t.pa, p); 
-			        fprintf(fp, "%+.16f %+.16f %+.16f\n", 
-						  p.z, t.potent[iPf],
-					      tempfiltr[iPf]);
-					if (t.neighbors_for_the_internal_node[T][iPf].iNODE1 >= t.maxelm) {
-						  volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
-                          fprintf(fp, "%+.16f %+.16f %+.16f\n",
-							  p.z + 0.5*dz, t.potent[t.neighbors_for_the_internal_node[T][iPf].iNODE1],
-							  tempfiltr[t.neighbors_for_the_internal_node[T][iPf].iNODE1]);
-					}
-					iPf = t.neighbors_for_the_internal_node[T][iPf].iNODE1;
-					} break;
-		  case XZ: while (iPf<t.maxelm) {
-			        center_cord3D(iPf, t.nvtx, t.pa, p); 
-			        fprintf(fp, "%+.16f %+.16f %+.16f\n", 
-						  p.y, t.potent[iPf],
-					      tempfiltr[iPf]);
-					if (t.neighbors_for_the_internal_node[N][iPf].iNODE1 >= t.maxelm) {
-						  volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
-                          fprintf(fp, "%+.16f %+.16f %+.16f\n",
-							  p.y + 0.5*dy, t.potent[t.neighbors_for_the_internal_node[N][iPf].iNODE1],
-							  tempfiltr[t.neighbors_for_the_internal_node[N][iPf].iNODE1]);
-					}
-					/*
-					// Узнаём последовательность узлов для отладки.
-					printf("iPf=%d\n",iPf);
-					if (fglobal[ifi].neighbors_for_the_internal_node[N][iPf].iNODE1>=fglobal[ifi].maxelm) {
-						printf("iPffinish=%d\n",fglobal[ifi].neighbors_for_the_internal_node[N][iPf].iNODE1);
-						getchar();
-					}
-					*/
-					iPf = t.neighbors_for_the_internal_node[N][iPf].iNODE1;
-					} break;
-		  case YZ: while (iPf<t.maxelm) {
-			        center_cord3D(iPf, t.nvtx, t.pa, p); 
-			        fprintf(fp, "%+.16f %+.16f %+.16f\n", 
-						  p.y, t.potent[iPf],
-					      tempfiltr[iPf]);
-					if (t.neighbors_for_the_internal_node[E][iPf].iNODE1 >= t.maxelm) {
-						  volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
-                          fprintf(fp, "%+.16f %+.16f %+.16f\n",
-							  p.x + 0.5*dx, t.potent[t.neighbors_for_the_internal_node[E][iPf].iNODE1],
-						  tempfiltr[t.neighbors_for_the_internal_node[E][iPf].iNODE1]);
-					}
-					iPf = t.neighbors_for_the_internal_node[E][iPf].iNODE1;
-					} break;
-		}
 		fclose(fp);
+		fclose(fp1);
 	}
 } // xyplot_temp
 

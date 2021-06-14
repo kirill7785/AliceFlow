@@ -69,15 +69,7 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 } // min
 */
 
-// недостающий функционал 1 октября 2016.
-// эта процедура определена выше по коду в mysolverv0_03.c, поэтому здесь её дефениция излишна.
-integer my_imin(integer ia, integer ib )
-{
-    integer ir;
-    if (ia<ib) ir=ia;
-    else ir=ib;
-    return ir;
-} // imin
+
 
 
 // 1 october 2016 cuda compiller.
@@ -2451,7 +2443,8 @@ L20:
 		maxit75 = 2000;
 	}
 	if (iVar == PAM) {
-		maxit75 = 2000; // 2000
+		//maxit75 = 2000; // 2000
+		maxit75 = 100;//100
 	}
 	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 		maxit75 = 100;//100
@@ -4146,7 +4139,13 @@ L20:
 	*/
 
 
-
+	if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+	{
+		epsilon75 = 1.0e-10;
+	}
 
 
 
@@ -8859,7 +8858,9 @@ L100:
 
 		// iluk smoother. начало 31.12.2019.
 		// окончание 01.01.2019
-		
+		//std::cout << "k==" << *k << std::endl;
+		//getchar();
+
 		equation3DtoCRSRUMBA1_amg1r5(milu2_amg1r5[*k - 1], a, ia, ja, imin, imax, *k - 1);
 		if (bflag_repeat_buffer_ilu) {
 			memory_allocation_apostoriory_buffer_ilu(milu2_amg1r5, *k - 1);
@@ -8883,8 +8884,14 @@ L100:
 	    s -= a[j] * u[ja[j]];
 /* L110: */
 	}
-	//printf("1\n");
-	u[i__] = u[i__] + 0.6667*((f[i__] + s) / a[ia[i__]] - u[i__]);
+	//printf("popal 1\n");
+	//u[i__] = u[i__] + 0.6667*((f[i__] + s) / a[ia[i__]] - u[i__]);
+	// Делается всего одна итерация и форма метода нижней релаксации
+	// с нулевого начального приближения, всего при одной итерации не является аппроксимирующей.
+	// Решение как бы стремится к нулевому решению.
+	// Закоментированную строку использовать нельзя. 03,04,2021
+
+	u[i__] = (f[i__] + s) / a[ia[i__]];
 	
 L120:
 	;
@@ -8952,7 +8959,7 @@ L200:
 			u[i__] += milu2_amg1r5[*k - 1].zbuf2[i__ - imin[*k]+1];
 		}
 		
-
+		printf("popal 2P\n");
 	}
 	else
 	{
@@ -8970,9 +8977,16 @@ L200:
 				/* L210: */
 			}
 			//u[i__] = s / a[ia[i__]];
-			doublereal alpha = 0.03; //   0.6667; 0.03; // damped Jacobi
-			u[i__] = (1.0 - alpha) * u[i__] + alpha * (s / a[ia[i__]]);
+			//doublereal alpha = 0.03; //   0.6667; 0.03; // damped Jacobi
+			//u[i__] = (1.0 - alpha) * u[i__] + alpha * (s / a[ia[i__]]);
+			// Делается всего одна итерация и форма метода нижней релаксации
+			// с нулевого начального приближения, всего при одной итерации не является аппроксимирующей.
+			// Решение как бы стремится к нулевому решению.
+			// Закоментированную строку использовать нельзя. 03,04,2021
+			//  
 			//printf("2\n");
+			u[i__] = s / a[ia[i__]];
+			//printf("popal 2\n");
 			/* L220: */
 		}
 	}
@@ -9013,8 +9027,15 @@ L300:
 				s_loc -= a[j_loc] * u[ja[j_loc]];
 				/* L310: */
 			}
-			u[i__loc] = u[i__loc]+ 0.6667*((f[i__loc] + s_loc) / a[ia[i__loc]]- u[i__loc]);
+			//u[i__loc] = u[i__loc]+ 0.6667*((f[i__loc] + s_loc) / a[ia[i__loc]]- u[i__loc]);
+			// Делается всего одна итерация и форма метода нижней релаксации
+			// с нулевого начального приближения, всего при одной итерации не является аппроксимирующей.
+			// Решение как бы стремится к нулевому решению.
+			// Закоментированную строку использовать нельзя. 03,04,2021
+
+			u[i__loc] = (f[i__loc] + s_loc) / a[ia[i__loc]];
 			//printf("3\n");
+			//printf("popal 3\n");
 		}
     }
     goto L1000;
@@ -9053,6 +9074,8 @@ L400:
 	}
 	u[i__] = s / a[ia[i__]];
 	//printf("4\n");
+
+	//printf("popal 4\n");
 L420:
 	;
     }
@@ -9072,6 +9095,8 @@ L420:
 	}
 	u[i__] = s / a[ia[i__]];
 	//printf("5\n");
+
+	//printf("popal 5\n");
 L440:
 	;
     }
@@ -9100,6 +9125,8 @@ L470:
     }
     u[i__m] = s1 / a[ia[i__m]];
     i__m = -icg[i__m];
+
+	//printf("popal 6\n");
     goto L470;
 
 L1000:
@@ -11633,7 +11660,7 @@ typedef struct TQuickMemVorst {
 	 doublereal* w_dubl; // для распараллеливания iluk.c
 	 integer* jw_dubl;
 
-	 integer iwk; // размерность памяти под матрицу предобуславливания.
+	 int64_t iwk; // размерность памяти под матрицу предобуславливания.
 
 	 //doublereal *trthdsd; // правая часть системы уравнений
 
@@ -11662,7 +11689,7 @@ typedef struct TQuickMemVorst {
 	 doublereal* tw; 
 	 integer* tjw;
 
-	 integer tiwk; // размерность памяти под матрицу предобуславливания.
+	 int64_t tiwk; // размерность памяти под матрицу предобуславливания.
 
 	 bool ballocCRSt;
 	 bool bsignalfreeCRSt; // сигнал к освобождению памяти из под a,ja,ia. если true
@@ -13433,6 +13460,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 } // amg_loc_memory
 
+
   // Здесь содержится обвязка вызывающая amg1r5.
   // локальное выделение памяти: всё внутри, многократные alloc и free.
 void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
@@ -13483,12 +13511,13 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 			integer i1 = m.col_ind[j];//номер столбца.
 			if (i1 < 0 || i1 > n - 1 || icg[i1] == 1) {
 				//icg[i1] == 1 - столбец был посещен.
-				std::cout << "n="<< n <<" i1="<< i1 <<" icg="<< icg[i1] << std::endl;
+				std::cout << "n="<< n <<" i1="<< i1 <<" icg="<< icg[i1] << "j1=" << j1 << " j2 =" << i__2 << " j=" << j << std::endl;
 				if (icg[i1] == 1) {
 					printf("POST simplesparsetoCRS in amg_loc_memory_m_ass2 amg two identical columns in a row\n");
 					for (integer j69 = j1; j69 <= i__2; ++j69) {
 						//printf("%lld %lld %lld val=%e col_ind=%lld row_ind=%lld i1=%lld\n", j69, j1, i__2, m.val[j69], m.col_ind[j69], i__, i1);
 						std::cout << j69 << " " << j1 << " " << i__2 << " val=" << m.val[j69] << " col_ind=" << m.col_ind[j69] << " row_ind=" << i__ << " i1=" << i1 << std::endl;
+						getchar();
 					}
 				}
 				system("PAUSE");
@@ -13802,6 +13831,14 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		iprint = 10606;
 		integer levelx = 0;
 		levelx = 100;
+
+		// инициализация.
+		init_level_additional_data(milu2_amg1r5, levelx);
+		bflag_repeat_buffer_ilu = true;
+		for (int i43 = 0; i43 < 100; i43++) {
+			bflag_visit_amg1r5[i43] = false;
+		}
+
 		integer ifirst = 0;
 		// начальное приближение:
 		// 0 - используется из вне.
@@ -13975,6 +14012,9 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 			if (i<n) {
 				// обязательно нужно проверить была ли выделена оперативная память. 
 				f[i + id] = dV[i];
+				//if (fabs(dV[i])>1.0e-20) {
+					//std::cout << "i=" << i << " dV=" << dV[i] << std::endl;
+				//}
 			}
 		}
 
@@ -14010,6 +14050,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				}
 			}
 
+			int nnz_1 = 0;
 
 			// для внутренних узлов расчётной области:
 			for (integer k = 0; k < n; k++) {
@@ -14022,6 +14063,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 						if (fabs(m.val[k1]) > nonzeroEPS) {
 							// id==0
 
+							nnz_1++;
+
 							if (((boundary != nullptr)&&(!boundary[k])) && (m.row_ptr[k + 1] - 1 > m.row_ptr[k])) {
 								
 								a[ik + id] = m.val[k1]/ alpharelax;
@@ -14033,7 +14076,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 
 							ja[ik + id] = m.col_ind[k1] + 1;
-							ia[k + id] = m.row_ptr[k + id];
+							//ia[k + id] = m.row_ptr[k + id];
+							ia[k + id] = my_imin(ik+id+1, ia[k + id]);
 							if (icg[m.col_ind[k1]] == 1) {
 								printf("error k1=%lld k=%lld\n", k1, k);
 								system("PAUSE");
@@ -14050,9 +14094,19 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 						if (fabs(m.val[k1]) > nonzeroEPS) {
 
+							nnz_1++;
+
 							a[ik + id] = m.val[k1];
+							//if (m.val[k1] > 0.0) {
+
+							// В Механике много положительных внедиагональных элементов.
+
+								//printf("positive non diagonal element %e %lld\n", m.val[k1],k1);
+								//getchar();
+							//}
 							ja[ik + id] = m.col_ind[k1] + 1;
-							ia[k + id] = m.row_ptr[k + id];
+							//ia[k + id] = m.row_ptr[k + id];
+							ia[k + id] = my_imin(ik + id + 1, ia[k + id]);
 							if (icg[m.col_ind[k1]] == 1) {
 								std::cout << "error k1="<< k1 <<" k="<< k <<"\n";
 								system("PAUSE");
@@ -14079,12 +14133,21 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 			}
 
+
+			ia[nnu] = nnz_1 + 1;
+			if (m.row_ptr[n] != nna) {
+				printf("nnz_1=%lld nna=%lld nnz input=%lld\n", nnz_1, nna, m.row_ptr[n]);
+				getchar();
+			}
+
 			if (icg != nullptr) {
 				delete[] icg;
 				icg = nullptr;
 			}
 		}
-		for (integer k = 0; k < nnu; k++) ia[k + id]++;
+		
+
+		//for (integer k = 0; k < nnu; k++) ia[k + id]++;
 
 		//****debug print message*******
 		/*
@@ -14243,6 +14306,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		}
 
 		
+		free_level_additional_data(milu2_amg1r5, levelx);
 
 		switch (ierr) {
 		case 1: printf("dimension A small\n.");
@@ -14325,21 +14389,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 } // amg_loc_memory_for_Matrix_assemble2
 
 
-// глобальная память для amg1r5
-typedef struct TamgGlobalMemory {
-	doublereal *a;
-	integer *ia;
-	integer *ja;
-	doublereal *u;
-	doublereal *f;
-	integer *ig;
-	integer nda;
-	integer ndia;
-	integer ndja;
-	integer ndu;
-	integer ndf;
-	integer ndig;
-} amgGlobalMemory;
+
 
 // этот метод показывает значительно более лучшую сходимость, чем простой BiCGStabCRS,
 // а также он гораздо лучше (и повидимому правильней) чем Bi_CGStab_internal1.

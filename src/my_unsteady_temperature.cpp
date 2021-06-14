@@ -36,6 +36,7 @@ void report_temperature(integer flow_interior,
 	doublereal pdiss = 0.0; // Суммарная тепловая мощность в Вт.
 	doublereal tmin1 = 1.0e30, tmax1 = -1.0e30; // Минимальная и максимальная температура в расчётной области.
 	doublereal umin1 = 1.0e30, umax1 = -1.0e30; // Минимальная и максимальная total deformation в расчётной области.
+	doublereal Stress_von_Mises_min1 = 1.0e30, Stress_von_Mises_max1 = -1.0e30; // Минимальное и максимальное эквивалентные напряжения по фон Мизесу в расчётной области.
 
 	doublereal* tmaxreportblock = nullptr;
 		tmaxreportblock = new doublereal[lb];
@@ -87,7 +88,35 @@ void report_temperature(integer flow_interior,
 		umaxreportwall = new doublereal[lw];
 		if (umaxreportwall == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem: not enough memory on your equipment for tmaxreportwall report_temperature...\n");
+			printf("Problem: not enough memory on your equipment for umaxreportwall report_temperature...\n");
+			//printf("Please any key to exit...\n");
+			system("pause");
+			exit(1);
+		}
+
+		doublereal* Stress_von_Mises_maxreportblock = nullptr;
+		Stress_von_Mises_maxreportblock = new doublereal[lb];
+		if (Stress_von_Mises_maxreportblock == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for Stress_von_Mises_maxreportblock report_temperature...\n");
+			//printf("Please any key to exit...\n");
+			system("pause");
+			exit(1);
+		}
+		doublereal* Stress_von_Mises_maxreportsource = nullptr;
+		Stress_von_Mises_maxreportsource = new doublereal[ls];
+		if (Stress_von_Mises_maxreportsource == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for Stress_von_Mises_maxreportsource report_temperature...\n");
+			//printf("Please any key to exit...\n");
+			system("pause");
+			exit(1);
+		}
+		doublereal* Stress_von_Mises_maxreportwall = nullptr;
+		Stress_von_Mises_maxreportwall = new doublereal[lw];
+		if (Stress_von_Mises_maxreportwall == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for Stress_von_Mises_maxreportwall report_temperature...\n");
 			//printf("Please any key to exit...\n");
 			system("pause");
 			exit(1);
@@ -95,19 +124,23 @@ void report_temperature(integer flow_interior,
 
 	const doublereal tmin = -1.0e27;
 	const doublereal umin = -1.0e27;
+	const doublereal sigmamin = -1.0e27;
 
 	// инициализация.
 	for (integer i = 0; i<lb; i++) {
 		tmaxreportblock[i] = tmin;
 		umaxreportblock[i] = umin;
+		Stress_von_Mises_maxreportblock[i] = sigmamin;
 	}
 	for (integer i = 0; i<ls; i++) {
 		tmaxreportsource[i] = tmin;
 		umaxreportsource[i] = umin;
+		Stress_von_Mises_maxreportsource[i] = sigmamin;
 	}
 	for (integer i = 0; i<lw; i++) {
 		tmaxreportwall[i] = tmin;
 		umaxreportwall[i] = umin;
+		Stress_von_Mises_maxreportwall[i] = sigmamin;
 	}
 
 	/*
@@ -142,6 +175,584 @@ void report_temperature(integer flow_interior,
 	}
 	}
 	*/
+
+	if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+	{
+
+		// gamma_xy
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 2, 4, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 2, 4, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 1, 5, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 1, 5, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_XY][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+
+		}
+
+		// gamma_yz
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 3, 4, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 3, 4, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 2, 5, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 2, 5, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_YZ][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+
+		}
+
+
+		// gamma_zx
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 1, 4, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 1, 4, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 3, 5, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 3, 5, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_ZX][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+
+		}
+
+		// epsilon_x
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, XDEFORMATION, STRAIN_X, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, XDEFORMATION, STRAIN_X, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+
+
+		// epsilon_y
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, YDEFORMATION, STRAIN_Y, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, YDEFORMATION, STRAIN_Y, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+		// epsilon_z
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, ZDEFORMATION, STRAIN_Z, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, ZDEFORMATION, STRAIN_Z, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+			doublereal beta_t_solid_x;
+			doublereal beta_t_solid_y;
+			doublereal beta_t_solid_z;
+
+			if (i < t.maxelm) {
+				beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][i] * t.prop[BETA_T_MECHANICAL][i];// Коэффициент линейного теплового расширения 1/K.
+				beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][i] * t.prop[BETA_T_MECHANICAL][i];
+				beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][i] * t.prop[BETA_T_MECHANICAL][i];
+			}
+			else {
+				// Граничный КО.
+				integer i_b = i - t.maxelm;
+				integer ii = t.border_neighbor[i_b].iI;
+				beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][ii] * t.prop[BETA_T_MECHANICAL][ii];// Коэффициент линейного теплового расширения 1/K.
+				beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][ii] * t.prop[BETA_T_MECHANICAL][ii];
+				beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][ii] * t.prop[BETA_T_MECHANICAL][ii];
+			}
+
+
+			//printf("%e %e %e %e %e\n", beta_t_solid_x, beta_t_solid_y, beta_t_solid_z, (t.potent[i] - t.operatingtemperature_copy), t.operatingtemperature_copy);
+			//getchar();
+
+			t.total_deformation[STRAIN_X][i] -= beta_t_solid_x * (t.potent[i] - t.operatingtemperature_copy);
+			t.total_deformation[STRAIN_Y][i] -= beta_t_solid_y * (t.potent[i] - t.operatingtemperature_copy);
+			t.total_deformation[STRAIN_Z][i] -= beta_t_solid_z * (t.potent[i] - t.operatingtemperature_copy);
+		}
+
+		//double **Dirichlet = new doublereal*[6];
+		//for (integer i_11 = 0; i_11 < 6; i_11++) {
+			//Dirichlet[i_11] = new doublereal[6];
+		//}
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+
+			doublereal E;
+			doublereal nu;
+
+			if (i_1 < t.maxelm) {
+				E = t.prop[YOUNG_MODULE][i_1];
+				nu = t.prop[POISSON_RATIO][i_1];
+			}
+			else {
+				// Граничный КО.
+				integer i_b = i_1 - t.maxelm;
+				integer ii = t.border_neighbor[i_b].iI;
+
+				E = t.prop[YOUNG_MODULE][ii];
+				nu = t.prop[POISSON_RATIO][ii];
+			}
+
+			//doublereal beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1]; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
+			//doublereal beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][i_1] * t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения 1/K.
+			//doublereal beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+			//doublereal beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+			//doublereal Ex = t.prop[MULT_YOUNG_MODULE_X][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			//doublereal Ey = t.prop[MULT_YOUNG_MODULE_Y][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			//doublereal Ez = t.prop[MULT_YOUNG_MODULE_Z][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			//doublereal E = t.prop[YOUNG_MODULE][i_1];
+			//doublereal nuyz = t.prop[MULT_POISSON_RATIO_YZ][i_1] * t.prop[POISSON_RATIO][i_1];
+			//doublereal nuxz = t.prop[MULT_POISSON_RATIO_XZ][i_1] * t.prop[POISSON_RATIO][i_1];
+			//doublereal nuxy = t.prop[MULT_POISSON_RATIO_XY][i_1] * t.prop[POISSON_RATIO][i_1];
+			//doublereal nuzy = t.prop[MULT_POISSON_RATIO_ZY][i_1] * t.prop[POISSON_RATIO][i_1];
+			//doublereal nuzx = t.prop[MULT_POISSON_RATIO_ZX][i_1] * t.prop[POISSON_RATIO][i_1];
+			//doublereal nuyx = t.prop[MULT_POISSON_RATIO_YX][i_1] * t.prop[POISSON_RATIO][i_1];
+
+			//doublereal nu = t.prop[POISSON_RATIO][i_1];
+
+			/*
+			doublereal Gxy, Gyz, Gxz;
+			if (!t.bActiveShearModule[i_1]) {
+				Gxy = Gyz = Gxz = Ex / (2.0 * (1.0 + nuxy));
+			}
+			else {
+				Gyz = t.prop[SHEAR_MODULE_YZ][i_1];
+				Gxz = t.prop[SHEAR_MODULE_XZ][i_1];
+				Gxy = t.prop[SHEAR_MODULE_XY][i_1];
+			}
+			*/
+			/*
+			Dirichlet[0][0] = (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[0][1] = -(nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[0][2] = -(nuxy*nuyz + nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[0][3] = 0.0;
+			Dirichlet[0][4] = 0.0;
+			Dirichlet[0][5] = 0.0;
+			Dirichlet[1][0] = -(nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[1][1] = (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[1][2] = -(nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[1][3] = 0.0;
+			Dirichlet[1][4] = 0.0;
+			Dirichlet[1][5] = 0.0;
+			Dirichlet[2][0] = -(nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[2][1] = -(nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[2][2] = (nuxy*nuyx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[2][3] = 0.0;
+			Dirichlet[2][4] = 0.0;
+			Dirichlet[2][5] = 0.0;
+			Dirichlet[3][0] = 0.0;
+			Dirichlet[3][1] = 0.0;
+			Dirichlet[3][2] = 0.0;
+			Dirichlet[3][3] = Gxy;
+			Dirichlet[3][4] = 0.0;
+			Dirichlet[3][5] = 0.0;
+			Dirichlet[4][0] = 0.0;
+			Dirichlet[4][1] = 0.0;
+			Dirichlet[4][2] = 0.0;
+			Dirichlet[4][3] = 0.0;
+			Dirichlet[4][4] = Gyz;
+			Dirichlet[4][5] = 0.0;
+			Dirichlet[5][0] = 0.0;
+			Dirichlet[5][1] = 0.0;
+			Dirichlet[5][2] = 0.0;
+			Dirichlet[5][3] = 0.0;
+			Dirichlet[5][4] = 0.0;
+			Dirichlet[5][5] = Gxz;
+			*/
+
+			// Compute 3D constitutive matrix (linear continuum mechanics)
+			/*
+			doublereal Dirichlet[6][6] =
+			{
+				{1.0 - nu, nu, nu, 0.0, 0.0, 0.0},
+				{nu, 1.0 - nu, nu, 0.0, 0.0, 0.0},
+				{nu, nu, 1.0 - nu, 0.0, 0.0, 0.0},
+				{0.0, 0.0, 0.0, (1.0 - 2.0 * nu) / 2.0, 0.0, 0.0},
+				{0.0, 0.0, 0.0, 0.0, (1.0 - 2.0 * nu) / 2.0, 0.0},
+				{0.0, 0.0, 0.0, 0.0, 0.0, (1.0 - 2.0 * nu) / 2.0}
+			};
+
+			for (int i_r = 0; i_r < 6; i_r++) {
+				for (int i_2 = 0; i_2 < 6; i_2++) {
+					Dirichlet[i_r][i_2] *= E / ((1.0 + nu) * (1.0 - 2.0 * nu));
+				}
+			}
+			*/
+
+
+			doublereal Gxy, Gyz, Gxz;
+			doublereal Ex, Ey, Ez;
+			doublereal nuyz, nuxz, nuxy, nuzy, nuzx, nuyx;
+
+			if (i_1 < t.maxelm) {
+				if (!t.bActiveShearModule[i_1]) {
+					Gxy = Gyz = Gxz = E / (2.0 * (1.0 + nu));
+				}
+				else {
+					Gyz = t.prop[SHEAR_MODULE_YZ][i_1];
+					Gxz = t.prop[SHEAR_MODULE_XZ][i_1];
+					Gxy = t.prop[SHEAR_MODULE_XY][i_1];
+				}
+
+				Ex = t.prop[MULT_YOUNG_MODULE_X][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				Ey = t.prop[MULT_YOUNG_MODULE_Y][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				Ez = t.prop[MULT_YOUNG_MODULE_Z][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+
+				nuyz = t.prop[MULT_POISSON_RATIO_YZ][i_1] * t.prop[POISSON_RATIO][i_1];
+				nuxz = t.prop[MULT_POISSON_RATIO_XZ][i_1] * t.prop[POISSON_RATIO][i_1];
+				nuxy = t.prop[MULT_POISSON_RATIO_XY][i_1] * t.prop[POISSON_RATIO][i_1];
+				nuzy = t.prop[MULT_POISSON_RATIO_ZY][i_1] * t.prop[POISSON_RATIO][i_1];
+				nuzx = t.prop[MULT_POISSON_RATIO_ZX][i_1] * t.prop[POISSON_RATIO][i_1];
+				nuyx = t.prop[MULT_POISSON_RATIO_YX][i_1] * t.prop[POISSON_RATIO][i_1];
+			}
+			else {
+				integer i_b = i_1 - t.maxelm;
+				integer ii = t.border_neighbor[i_b].iI;
+
+				if (!t.bActiveShearModule[ii]) {
+					Gxy = Gyz = Gxz = E / (2.0 * (1.0 + nu));
+				}
+				else {
+					Gyz = t.prop[SHEAR_MODULE_YZ][ii];
+					Gxz = t.prop[SHEAR_MODULE_XZ][ii];
+					Gxy = t.prop[SHEAR_MODULE_XY][ii];
+				}
+
+				Ex = t.prop[MULT_YOUNG_MODULE_X][ii] * t.prop[YOUNG_MODULE][ii]; // Модуль Юнга Па.
+				Ey = t.prop[MULT_YOUNG_MODULE_Y][ii] * t.prop[YOUNG_MODULE][ii]; // Модуль Юнга Па.
+				Ez = t.prop[MULT_YOUNG_MODULE_Z][ii] * t.prop[YOUNG_MODULE][ii]; // Модуль Юнга Па.
+
+				nuyz = t.prop[MULT_POISSON_RATIO_YZ][ii] * t.prop[POISSON_RATIO][ii];
+				nuxz = t.prop[MULT_POISSON_RATIO_XZ][ii] * t.prop[POISSON_RATIO][ii];
+				nuxy = t.prop[MULT_POISSON_RATIO_XY][ii] * t.prop[POISSON_RATIO][ii];
+				nuzy = t.prop[MULT_POISSON_RATIO_ZY][ii] * t.prop[POISSON_RATIO][ii];
+				nuzx = t.prop[MULT_POISSON_RATIO_ZX][ii] * t.prop[POISSON_RATIO][ii];
+				nuyx = t.prop[MULT_POISSON_RATIO_YX][ii] * t.prop[POISSON_RATIO][ii];
+			}
+
+			/*
+			doublereal C_1[6][6] =
+			{
+				{1.0 / Ex, -nu / Ex, -nu / Ex, 0.0, 0.0, 0.0},
+				{-nu / Ey, 1.0 / Ey, -nu / Ey, 0.0, 0.0, 0.0},
+				{-nu / Ez, -nu / Ez, 1.0 / Ez, 0.0, 0.0, 0.0},
+				{0.0, 0.0, 0.0, 1.0 / Gxy, 0.0, 0.0},
+				{0.0, 0.0, 0.0, 0.0, 1.0 / Gyz, 0.0},
+				{0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / Gxz}
+			};*/
+
+			doublereal C_1[6][6] =
+			{
+				{1.0 / Ex, -nuxy / Ex, -nuxz / Ex, 0.0, 0.0, 0.0},
+				{-nuyx / Ey, 1.0 / Ey, -nuyz / Ey, 0.0, 0.0, 0.0},
+				{-nuzx / Ez, -nuzy / Ez, 1.0 / Ez, 0.0, 0.0, 0.0},
+				{0.0, 0.0, 0.0, 1.0 / Gxy, 0.0, 0.0},
+				{0.0, 0.0, 0.0, 0.0, 1.0 / Gyz, 0.0},
+				{0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / Gxz}
+			};
+
+
+			doublereal** Dirichlet = new doublereal * [6];
+			for (int ir1 = 0; ir1 < 6; ir1++) {
+				Dirichlet[ir1] = new doublereal[6];
+				for (int ir2 = 0; ir2 < 6; ir2++) {
+					Dirichlet[ir1][ir2] = C_1[ir1][ir2];
+				}
+			}
+
+			inverse_matrix_simple(Dirichlet, 6, false);
+
+			doublereal Strain_vec[6] = {
+				t.total_deformation[STRAIN_X][i_1],
+				t.total_deformation[STRAIN_Y][i_1],
+				t.total_deformation[STRAIN_Z][i_1],
+				t.total_deformation[STRAIN_XY][i_1],
+				t.total_deformation[STRAIN_YZ][i_1],
+				t.total_deformation[STRAIN_ZX][i_1]
+			};
+
+			doublereal Stress_vec[6] = {
+				0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+			};
+
+			for (integer ir1 = 0; ir1 < 6; ir1++) {
+				for (integer ir2 = 0; ir2 < 6; ir2++) {
+					Stress_vec[ir1] += Dirichlet[ir1][ir2] * Strain_vec[ir2];
+				}
+			}
+
+			t.total_deformation[STRESS_X][i_1] = Stress_vec[0];
+			t.total_deformation[STRESS_Y][i_1] = Stress_vec[1];
+			t.total_deformation[STRESS_Z][i_1] = Stress_vec[2];
+			t.total_deformation[STRESS_XY][i_1] = Stress_vec[3];
+			t.total_deformation[STRESS_YZ][i_1] = Stress_vec[4];
+			t.total_deformation[STRESS_ZX][i_1] = Stress_vec[5];
+
+			for (int ir1 = 0; ir1 < 6; ir1++) {
+				delete[] Dirichlet[ir1];
+			}
+			delete[] Dirichlet;
+
+			/*
+			t.total_deformation[STRESS_X][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					// Во первых почему мы вычитаем epsilon_t они по идее сонаправлены и должны суммироваться.
+					// А во вторых зачем здесь вообще epsilon_t участвует ??? 16.03.2021
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*- beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*-	beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*-	beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+				}
+				else {
+					t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+			t.total_deformation[STRESS_Y][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					// Во первых почему мы вычитаем epsilon_t они по идее сонаправлены и должны суммироваться.
+					// А во вторых зачем здесь вообще epsilon_t участвует ??? 16.03.2021
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*- beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*- beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*- beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+				}
+				else {
+					t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+			t.total_deformation[STRESS_Z][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					// Во первых почему мы вычитаем epsilon_t они по идее сонаправлены и должны суммироваться.
+					// А во вторых зачем здесь вообще epsilon_t участвует ??? 16.03.2021
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*-	beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*-	beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1]
+							/*-	beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy)*//*);
+					}
+				}
+				else {
+					t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+
+			t.total_deformation[STRESS_XY][i_1] = Dirichlet[3][3] * t.total_deformation[STRAIN_XY][i_1];
+			t.total_deformation[STRESS_YZ][i_1] = Dirichlet[4][4] * t.total_deformation[STRAIN_YZ][i_1];
+			t.total_deformation[STRESS_ZX][i_1] = Dirichlet[5][5] * t.total_deformation[STRAIN_ZX][i_1];
+			*/
+		}
+		//for (integer i_11 = 0; i_11 < 6; i_11++) {
+			//delete[] Dirichlet[i_11];
+		//}
+		//delete[] Dirichlet;
+
+		/*
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxbound; i_1++) {
+			t.total_deformation[STRESS_X][i_1] = t.total_deformation[STRESS_X][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_Y][i_1] = t.total_deformation[STRESS_Y][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_Z][i_1] = t.total_deformation[STRESS_Z][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_XY][i_1] = t.total_deformation[STRESS_XY][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_YZ][i_1] = t.total_deformation[STRESS_YZ][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_ZX][i_1] = t.total_deformation[STRESS_ZX][t.border_neighbor[i_1].iI];
+		}
+		*/
+		// epsilon (STRAIN) von Mizes
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			//t.total_deformation[STRAIN_VON_MIZES][i_1] = sqrt(0.5*((t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Y][i_1])*
+				//(t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Y][i_1]) + (t.total_deformation[STRAIN_Y][i_1] - t.total_deformation[STRAIN_Z][i_1]) *
+				//(t.total_deformation[STRAIN_Y][i_1] - t.total_deformation[STRAIN_Z][i_1]) + (t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Z][i_1]) *
+				//(t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Z][i_1])));
+
+			t.total_deformation[STRAIN_VON_MIZES][i_1] = sqrt(0.5 * ((t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Y][i_1]) *
+				(t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Y][i_1]) + (t.total_deformation[STRAIN_Y][i_1] - t.total_deformation[STRAIN_Z][i_1]) *
+				(t.total_deformation[STRAIN_Y][i_1] - t.total_deformation[STRAIN_Z][i_1]) + (t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Z][i_1]) *
+				(t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Z][i_1]) + 6.0 * (t.total_deformation[STRAIN_XY][i_1] * t.total_deformation[STRAIN_XY][i_1] +
+					t.total_deformation[STRAIN_YZ][i_1] * t.total_deformation[STRAIN_YZ][i_1] + t.total_deformation[STRAIN_ZX][i_1] * t.total_deformation[STRAIN_ZX][i_1])));
+
+
+			t.total_deformation[LOG10_STRAIN_VON_MIZES][i_1] = log10(t.total_deformation[STRAIN_VON_MIZES][i_1]);
+
+
+			// STRESS
+
+
+			//t.total_deformation[STRESS_VON_MIZES][i_1] = sqrt(0.5*((t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Y][i_1])*
+				//(t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Y][i_1]) + (t.total_deformation[STRESS_Y][i_1] - t.total_deformation[STRESS_Z][i_1]) *
+				//(t.total_deformation[STRESS_Y][i_1] - t.total_deformation[STRESS_Z][i_1]) + (t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Z][i_1]) *
+				//(t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Z][i_1])));
+
+
+			// https://ru.wikipedia.org/wiki/Мизес,_Рихард_Эдлер_фон
+			// https://ru.qaz.wiki/wiki/Von_Mises_yield_criterion
+			t.total_deformation[STRESS_VON_MIZES][i_1] = sqrt(0.5 * ((t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Y][i_1]) *
+				(t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Y][i_1]) + (t.total_deformation[STRESS_Y][i_1] - t.total_deformation[STRESS_Z][i_1]) *
+				(t.total_deformation[STRESS_Y][i_1] - t.total_deformation[STRESS_Z][i_1]) + (t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Z][i_1]) *
+				(t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Z][i_1]) + 6.0 * (t.total_deformation[STRESS_XY][i_1] * t.total_deformation[STRESS_XY][i_1] +
+					t.total_deformation[STRESS_YZ][i_1] * t.total_deformation[STRESS_YZ][i_1] + t.total_deformation[STRESS_ZX][i_1] * t.total_deformation[STRESS_ZX][i_1])));
+
+			t.total_deformation[LOG10_STRESS_VON_MIZES][i_1] = log10(t.total_deformation[STRESS_VON_MIZES][i_1]);
+
+		}
+
+
+	}
+
+
 	// 8 января 2016 гораздо более быстрый вариант по быстродействию.
 	// Проходим по всем КО включая граничные.
 	for (integer i = 0; i<t.maxelm + t.maxbound; i++) {
@@ -167,6 +778,10 @@ void report_temperature(integer flow_interior,
 					if (umaxreportblock[ib] < t.total_deformation[0][iP]) {
 						umaxreportblock[ib] = t.total_deformation[0][iP];
 					}
+
+					if (Stress_von_Mises_maxreportblock[ib] < 1.0e-6*t.total_deformation[STRESS_VON_MIZES][iP]) {
+						Stress_von_Mises_maxreportblock[ib] = 1.0e-6*t.total_deformation[STRESS_VON_MIZES][iP];
+					}
 				}
 			}
 		}
@@ -187,6 +802,9 @@ void report_temperature(integer flow_interior,
 							if (umaxreportsource[t.border_neighbor[inumber].MCB] < t.total_deformation[0][i]) {
 								umaxreportsource[t.border_neighbor[inumber].MCB] = t.total_deformation[0][i];
 							}
+							if (Stress_von_Mises_maxreportsource[t.border_neighbor[inumber].MCB] < 1.0e-6*t.total_deformation[STRESS_VON_MIZES][i]) {
+								Stress_von_Mises_maxreportsource[t.border_neighbor[inumber].MCB] = 1.0e-6*t.total_deformation[STRESS_VON_MIZES][i];
+							}
 						}
 					}
 				}
@@ -202,6 +820,9 @@ void report_temperature(integer flow_interior,
 						if (t.total_deformation != nullptr) {
 							if (umaxreportwall[t.border_neighbor[inumber].MCB - ls] < t.total_deformation[0][i]) {
 								umaxreportwall[t.border_neighbor[inumber].MCB - ls] = t.total_deformation[0][i];
+							}
+							if (Stress_von_Mises_maxreportwall[t.border_neighbor[inumber].MCB - ls] < 1.0e-6*t.total_deformation[STRESS_VON_MIZES][i]) {
+								Stress_von_Mises_maxreportwall[t.border_neighbor[inumber].MCB - ls] = 1.0e-6*t.total_deformation[STRESS_VON_MIZES][i];
 							}
 						}
 					}
@@ -299,7 +920,7 @@ void report_temperature(integer flow_interior,
 				name = nullptr;
 
 				if (bMechanical) {
-					fprintf(fp, "object_name temperature, °C   power, W   total_deformation, m\n");
+					fprintf(fp, "object_name temperature, °C   power, W   total_deformation, m   stress von Mises, MPa\n");
 				}
 				else {
 					fprintf(fp, "object_name temperature, °C   power, W\n");
@@ -329,12 +950,16 @@ void report_temperature(integer flow_interior,
 						}
 						else {
 							pdiss += get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i]) * (Vol);
-							if (tmaxreportblock[i] < tmin1) tmin1 = tmaxreportblock[i];
+							if ((tmaxreportblock[i] > -1.0e26) && (tmaxreportblock[i] < tmin1)) tmin1 = tmaxreportblock[i];
 							if (tmaxreportblock[i] > tmax1) tmax1 = tmaxreportblock[i];
 							if (bMechanical) {
 								if (umaxreportblock[i] < umin1) umin1 = umaxreportblock[i];
 								if (umaxreportblock[i] > umax1) umax1 = umaxreportblock[i];
-								fprintf(fp, "%-30s %e %e %e\n", b[i].name, tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i])* (Vol), umaxreportblock[i]);
+
+								if ((Stress_von_Mises_maxreportblock[i]>-1.0e26)&&(Stress_von_Mises_maxreportblock[i] < Stress_von_Mises_min1)) Stress_von_Mises_min1 = Stress_von_Mises_maxreportblock[i];
+								if (Stress_von_Mises_maxreportblock[i] > Stress_von_Mises_max1) Stress_von_Mises_max1 = Stress_von_Mises_maxreportblock[i];
+
+								fprintf(fp, "%-30s %e %e %e %e\n", b[i].name, tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i])* (Vol), umaxreportblock[i], Stress_von_Mises_maxreportblock[i]);
 							}
 							else {
 								fprintf(fp, "%-30s %e %e\n", b[i].name, tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i])* (Vol));
@@ -347,13 +972,17 @@ void report_temperature(integer flow_interior,
 						}
 						else {
 							pdiss += get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i]) * (Vol);
-							if (tmaxreportblock[i] < tmin1) tmin1 = tmaxreportblock[i];
+							if ((tmaxreportblock[i] > -1.0e26) && (tmaxreportblock[i] < tmin1)) tmin1 = tmaxreportblock[i];
 							if (tmaxreportblock[i] > tmax1) tmax1 = tmaxreportblock[i];
 							//fprintf(fp, "%-30s %e %e\n", b[i].name, tmaxreportblock[i], b[i].Sc*(Vol));
 							if (bMechanical) {
 								if (umaxreportblock[i] < umin1) umin1 = umaxreportblock[i];
 								if (umaxreportblock[i] > umax1) umax1 = umaxreportblock[i];
-								fprintf(fp, "%-30s %e %e %e\n", b[i].name, tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i]) * (Vol), umaxreportblock[i]);
+
+								if ((Stress_von_Mises_maxreportblock[i] > -1.0e26) && (Stress_von_Mises_maxreportblock[i] < Stress_von_Mises_min1)) Stress_von_Mises_min1 = Stress_von_Mises_maxreportblock[i];
+								if (Stress_von_Mises_maxreportblock[i] > Stress_von_Mises_max1) Stress_von_Mises_max1 = Stress_von_Mises_maxreportblock[i];
+
+								fprintf(fp, "%-30s %e %e %e %e\n", b[i].name, tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i]) * (Vol), umaxreportblock[i], Stress_von_Mises_maxreportblock[i]);
 							}
 							else {
 								fprintf(fp, "%-30s %e %e\n", b[i].name, tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i]) * (Vol));
@@ -363,25 +992,32 @@ void report_temperature(integer flow_interior,
 				}
 				for (integer i = 0; i < ls; i++) {
 					pdiss += s[i].power;
-					if (tmaxreportsource[i] < tmin1) tmin1 = tmaxreportsource[i];
+					if ((tmaxreportsource[i] > -1.0e26) && (tmaxreportsource[i] < tmin1)) tmin1 = tmaxreportsource[i];
 					if (tmaxreportsource[i] > tmax1) tmax1 = tmaxreportsource[i];
 					if (bMechanical) {
 						if (umaxreportsource[i] < umin1) umin1 = umaxreportsource[i];
 						if (umaxreportsource[i] > umax1) umax1 = umaxreportsource[i];
-						fprintf(fp, "%-30s %e %e %e\n", s[i].name, tmaxreportsource[i], s[i].power, umaxreportsource[i]);
+
+						if ((Stress_von_Mises_maxreportsource[i] > -1.0e26) && (Stress_von_Mises_maxreportsource[i] < Stress_von_Mises_min1)) Stress_von_Mises_min1 = Stress_von_Mises_maxreportsource[i];
+						if (Stress_von_Mises_maxreportsource[i] > Stress_von_Mises_max1) Stress_von_Mises_max1 = Stress_von_Mises_maxreportsource[i];
+
+						fprintf(fp, "%-30s %e %e %e %e\n", s[i].name, tmaxreportsource[i], s[i].power, umaxreportsource[i], Stress_von_Mises_maxreportsource[i]);
 					}
 					else {
 						fprintf(fp, "%-30s %e %e\n", s[i].name, tmaxreportsource[i], s[i].power);
 					}
 				}
 				for (integer i = 0; i < lw; i++) {
-					if (tmaxreportwall[i] < tmin1) tmin1 = tmaxreportwall[i];
+					if ((tmaxreportwall[i]>-1.0e26)&&(tmaxreportwall[i] < tmin1)) tmin1 = tmaxreportwall[i];
 					if (tmaxreportwall[i] > tmax1) tmax1 = tmaxreportwall[i];
 					if (bMechanical) {
 						if (umaxreportwall[i] < umin1) umin1 = umaxreportwall[i];
 						if (umaxreportwall[i] > umax1) umax1 = umaxreportwall[i];
 
-						fprintf(fp, "%-30s %e %e %e\n", w[i].name, tmaxreportwall[i], 0.0, umaxreportwall[i]);
+						if ((Stress_von_Mises_maxreportwall[i] > -1.0e26) && (Stress_von_Mises_maxreportwall[i] < Stress_von_Mises_min1)) Stress_von_Mises_min1 = Stress_von_Mises_maxreportwall[i];
+						if (Stress_von_Mises_maxreportwall[i] > Stress_von_Mises_max1) Stress_von_Mises_max1 = Stress_von_Mises_maxreportwall[i];
+
+						fprintf(fp, "%-30s %e %e %e %e\n", w[i].name, tmaxreportwall[i], 0.0, umaxreportwall[i], Stress_von_Mises_maxreportwall[i]);
 					}
 					else {
 						fprintf(fp, "%-30s %e %e\n", w[i].name, tmaxreportwall[i], 0.0);
@@ -394,6 +1030,9 @@ void report_temperature(integer flow_interior,
 				if (bMechanical) {
 					fprintf(fp, "Minimum total deformation in default\n interior is equal = %e m\n", umin1);
 					fprintf(fp, "Maximum total deformation in default\n interior is equal = %e m\n", umax1);
+
+					fprintf(fp, "Minimum equivalent von Mises Stress in default\n interior is equal = %e MPa\n", Stress_von_Mises_min1);
+					fprintf(fp, "Maximum equivalent von Mises Stress in default\n interior is equal = %e MPa\n", Stress_von_Mises_max1);
 				}
 
 				doublereal massa=massa_cabinet(t, f,  flow_interior,
@@ -518,6 +1157,7 @@ void report_temperature(integer flow_interior,
 					printf("\n");
 					for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
 						fprintf(fp, "wall[%d].name = %s power is %e W. Number control volume in wall=%lld\n", iwall_scan, w[iwall_scan].name, wall_power[iwall_scan], number_control_volume_on_wall[iwall_scan]);
+					
 					}
 
 					delete[] number_control_volume_on_wall;
@@ -774,6 +1414,36 @@ void report_temperature(integer flow_interior,
 			tmaxreportwall = nullptr;
 		}
 
+		if (umaxreportblock != nullptr) {
+			delete[] umaxreportblock;
+			umaxreportblock = nullptr;
+		}
+
+		if (umaxreportsource != nullptr) {
+			delete[] umaxreportsource;
+			umaxreportsource = nullptr;
+		}
+
+		if (umaxreportwall != nullptr) {
+			delete[] umaxreportwall;
+			umaxreportwall = nullptr;
+		}
+
+		
+		if (Stress_von_Mises_maxreportblock != nullptr) {
+			delete[] Stress_von_Mises_maxreportblock;
+			Stress_von_Mises_maxreportblock = nullptr;
+		}
+
+		if (Stress_von_Mises_maxreportsource != nullptr) {
+			delete[] Stress_von_Mises_maxreportsource;
+			Stress_von_Mises_maxreportsource = nullptr;
+		}
+
+		if (Stress_von_Mises_maxreportwall != nullptr) {
+			delete[] Stress_von_Mises_maxreportwall;
+			Stress_von_Mises_maxreportwall = nullptr;
+		}
 	}
 	else {
 
@@ -880,6 +1550,99 @@ void report_mechanical_for_unsteady_modeling(integer flow_interior,
 		exit(1);
 	}
 
+	doublereal* umaxreportblock_x = nullptr;
+	umaxreportblock_x = new doublereal[lb];
+	if (umaxreportblock_x == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportblock_x report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+	doublereal* umaxreportsource_x = nullptr;
+	umaxreportsource_x = new doublereal[ls];
+	if (umaxreportsource_x == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportsource_x report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+	doublereal* umaxreportwall_x = nullptr;
+	umaxreportwall_x = new doublereal[lw];
+	if (umaxreportwall_x == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportwall_x report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+
+	doublereal* umaxreportblock_y = nullptr;
+	umaxreportblock_y = new doublereal[lb];
+	if (umaxreportblock_y == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportblock_y report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+	doublereal* umaxreportsource_y = nullptr;
+	umaxreportsource_y = new doublereal[ls];
+	if (umaxreportsource_y == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportsource_y report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+	doublereal* umaxreportwall_y = nullptr;
+	umaxreportwall_y = new doublereal[lw];
+	if (umaxreportwall_y == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportwall_y report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+
+	doublereal* umaxreportblock_z = nullptr;
+	umaxreportblock_z = new doublereal[lb];
+	if (umaxreportblock_z == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportblock_z report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+	doublereal* umaxreportsource_z = nullptr;
+	umaxreportsource_z = new doublereal[ls];
+	if (umaxreportsource_z == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportsource_z report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+	doublereal* umaxreportwall_z = nullptr;
+	umaxreportwall_z = new doublereal[lw];
+	if (umaxreportwall_z == nullptr) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for umaxreportwall_z report_mechanical_for_unsteady_modeling...\n");
+		printf("Please any key to exit...\n");
+		//getchar();
+		system("pause");
+		exit(1);
+	}
+
 	const doublereal umin = -1.0e27;
 
 	// инициализация.
@@ -892,6 +1655,38 @@ void report_mechanical_for_unsteady_modeling(integer flow_interior,
 	for (integer i = 0; i < lw; i++) {
 		umaxreportwall[i] = umin;
 	}
+
+
+	for (integer i = 0; i < lb; i++) {
+		umaxreportblock_x[i] = umin;
+	}
+	for (integer i = 0; i < ls; i++) {
+		umaxreportsource_x[i] = umin;
+	}
+	for (integer i = 0; i < lw; i++) {
+		umaxreportwall_x[i] = umin;
+	}
+
+	for (integer i = 0; i < lb; i++) {
+		umaxreportblock_y[i] = umin;
+	}
+	for (integer i = 0; i < ls; i++) {
+		umaxreportsource_y[i] = umin;
+	}
+	for (integer i = 0; i < lw; i++) {
+		umaxreportwall_y[i] = umin;
+	}
+
+	for (integer i = 0; i < lb; i++) {
+		umaxreportblock_z[i] = umin;
+	}
+	for (integer i = 0; i < ls; i++) {
+		umaxreportsource_z[i] = umin;
+	}
+	for (integer i = 0; i < lw; i++) {
+		umaxreportwall_z[i] = umin;
+	}
+
 
 	/*
 	// Проходим по всем КО включая граничные.
@@ -961,6 +1756,15 @@ void report_mechanical_for_unsteady_modeling(integer flow_interior,
 					if (umaxreportblock[ib] < t.total_deformation[0][iP]) {
 						umaxreportblock[ib] = t.total_deformation[0][iP];
 					}
+					if (umaxreportblock_x[ib] < fabs(t.total_deformation[1][iP])) {
+						umaxreportblock_x[ib] = fabs(t.total_deformation[1][iP]);
+					}
+					if (umaxreportblock_y[ib] < fabs(t.total_deformation[2][iP])) {
+						umaxreportblock_y[ib] = fabs(t.total_deformation[2][iP]);
+					}
+					if (umaxreportblock_z[ib] < fabs(t.total_deformation[3][iP])) {
+						umaxreportblock_z[ib] = fabs(t.total_deformation[3][iP]);
+					}
 				}
 			}
 		}
@@ -984,6 +1788,40 @@ void report_mechanical_for_unsteady_modeling(integer flow_interior,
 								umaxreportwall[t.border_neighbor[inumber].MCB - ls] = t.total_deformation[0][i];
 							}
 						}
+
+						if (t.border_neighbor[inumber].MCB < ls) {
+							if (umaxreportsource_x[t.border_neighbor[inumber].MCB] < fabs(t.total_deformation[1][i])) {
+								umaxreportsource_x[t.border_neighbor[inumber].MCB] = fabs(t.total_deformation[1][i]);
+							}
+						}
+						else {
+							if (umaxreportwall_x[t.border_neighbor[inumber].MCB - ls] < fabs(t.total_deformation[1][i])) {
+								umaxreportwall_x[t.border_neighbor[inumber].MCB - ls] = fabs(t.total_deformation[1][i]);
+							}
+						}
+
+						if (t.border_neighbor[inumber].MCB < ls) {
+							if (umaxreportsource_y[t.border_neighbor[inumber].MCB] < fabs(t.total_deformation[2][i])) {
+								umaxreportsource_y[t.border_neighbor[inumber].MCB] = fabs(t.total_deformation[2][i]);
+							}
+						}
+						else {
+							if (umaxreportwall_y[t.border_neighbor[inumber].MCB - ls] < fabs(t.total_deformation[2][i])) {
+								umaxreportwall_y[t.border_neighbor[inumber].MCB - ls] = fabs(t.total_deformation[2][i]);
+							}
+						}
+
+						if (t.border_neighbor[inumber].MCB < ls) {
+							if (umaxreportsource_z[t.border_neighbor[inumber].MCB] < fabs(t.total_deformation[3][i])) {
+								umaxreportsource_z[t.border_neighbor[inumber].MCB] = fabs(t.total_deformation[3][i]);
+							}
+						}
+						else {
+							if (umaxreportwall_z[t.border_neighbor[inumber].MCB - ls] < fabs(t.total_deformation[3][i])) {
+								umaxreportwall_z[t.border_neighbor[inumber].MCB - ls] = fabs(t.total_deformation[3][i]);
+							}
+						}
+
 					}
 				}
 			}
@@ -1090,12 +1928,21 @@ void report_mechanical_for_unsteady_modeling(integer flow_interior,
 				//fprintf(fp, "deformation, m  \n");
 				for (integer i = 0; i < lb; i++) {
 					fprintf(fp, "%e ", umaxreportblock[i]);
+					fprintf(fp, "%e ", umaxreportblock_x[i]);
+					fprintf(fp, "%e ", umaxreportblock_y[i]);
+					fprintf(fp, "%e ", umaxreportblock_z[i]);
 				}
 				for (integer i = 0; i < ls; i++) {
 					fprintf(fp, "%e ", umaxreportsource[i]);
+					fprintf(fp, "%e ", umaxreportsource_x[i]);
+					fprintf(fp, "%e ", umaxreportsource_y[i]);
+					fprintf(fp, "%e ", umaxreportsource_z[i]);
 				}
 				for (integer i = 0; i < lw; i++) {
 					fprintf(fp, "%e ", umaxreportwall[i]);
+					fprintf(fp, "%e ", umaxreportwall_x[i]);
+					fprintf(fp, "%e ", umaxreportwall_y[i]);
+					fprintf(fp, "%e ", umaxreportwall_z[i]);
 				}
 				fprintf(fp, "\n");
 
@@ -1121,6 +1968,52 @@ void report_mechanical_for_unsteady_modeling(integer flow_interior,
 			umaxreportwall = nullptr;
 		}
 
+		if (umaxreportblock_x != nullptr) {
+			delete[] umaxreportblock_x;
+			umaxreportblock_x = nullptr;
+		}
+
+		if (umaxreportsource_x != nullptr) {
+			delete[] umaxreportsource_x;
+			umaxreportsource_x = nullptr;
+		}
+
+		if (umaxreportwall_x != nullptr) {
+			delete[] umaxreportwall_x;
+			umaxreportwall_x = nullptr;
+		}
+
+
+		if (umaxreportblock_y != nullptr) {
+			delete[] umaxreportblock_y;
+			umaxreportblock_y = nullptr;
+		}
+
+		if (umaxreportsource_y != nullptr) {
+			delete[] umaxreportsource_y;
+			umaxreportsource_y = nullptr;
+		}
+
+		if (umaxreportwall_y != nullptr) {
+			delete[] umaxreportwall_y;
+			umaxreportwall_y = nullptr;
+		}
+
+		if (umaxreportblock_z != nullptr) {
+			delete[] umaxreportblock_z;
+			umaxreportblock_z = nullptr;
+		}
+
+		if (umaxreportsource_z != nullptr) {
+			delete[] umaxreportsource_z;
+			umaxreportsource_z = nullptr;
+		}
+
+		if (umaxreportwall_z != nullptr) {
+			delete[] umaxreportwall_z;
+			umaxreportwall_z = nullptr;
+		}
+
 	}
 	else {
 
@@ -1142,6 +2035,52 @@ void report_mechanical_for_unsteady_modeling(integer flow_interior,
 		if (umaxreportwall != nullptr) {
 			delete[] umaxreportwall;
 			umaxreportwall = nullptr;
+		}
+
+		if (umaxreportblock_x != nullptr) {
+			delete[] umaxreportblock_x;
+			umaxreportblock_x = nullptr;
+		}
+
+		if (umaxreportsource_x != nullptr) {
+			delete[] umaxreportsource_x;
+			umaxreportsource_x = nullptr;
+		}
+
+		if (umaxreportwall_x != nullptr) {
+			delete[] umaxreportwall_x;
+			umaxreportwall_x = nullptr;
+		}
+
+
+		if (umaxreportblock_y != nullptr) {
+			delete[] umaxreportblock_y;
+			umaxreportblock_y = nullptr;
+		}
+
+		if (umaxreportsource_y != nullptr) {
+			delete[] umaxreportsource_y;
+			umaxreportsource_y = nullptr;
+		}
+
+		if (umaxreportwall_y != nullptr) {
+			delete[] umaxreportwall_y;
+			umaxreportwall_y = nullptr;
+		}
+
+		if (umaxreportblock_z != nullptr) {
+			delete[] umaxreportblock_z;
+			umaxreportblock_z = nullptr;
+		}
+
+		if (umaxreportsource_z != nullptr) {
+			delete[] umaxreportsource_z;
+			umaxreportsource_z = nullptr;
+		}
+
+		if (umaxreportwall_z != nullptr) {
+			delete[] umaxreportwall_z;
+			umaxreportwall_z = nullptr;
 		}
 
 		printf("Indetify problem in report_mechanical_for_unsteady_modeling in my_unsteady_temperature.c module...\n");
@@ -2335,9 +3274,9 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 #endif
 		if ((errM == 0) && (fpM != NULL)) {
 			fprintf(fpM, "time ");
-			for (integer i = 0; i < lb; i++) fprintf(fpM, "%s ", b[i].name);
-			for (integer i = 0; i < ls; i++) fprintf(fpM, "%s ", s[i].name);
-			for (integer i = 0; i < lw; i++) fprintf(fpM, "%s ", w[i].name);
+			for (integer i = 0; i < lb; i++) fprintf(fpM, "t_%s x_%s y_%s z_%s ", b[i].name, b[i].name, b[i].name, b[i].name);
+			for (integer i = 0; i < ls; i++) fprintf(fpM, "t_%s x_%s y_%s z_%s ", s[i].name, s[i].name, s[i].name, s[i].name);
+			for (integer i = 0; i < lw; i++) fprintf(fpM, "t_%s x_%s y_%s z_%s ", w[i].name, w[i].name, w[i].name, w[i].name);
 			fprintf(fpM, "\n");
 			fclose(fpM);
 		}
@@ -2394,6 +3333,8 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	// Нестационарный расчёт деформации МКЭ.
 	doublereal* uoldtimestep = nullptr;
 	doublereal* uolddoubletimestep = nullptr;
+	doublereal* uolddoubletimestep1 = nullptr;
+	doublereal* uolddoubletimestep2 = nullptr;
 	doublereal* tnewtimestep = nullptr;
 	integer maxelm_global_ret = 0;
 	if (bTemperature) {
@@ -2429,10 +3370,14 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	if (bMechanical) {
 		uoldtimestep = new doublereal[3 * t.maxnod]; 
 		uolddoubletimestep = new doublereal[3 * t.maxnod];
+		uolddoubletimestep1 = new doublereal[3 * t.maxnod];
+		uolddoubletimestep2 = new doublereal[3 * t.maxnod];
 		// Инициализация нулевым перемещением.
 		for (integer i = 0; i < 3 * t.maxnod; i++) {
 			uoldtimestep[i] = 0.0;
 			uolddoubletimestep[i] = 0.0;
+			uolddoubletimestep1[i] = 0.0;
+			uolddoubletimestep2[i] = 0.0;
 		}
 	}
 
@@ -2888,11 +3833,18 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 								vol[i] = 0.0;
 							}
 
-							// Преобразование температуры с сетки МКО на сетку МКЭ.
-							SECOND_ORDER_QUADRATIC_RECONSTRUCTA(my_global_temperature_struct.maxnod,
-								my_global_temperature_struct.maxelm, my_global_temperature_struct.pa,
-								my_global_temperature_struct.nvtx, vol, t_for_Mechanical, min_x, min_y, min_z, my_global_temperature_struct.potent,
-								my_global_temperature_struct, eps_mashine, false);
+							if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)||
+								(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)) 
+							{
+								// Это требуется только для механики.
+
+								// Преобразование температуры с сетки МКО на сетку МКЭ.
+								SECOND_ORDER_QUADRATIC_RECONSTRUCTA(my_global_temperature_struct.maxnod,
+									my_global_temperature_struct.maxelm, my_global_temperature_struct.pa,
+									my_global_temperature_struct.nvtx, vol, t_for_Mechanical, min_x, min_y, min_z, my_global_temperature_struct.potent,
+									my_global_temperature_struct, eps_mashine, false, 1.0e-2);
+
+							}
 
 							delete[] vol;
 
@@ -3104,18 +4056,30 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 
 				if (bMechanical) {
+					doublereal tau_old2 = timestep_sequence[0];
+					doublereal tau_old1 = timestep_sequence[0];
+					doublereal tau_old = timestep_sequence[0];
+					if (j > 2) {
+						tau_old2 = timestep_sequence[j - 3];
+					}
+					if (j > 1) {
+						tau_old1 = timestep_sequence[j - 2];
+					}
+					if (j > 0) {
+						tau_old = timestep_sequence[j - 1];
+					}
 					// Вызов солвера Static Structural.
 					//Сложного поведения с одновременным использованием poweron_multiplier_sequence и poweron_multiplier_sequence0 не предусмотрено.
 					if (glTSL.id_law == TIME_STEP_lAW_SELECTOR::SQUARE_WAVE) {
 						solve_Structural(t, w, lw, true, operatingtemperature, b, lb, lu,
-							btimedep, timestep_sequence[j], uoldtimestep, uolddoubletimestep,  poweron_multiplier_sequence0[j], matlist,
+							btimedep, timestep_sequence[j], tau_old, tau_old1, tau_old2, uoldtimestep, uolddoubletimestep, uolddoubletimestep1, uolddoubletimestep2, poweron_multiplier_sequence0[j], matlist,
 							t_for_Mechanical);
 
 						report_mechanical_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence0[j], operatingtemperature);
 					}
 					else {
 						solve_Structural(t, w, lw, true, operatingtemperature, b, lb, lu,
-							btimedep, timestep_sequence[j], uoldtimestep, uolddoubletimestep,  poweron_multiplier_sequence[j], matlist,
+							btimedep, timestep_sequence[j], tau_old, tau_old1, tau_old2, uoldtimestep, uolddoubletimestep, uolddoubletimestep1, uolddoubletimestep2, poweron_multiplier_sequence[j], matlist,
 							t_for_Mechanical);
 
 						report_mechanical_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], operatingtemperature);
@@ -3225,7 +4189,9 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 			fclose(fpcurvedata); // закрытие файла для записи кривой прогрева.
 		}
-		fclose(fpKras); // закрытие файла для записи кривой прогрева в готовом для визуализации виде.
+		if (fpKras != NULL) {
+			fclose(fpKras); // закрытие файла для записи кривой прогрева в готовом для визуализации виде.
+		}
 	}
 
 	
@@ -3241,6 +4207,14 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 	if (uolddoubletimestep != nullptr) {
 		delete[] uolddoubletimestep;
+	}
+
+	if (uolddoubletimestep1 != nullptr) {
+		delete[] uolddoubletimestep1;
+	}
+
+	if (uolddoubletimestep2 != nullptr) {
+		delete[] uolddoubletimestep2;
 	}
 
 	if (tnewtimestep != nullptr) {
@@ -3283,19 +4257,70 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 					evdokimova_report[i][4] = 0.0;
 				}
 				else {
-					evdokimova_report[i][4] = (evdokimova_report[i + 1][3] - evdokimova_report[i][3]) / (evdokimova_report[i + 1][2] - evdokimova_report[i][2]);
+					if (i == 0) {
+						evdokimova_report[i][4] = (evdokimova_report[i + 1][3] - evdokimova_report[i][3]) / (evdokimova_report[i + 1][2] - evdokimova_report[i][2]);
+					}
+					else {
+						// Схема второго порядка точности.
+						doublereal Fforvard = evdokimova_report[i + 1][3];
+						doublereal Fcenter = evdokimova_report[i][3];
+						doublereal Fback = evdokimova_report[i - 1][3];
+						doublereal hback = (evdokimova_report[i][2] - evdokimova_report[i - 1][2]);
+						doublereal hforvard = (evdokimova_report[i + 1][2] - evdokimova_report[i][2]);
+
+						evdokimova_report[i][4] = ((Fforvard - Fcenter) * hback * hback - (Fback - Fcenter) * hforvard * hforvard) / (hback * hforvard * (hback + hforvard));
+						if (evdokimova_report[i][4] < 0.0) {
+							// Схема первого порядка точности (назад).
+							evdokimova_report[i][4] = (evdokimova_report[i][3] - evdokimova_report[i-1][3]) / (evdokimova_report[i][2] - evdokimova_report[i-1][2]);
+						}
+					
+					}
 				}
 				if (fabs(evdokimova_report[i + 1][8] - evdokimova_report[i][8]) < 1.0e-30) {
 					evdokimova_report[i][10] = 0.0;
 				}
 				else {
-					evdokimova_report[i][10] = (evdokimova_report[i + 1][9] - evdokimova_report[i][9]) / (evdokimova_report[i + 1][8] - evdokimova_report[i][8]);
+					if (i == 0) {
+						evdokimova_report[i][10] = (evdokimova_report[i + 1][9] - evdokimova_report[i][9]) / (evdokimova_report[i + 1][8] - evdokimova_report[i][8]);
+					}
+					else {
+						// Схема второго порядка точности.
+						doublereal Fforvard = evdokimova_report[i + 1][9];
+						doublereal Fcenter = evdokimova_report[i][9];
+						doublereal Fback = evdokimova_report[i - 1][9];
+						doublereal hback = (evdokimova_report[i][8] - evdokimova_report[i - 1][8]);
+						doublereal hforvard = (evdokimova_report[i + 1][8] - evdokimova_report[i][8]);
+
+						evdokimova_report[i][10] = ((Fforvard - Fcenter) * hback * hback - (Fback - Fcenter) * hforvard * hforvard) / (hback * hforvard * (hback + hforvard));
+						
+						if (evdokimova_report[i][10] < 0.0) {
+							// Схема первого порядка точности (назад).
+							evdokimova_report[i][10] = (evdokimova_report[i][9] - evdokimova_report[i-1][9]) / (evdokimova_report[i][8] - evdokimova_report[i-1][8]);
+						}
+					}
 				}
 				if (fabs(evdokimova_report[i + 1][14] - evdokimova_report[i][14]) < 1.0e-30) {
 					evdokimova_report[i][16] = 0.0;
 				}
 				else {
-					evdokimova_report[i][16] = (evdokimova_report[i + 1][15] - evdokimova_report[i][15]) / (evdokimova_report[i + 1][14] - evdokimova_report[i][14]);
+					if (i == 0) {
+						evdokimova_report[i][16] = (evdokimova_report[i + 1][15] - evdokimova_report[i][15]) / (evdokimova_report[i + 1][14] - evdokimova_report[i][14]);
+					}
+					else {
+						// Схема второго порядка точности.
+						doublereal Fforvard = evdokimova_report[i + 1][15];
+						doublereal Fcenter = evdokimova_report[i][15];
+						doublereal Fback = evdokimova_report[i - 1][15];
+						doublereal hback = (evdokimova_report[i][14] - evdokimova_report[i - 1][14]);
+						doublereal hforvard = (evdokimova_report[i + 1][14] - evdokimova_report[i][14]);
+
+						evdokimova_report[i][16] = ((Fforvard - Fcenter) * hback * hback - (Fback - Fcenter) * hforvard * hforvard) / (hback * hforvard * (hback + hforvard));
+
+						if (evdokimova_report[i][16] < 0.0) {
+							// Схема первого порядка точности (назад).
+							evdokimova_report[i][16] = (evdokimova_report[i][15] - evdokimova_report[i - 1][15]) / (evdokimova_report[i][14] - evdokimova_report[i - 1][14]);
+						}
+					}
 				}
 			}
 			evdokimova_report[iN][3] = evdokimova_report[iN][0] / evdokimova_report[iN][2];
@@ -3338,6 +4363,58 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			errno_t errE = 0;
 			errE = fopen_s(&fpevdokimova, "Evdokimova.txt", "w");
 #endif
+
+			FILE* fpevdokimova1 = NULL;
+#ifdef MINGW_COMPILLER
+			int errE1 = 0;
+			fpevdokimova1 = fopen64("EvdokimovaTmax.PLT", "w");
+			if (fpevdokimova1 == NULL) errE1 = 1;
+#else
+			errno_t errE1 = 0;
+			errE1 = fopen_s(&fpevdokimova1, "EvdokimovaTmax.PLT", "w");
+#endif
+
+			FILE* fpevdokimova2 = NULL;
+#ifdef MINGW_COMPILLER
+			int errE2 = 0;
+			fpevdokimova2 = fopen64("EvdokimovaThermalResistance.PLT", "w");
+			if (fpevdokimova2 == NULL) errE2 = 1;
+#else
+			errno_t errE2 = 0;
+			errE2 = fopen_s(&fpevdokimova2, "EvdokimovaThermalResistance.PLT", "w");
+#endif
+
+			FILE* fpevdokimova3 = NULL;
+#ifdef MINGW_COMPILLER
+			int errE3 = 0;
+			fpevdokimova3 = fopen64("EvdokimovaThermalResistanceQ.txt", "w");
+			if (fpevdokimova3 == NULL) errE3 = 1;
+#else
+			errno_t errE3 = 0;
+			errE3 = fopen_s(&fpevdokimova3, "EvdokimovaThermalResistanceQ.txt", "w");
+#endif
+
+			FILE* fpevdokimova4 = NULL;
+#ifdef MINGW_COMPILLER
+			int errE4 = 0;
+			fpevdokimova4 = fopen64("EvdokimovaIntegralCapacity.PLT", "w");
+			if (fpevdokimova4 == NULL) errE4 = 1;
+#else
+			errno_t errE4 = 0;
+			errE4 = fopen_s(&fpevdokimova4, "EvdokimovaIntegralCapacity.PLT", "w");
+#endif
+
+			FILE* fpevdokimova5 = NULL;
+#ifdef MINGW_COMPILLER
+			int errE5 = 0;
+			fpevdokimova5 = fopen64("EvdokimovaDifferentialCapacity.PLT", "w");
+			if (fpevdokimova5 == NULL) errE5 = 1;
+#else
+			errno_t errE5 = 0;
+			errE5 = fopen_s(&fpevdokimova5, "EvdokimovaDifferentialCapacity.PLT", "w");
+#endif
+
+
 			if ((errE) != 0) {
 				printf("Create File Evdokimova.txt Error\n");
 				// getchar();
@@ -3347,10 +4424,30 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			else {
 				if (fpevdokimova != NULL) {
 					fprintf(fpevdokimova, "time Tch_all RTch_all Cchall dCchall/dRt_chall Cchall/Rtchall time Tch_in RTch_in Cchin dCchin/dRt_chin Cchin/Rtchin time Tch_avg RTch_avg Cchavg dCchavg/dRt_chavg Cchavg/Rtchavg \n");
+					fprintf(fpevdokimova1, "VARIABLES= time[s], maximum_temperature[C]\n");
+					fprintf(fpevdokimova2, "VARIABLES= time[s], thermal_resistanse[C/W]\n");
+					fprintf(fpevdokimova4, "VARIABLES= time[s], integral_capacity\n");
+					fprintf(fpevdokimova5, "VARIABLES= time[s], differential_capacity\n");
+					fprintf(fpevdokimova3, "pulse_width[s] Q=2 Q=3 Q=5 Q=10 Q=20\n");
 					for (integer i = 0; i <= iN; i++) {
 						fprintf(fpevdokimova, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n", evdokimova_report[i][0], evdokimova_report[i][1], evdokimova_report[i][2], evdokimova_report[i][3], evdokimova_report[i][4], evdokimova_report[i][5], evdokimova_report[i][6], evdokimova_report[i][7], evdokimova_report[i][8], evdokimova_report[i][9], evdokimova_report[i][10], evdokimova_report[i][11], evdokimova_report[i][12], evdokimova_report[i][13], evdokimova_report[i][14], evdokimova_report[i][15], evdokimova_report[i][16], evdokimova_report[i][17]);
+						fprintf(fpevdokimova1, "%+.16f %+.16f\n", evdokimova_report[i][0], evdokimova_report[i][1]);// Максимальная температура.
+						fprintf(fpevdokimova2, "%+.16f %+.16f\n", evdokimova_report[i][0], evdokimova_report[i][2]);// Тепловое сопротивление.
+						fprintf(fpevdokimova3, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n", 
+							evdokimova_report[i][0], 0.5*evdokimova_report[i][2]+0.5* evdokimova_report[iN][2], 
+							0.666666 * evdokimova_report[i][2] + 0.33333 * evdokimova_report[iN][2], 
+							0.8 * evdokimova_report[i][2] + 0.2 * evdokimova_report[iN][2],
+							0.9 * evdokimova_report[i][2] + 0.1 * evdokimova_report[iN][2], 
+							0.95 * evdokimova_report[i][2] + 0.05 * evdokimova_report[iN][2]);// Тепловое сопротивление импульсного режима.
+						fprintf(fpevdokimova4, "%+.16f %+.16f\n", evdokimova_report[i][0], evdokimova_report[i][3]);// Интегральная теплоёмкость.
+						fprintf(fpevdokimova5, "%+.16f %+.16f\n", evdokimova_report[i][0], evdokimova_report[i][4]);// Дифференциальная теплоёмкость.
 					}
 					fclose(fpevdokimova); // закрываем файл.
+					fclose(fpevdokimova1);
+					fclose(fpevdokimova2);
+					fclose(fpevdokimova3);
+					fclose(fpevdokimova4);
+					fclose(fpevdokimova5);
 				}
 			}
 
@@ -7814,7 +8911,9 @@ void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
 
 			fclose(fpcurvedata); // закрытие файла для записи кривой прогрева.
 		}
-		fclose(fpKras); // закрытие файла для записи кривой прогрева в готовом для визуализации виде.
+		if (fpKras != NULL) {
+			fclose(fpKras); // закрытие файла для записи кривой прогрева в готовом для визуализации виде.
+		}
 	}
 
 
@@ -8325,43 +9424,6 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						  fprintf(fpcont, " iter \t\t continity\n");
 						  fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%d\n", iflow);
 #endif
-						  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
-							  if (eqin.itemper == 1) {
-								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      k		epsilon	\n");
-							  }
-							  else {
-								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     k		epsilon \n");
-							  }
-						  }
-						  else
-						  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
-							  if (eqin.itemper == 1) {
-								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      k		omega	\n");
-							  }
-							  else {
-								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     k		omega \n");
-							  }
-						  }
-						  else  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
-							  if (eqin.itemper == 1) {
-								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      nut	\n");
-							  }
-							  else {
-								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     nut	\n");
-							  }
-						  }
-						  else {
-							  if (eqin.itemper == 1) {
-								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      \n");
-							  }
-							  else {
-								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     \n");
-							  }
-						  }
-						  fclose(fp_statistic_convergence);
-
-
-						  doublereal continity = 1.0; // инициализация
 
 #if doubleintprecision == 1
 						  printf("fluid interior number %lld: maxelm=%lld, maxbound=%lld\n", iflow, fglobal[iflow].maxelm, fglobal[iflow].maxbound);
@@ -8373,6 +9435,65 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  //getchar();
 							  system("pause");
 						  }
+
+						  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
+							  if (eqin.itemper == 1) {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      k		epsilon	\n");
+								  printf("iter    VX      VY       VZ      PAM     energy      k		epsilon	\n");
+							  }
+							  else {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     k		epsilon \n");
+								  printf("iter    VX      VY       VZ      PAM     k		epsilon \n");
+							  }
+						  }
+						  else
+						  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
+							  if (eqin.itemper == 1) {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      k		omega	\n");
+								  printf("iter    VX      VY       VZ      PAM     energy      k		omega	\n");
+							  }
+							  else {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     k		omega \n");
+								  printf("iter    VX      VY       VZ      PAM     k		omega \n");
+							  }
+						  }
+						  else
+							  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+								  if (eqin.itemper == 1) {
+									  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      k		omega	  gamma    re_theta\n");
+									  printf("iter    VX      VY       VZ      PAM     energy          k		omega	  gamma    re_theta\n");
+								  }
+								  else {
+									  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     k		omega	  gamma    re_theta\n");
+									  printf("iter    VX      VY       VZ      PAM     k		omega	  gamma    re_theta\n");
+								  }
+							  }
+						  else  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
+							  if (eqin.itemper == 1) {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      nut	\n");
+								  printf("iter    VX      VY       VZ      PAM     energy      nut	\n");
+							  }
+							  else {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     nut	\n");
+								  printf("iter    VX      VY       VZ      PAM     nut	\n");
+							  }
+						  }
+						  else {
+							  if (eqin.itemper == 1) {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      \n");
+								  printf("iter    VX      VY       VZ      PAM     energy      \n");
+							  }
+							  else {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     \n");
+								  printf("iter    VX      VY       VZ      PAM     \n");
+							  }
+						  }
+						  fclose(fp_statistic_convergence);
+
+
+						  doublereal continity = 1.0; // инициализация
+
+
 						  calculation_start_time = clock(); // момент начала счёта.
 						  bool bfirst = true;
 						  doublereal* smagconstolditer = nullptr;
@@ -8823,7 +9944,32 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  rthdsd, rthdsdt, lu, my_union, 
 								  color, dist_max_fluid, color_solid, dist_max_solid);
 
-
+							  // 24.01.2021
+							  // Итерируем тривиальное решение при нулевой правой части и нулевых граничных условиях.
+							  //amgcl_params_seti(prm, "solver.ns_search", 1);
+							  /*
+							  if (fabs(rfluentres.res_vx) < 1.0e-30) {
+								  // Нам не нужно тривиальное решение, т.к. оно неверно.
+								  for (int iP = 0; iP < fglobal[iflow].maxelm; iP++) {
+									  fglobal[iflow].potent[VELOCITY_X_COMPONENT][iP] = 0.01*(rand() % 100 + 1);
+									  fglobal[iflow].potent[VXCOR][iP] = 0.01 * (rand() % 100 + 1);
+								  }
+							  }
+							  if (fabs(rfluentres.res_vy) < 1.0e-30) {
+								  // Нам не нужно тривиальное решение, т.к. оно неверно.
+								  for (int iP = 0; iP < fglobal[iflow].maxelm; iP++) {
+									  fglobal[iflow].potent[VELOCITY_Y_COMPONENT][iP] = 0.01 * (rand() % 100 + 1);
+									  fglobal[iflow].potent[VYCOR][iP] = 0.01 * (rand() % 100 + 1);
+								  }
+							  }
+							  if (fabs(rfluentres.res_vz) < 1.0e-30) {
+								  // Нам не нужно тривиальное решение, т.к. оно неверно.
+								  for (int iP = 0; iP < fglobal[iflow].maxelm; iP++) {
+									  fglobal[iflow].potent[VELOCITY_Z_COMPONENT][iP] = 0.01 * (rand() % 100 + 1);
+									  fglobal[iflow].potent[VZCOR][iP] = 0.01 * (rand() % 100 + 1);
+								  }
+							  }
+							  */
 							  calculation_simple_end_time = clock();
 							  calculation_simple_seach_time = calculation_simple_end_time - calculation_simple_start_time;
 							  int im = 0, is = 0, ims = 0;
@@ -8912,6 +10058,33 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												  fclose(fp_statistic_convergence);
 											  }
 										  }
+										  else
+											  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+												  //printf("%lld 1.0\n",i+1);
+												  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e  %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+													  i, rfluentres.res_no_balance, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+													  rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor, 
+													  rfluentres.res_turb_Re_Theta_Langtry_Mentor, im, is, ims, iend - i);
+												  if (i % 10 == 0) {
+													  printf("  iter continity x-velocity y-velocity z-velocity        k	omega	 gamma    re_theta\t time/iter\n");
+												  }
+#ifdef MINGW_COMPILLER
+												  err_stat = 0;
+												  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+												  if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+												  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+														  rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+														  rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+													  fclose(fp_statistic_convergence);
+												  }
+											  }
 										  else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 											  //printf("%lld 1.0\n",i+1);
 											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
@@ -9013,6 +10186,34 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												  fclose(fp_statistic_convergence);
 											  }
 										  }
+										  else
+											  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+												  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+													  i, rfluentres.res_no_balance, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
+													  rfluentres.res_turb_kinetik_energy,
+													  rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+													  rfluentres.res_turb_Re_Theta_Langtry_Mentor, tmax, im, is, ims, iend - i);
+												  if (i % 10 == 0) {
+													  printf("  iter continity x-velocity y-velocity z-velocity temperature        k	omega	gamma    re_theta   Tmax\t time/iter\n");
+												  }
+#ifdef MINGW_COMPILLER
+												  err_stat = 0;
+												  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+												  if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+												  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015. 30 september 2019
+													  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i,
+														  rfluentres.res_vx, rfluentres.res_vy, rfluentres.res_vz,
+														  rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+														  rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+														  rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+													  fclose(fp_statistic_convergence);
+												  }
+											  }
 										  else  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -9114,6 +10315,33 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												  fclose(fp_statistic_convergence);
 											  }
 										  }
+										  else
+											  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+												  //printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+												  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+													  i, rfluentres.res_no_balance, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+													  rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+													  rfluentres.res_turb_Re_Theta_Langtry_Mentor, im, is, ims, iend - i);
+												  if (i % 10 == 0) {
+													  printf("  iter continity x-velocity y-velocity z-velocity        k	  omega	   gamma  re_theta\t time/iter\n");
+												  }
+#ifdef MINGW_COMPILLER
+												  err_stat = 0;
+												  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+												  if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+												  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+														  rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+														  rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+													  fclose(fp_statistic_convergence);
+												  }
+											  }
 										  else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 											  //printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
 											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
@@ -9214,6 +10442,34 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												  fclose(fp_statistic_convergence);
 											  }
 										  }
+										  else
+											  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+												  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+													  i, rfluentres.res_no_balance, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
+													  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+													  rfluentres.res_turb_gamma_Langtry_Mentor,
+													  rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+													  tmax, im, is, ims, iend - i);
+												  if (i % 10 == 0) {
+													  printf("  iter continity x-velocity y-velocity z-velocity temperature    k    omega    gamma  re_theta    Tmax\t time/iter\n");
+												  }
+#ifdef MINGW_COMPILLER
+												  err_stat = 0;
+												  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+												  if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+												  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e  %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp,
+														  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+														  rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+													  fclose(fp_statistic_convergence);
+												  }
+											  }
 										  else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -9320,6 +10576,36 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													  fclose(fp_statistic_convergence);
 												  }
 										  }
+										  else
+											  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+												  //printf("%d 1.0\n",i+1);
+												  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+													  i, rfluentres.res_no_balance, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+													  rfluentres.res_turb_gamma_Langtry_Mentor,
+													  rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+													  im, is, ims, iend - i);
+												  if (i % 10 == 0) {
+													  printf("  iter continity x-velocity y-velocity z-velocity k	  omega		gamma    re_theta\t time/iter\n");
+												  }
+#ifdef MINGW_COMPILLER
+												  err_stat = 0;
+												  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+												  if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+												  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n",
+														  i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance,
+														  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega, 
+														  rfluentres.res_turb_gamma_Langtry_Mentor,
+														  rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+													  fclose(fp_statistic_convergence);
+												  }
+											  }
 										  else  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 											  //printf("%d 1.0\n",i+1);
 											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
@@ -9419,6 +10705,35 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													  fclose(fp_statistic_convergence);
 												  }
 										  }
+										  else
+											  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+												  printf(" %d %1.4e %1.4e %1.4e %1.4e  %1.4e %1.4e  %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+													  i, rfluentres.res_no_balance, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
+													  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+													  rfluentres.res_turb_gamma_Langtry_Mentor,
+													  rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+													  tmax, im, is, ims, iend - i);
+												  if (i % 10 == 0) {
+													  printf("  iter continity x-velocity y-velocity z-velocity temperature k    omega     gamma    re_theta   Tmax\t time/iter\n");
+												  }
+#ifdef MINGW_COMPILLER
+												  err_stat = 0;
+												  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+												  if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+												  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+												  if ((err_stat) == 0) {
+													  // 15 января 2021.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp,
+														  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+														  rfluentres.res_turb_gamma_Langtry_Mentor,
+														  rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+													  fclose(fp_statistic_convergence);
+												  }
+											  }
 										  else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -9520,6 +10835,35 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													  fclose(fp_statistic_convergence);
 												  }
 										  }
+										  else
+											  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+												  //printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+												  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+													  i, rfluentres.res_no_balance, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz,
+													  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+													  rfluentres.res_turb_gamma_Langtry_Mentor,
+													  rfluentres.res_turb_Re_Theta_Langtry_Mentor, im, is, ims, iend - i);
+												  if (i % 10 == 0) {
+													  printf("  iter continity x-velocity y-velocity z-velocity k	omega	gamma    re_theta\t time/iter\n");
+												  }
+#ifdef MINGW_COMPILLER
+												  err_stat = 0;
+												  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+												  if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+												  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+												  if ((err_stat) == 0) {
+													  // 15 января 2021.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance,
+														  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+														  rfluentres.res_turb_gamma_Langtry_Mentor,
+														  rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+													  fclose(fp_statistic_convergence);
+												  }
+											  }
 										  else  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 											  //printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
 											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
@@ -9616,6 +10960,34 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													  fclose(fp_statistic_convergence);
 												  }
 										  }
+										  else
+											  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+												  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+													  i, rfluentres.res_no_balance, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+													  rfluentres.res_turb_gamma_Langtry_Mentor,
+													  rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+													  tmax,
+													  im, is, ims, iend - i);
+												  if (i % 10 == 0) {
+													  printf("  iter continity x-velocity y-velocity z-velocity temperature k      omega	gamma    re_theta    Tmax\t time/iter\n");
+												  }
+#ifdef MINGW_COMPILLER
+												  err_stat = 0;
+												  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+												  if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+												  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e  %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+														  rfluentres.res_turb_gamma_Langtry_Mentor,
+														  rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+													  fclose(fp_statistic_convergence);
+												  }
+											  }
 										  else  if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -9932,7 +11304,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				  btimedep, dgx, dgy, dgz, matlist,
 				  inumiter, consolemessage, RCh,bVeryStable,
 				  nullptr,rsumanbstuff,bhighorder,bdeltapfinish, 1.0, 1.0, 
-				  my_memory_bicgstab, rthdsdt, rfluent_res_temp, lu, my_union, color_solid, dist_max_solid);
+				  my_memory_bicgstab, rthdsdt, rfluent_res_temp, lu, my_union, color_solid, dist_max_solid,false);
 			
 			// последний параметр равный единице означает что мощность подаётся !
 			doublereal tmax = -1.0e30;
@@ -10394,6 +11766,15 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM		k	   omega\n");
 							}
 						}
+						else
+							if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+								if (eqin.itemper == 1) {
+									fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy     k	omega      gamma    re_theta \n");
+								}
+								else {
+									fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM		k	   omega      gamma    re_theta\n");
+								}
+							}
 						else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 							if (eqin.itemper == 1) {
 								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy     nut	 \n");
@@ -10580,6 +11961,12 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								case TURBULENT_NUSHA_OLD_TIME_STEP:
 									fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_NUSHA_OLD_TIME_STEP][i60] = fglobal[iflow].potent[NUSHA][i60];
 									break;
+								case GAMMA_LANGTRY_MENTER_OLD_TIME_STEP:
+									fglobal[iflow].turbulent_parameters_old_time_step[GAMMA_LANGTRY_MENTER_OLD_TIME_STEP][i60] = fglobal[iflow].potent[GAMMA_LANGTRY_MENTER][i60];
+									break;
+								case RE_THETA_LANGTRY_MENTER_OLD_TIME_STEP:
+									fglobal[iflow].turbulent_parameters_old_time_step[RE_THETA_LANGTRY_MENTER_OLD_TIME_STEP][i60] = fglobal[iflow].potent[RE_THETA_LANGTRY_MENTER][i60];
+									break;
 								}
 							}
 						}
@@ -10644,18 +12031,36 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							piecewise_const_timestep_law(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
 						}
 
+
+#ifndef NO_OPENGL_GLFW
 						if ((iN > 0) && (animation_sequence_functions_openGL == nullptr)) {
 
 							if (eqin.itemper == 0) {
 								// Чистая гидродинамика.
 								// 0 - модуль скорости, 1 - Давление.
 								iNUMBER_ANIMATION_FUNCTIONS = 2;
+
+								if ((fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES)||
+									(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+									(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST)) {
+									// 0 - Модуль скорости, 1 - давление и 2 - viscosity ratio.
+									iNUMBER_ANIMATION_FUNCTIONS = 3;
+								}
 							}
 							else {
 								// Гидродинамика и теплопередача.
 								// 0 - модуль скорости, 1 - Давление.
 								// 2 - Температура.
+								
 								iNUMBER_ANIMATION_FUNCTIONS = 3;
+
+								if ((fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+									(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+									(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST)) {
+									// 0 - Модуль скорости, 1 - давление, 2 - температура и 3 - viscosity ratio.
+
+									iNUMBER_ANIMATION_FUNCTIONS = 4;
+								}
 							}
 							iNUMBER_ANIMATION_CADERS = iN+1;
 							iCURENT_ANIMATION_CADER = 0;
@@ -10689,23 +12094,68 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										// Первый кадр
 										int j60 = t.ptr[0][i60];
 										if ((t.ptr[1][i60] > -1) && (j60 > -1) && (j60 < fglobal[iflow].maxelm)) {
-											animation_sequence_functions_openGL[i62][0][i60] = sqrt(fglobal[iflow].potent[PRESS][j60]);
+											animation_sequence_functions_openGL[i62][0][i60] = fglobal[iflow].potent[PRESS][j60];
 										}
 										else {
 											animation_sequence_functions_openGL[i62][0][i60] = 0.0; // Твёрдое тело.
 										}
 									}
 									break;
-								case 2: // Температура
-									for (int i60 = 0; i60 < t.maxelm; i60++) {
-										// Первый кадр
-										animation_sequence_functions_openGL[i62][0][i60] = t.potent[i60]; // Поле температур в нулевом кадре.
+								case 2: 
+									
+									if ((eqin.itemper == 0)&&((fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+										(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+										(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST))) {
+
+
+										for (int i60 = 0; i60 < t.maxelm; i60++) {
+											// Первый кадр
+											int j60 = t.ptr[0][i60];
+											if ((t.ptr[1][i60] > -1) && (j60 > -1) && (j60 < fglobal[iflow].maxelm)) {
+												// viscosity ratio
+												animation_sequence_functions_openGL[i62][0][i60] = fglobal[iflow].potent[MUT][j60]/ f[t.ptr[1][i60]].prop[MU_DYNAMIC_VISCOSITY][t.ptr[0][i60]];
+											}
+											else {
+												animation_sequence_functions_openGL[i62][0][i60] = 0.0; // Твёрдое тело.
+											}
+										}
+
+									}
+									else {
+
+										// Температура
+										for (int i60 = 0; i60 < t.maxelm; i60++) {
+											// Первый кадр
+											animation_sequence_functions_openGL[i62][0][i60] = t.potent[i60]; // Поле температур в нулевом кадре.
+										}
+									}
+									break;
+								case 3:
+									if ((eqin.itemper == 1) && ((fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+										(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+										(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST))) {
+
+
+										for (int i60 = 0; i60 < t.maxelm; i60++) {
+											// Первый кадр
+											int j60 = t.ptr[0][i60];
+											if ((t.ptr[1][i60] > -1) && (j60 > -1) && (j60 < fglobal[iflow].maxelm)) {
+												// viscosity ratio
+												animation_sequence_functions_openGL[i62][0][i60] = fglobal[iflow].potent[MUT][j60] / f[t.ptr[1][i60]].prop[MU_DYNAMIC_VISCOSITY][t.ptr[0][i60]];
+											}
+											else {
+												animation_sequence_functions_openGL[i62][0][i60] = 0.0; // Твёрдое тело.
+											}
+										}
+
 									}
 									break;
 								}
 							}
 
 						}
+
+#endif
 
 						FILE* fpcurvedata = NULL; // файл в который будут записываться результаты нестационарного моделирования.
 
@@ -11174,6 +12624,33 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															fclose(fp_statistic_convergence);
 														}
 													}
+													else
+														if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+															//printf("%lld 1.0\n",i+1);
+															printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
+																i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																rfluentres.res_turb_Re_Theta_Langtry_Mentor, im, is, ims, iend - i);
+															if (i % 10 == 0) {
+																printf("  iter continity x-velocity y-velocity z-velocity k     omega	gamma    re_theta\t time/iter\n");
+															}
+#ifdef MINGW_COMPILLER
+															err_stat = 0;
+															fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+															if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+															err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+															if ((err_stat) == 0) {
+																// 29 декабря 2015.
+																fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																	rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+																	rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																	rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+																fclose(fp_statistic_convergence);
+															}
+														}
 													else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 														//printf("%lld 1.0\n",i+1);
 														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
@@ -11271,6 +12748,34 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															fclose(fp_statistic_convergence);
 														}
 													}
+													else
+														if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+															printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
+																i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
+																rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+																rfluentres.res_turb_gamma_Langtry_Mentor,
+																rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+																im, is, ims, iend - i);
+															if (i % 10 == 0) {
+																printf("  iter continity x-velocity y-velocity z-velocity temperature k		omega     gamma    re_theta\t time/iter\n");
+															}
+#ifdef MINGW_COMPILLER
+															err_stat = 0;
+															fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+															if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+															err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+															if ((err_stat) == 0) {
+																// 29 декабря 2015.
+																fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																	rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																	rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																	rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+																fclose(fp_statistic_convergence);
+															}
+														}
 													else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -11372,9 +12877,38 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															fclose(fp_statistic_convergence);
 														}
 													}
+													else
+														if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+															//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+															printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
+																i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega, 
+																rfluentres.res_turb_gamma_Langtry_Mentor,
+																rfluentres.res_turb_Re_Theta_Langtry_Mentor, 
+																im, is, ims, iend - i);
+															if (i % 10 == 0) {
+																printf("  iter continity x-velocity y-velocity z-velocity k		omega	  gamma    re_theta\t time/iter\n");
+															}
+#ifdef MINGW_COMPILLER
+															err_stat = 0;
+															fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+															if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+															err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+															if ((err_stat) == 0) {
+																// 29 декабря 2015.
+																fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																	rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+																	rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																	rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+																fclose(fp_statistic_convergence);
+															}
+														}
 													else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e  %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -11466,6 +13000,34 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															fclose(fp_statistic_convergence);
 														}
 													}
+													else
+														if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+															printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
+																i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega,
+																rfluentres.res_turb_gamma_Langtry_Mentor,
+																rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+																im, is, ims, iend - i);
+															if (i % 10 == 0) {
+																printf("  iter continity x-velocity y-velocity z-velocity temperature k		omega	  gamma    re_theta\t time/iter\n");
+															}
+#ifdef MINGW_COMPILLER
+															err_stat = 0;
+															fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+															if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+															err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+															if ((err_stat) == 0) {
+																// 29 декабря 2015.
+																fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																	rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																	rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																	rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+																fclose(fp_statistic_convergence);
+															}
+														}
 													else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -11567,6 +13129,35 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															fclose(fp_statistic_convergence);
 														}
 													}
+													else
+														if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+															//printf("%d 1.0\n",i+1);
+															printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
+																i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega,
+																rfluentres.res_turb_gamma_Langtry_Mentor,
+																rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+																im, is, ims, iend - i);
+															if (i % 10 == 0) {
+																printf("  iter continity x-velocity y-velocity z-velocity k     omega    gamma    re_theta\t time/iter\n");
+															}
+#ifdef MINGW_COMPILLER
+															err_stat = 0;
+															fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+															if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+															err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+															if ((err_stat) == 0) {
+																// 29 декабря 2015.
+																fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																	rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+																	rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																	rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+																fclose(fp_statistic_convergence);
+															}
+														}
 													else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 														//printf("%d 1.0\n",i+1);
 														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
@@ -11662,6 +13253,32 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															fclose(fp_statistic_convergence);
 														}
 													}
+													else
+														if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+															printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
+																i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																rfluentres.res_turb_Re_Theta_Langtry_Mentor, im, is, ims, iend - i);
+															if (i % 10 == 0) {
+																printf("  iter continity x-velocity y-velocity z-velocity temperature k     omega    gamma    re_theta\t time/iter\n");
+															}
+#ifdef MINGW_COMPILLER
+															err_stat = 0;
+															fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+															if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+															err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+															if ((err_stat) == 0) {
+																// 21 01 2021.
+																fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e  %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																	rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																	rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																	rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+																fclose(fp_statistic_convergence);
+															}
+														}
 													else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -11763,6 +13380,35 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															fclose(fp_statistic_convergence);
 														}
 													}
+													else
+														if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+															//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+															printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
+																i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega, 
+																rfluentres.res_turb_gamma_Langtry_Mentor,
+																rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+																im, is, ims, iend - i);
+															if (i % 10 == 0) {
+																printf("  iter continity x-velocity y-velocity z-velocity k     omega    gamma    re_theta\t time/iter\n");
+															}
+#ifdef MINGW_COMPILLER
+															err_stat = 0;
+															fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+															if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+															err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+															if ((err_stat) == 0) {
+																// 29 декабря 2015.
+																fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																	rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+																	rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																	rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+																fclose(fp_statistic_convergence);
+															}
+														}
 													else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
 														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
@@ -11857,6 +13503,34 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															fclose(fp_statistic_convergence);
 														}
 													}
+													else
+														if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST) {
+															printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
+																i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega, 
+																rfluentres.res_turb_gamma_Langtry_Mentor,
+																rfluentres.res_turb_Re_Theta_Langtry_Mentor,
+																im, is, ims, iend - i);
+															if (i % 10 == 0) {
+																printf("  iter continity x-velocity y-velocity z-velocity temperature k    omega    gamma    re_theta\t time/iter\n");
+															}
+#ifdef MINGW_COMPILLER
+															err_stat = 0;
+															fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+															if (fp_statistic_convergence == nullptr) err_stat = 1;
+#else
+															err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+															if ((err_stat) == 0) {
+																// 29 декабря 2015.
+																fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																	rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																	rfluentres.res_turb_omega, rfluentres.res_turb_gamma_Langtry_Mentor,
+																	rfluentres.res_turb_Re_Theta_Langtry_Mentor);
+																fclose(fp_statistic_convergence);
+															}
+														}
 													else if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -12009,10 +13683,17 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											case TURBULENT_NUSHA_OLD_TIME_STEP:
 												fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_NUSHA_OLD_TIME_STEP][i60] = fglobal[iflow].potent[NUSHA][i60];
 												break;
+											case GAMMA_LANGTRY_MENTER_OLD_TIME_STEP:
+												fglobal[iflow].turbulent_parameters_old_time_step[GAMMA_LANGTRY_MENTER_OLD_TIME_STEP][i60] = fglobal[iflow].potent[GAMMA_LANGTRY_MENTER][i60];
+												break;
+											case RE_THETA_LANGTRY_MENTER_OLD_TIME_STEP:
+												fglobal[iflow].turbulent_parameters_old_time_step[RE_THETA_LANGTRY_MENTER_OLD_TIME_STEP][i60] = fglobal[iflow].potent[RE_THETA_LANGTRY_MENTER][i60];
+												break;
 											}
 										}
 									}
 
+#ifndef NO_OPENGL_GLFW
 									// Модуль скорости и давление, а также температура.
 #pragma omp parallel for
 									for (int i60 = 0; i60 < t.maxelm; i60++) {
@@ -12023,7 +13704,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												fglobal[iflow].potent[VYCOR][j60] * fglobal[iflow].potent[VYCOR][j60] +
 												fglobal[iflow].potent[VZCOR][j60] * fglobal[iflow].potent[VZCOR][j60]); // Модуль скорости.
 
-											animation_sequence_functions_openGL[1][j + 1][i60] = sqrt(fglobal[iflow].potent[PRESS][j60]);// Давление, Па.
+											animation_sequence_functions_openGL[1][j + 1][i60] = (fglobal[iflow].potent[PRESS][j60]);// Давление, Па.
 										}
 										else {
 											animation_sequence_functions_openGL[0][j + 1][i60] = 0.0; // Твёрдое тело. Модуль скорости, м/с.
@@ -12036,7 +13717,49 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										for (int i60 = 0; i60 < t.maxelm; i60++) {
 											animation_sequence_functions_openGL[2][j + 1][i60] = t.potent[i60]; // Поле температур в нулевом кадре.
 										}
+
+										if ((eqin.itemper == 1) && ((fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+											(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+											(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST))) {
+
+
+											for (int i60 = 0; i60 < t.maxelm; i60++) {
+												// Первый кадр
+												int j60 = t.ptr[0][i60];
+												if ((t.ptr[1][i60] > -1) && (j60 > -1) && (j60 < fglobal[iflow].maxelm)) {
+													// viscosity ratio
+													animation_sequence_functions_openGL[3][j + 1][i60] = fglobal[iflow].potent[MUT][j60] / f[t.ptr[1][i60]].prop[MU_DYNAMIC_VISCOSITY][t.ptr[0][i60]];
+												}
+												else {
+													animation_sequence_functions_openGL[3][j + 1][i60] = 0.0; // Твёрдое тело.
+												}
+											}
+
+										}
 									}
+									else if (eqin.itemper == 0) {
+
+										if ((eqin.itemper == 0) && ((fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+											(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+											(fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST))) {
+
+
+											for (int i60 = 0; i60 < t.maxelm; i60++) {
+												// Первый кадр
+												int j60 = t.ptr[0][i60];
+												if ((t.ptr[1][i60] > -1) && (j60 > -1) && (j60 < fglobal[iflow].maxelm)) {
+													// viscosity ratio
+													animation_sequence_functions_openGL[2][j + 1][i60] = fglobal[iflow].potent[MUT][j60] / f[t.ptr[1][i60]].prop[MU_DYNAMIC_VISCOSITY][t.ptr[0][i60]];
+												}
+												else {
+													animation_sequence_functions_openGL[2][j + 1][i60] = 0.0; // Твёрдое тело.
+												}
+											}
+
+										}
+
+									}
+#endif
 
 									// Формируем отчёт о температуре каждого объекта из которой состоит модель:
 									report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], t.operatingtemperature);
@@ -12280,7 +14003,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 						printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
 
-
+#ifndef NO_OPENGL_GLFW
 						if (1) {
 
 							pa_opengl = new TOCHKA[t.maxelm];
@@ -12338,12 +14061,14 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 						}
 
-
+#endif
 												
 								
 						delete[] fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_KINETIK_ENERGY_MENTER_SST_OLD_TIME_STEP];
 						delete[] fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_OLD_TIME_STEP];
 						delete[] fglobal[iflow].turbulent_parameters_old_time_step[TURBULENT_NUSHA_OLD_TIME_STEP];
+						delete[] fglobal[iflow].turbulent_parameters_old_time_step[GAMMA_LANGTRY_MENTER_OLD_TIME_STEP];
+						delete[] fglobal[iflow].turbulent_parameters_old_time_step[RE_THETA_LANGTRY_MENTER_OLD_TIME_STEP];
 						
 
 						for (integer i = 0; i < 3; i++) {

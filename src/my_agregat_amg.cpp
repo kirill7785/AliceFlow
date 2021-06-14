@@ -493,7 +493,7 @@ void formirate_F_SiTranspose_hash_table_Gus_struct02(Taccumulqtor_list* &p, inte
 
   // Передача списка Si Transpose из АВЛ дерева в множество root_Gus_set.
   // перекачка данных из одного дерева в другое.
-void formirate_F_SiTranspose_hash_table_Gus2_struct02(Taccumulqtor_list* &p, integer &imarker75_scan,
+void formirate_F_SiTranspose_hash_table_Gus2_struct02(Taccumulqtor_list* &p,  integer &imarker75_scan,
 	bool* &this_is_F_node, bool* &this_is_C_node)
 {
 
@@ -505,6 +505,46 @@ void formirate_F_SiTranspose_hash_table_Gus2_struct02(Taccumulqtor_list* &p, int
 			imarker75_scan++;
 		}
 		buf = buf->next;
+	}
+} // formirate_F_SiTranspose_hash_table_Gus2_struct01
+
+// Передача списка Si Transpose из АВЛ дерева в множество root_Gus_set.
+  // перекачка данных из одного дерева в другое.
+void formirate_F_SiTranspose_hash_table_Gus2_struct03(Taccumulqtor_list*& p, integer isize75, integer& imarker75_scan,
+	bool*& this_is_F_node, bool*& this_is_C_node)
+{
+
+	Taccumulqtor_list* buf = p;
+	integer i75 = 0;
+	while ((i75 < isize75) && (buf != nullptr)) {
+
+		if ((this_is_F_node[buf->ikey] == false) && (this_is_C_node[buf->ikey] == false)) {
+			insert_hash_table_Gus_struct01(buf->ikey);
+			imarker75_scan++;
+		}
+		buf = buf->next;
+		i75++;
+	}
+} // formirate_F_SiTranspose_hash_table_Gus2_struct01
+
+// Передача списка Si Transpose из АВЛ дерева в множество root_Gus_set.
+  // перекачка данных из одного дерева в другое.
+// Вместо деревьев теперь используется хеш таблица p.
+// 10.06.2021
+void formirate_F_SiTranspose_hash_table_Gus2_struct04(integer*& p, integer idstr, integer n_a, integer isize75, integer& imarker75_scan,
+	bool*& this_is_F_node, bool*& this_is_C_node)
+{
+
+	integer i75 = 0;
+	while (i75 < isize75) {
+
+		integer ikey = p[i75*n_a+ idstr];
+
+		if ((this_is_F_node[ikey] == false) && (this_is_C_node[ikey] == false)) {
+			insert_hash_table_Gus_struct01(ikey);
+			imarker75_scan++;
+		}
+		i75++;
 	}
 } // formirate_F_SiTranspose_hash_table_Gus2_struct01
 
@@ -59435,7 +59475,7 @@ FULL_DIVERGENCE_DETECTED:
 		//}
 #else
 		//switch (iVar) {
-		// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
+		// модуль ВУМ с радиатором жидкостного охлаждения ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		//case PAM: printf("PAM %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel-2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]);  break;
 		//case VX:  printf("VX %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
@@ -59449,7 +59489,7 @@ FULL_DIVERGENCE_DETECTED:
 
 #if doubleintprecision == 1
 		switch (iVar) {
-			// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
+			// модуль ВУМ с радиатором жидкостного охлаждения ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		case PAM: printf("PAM level=%lld  CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
 		case VELOCITY_X_COMPONENT:  printf("VX level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
@@ -59460,7 +59500,7 @@ FULL_DIVERGENCE_DETECTED:
 		}
 #else
 		switch (iVar) {
-			// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
+			// модуль ВУМ с радиатором жидкостного охлаждения ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		case PAM: printf("PAM level=%d  CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
 		case VELOCITY_X_COMPONENT:  printf("VX level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
@@ -69498,7 +69538,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		}*/
 #if doubleintprecision == 1
 		switch (iVar) {
-			// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
+			// модуль ВУМ с радиатором жидкостного охлаждения ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		case PAM: printf("PAM level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
 		case VELOCITY_X_COMPONENT:  printf("VX level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
@@ -69508,7 +69548,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		}
 #else
 		switch (iVar) {
-			// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
+			// модуль ВУМ с радиатором жидкостного охлаждения ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		case PAM: printf("PAM level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
 		case VELOCITY_X_COMPONENT:  printf("VX level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
@@ -75884,11 +75924,11 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	simplesparsefree(sparseM, n);
 
 	integer ierr = 0;
-	doublereal eps = 1.0e-12;
+	//doublereal eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
 
 	ierr = 0; // изначальное состояние безошибочное.
 			  // Порог точности решения СЛАУ. Значение 1.0E-12 достаточно что проверено в ANSYS icepak.
-	eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
+	//eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
 
 				   // Требования к оперативной памяти.
 				   /*     VECTOR         NEEDED LENGTH (GUESS) */
@@ -76617,11 +76657,11 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	simplesparsefree(sparseM, n);
 
 	integer ierr = 0;
-	doublereal eps = 1.0e-12;
+	//doublereal eps = 1.0e-12;
 
 	ierr = 0; // изначальное состояние безошибочное.
 			  // Порог точности решения СЛАУ. Значение 1.0E-12 достаточно что проверено в ANSYS icepak.
-	eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
+	//eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
 
 				   // Требования к оперативной памяти.
 				   /*     VECTOR         NEEDED LENGTH (GUESS) */
@@ -77488,11 +77528,11 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 
 
 		integer ierr = 0;
-		doublereal eps = 1.0e-12;
+		//doublereal eps = 1.0e-12;
 
 		ierr = 0; // изначальное состояние безошибочное.
 				  // Порог точности решения СЛАУ. Значение 1.0E-12 достаточно что проверено в ANSYS icepak.
-		eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
+		//eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
 
 					   // Требования к оперативной памяти.
 					   /*     VECTOR         NEEDED LENGTH (GUESS) */
@@ -78717,7 +78757,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	}
 	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)||(iVar == PAM)||(iVar==TEMP)||
 		(iVar== NUSHA)||(iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)||
+		(iVar == GAMMA_LANGTRY_MENTER)||(iVar == RE_THETA_LANGTRY_MENTER)) {
 		// 4.05.2019 Обнаружено что гидродинамические невязки неправильно
 		// отображаются, портятся искажаются при включенной опции 
 		// bmemory_savings==true. После ее выключения невязки стали отображаться 
@@ -78813,7 +78854,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) ||
+		(iVar == GAMMA_LANGTRY_MENTER) || (iVar == RE_THETA_LANGTRY_MENTER)) {
 		if (res_sum > 20.0) {
 			printf("Turbulent equations diagnostic problem analysys....\n");
 		}
@@ -78841,7 +78883,21 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		// Работает задача Ньютона Рихмана или
 		// Стефана Больцмана или миксовая.
 		res_sum_previos = 1.0e-12;
+		
 	}
+	else {
+		// Надо в любом случае сделать повторный запуск так как теплопроводности 
+		// зависящие от температуры были изменены.
+		// лог при вызове повторной сборки с измененными теплопроводностями. 
+		//input diagnostic residual =1.779463e+01
+		//res_sum = 1.779463e+01 res_sum_previos = 1.833335e+01
+		// Т.е. чтобы запуск произошел нужно искуственно уменьшить 
+		// значение res_sum_previos.
+		res_sum_previos = res_sum_previos / 2.0;
+	}
+
+	//printf("res_sum=%e res_sum_previos=%e\n", res_sum, res_sum_previos);
+	//system("pause");
 
 	//if (res_sum>1.0E-10) 
 	if (res_sum > res_sum_previos) // защита от повторного холостого запуска экономит время конечного пользователя.
@@ -78877,11 +78933,11 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 		integer ierr = 0;
-		doublereal eps = 1.0e-12;
+		//doublereal eps = 1.0e-12;
 
 		ierr = 0; // изначальное состояние безошибочное.
 				  // Порог точности решения СЛАУ. Значение 1.0E-12 достаточно что проверено в ANSYS icepak.
-		eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
+		//eps = 1.0e-12; // рекомендуемое значение которого достаточно. 
 
 					   // Требования к оперативной памяти.
 					   /*     VECTOR         NEEDED LENGTH (GUESS) */

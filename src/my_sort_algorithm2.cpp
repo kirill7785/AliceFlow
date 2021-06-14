@@ -1509,6 +1509,162 @@ void Counting_Sortj(Ak2& Amat, integer first, integer last, integer bucket_len)
 
 }// Counting_Sortj
 
+
+
+// Сортировка подсчётом.
+// За время O(n)
+// Томас Кормен стр. 224.
+// Внимание: Алгоритм потребляет очень много оперативной памяти.
+// Впервые предложена Севардом (H.H.Seward) в 1954 году.
+// Однопоточный вариант, т.к. распараллеливание будет сделано на уровень выше
+// путём разбиения на два подмассива сортировки их по отдельности разными потоками,
+// а на заключительной части используется алгоритм слияния.
+// 08.06.2021 Не содержит выделений и уничтожений памяти. Оперативная память выделяется централизованно 
+// один раз для всех многосеточных уровней внутри setup_phase.
+void Counting_Sort_bmemo_false(Ak1*& Amat, integer first, integer last, integer bucket_len,
+	integer(*indx_compare)(Ak1& Amat), integer*& C, Ak1* &Bm)
+{
+	// смена на malloc и calloc 7 января 2016.
+
+
+	//integer bucket_len = -1;
+	//for (integer j = first; j <= last; j++) {
+		//if (indx_compare(Amat[j]) > bucket_len) bucket_len = indx_compare(Amat[j]);
+	//}
+	//integer* C = new integer[bucket_len + 1];
+	/*
+	// Вынесен во внешний код, чтобы избежать частых alloc() и free().
+	integer* C = (integer*)malloc((bucket_len + 1) * sizeof(integer));
+	char c1[2] = "C";
+	char c2[14] = "Counting_Sort";
+	handle_error<integer>(C, c1, c2, (bucket_len + 1));
+
+	// Инициализация также выполняется параллельно во внешнем коде.
+//#pragma omp parallel for
+	for (integer i = 0; i <= bucket_len; i++) {
+		C[i] = 0; // инициализация.
+	}*/
+	//memset(C, 0, sizeof(integer)*(bucket_len + 1));
+	for (integer j = first; j <= last; j++) {
+		C[indx_compare(Amat[j])]++;
+	}
+	// В C[i] хранится количество элементов равных i.
+//НИ в коем случае !!! #pragma omp parallel for
+	for (integer i = 1; i <= bucket_len; i++) {
+		C[i] += C[i - 1];
+	}
+	// В C[i] количество элементов не превышающих i
+	//Ak1* Bm = new Ak1[last - first + 2];
+	/*Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
+	char c3[3] = "Bm";
+	char c4[14] = "Counting_Sort";
+	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
+	*/
+
+	for (integer j = last; j >= first; j--) {
+		integer ind;
+		ind = indx_compare(Amat[j]);
+		Bm[C[ind]] = Amat[j];
+		C[ind]--;
+	}
+
+	//delete[] C;
+	/*if (C != nullptr) {
+		free(C);
+		C = nullptr;
+	}*/
+
+	// Обратное копирование.
+	for (integer jnew = first, i = 1; jnew <= last; jnew++, i++) {
+		//Amat[jnew] = B[jnew - first + 1];
+		// i стал jnew. i ассоциируется с C[ind].
+		Amat[jnew] = Bm[i];
+	}
+	//delete[] Bm;
+	/*if (Bm != nullptr) {
+		free(Bm);
+		Bm = nullptr;
+	}*/
+
+}
+
+
+// Сортировка подсчётом.
+// За время O(n)
+// Томас Кормен стр. 224.
+// Внимание: Алгоритм потребляет очень много оперативной памяти.
+// Впервые предложена Севардом (H.H.Seward) в 1954 году.
+// Однопоточный вариант, т.к. распараллеливание будет сделано на уровень выше
+// путём разбиения на два подмассива сортировки их по отдельности разными потоками,
+// а на заключительной части используется алгоритм слияния.
+// 08.06.2021
+void Counting_Sort_bmemo_false(Ak1*& Amat, integer first, integer last,  integer bucket_len,
+	integer(*indx_compare)(Ak1& Amat), integer* &C)
+{
+	// смена на malloc и calloc 7 января 2016.
+	
+
+	//integer bucket_len = -1;
+	//for (integer j = first; j <= last; j++) {
+		//if (indx_compare(Amat[j]) > bucket_len) bucket_len = indx_compare(Amat[j]);
+	//}
+	//integer* C = new integer[bucket_len + 1];
+	/*
+	// Вынесен во внешний код, чтобы избежать частых alloc() и free().
+	integer* C = (integer*)malloc((bucket_len + 1) * sizeof(integer));
+	char c1[2] = "C";
+	char c2[14] = "Counting_Sort";
+	handle_error<integer>(C, c1, c2, (bucket_len + 1));	
+
+	// Инициализация также выполняется параллельно во внешнем коде.
+//#pragma omp parallel for
+	for (integer i = 0; i <= bucket_len; i++) {
+		C[i] = 0; // инициализация.
+	}*/
+	//memset(C, 0, sizeof(integer)*(bucket_len + 1));
+	for (integer j = first; j <= last; j++) {
+		C[indx_compare(Amat[j])]++;
+	}
+	// В C[i] хранится количество элементов равных i.
+//НИ в коем случае !!! #pragma omp parallel for
+	for (integer i = 1; i <= bucket_len; i++) {
+		C[i] += C[i - 1];
+	}
+	// В C[i] количество элементов не превышающих i
+	//Ak1* Bm = new Ak1[last - first + 2];
+	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
+	char c3[3] = "Bm";
+	char c4[14] = "Counting_Sort";
+	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
+
+
+	for (integer j = last; j >= first; j--) {
+		integer ind;
+		ind = indx_compare(Amat[j]);
+		Bm[C[ind]] = Amat[j];
+		C[ind]--;
+	}
+
+	//delete[] C;
+	/*if (C != nullptr) {
+		free(C);
+		C = nullptr;
+	}*/
+
+	// Обратное копирование.
+	for (integer jnew = first, i = 1; jnew <= last; jnew++, i++) {
+		//Amat[jnew] = B[jnew - first + 1];
+		// i стал jnew. i ассоциируется с C[ind].
+		Amat[jnew] = Bm[i];
+	}
+	//delete[] Bm;
+	if (Bm != nullptr) {
+		free(Bm);
+		Bm = nullptr;
+	}
+	
+}
+
 // Сортировка подсчётом.
 // За время O(n)
 // Томас Кормен стр. 224.

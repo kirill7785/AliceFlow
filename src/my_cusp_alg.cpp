@@ -3,7 +3,7 @@
 // my_cusp_alg.cu
 
 #pragma once
-//#define GPU_LIB_INCLUDE_MY_PROJECT 0
+//#define GPU_LIB_INCLUDE_MY_PROJECT 1
 
 // amgx
 //#include "amgx_c.h"
@@ -62,6 +62,8 @@ cusp::krylov::bicgstab(A, x, b, monitor);
 #if GPU_LIB_INCLUDE_MY_PROJECT == 1 
 
 // CUSP 0.5.1 NVIDIA Includes
+
+
 
 //#include "cusp_library\cusp\csr_matrix.h"
 //#include "cusp_library\cusp/krylov/bicgstab.h"
@@ -363,9 +365,9 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 		// радиатора водяного охлаждения 3л/мин (совместное решение cfd + temperature 
 		// + приближение Обербека-Буссинеска.).
 		switch (iVar) {
-		case VX: tolerance = 1e-5;  break; //5e-5
-		case VY: tolerance = 1e-5;  break; // 5e-5
-		case VZ: tolerance = 1e-5;  break; // 5e-5
+		case VELOCITY_X_COMPONENT: tolerance = 1e-5;  break; //5e-5
+		case VELOCITY_Y_COMPONENT: tolerance = 1e-5;  break; // 5e-5
+		case VELOCITY_Z_COMPONENT: tolerance = 1e-5;  break; // 5e-5
 		case NUSHA: tolerance = 1e-5;  break; // 5e-5
 		case TURBULENT_KINETIK_ENERGY: tolerance = 1e-5;  break; // 5e-5
 		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: tolerance = 1e-5;  break; // 5e-5
@@ -375,7 +377,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	integer imaxiter = 6000;
-	if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
+	if (((adiabatic_vs_heat_transfer_coeff > DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
 		// для нелинейных задач. 
 		imaxiter = 1;
 		tolerance = 0.1;
@@ -446,7 +448,13 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 		// setup preconditioner
 		//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::device_memory> Md(Ad);
 		// setup preconditioner
+
+		//printf("typename SmootherType = thrust::use_default\n");
+		//printf("typename SolverType   = thrust::use_default\n");
+		//cusp::precond::aggregation::smoothed_aggregation<int, ScalarType, cusp::host_memory> Mh(Ah);
+
 		cusp::precond::aggregation::smoothed_aggregation<int, ScalarType, cusp::host_memory> Mh(Ah);
+
 		//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::device_memory> Md(Mh);
 		// Диагональный предобуславливатель.
 		//cusp::precond::diagonal<float, cusp::device_memory> Md(Ad);
@@ -745,9 +753,9 @@ void cusp_solver_GPU_SAMG(equation3D* &sl, equation3D_bon* &slb,
 		// радиатора водяного охлажения (совместное решение cfd + temperature 
 		// + приближение Обербека-Буссинеска.).
 		switch (iVar) {
-		case VX: tolerance = 1e-5;  break; //5e-5
-		case VY: tolerance = 1e-5;  break; // 5e-5
-		case VZ: tolerance = 1e-5;  break; // 5e-5
+		case VELOCITY_X_COMPONENT: tolerance = 1e-5;  break; //5e-5
+		case VELOCITY_Y_COMPONENT: tolerance = 1e-5;  break; // 5e-5
+		case VELOCITY_Z_COMPONENT: tolerance = 1e-5;  break; // 5e-5
 		case NUSHA: tolerance = 1e-5;  break; // 5e-5
 		case TURBULENT_KINETIK_ENERGY: tolerance = 1e-5;  break; // 5e-5
 		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: tolerance = 1e-5;  break; // 5e-5
@@ -757,7 +765,7 @@ void cusp_solver_GPU_SAMG(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	integer imaxiter = 6000;
-	if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
+	if (((adiabatic_vs_heat_transfer_coeff > DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
 		// для нелинейных задач. Граничное условие Стефана-Больцмана.
 		// 348878024515312.94
 		// 1947852997768.51

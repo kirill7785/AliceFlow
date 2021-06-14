@@ -13,6 +13,44 @@
 #include <iostream>
 #include <string>
 
+// недостающий функционал 1 октября 2016.
+// эта процедура определена выше по коду в mysolverv0_03.c, поэтому здесь её дефениция излишна.
+integer my_imin(integer ia, integer ib)
+{
+	integer ir;
+	if (ia < ib) ir = ia;
+	else ir = ib;
+	return ir;
+} // imin
+
+// Возвращает максимум из двух целых чисел.
+integer my_imax(integer ia, integer ib) {
+	integer ir = ia;
+	if (ib > ia) ir = ib;
+	return ir;
+} // my_imax
+
+// недостающий функционал 1 октября 2016.
+// эта процедура определена выше по коду в mysolverv0_03.c, поэтому здесь её дефениция излишна.
+doublereal my_imin3(doublereal ra, doublereal rb, doublereal rc)
+{
+	doublereal dr;
+	if (ra < rb) dr = ra;
+	else dr = rb;
+	if (dr > rc) dr = rc;
+	return dr;
+} // my_imin3
+
+// Возвращает максимум из двух целых чисел.
+doublereal my_imax3(doublereal ra, doublereal rb, doublereal rc)
+{
+	doublereal dr;
+	if (ra < rb) dr = rb;
+	else dr = ra;
+	if (dr < rc) dr = rc;
+	return dr;
+} // my_imax3
+
 //#include <string.h> // функции обработки строк
 #include "power_temperature_depend.cpp" // сплайновая интерполяция таблично заданной функции (зависимость мощности от температуры)
 
@@ -230,7 +268,7 @@ bool trnLineFacet(TOCHKA_FLOAT p1, TOCHKA_FLOAT p2, TOCHKA_FLOAT pa, TOCHKA_FLOA
 	double total, denom, mu;
 	TOCHKA n, pa1, pa2, pa3;
 	// 1.0e-7 Проверено на BSK_Dmitrii
-	const doublereal EPS1 = 0.01; //0.01; // 1.0e-7;
+	const doublereal EPS1 =  0.01; //0.01; // 1.0e-7;
 	const doublereal EPS = 1.0e-3;// 1.0e-3; 5.0e-4; //1.0e-7;//  1.0e-9;
 
 	/* Calculate the parameters for the plane */
@@ -246,8 +284,11 @@ bool trnLineFacet(TOCHKA_FLOAT p1, TOCHKA_FLOAT p2, TOCHKA_FLOAT pa, TOCHKA_FLOA
 
 	/* Calculate the position on the line that intersects the plane */
 	denom = n.x * (p2.x - p1.x) + n.y * (p2.y - p1.y) + n.z * (p2.z - p1.z);
-	if (dabs(denom/sqrt((p2.x - p1.x)*(p2.x - p1.x) + (p2.y - p1.y)*(p2.y - p1.y) + (p2.z - p1.z)*(p2.z - p1.z))) < EPS1)         /* Line and plane don't intersect */
+	if (dabs(denom / sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y) + (p2.z - p1.z) * (p2.z - p1.z))) < EPS1) {         /* Line and plane don't intersect */
+		//printf("1 %e\n", dabs(denom / sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y) + (p2.z - p1.z) * (p2.z - p1.z))));
+		//getchar();
 		return(false);
+	}
 	//std::wcout << "|denom|<EPS |denom|=" << fabs(denom) << std::endl;
 
 
@@ -293,9 +334,11 @@ bool trnLineFacet(TOCHKA_FLOAT p1, TOCHKA_FLOAT p2, TOCHKA_FLOAT pa, TOCHKA_FLOA
 
 	//std::wcout << "360 dopusk=" << dabs(total - 360.0) << std::endl;
 
-	if (dabs(total - 360.0) > EPS)
+	if (dabs(total - 360.0) > EPS) {
+		//printf("2 %e\n",dabs(total-360));
+		//getchar();
 		return(false);
-
+	}
 	
 
 	//system("PAUSE");
@@ -328,6 +371,10 @@ typedef struct TGEOM {
 	// В режиме большой модели большая stl модель 
 	// делится на небольшие части которые обрабатываются независимо. 
 	bool bbigCADmodel; // Режим большой модели.
+	const int size_pattern = 64;//16
+	bigCAD_STL*** root_big_CAD_STL_model_x_hash_table;
+	bigCAD_STL*** root_big_CAD_STL_model_y_hash_table;
+	bigCAD_STL*** root_big_CAD_STL_model_z_hash_table;
 	bigCAD_STL* root_big_CAD_STL_model_x;
 	bigCAD_STL* root_big_CAD_STL_model_y;
 	bigCAD_STL* root_big_CAD_STL_model_z;
@@ -336,6 +383,7 @@ typedef struct TGEOM {
 	TGEOM() {
 		name[0] = '\0';
 
+		
 		itypegeom = PRISM; // 0 - Prism, 1 - Cylinder, 2 - Polygon, 3 - CAD_STL
 		// Prism
 		xS=0.0, yS=0.0, zS=0.0; // координаты начала объекта
@@ -355,6 +403,10 @@ typedef struct TGEOM {
 		volcadstl = 0.0;
 
 		bbigCADmodel = false;
+		root_big_CAD_STL_model_x_hash_table = nullptr;
+		root_big_CAD_STL_model_y_hash_table = nullptr;
+		root_big_CAD_STL_model_z_hash_table = nullptr;
+
 		root_big_CAD_STL_model_x = nullptr;
 		root_big_CAD_STL_model_y = nullptr;
 		root_big_CAD_STL_model_z = nullptr;
@@ -372,6 +424,30 @@ typedef struct TGEOM {
 		}
 
 		inumber_triangles_for_CAD_STL_model = 12;
+
+		if (root_big_CAD_STL_model_x_hash_table != nullptr) {
+			for (int i_1 = 0; i_1 < size_pattern; i_1++) {
+				for (int i_2 = 0; i_2 < size_pattern; i_2++) {
+					root_big_CAD_STL_model_x_hash_table[i_1][i_2] = nullptr;
+				}
+			}
+		}
+
+		if (root_big_CAD_STL_model_y_hash_table != nullptr) {
+			for (int i_1 = 0; i_1 < size_pattern; i_1++) {
+				for (int i_2 = 0; i_2 < size_pattern; i_2++) {
+					root_big_CAD_STL_model_y_hash_table[i_1][i_2] = nullptr;
+				}
+			}
+		}
+
+		if (root_big_CAD_STL_model_z_hash_table != nullptr) {
+			for (int i_1 = 0; i_1 < size_pattern; i_1++) {
+				for (int i_2 = 0; i_2 < size_pattern; i_2++) {
+					root_big_CAD_STL_model_z_hash_table[i_1][i_2] = nullptr;
+				}
+			}
+		}
 
 		bigCAD_STL* tmp1 = root_big_CAD_STL_model_x;
 		while (root_big_CAD_STL_model_x != nullptr) {
@@ -2728,6 +2804,7 @@ typedef struct TGEOM {
 				tmp = tmp->next;
 			}
 		}
+		return 1.0e20; // Нет пересечения, бесконечное расстояние 21,02,2021
 	}
 
 	// Вычисляет окаймляющую призму для CAD STL объекта.
@@ -2842,7 +2919,10 @@ typedef struct TGEOM {
 
 		minimaxCAD_STL(pmin, pmax);
 
+
+
 		if ((pf.x > pmin.x) && (pf.x < pmax.x) && (pf.y > pmin.y) && (pf.y < pmax.y) && (pf.z > pmin.z) && (pf.z < pmax.z)) {
+
 
 			// решение принимается большинством голосов за три теста.
 			bool bout1 = false, bout2 = false, bout3 = false;
@@ -2850,7 +2930,7 @@ typedef struct TGEOM {
 			TOCHKA_FLOAT pf2, pintersect;
 			pf2.x = (float)p.x;
 			pf2.y = (float)p.y;
-			pf2.z = (float)(pmax.z+0.02);
+			pf2.z = (float)(pmax.z+ 0.02* (pmax.z - pmin.z));//+0.02
 
 			int inumberintersect = 0;
 
@@ -2870,18 +2950,103 @@ typedef struct TGEOM {
 			}
 			else {
 				// Большая .stl модель.
-				bigCAD_STL* tmp1 = root_big_CAD_STL_model_z;
+				//bigCAD_STL* tmp1 = root_big_CAD_STL_model_z;
 
-				gCAD_STL* tmp = nullptr;
-
-				while (tmp1 != nullptr) {
+				gCAD_STL* tmp = nullptr;//, * tmp_loc = nullptr;
+				
+				/*while (tmp1 != nullptr) {
 
 					if ((p.x>=tmp1->min1)&& (p.x <= tmp1->max1)&& (p.y >= tmp1->min2) && (p.y <= tmp1->max2)) {
-						tmp= tmp1->root_CAD_STL;
+						tmp_loc= tmp1->root_CAD_STL;
 					}
 
 					tmp1 = tmp1->next;
+				}*/
+				
+				TOCHKA_FLOAT pmin;
+				TOCHKA_FLOAT pmax;
+
+				minimaxCAD_STL(pmin, pmax);
+
+				//int key_x = my_imax(0,my_imin((int)(p.x- root_big_CAD_STL_model_z_hash_table[0][0]->min1)/(root_big_CAD_STL_model_z_hash_table[size_pattern - 1][0]->max1 -root_big_CAD_STL_model_z_hash_table[0][0]->min1),size_pattern-1));
+				//int key_y = my_imax(0, my_imin((int)(p.y - root_big_CAD_STL_model_z_hash_table[0][0]->min2) / (root_big_CAD_STL_model_z_hash_table[0][size_pattern - 1]->max2 - root_big_CAD_STL_model_z_hash_table[0][0]->min2), size_pattern - 1));
+				const double dsize_pattern = 1.0 * size_pattern;
+
+				integer key_x = my_imax(0, my_imin((integer)((dsize_pattern)*(p.x - pmin.x) / (pmax.x - pmin.x)), size_pattern - 1));
+				integer key_y = my_imax(0, my_imin((integer)((dsize_pattern) * (p.y - pmin.y) / (pmax.y - pmin.y)), size_pattern - 1));
+				
+				/*if ((tmp_loc!=nullptr)/*&&(root_big_CAD_STL_model_z_hash_table[key_x][key_y]->root_CAD_STL != nullptr)*//*) {
+					std::wcout << "p.x=" << p.x << " min=" << pmin.x << " max=" << pmax.x <<  std::endl;
+					std::wcout << "p.y=" << p.y << " min=" << pmin.y << " max=" << pmax.y << std::endl;
+					std::wcout << "x=" << key_x << " y=" << key_y << std::endl;
+				}*/
+				//else {
+					//printf("ok");
+				//}
+				//tmp = tmp_loc;
+				if (root_big_CAD_STL_model_z_hash_table[key_x][key_y] != nullptr) {
+					//bigCAD_STL* tmp1t = root_big_CAD_STL_model_z_hash_table[key_x][key_y];
+					//if ((p.x >= tmp1t->min1) && (p.x <= tmp1t->max1) && (p.y >= tmp1t->min2) && (p.y <= tmp1t->max2)) {
+						tmp = root_big_CAD_STL_model_z_hash_table[key_x][key_y]->root_CAD_STL;
+					//}
 				}
+				/*
+				if (tmp_loc != tmp) {
+					std::wcout << "p.x=" << p.x << " min=" << pmin.x << " max=" << pmax.x << std::endl;
+					std::wcout << "p.y=" << p.y << " min=" << pmin.y << " max=" << pmax.y << std::endl;
+					std::wcout << "x=" << key_x << " y=" << key_y << std::endl;
+
+					//std::wcout << "x=" << (integer)((dsize_pattern) * (p.x - pmin.x) / (pmax.x - pmin.x)) - 32 << " y=" << (integer)((dsize_pattern) * (p.y - pmin.y) / (pmax.y - pmin.y)) - 32 << std::endl;
+
+
+					for (int i_3 = 0; i_3 < size_pattern; i_3++) {
+						for (int i_4 = 0; i_4 < size_pattern; i_4++) {
+							if (root_big_CAD_STL_model_z_hash_table[i_3][i_4] != nullptr) {
+								if (tmp_loc == root_big_CAD_STL_model_z_hash_table[i_3][i_4]->root_CAD_STL) {
+									std::wcout << "i_3=" << i_3 << " i_4=" << i_4 << "nakonec found\n";
+									getchar();
+								}
+							}
+						}
+					}
+
+					getchar();
+				}
+				*/
+				/*
+				if ((tmp_loc != nullptr) /*&& (root_big_CAD_STL_model_z_hash_table[key_x][key_y]->root_CAD_STL != nullptr)*//*) {
+					std::cout << "tmp " << tmp << " tmp_loc " << tmp_loc << std::endl;
+
+
+					for (int i_3 = 0; i_3 < size_pattern; i_3++) {
+						for (int i_4 = 0; i_4 < size_pattern; i_4++) {
+							if (root_big_CAD_STL_model_z_hash_table[i_3][i_4] != nullptr) {
+								if (tmp_loc == root_big_CAD_STL_model_z_hash_table[i_3][i_4]->root_CAD_STL) {
+									std::wcout << "i_3=" << i_3 << " i_4=" << i_4 << "nakonec found\n";
+									getchar();
+								}
+							}
+						}
+					}
+
+					/*if (root_big_CAD_STL_model_z_hash_table[key_x + 1][key_y] != nullptr) {
+						std::cout << "x+1 y0" << root_big_CAD_STL_model_z_hash_table[key_x + 1][key_y]->root_CAD_STL << std::endl;
+					}
+					if (root_big_CAD_STL_model_z_hash_table[key_x - 1][key_y] != nullptr) {
+						std::cout << "x-1 y0" << root_big_CAD_STL_model_z_hash_table[key_x - 1][key_y]->root_CAD_STL << std::endl;
+					}
+					if (root_big_CAD_STL_model_z_hash_table[key_x][key_y + 1] != nullptr) {
+						std::cout << "x0 y+1" << root_big_CAD_STL_model_z_hash_table[key_x][key_y + 1]->root_CAD_STL << std::endl;
+					}
+					if (root_big_CAD_STL_model_z_hash_table[key_x + 1][key_y + 1] != nullptr) {
+						std::cout << "x+1 y+1" << root_big_CAD_STL_model_z_hash_table[key_x + 1][key_y + 1]->root_CAD_STL << std::endl;
+					}
+					if (root_big_CAD_STL_model_z_hash_table[key_x - 1][key_y + 1] != nullptr) {
+						std::cout << "x+1 y+1" << root_big_CAD_STL_model_z_hash_table[key_x - 1][key_y + 1]->root_CAD_STL << std::endl;
+					}*//*
+
+					getchar();
+				}*/
 
 				while (tmp != nullptr) {
 
@@ -2899,7 +3064,7 @@ typedef struct TGEOM {
 				bout1 = true;
 			}
 
-			pf2.x = (float)(pmax.x+0.02);
+			pf2.x = (float)(pmax.x+ 0.02*(pmax.x - pmin.x));//+0.02
 			pf2.y = (float)p.y;
 			pf2.z = (float)p.z;
 
@@ -2921,19 +3086,44 @@ typedef struct TGEOM {
 			}
 			else {
 				// Большая .stl модель.
-				bigCAD_STL* tmp1 = root_big_CAD_STL_model_x;
+				//bigCAD_STL* tmp1 = root_big_CAD_STL_model_x;
 
 				gCAD_STL* tmp = nullptr;
 
-				while (tmp1 != nullptr) {
+				/*while (tmp1 != nullptr) {
 
 					if ((p.y >= tmp1->min1) && (p.y <= tmp1->max1) && (p.z >= tmp1->min2) && (p.z <= tmp1->max2)) {
 						tmp = tmp1->root_CAD_STL;
 					}
 
 					tmp1 = tmp1->next;
-				}
+				}*/
+				
+				TOCHKA_FLOAT pmin;
+				TOCHKA_FLOAT pmax;
 
+				minimaxCAD_STL(pmin, pmax);
+
+				//int key_y = my_imax(0, my_imin((int)(p.y - root_big_CAD_STL_model_x_hash_table[0][0]->min1) / (root_big_CAD_STL_model_x_hash_table[size_pattern - 1][0]->max1 - root_big_CAD_STL_model_x_hash_table[0][0]->min1), size_pattern - 1));
+				//int key_z = my_imax(0, my_imin((int)(p.z - root_big_CAD_STL_model_x_hash_table[0][0]->min2) / (root_big_CAD_STL_model_x_hash_table[0][size_pattern - 1]->max2 - root_big_CAD_STL_model_x_hash_table[0][0]->min2), size_pattern - 1));
+				
+				integer key_y = my_imax(0, my_imin((integer)(((size_pattern)*(p.y - pmin.y)) / (pmax.y - pmin.y)), size_pattern - 1));
+				integer key_z = my_imax(0, my_imin((integer)(((size_pattern) * (p.z - pmin.z)) / (pmax.z - pmin.z)), size_pattern - 1));
+
+				//if (root_big_CAD_STL_model_x_hash_table[key_y][key_z]->root_CAD_STL == nullptr) {
+				//	std::wcout << "y=" << key_y << " z=" << key_z << std::endl;
+				//}
+				//else {
+				//	printf("ok");
+				//}
+
+				if (root_big_CAD_STL_model_x_hash_table[key_y][key_z] != nullptr) {
+					//bigCAD_STL* tmp1t = root_big_CAD_STL_model_x_hash_table[key_y][key_z];
+					//if ((p.y >= tmp1t->min1) && (p.y <= tmp1t->max1) && (p.z >= tmp1t->min2) && (p.z <= tmp1t->max2)) {
+						tmp = root_big_CAD_STL_model_x_hash_table[key_y][key_z]->root_CAD_STL;
+					//}
+				}
+				
 				while (tmp != nullptr) {
 
 					if (trnLineFacet(pf, pf2, tmp->pa, tmp->pb, tmp->pc, pintersect)) {
@@ -2951,7 +3141,7 @@ typedef struct TGEOM {
 			}
 
 			pf2.x = (float)p.x;
-			pf2.y = (float)(pmax.y+0.02);
+			pf2.y = (float)(pmax.y+ 0.02 * (pmax.y - pmin.y));//+0.02
 			pf2.z = (float)p.z;
 
 			inumberintersect = 0;
@@ -2972,19 +3162,45 @@ typedef struct TGEOM {
 			}
 			else {
 				// Большая .stl модель.
-				bigCAD_STL* tmp1 = root_big_CAD_STL_model_y;
+				//bigCAD_STL* tmp1 = root_big_CAD_STL_model_y;
 
 				gCAD_STL* tmp = nullptr;
 
-				while (tmp1 != nullptr) {
+				/*while (tmp1 != nullptr) {
 
 					if ((p.x >= tmp1->min1) && (p.x <= tmp1->max1) && (p.z >= tmp1->min2) && (p.z <= tmp1->max2)) {
 						tmp = tmp1->root_CAD_STL;
 					}
 
-					tmp1 = tmp1->next;
-				}
+				    tmp1 = tmp1->next;
+				}*/
+				
+				TOCHKA_FLOAT pmin;
+				TOCHKA_FLOAT pmax;
 
+				minimaxCAD_STL(pmin, pmax);
+
+				// 
+				//int key_x = my_imax(0, my_imin((int)(p.x - root_big_CAD_STL_model_y_hash_table[0][0]->min1) / (root_big_CAD_STL_model_y_hash_table[size_pattern - 1][0]->max1 - root_big_CAD_STL_model_y_hash_table[0][0]->min1), size_pattern - 1));
+				//int key_z = my_imax(0, my_imin((int)(p.z - root_big_CAD_STL_model_y_hash_table[0][0]->min2) / (root_big_CAD_STL_model_y_hash_table[0][size_pattern - 1]->max2 - root_big_CAD_STL_model_y_hash_table[0][0]->min2), size_pattern - 1));
+				
+				integer key_x = my_imax(0, my_imin((integer)(1.0*(size_pattern)*(p.x - pmin.x) / (pmax.x - pmin.x)), size_pattern - 1));
+				integer key_z = my_imax(0, my_imin((integer)(1.0*(size_pattern) * (p.z - pmin.z) / (pmax.z - pmin.z)), size_pattern - 1));
+
+				//if (root_big_CAD_STL_model_y_hash_table[key_x][key_z]->root_CAD_STL == nullptr) {
+					//std::wcout << "x=" << key_x << " z=" << key_z << std::endl;
+				//}
+				//else {
+				//	printf("ok");
+				//}
+
+				if (root_big_CAD_STL_model_y_hash_table[key_x][key_z] != nullptr) {
+					//bigCAD_STL* tmp1t = root_big_CAD_STL_model_y_hash_table[key_x][key_z];
+					//if ((p.x >= tmp1t->min1) && (p.x <= tmp1t->max1) && (p.z >= tmp1t->min2) && (p.z <= tmp1t->max2)) {
+						tmp = root_big_CAD_STL_model_y_hash_table[key_x][key_z]->root_CAD_STL;
+					//}
+				}
+				
 				while (tmp != nullptr) {
 
 					if (trnLineFacet(pf, pf2, tmp->pa, tmp->pb, tmp->pc, pintersect)) {
@@ -3825,8 +4041,7 @@ typedef struct TGEOM {
 
 		// Вывод статистики.
 
-		TOCHKA_FLOAT pmin;
-		TOCHKA_FLOAT pmax;
+		
 
 		int number_faces=0;
 
@@ -3839,7 +4054,8 @@ typedef struct TGEOM {
 			tmp = tmp->next;
 		}
 
-		
+		TOCHKA_FLOAT pmin;
+		TOCHKA_FLOAT pmax;
 
 		std::wcout << "number triangle faces is equal=" << number_faces << std::endl;
 
@@ -3854,16 +4070,24 @@ typedef struct TGEOM {
 			root_big_CAD_STL_model_z = new bigCAD_STL;
 			bigCAD_STL * tmp1 = root_big_CAD_STL_model_z;
 
-			const int size_pattern = 64;//16
+			
 			const double dsize_pattern = 1.0 * size_pattern;
+
+			root_big_CAD_STL_model_z_hash_table = new bigCAD_STL**[size_pattern];
+			for (int i = 0; i < size_pattern; i++) {
+				root_big_CAD_STL_model_z_hash_table[i]= new bigCAD_STL*[size_pattern];
+				for (int j = 0; j < size_pattern; j++) {
+					root_big_CAD_STL_model_z_hash_table[i][j] = nullptr;
+				}
+			}
 
 			// Всего 256 сегментов.
 			for (int i = 0; i < size_pattern; i++) {
 				for (int j = 0; j < size_pattern; j++) {
-					tmp1->min1 = i * (pmax.x - pmin.x) / dsize_pattern;
-					tmp1->max1 = (i + 1) * (pmax.x - pmin.x) / dsize_pattern;
-					tmp1->min2 = j * (pmax.y - pmin.y) / dsize_pattern;
-					tmp1->max2 = (j + 1) * (pmax.y - pmin.y) / dsize_pattern;
+					tmp1->min1 = pmin.x + i * (pmax.x - pmin.x) / dsize_pattern;
+					tmp1->max1 = pmin.x + (i + 1) * (pmax.x - pmin.x) / dsize_pattern;
+					tmp1->min2 = pmin.y + j * (pmax.y - pmin.y) / dsize_pattern;
+					tmp1->max2 = pmin.y + (j + 1) * (pmax.y - pmin.y) / dsize_pattern;
 
 					tmp1->root_CAD_STL = nullptr;
 					tmp1->id_endl = i * size_pattern + j;
@@ -3874,6 +4098,8 @@ typedef struct TGEOM {
 					else {
 						tmp1->next = nullptr;
 					}
+
+					//root_big_CAD_STL_model_z_hash_table[i][j] = tmp1;
 					tmp1 = tmp1->next;
 				}
 			}
@@ -3888,14 +4114,22 @@ typedef struct TGEOM {
 
 			while (tmp != nullptr) {
 
-				double x1 = tmp->pa.x;
-				double y1 = tmp->pa.y;
+				//double x1 = tmp->pa.x;
+				//double y1 = tmp->pa.y;
 
+				double tr_xmin = my_imin3(tmp->pa.x, tmp->pb.x, tmp->pc.x);
+				double tr_ymin = my_imin3(tmp->pa.y, tmp->pb.y, tmp->pc.y);
+
+				double tr_xmax = my_imax3(tmp->pa.x, tmp->pb.x, tmp->pc.x);
+				double tr_ymax = my_imax3(tmp->pa.y, tmp->pb.y, tmp->pc.y);
+				
 				tmp1 = root_big_CAD_STL_model_z;
 
 				while (tmp1 != nullptr) {
 
-					if ((x1>= tmp1->min1)&&(x1<= tmp1->max1)&& (y1 >= tmp1->min2) && (y1 <= tmp1->max2)) {
+					//if ((x1>= tmp1->min1)&&(x1<= tmp1->max1)&& (y1 >= tmp1->min2) && (y1 <= tmp1->max2)) 
+					if ((tr_xmin<= tmp1->max1)&&(tr_xmax>=tmp1->min1)&& (tr_ymin <= tmp1->max2) && (tr_ymax >= tmp1->min2))
+					{
 
 						badd = true;
 
@@ -3927,7 +4161,7 @@ typedef struct TGEOM {
 
 				tmp = tmp->next;
 			}
-
+			/*
 			if (!badd) {
 				badd = false;
 
@@ -4025,10 +4259,30 @@ typedef struct TGEOM {
 				}
 
 			}
-
+			*/
 			for (int i = 0; i < size_pattern * size_pattern; i++) {
 				endl_link[i] = nullptr;
 			}
+
+			bigCAD_STL* tmp1t = root_big_CAD_STL_model_z;
+
+			
+
+			while (tmp1t != nullptr) {
+
+				doublereal dkey_x= 0.5*(tmp1t->min1+ tmp1t->max1);
+				doublereal dkey_y = 0.5 * (tmp1t->min2 + tmp1t->max2);
+
+				integer key_x = my_imax(0, my_imin((integer)((dsize_pattern) * (dkey_x - pmin.x) / (pmax.x - pmin.x)), size_pattern - 1));
+				integer key_y = my_imax(0, my_imin((integer)((dsize_pattern) * (dkey_y - pmin.y) / (pmax.y - pmin.y)), size_pattern - 1));
+
+				root_big_CAD_STL_model_z_hash_table[key_x][key_y] = tmp1t;
+
+				
+
+				tmp1t = tmp1t->next;
+			}
+
 
 
 			// ox 256=16*16.
@@ -4036,15 +4290,21 @@ typedef struct TGEOM {
 			root_big_CAD_STL_model_x = new bigCAD_STL;
 			tmp1 = root_big_CAD_STL_model_x;
 
-			
+			root_big_CAD_STL_model_x_hash_table = new bigCAD_STL**[size_pattern];
+			for (int i = 0; i < size_pattern; i++) {
+				root_big_CAD_STL_model_x_hash_table[i] = new bigCAD_STL*[size_pattern];
+				for (int j = 0; j < size_pattern; j++) {
+					root_big_CAD_STL_model_x_hash_table[i][j] = nullptr;
+				}
+			}
 
 			// Всего 256 сегментов.
 			for (int i = 0; i < size_pattern; i++) {
 				for (int j = 0; j < size_pattern; j++) {
-					tmp1->min1 = i * (pmax.y - pmin.y) / dsize_pattern;
-					tmp1->max1 = (i + 1) * (pmax.y - pmin.y) / dsize_pattern;
-					tmp1->min2 = j * (pmax.z - pmin.z) / dsize_pattern;
-					tmp1->max2 = (j + 1) * (pmax.z - pmin.z) / dsize_pattern;
+					tmp1->min1 = pmin.y + i * (pmax.y - pmin.y) / dsize_pattern;
+					tmp1->max1 = pmin.y + (i + 1) * (pmax.y - pmin.y) / dsize_pattern;
+					tmp1->min2 = pmin.z + j * (pmax.z - pmin.z) / dsize_pattern;
+					tmp1->max2 = pmin.z + (j + 1) * (pmax.z - pmin.z) / dsize_pattern;
 
 					tmp1->root_CAD_STL = nullptr;
 					tmp1->id_endl = i * size_pattern + j;
@@ -4055,6 +4315,7 @@ typedef struct TGEOM {
 					else {
 						tmp1->next = nullptr;
 					}
+					//root_big_CAD_STL_model_x_hash_table[i][j] = tmp1;
 					tmp1 = tmp1->next;
 				}
 			}
@@ -4067,14 +4328,23 @@ typedef struct TGEOM {
 
 			while (tmp != nullptr) {
 
-				double x1 = tmp->pa.y;
-				double y1 = tmp->pa.z;
+				//double x1 = tmp->pa.y;
+				//double y1 = tmp->pa.z;
 
+				double tr_xmin = my_imin3(tmp->pa.y, tmp->pb.y, tmp->pc.y);
+				double tr_ymin = my_imin3(tmp->pa.z, tmp->pb.z, tmp->pc.z);
+
+				double tr_xmax = my_imax3(tmp->pa.y, tmp->pb.y, tmp->pc.y);
+				double tr_ymax = my_imax3(tmp->pa.z, tmp->pb.z, tmp->pc.z);
+
+				
 				tmp1 = root_big_CAD_STL_model_x;
 
 				while (tmp1 != nullptr) {
 
-					if ((x1 >= tmp1->min1) && (x1 <= tmp1->max1) && (y1 >= tmp1->min2) && (y1 <= tmp1->max2)) {
+					//if ((x1 >= tmp1->min1) && (x1 <= tmp1->max1) && (y1 >= tmp1->min2) && (y1 <= tmp1->max2)) 
+						if ((tr_xmin <= tmp1->max1) && (tr_xmax >= tmp1->min1) && (tr_ymin <= tmp1->max2) && (tr_ymax >= tmp1->min2))
+					{
 						// Добавление.
 
 						badd = true;
@@ -4107,7 +4377,7 @@ typedef struct TGEOM {
 				tmp = tmp->next;
 			}
 
-
+			/*
 			if (!badd) {
 				badd = false;
 
@@ -4203,9 +4473,28 @@ typedef struct TGEOM {
 					tmp = tmp->next;
 				}
 			}
-
+			*/
 			for (int i = 0; i < size_pattern * size_pattern; i++) {
 				endl_link[i] = nullptr;
+			}
+
+			 tmp1t = root_big_CAD_STL_model_x;
+
+
+
+			while (tmp1t != nullptr) {
+
+				doublereal dkey_y = 0.5 * (tmp1t->min1 + tmp1t->max1);
+				doublereal dkey_z = 0.5 * (tmp1t->min2 + tmp1t->max2);
+
+				integer key_y = my_imax(0, my_imin((integer)((dsize_pattern) * (dkey_y - pmin.y) / (pmax.y - pmin.y)), size_pattern - 1));
+				integer key_z = my_imax(0, my_imin((integer)((dsize_pattern) * (dkey_z - pmin.z) / (pmax.z - pmin.z)), size_pattern - 1));
+
+				root_big_CAD_STL_model_x_hash_table[key_y][key_z] = tmp1t;
+
+				
+
+				tmp1t = tmp1t->next;
 			}
 
 
@@ -4214,15 +4503,21 @@ typedef struct TGEOM {
 			root_big_CAD_STL_model_y = new bigCAD_STL;
 			tmp1 = root_big_CAD_STL_model_y;
 
-
+			root_big_CAD_STL_model_y_hash_table = new bigCAD_STL**[size_pattern];
+			for (int i = 0; i < size_pattern; i++) {
+				root_big_CAD_STL_model_y_hash_table[i] = new bigCAD_STL*[size_pattern];
+				for (int j = 0; j < size_pattern; j++) {
+					root_big_CAD_STL_model_y_hash_table[i][j] = nullptr;
+				}
+			}
 
 			// Всего 256 сегментов.
 			for (int i = 0; i < size_pattern; i++) {
 				for (int j = 0; j < size_pattern; j++) {
-					tmp1->min1 = i * (pmax.x - pmin.x) / dsize_pattern;
-					tmp1->max1 = (i + 1) * (pmax.x - pmin.x) / dsize_pattern;
-					tmp1->min2 = j * (pmax.z - pmin.z) / dsize_pattern;
-					tmp1->max2 = (j + 1) * (pmax.z - pmin.z) / dsize_pattern;
+					tmp1->min1 = pmin.x + i * (pmax.x - pmin.x) / dsize_pattern;
+					tmp1->max1 = pmin.x + (i + 1) * (pmax.x - pmin.x) / dsize_pattern;
+					tmp1->min2 = pmin.z + j * (pmax.z - pmin.z) / dsize_pattern;
+					tmp1->max2 = pmin.z + (j + 1) * (pmax.z - pmin.z) / dsize_pattern;
 
 					tmp1->root_CAD_STL = nullptr;
 					tmp1->id_endl = i * size_pattern + j;
@@ -4233,11 +4528,12 @@ typedef struct TGEOM {
 					else {
 						tmp1->next = nullptr;
 					}
+					//root_big_CAD_STL_model_y_hash_table[i][j] = tmp1;
 					tmp1 = tmp1->next;
 				}
 			}
 
-			// Ox распределение по ректанглам.			
+			// Oz распределение по ректанглам.			
 
 			badd = false;
 
@@ -4245,14 +4541,23 @@ typedef struct TGEOM {
 
 			while (tmp != nullptr) {
 
-				double x1 = tmp->pa.x;
-				double y1 = tmp->pa.z;
+				//double x1 = tmp->pa.x;
+				//double y1 = tmp->pa.z;
+
+				double tr_xmin = my_imin3(tmp->pa.x, tmp->pb.x, tmp->pc.x);
+				double tr_ymin = my_imin3(tmp->pa.z, tmp->pb.z, tmp->pc.z);
+
+				double tr_xmax = my_imax3(tmp->pa.x, tmp->pb.x, tmp->pc.x);
+				double tr_ymax = my_imax3(tmp->pa.z, tmp->pb.z, tmp->pc.z);
+				
 
 				tmp1 = root_big_CAD_STL_model_y;
 
 				while (tmp1 != nullptr) {
 
-					if ((x1 >= tmp1->min1) && (x1 <= tmp1->max1) && (y1 >= tmp1->min2) && (y1 <= tmp1->max2)) {
+					//if ((x1 >= tmp1->min1) && (x1 <= tmp1->max1) && (y1 >= tmp1->min2) && (y1 <= tmp1->max2))
+						if ((tr_xmin <= tmp1->max1) && (tr_xmax >= tmp1->min1) && (tr_ymin <= tmp1->max2) && (tr_ymax >= tmp1->min2))
+					{
 						// Добавление.
 
 						badd = true;
@@ -4284,7 +4589,7 @@ typedef struct TGEOM {
 
 				tmp = tmp->next;
 			}
-
+			/*
 			if (!badd) {
 				badd = false;
 
@@ -4381,13 +4686,32 @@ typedef struct TGEOM {
 					tmp = tmp->next;
 				}
 			}
-
+			*/
 			for (int i = 0; i < size_pattern * size_pattern; i++) {
 				endl_link[i] = nullptr;
 			}
 
 			delete[] endl_link;
 
+
+			 tmp1t = root_big_CAD_STL_model_y;
+
+
+
+			while (tmp1t != nullptr) {
+
+				doublereal dkey_x = 0.5 * (tmp1t->min1 + tmp1t->max1);
+				doublereal dkey_z = 0.5 * (tmp1t->min2 + tmp1t->max2);
+
+				integer key_x = my_imax(0, my_imin((integer)((dsize_pattern) * (dkey_x - pmin.x) / (pmax.x - pmin.x)), size_pattern - 1));
+				integer key_z = my_imax(0, my_imin((integer)((dsize_pattern) * (dkey_z - pmin.z) / (pmax.z - pmin.z)), size_pattern - 1));
+
+				root_big_CAD_STL_model_y_hash_table[key_x][key_z] = tmp1t;
+
+
+
+				tmp1t = tmp1t->next;
+			}
 		}
 
 		std::wcout << "import .stl CAD obj dimensions:\n";
@@ -5944,7 +6268,12 @@ bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doub
 
 }
 
-
+// Площадь треугольника по трем вершинам.
+doublereal square_triangle(doublereal x1, doublereal x2, doublereal x3, 
+	doublereal y1, doublereal y2, doublereal y3) {
+	
+	return 0.5 * fabs((x1-x3)*(y2-y3)-(x2-x3)*(y1-y3));
+}
 
 // Приближенно вычисляет объем полигона.
 // 23.10.2020
@@ -5975,25 +6304,37 @@ doublereal Volume_polygon(integer nsizei,
 		resolution_y = 100.0;
 		resolution_z = 1.0;
 
-		for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
-			if (xi[i_73] < xS) xS = xi[i_73];
-			if (xi[i_73] > xE) xE = xi[i_73];
-			if (yi[i_73] < yS) yS = yi[i_73];
-			if (yi[i_73] > yE) yE = yi[i_73];
-		}
-		hx = fabs(xE - xS) / resolution_x;
-		hy = fabs(yE - yS) / resolution_y;
+		switch (nsizei) {
+		case 3:
+			vol = hi[0] * square_triangle(xi[0],xi[1],xi[2], yi[0], yi[1], yi[2]);
+			break;
+		case 4:
+			// Внимание только если четырехугольник выпуклый!!!
+			vol = hi[0] * (square_triangle(xi[0], xi[1], xi[2], yi[0], yi[1], yi[2])+ square_triangle(xi[0], xi[3], xi[2], yi[0], yi[3], yi[2]));
+			break;
+		default:
+
+			for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
+				if (xi[i_73] < xS) xS = xi[i_73];
+				if (xi[i_73] > xE) xE = xi[i_73];
+				if (yi[i_73] < yS) yS = yi[i_73];
+				if (yi[i_73] > yE) yE = yi[i_73];
+			}
+			hx = fabs(xE - xS) / resolution_x;
+			hy = fabs(yE - yS) / resolution_y;
 #pragma omp parallel for private(k, ib) reduction(+: vol)
-		for (integer i_73 = 0; i_73 < (integer)(resolution_x); i_73++) {
-			for (integer j_73 = 0; j_73 < (integer)(resolution_y); j_73++) {
-				p.x = xS + i_73*hx + 0.5*hx;
-				p.y = yS + j_73*hy + 0.5*hy;
-				p.z = zi[0] + 0.5*hi[0];
-				ib = -1;
-				if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
-					vol += hi[0] * hx*hy;
+			for (integer i_73 = 0; i_73 < (integer)(resolution_x); i_73++) {
+				for (integer j_73 = 0; j_73 < (integer)(resolution_y); j_73++) {
+					p.x = xS + i_73 * hx + 0.5 * hx;
+					p.y = yS + j_73 * hy + 0.5 * hy;
+					p.z = zi[0] + 0.5 * hi[0];
+					ib = -1;
+					if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
+						vol += hi[0] * hx * hy;
+					}
 				}
 			}
+			break;
 		}
 		break;
 
@@ -6002,25 +6343,37 @@ doublereal Volume_polygon(integer nsizei,
 		resolution_y = 1.0;
 		resolution_z = 100.0;
 
-		for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
-			if (xi[i_73] < xS) xS = xi[i_73];
-			if (xi[i_73] > xE) xE = xi[i_73];
-			if (zi[i_73] < zS) zS = zi[i_73];
-			if (zi[i_73] > zE) zE = zi[i_73];
-		}
-		hx = fabs(xE - xS) / resolution_x;
-		hz = fabs(zE - zS) / resolution_z;
+		switch (nsizei) {
+		case 3:
+			vol = hi[0] * square_triangle(xi[0], xi[1], xi[2], zi[0], zi[1], zi[2]);
+			break;
+		case 4:
+			// Внимание только если четырехугольник выпуклый!!!
+			vol = hi[0] * (square_triangle(xi[0], xi[1], xi[2], zi[0], zi[1], zi[2]) + square_triangle(xi[0], xi[3], xi[2], zi[0], zi[3], zi[2]));
+			break;
+		default:
+
+			for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
+				if (xi[i_73] < xS) xS = xi[i_73];
+				if (xi[i_73] > xE) xE = xi[i_73];
+				if (zi[i_73] < zS) zS = zi[i_73];
+				if (zi[i_73] > zE) zE = zi[i_73];
+			}
+			hx = fabs(xE - xS) / resolution_x;
+			hz = fabs(zE - zS) / resolution_z;
 #pragma omp parallel for private(k, ib) reduction(+: vol)
-		for (integer i_73 = 0; i_73 < (integer)(resolution_x); i_73++) {
-			for (integer j_73 = 0; j_73 < (integer)(resolution_z); j_73++) {
-				p.x = xS + i_73*hx + 0.5*hx;
-				p.z = zS + j_73*hz + 0.5*hz;
-				p.y = yi[0] + 0.5*hi[0];
-				ib = -1;
-				if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
-					vol += hi[0] * hx*hz;
+			for (integer i_73 = 0; i_73 < (integer)(resolution_x); i_73++) {
+				for (integer j_73 = 0; j_73 < (integer)(resolution_z); j_73++) {
+					p.x = xS + i_73 * hx + 0.5 * hx;
+					p.z = zS + j_73 * hz + 0.5 * hz;
+					p.y = yi[0] + 0.5 * hi[0];
+					ib = -1;
+					if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
+						vol += hi[0] * hx * hz;
+					}
 				}
 			}
+			break;
 		}
 		break;
 
@@ -6029,26 +6382,40 @@ doublereal Volume_polygon(integer nsizei,
 		resolution_y = 100.0;
 		resolution_z = 100.0;
 
-		for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
-			if (yi[i_73] < yS) yS = yi[i_73];
-			if (yi[i_73] > yE) yE = yi[i_73];
-			if (zi[i_73] < zS) zS = zi[i_73];
-			if (zi[i_73] > zE) zE = zi[i_73];
-		}
-		hy = fabs(yE - yS) / resolution_y;
-		hz = fabs(zE - zS) / resolution_z;
+
+		switch (nsizei) {
+		case 3:
+			vol = hi[0] * square_triangle(yi[0], yi[1], yi[2], zi[0], zi[1], zi[2]);
+			break;
+		case 4:
+			// Внимание только если четырехугольник выпуклый!!!
+			vol = hi[0] * (square_triangle(yi[0], yi[1], yi[2], zi[0], zi[1], zi[2]) + square_triangle(yi[0], yi[3], yi[2], zi[0], zi[3], zi[2]));
+			break;
+		default:
+
+			for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
+				if (yi[i_73] < yS) yS = yi[i_73];
+				if (yi[i_73] > yE) yE = yi[i_73];
+				if (zi[i_73] < zS) zS = zi[i_73];
+				if (zi[i_73] > zE) zE = zi[i_73];
+			}
+			hy = fabs(yE - yS) / resolution_y;
+			hz = fabs(zE - zS) / resolution_z;
 #pragma omp parallel for private(k, ib) reduction(+: vol)
-		for (integer i_73 = 0; i_73 < (integer)(resolution_y); i_73++) {
-			for (integer j_73 = 0; j_73 < (integer)(resolution_z); j_73++) {
-				p.y = yS + i_73*hy + 0.5*hy;
-				p.z = zS + j_73*hz + 0.5*hz;
-				p.x = xi[0] + 0.5*hi[0];
-				ib = -1;
-				if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
-					vol += hi[0] * hy*hz;
+			for (integer i_73 = 0; i_73 < (integer)(resolution_y); i_73++) {
+				for (integer j_73 = 0; j_73 < (integer)(resolution_z); j_73++) {
+					p.y = yS + i_73 * hy + 0.5 * hy;
+					p.z = zS + j_73 * hz + 0.5 * hz;
+					p.x = xi[0] + 0.5 * hi[0];
+					ib = -1;
+					if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
+						vol += hi[0] * hy * hz;
+					}
 				}
 			}
+			break;
 		}
+
 		break;
 	}
 
@@ -7392,9 +7759,25 @@ enum class FLOW_REGIME {LAMINAR=0, TURBULENT=1};
 //const unsigned char RANS_SPALART_ALLMARES = 4; // RANS модель Спаларта - Аллмареса.
 //const unsigned char RANS_MENTER_SST = 5; //  Shear Stress Model SST Ментера.
 //const unsigned char RANS_STANDART_K_EPS = 6; // Двухслойная k-epsilon модель на основе стандартной k-epsilon модели.
+//const unigned char RANS_LANGTRY_MENTOR_SST = 7; // Модель Ментора Лангтрии 2009.
 // Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
-enum class VISCOSITY_MODEL { LAMINAR = 0, ZEROEQMOD = 1, SMAGORINSKY = 2, RNG_LES = 3, RANS_SPALART_ALLMARES = 4, RANS_MENTER_SST = 5, RANS_STANDART_K_EPS = 6 };
-enum class TURBULENT_MODEL { ZEROEQMOD = 0, SMAGORINSKY = 1, RNG_LES = 2, RANS_SPALART_ALLMARES = 3, RANS_MENTER_SST = 4, RANS_STANDART_K_EPS = 5 };
+enum class VISCOSITY_MODEL { LAMINAR = 0,
+	ZEROEQMOD = 1,
+	SMAGORINSKY = 2, 
+	RNG_LES = 3,
+	RANS_SPALART_ALLMARES = 4, 
+	RANS_MENTER_SST = 5,
+	RANS_STANDART_K_EPS = 6,
+    RANS_LANGTRY_MENTOR_SST = 7
+};
+enum class TURBULENT_MODEL { ZEROEQMOD = 0,
+	SMAGORINSKY = 1,
+	RNG_LES = 2,
+	RANS_SPALART_ALLMARES = 3,
+	RANS_MENTER_SST = 4, 
+	RANS_STANDART_K_EPS = 5,
+	RANS_LANGTRY_MENTOR_SST = 6
+};
 
 // информация о жидкой зоне
 typedef struct TFLOWINFO {
@@ -7411,6 +7794,7 @@ typedef struct TFLOWINFO {
 	// 3 - Spalart-Allmares (RANS). 19.04.2019
 	// 4 - K - Omega SST (RANS). 06.10.2019
 	// 5 - Двухслойная модель на основе стандартной K-Epsilon модели (RANS). 31.10.2019
+	// 6 - Модель Ламинарно турбулентного перехода Ментора Лангтрии (RANS). 15.01.2021
 	TURBULENT_MODEL iturbmodel;
 	// параметры модели Смагоринского:
 	doublereal Cs; // постоянная Смагоринского.
@@ -7460,6 +7844,18 @@ typedef struct TFLOWINFO {
 	doublereal menter_a1;
 	doublereal alpha1;
 	doublereal alpha2;
+
+	// Модель ламинарно турбулентного перехода Лантгрии Ментера.
+	// The calibration constants for the Langtry-Menter model are:
+	doublereal Ca1;
+	doublereal Ca2;
+	doublereal Cepsilon1;
+	doublereal Cepsilon2;
+	doublereal CthetaT;
+	doublereal s1;
+	doublereal sigmaf;
+	doublereal sigma_theta_T;
+
 
 	// Стандартная k-epsilon модель не работает вблизи стенок.
 	// Здесь используется двухслойная модель на основе стандартной
@@ -7545,6 +7941,18 @@ typedef struct TFLOWINFO {
 		menter_a1 = 0.31;
 		alpha1 = 0.555;
 		alpha2 = 0.44;
+
+		// Модель ламинарно турбулентного перехода Лантгрии Ментера.
+	    // The calibration constants for the Langtry-Menter model are:
+		Ca1 = 2.0;
+		Ca2 = 0.06;
+		Cepsilon1 = 1.0;
+		Cepsilon2 = 50.0;
+		CthetaT = 0.03;
+		s1 = 2.0;
+		sigmaf = 1.0;
+		sigma_theta_T = 2.0;
+
 
 		// Стандартная k-epsilon модель не работает вблизи стенок.
 		// Здесь используется двухслойная модель на основе стандартной
@@ -9429,8 +9837,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			   integer &ltdp, TEMP_DEP_POWER* &gtdps, integer &lu, UNION* &my_union) {
 
 
-	doublereal dmult = 1.0 / rdivision_interval;
 	
+
 
 	// Так как в режиме bFULL_AUTOMATIC допуски определяются локально с
 	// помощью тяжеловесной функции, то значения функции вычисляются лишь один раз, а
@@ -9447,7 +9855,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 		shorter_hash_Z[i_1] = 1.0e-10;
 	}
 
+	doublereal dmult = 1.0 / rdivision_interval;
+
 #ifdef MINGW_COMPILLER
+
+	
+
 	// eqin - информация о наборе решаемых уравнений.
 
 	// dgx, dgy, dgz - вектор силы тяжести.
@@ -9608,6 +10021,29 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 			fscanf(fp, "%d", &din);
+			
+				switch (din) {
+				case 0:  iprefix_Scheme_Flow = CR;
+					break;
+				case 1:  iprefix_Scheme_Flow = UDS;
+					break;
+				case 2:  iprefix_Scheme_Flow = COMB;
+					break;
+				case 3:  iprefix_Scheme_Flow = POLY;
+					break;
+				case 4:  iprefix_Scheme_Flow = EXP;
+					break;
+				case 5:  iprefix_Scheme_Flow = BULG;
+					break;
+				case 6:  iprefix_Scheme_Flow = POW;
+					break;
+				default:
+					iprefix_Scheme_Flow = UDS;
+					break;
+				}
+			
+
+			fscanf(fp, "%d", &din);
 			// выбор схемы для потока жидкости.
 			// Внимание эти определения должны полностью соответствовать 
 			// определениям в файле my_approx_convective2.c
@@ -9627,7 +10063,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			case 13: iFLOWScheme = UNEVEN_SUPER_C; break; // SUPER_C
 			case 14: iFLOWScheme = UNEVEN_ISNAS; break; // ISNAS
 			case 15: iFLOWScheme = UNEVEN_CUBISTA; break; // CUBISTA
-			default: iFLOWScheme = 2; break; // UDS самая стабильная схема.
+			case 16: iFLOWScheme = UNEVEN_GAMMA; break; // GAMMA
+			case 17: iFLOWScheme = UNEVEN_COPLA; break; // COPLA
+			case 18: iFLOWScheme = UNEVEN_SECBC; break; // SECBC
+			case 19: iFLOWScheme = UNEVEN_SGSD; break; // SGSD
+			case 20: iFLOWScheme = UNEVEN_WENO5; break; // WENO5
+			default: iFLOWScheme = UDS; break; // UDS самая стабильная схема.
 			}
 
 			fscanf(fp, "%d", &din);
@@ -9650,7 +10091,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			case 13: iTEMPScheme = UNEVEN_SUPER_C; break; // SUPER_C
 			case 14: iTEMPScheme = UNEVEN_ISNAS; break; // ISNAS
 			case 15: iTEMPScheme = UNEVEN_CUBISTA; break; // CUBISTA
-			default: iTEMPScheme = 2; break; // UDS самая стабильная схема.
+			case 16: iTEMPScheme = UNEVEN_GAMMA; break; // GAMMA
+			case 17: iTEMPScheme = UNEVEN_COPLA; break; // COPLA
+			case 18: iTEMPScheme = UNEVEN_SECBC; break; // SECBC
+			case 19: iTEMPScheme = UNEVEN_SGSD; break; // SGSD
+			case 20: iTEMPScheme = UNEVEN_WENO5; break; // WENO5
+			default: iTEMPScheme = UDS; break; // UDS самая стабильная схема.
 			}
 
 
@@ -10310,7 +10756,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			matlist = new TPROP[lmatmax];
 			b = new BLOCK[lb];
 			s = new SOURCE[ls];
-			w = new WALL[lw];
+			w = new WALL[lw+1];// +1 это гран условие по умолчанию, заглушка, чтобы избежать неопределенности.
 			integer i = 0; // счётчик цикла for
 
 			for (i = 0; i < ltdp; i++) {
@@ -11022,7 +11468,35 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// считывание твёрдых стенок
 
-
+			// 19.01.2021
+		    // Стенка заглушка с условием прилипания по скорости(нулевой вектор скорости), 
+		    // нулевым тепловым потоком по температуре, 
+		    // свободной free границе в механике без приложенной силы.
+			w[lw].iunion_id = 0; // cabinet
+			w[lw].ifamily = WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY;
+			w[lw].Tamb = 0.0;
+			w[lw].emissivity = 0.0;
+			w[lw].film_coefficient = 0.0;
+			w[lw].ViewFactor = 1.0;
+			w[lw].hf = 0.0;
+			w[lw].bsymmetry = false;
+			w[lw].bpressure = false;
+			w[lw].bopening = false;
+			w[lw].Vx = 0.0;
+			w[lw].Vy = 0.0;
+			w[lw].Vz = 0.0;
+			w[lw].P = 0.0;
+			w[lw].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+			w[lw].xForce = 0.0;
+			w[lw].yForce = 0.0;
+			w[lw].zForce = 0.0;
+			w[lw].iPlane = XY_PLANE;
+			w[lw].g.xS = 0.0;
+			w[lw].g.yS = 0.0;
+			w[lw].g.zS = 0.0;
+			w[lw].g.xE = 0.0;
+			w[lw].g.yE = 0.0;
+			w[lw].g.zE = 0.0;
 
 			for (i = 0; i < lw; i++) {
 
@@ -11280,6 +11754,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					case 4: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_MENTER_SST;
 						break;
 					case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
+						break;
+					case 6: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_LANGTRY_MENTOR_SST;
 						break;
 					default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
 						break;
@@ -11692,7 +12168,9 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			fscanf_s(fp, "%f", &fin);
 			scale = fin;
+#ifndef NO_OPENGL_GLFW
 			scale_all = 1.0f / scale;
+#endif
 			fscanf_s(fp, "%d", &din);
 			lmatmax = din;
 			fscanf_s(fp, "%d", &din);
@@ -11803,6 +12281,28 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
 			}
 
+
+			fscanf_s(fp, "%d", &din);
+			switch (din) {
+			case 0:  iprefix_Scheme_Flow = CR;
+				break;
+			case 1:  iprefix_Scheme_Flow = UDS;
+				break;
+			case 2:  iprefix_Scheme_Flow = COMB;
+				break;
+			case 3:  iprefix_Scheme_Flow = POLY;
+				break;
+			case 4:  iprefix_Scheme_Flow = EXP;
+				break;
+			case 5:  iprefix_Scheme_Flow = BULG;
+				break;
+			case 6:  iprefix_Scheme_Flow = POW;
+				break;
+			default:
+				iprefix_Scheme_Flow = UDS;
+				break;
+			}
+
 			fscanf_s(fp, "%d", &din);
 			// выбор схемы для потока жидкости.
 			// Внимание эти определения должны полностью соответствовать 
@@ -11823,7 +12323,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			case 13: iFLOWScheme = UNEVEN_SUPER_C; break; // SUPER_C
 			case 14: iFLOWScheme = UNEVEN_ISNAS; break; // ISNAS
 			case 15: iFLOWScheme = UNEVEN_CUBISTA; break; // CUBISTA
-			default: iFLOWScheme = 2; break; // UDS самая стабильная схема.
+			case 16: iFLOWScheme = UNEVEN_GAMMA; break; // GAMMA
+			case 17: iFLOWScheme = UNEVEN_COPLA; break; // COPLA
+			case 18: iFLOWScheme = UNEVEN_SECBC; break; // SECBC
+			case 19: iFLOWScheme = UNEVEN_SGSD; break; // SGSD
+			case 20: iFLOWScheme = UNEVEN_WENO5; break; // WENO5
+			default: iFLOWScheme = UDS; break; // UDS самая стабильная схема.
 			}
 
 			fscanf_s(fp, "%d", &din);
@@ -11846,7 +12351,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			case 13: iTEMPScheme = UNEVEN_SUPER_C; break; // SUPER_C
 			case 14: iTEMPScheme = UNEVEN_ISNAS; break; // ISNAS
 			case 15: iTEMPScheme = UNEVEN_CUBISTA; break; // CUBISTA
-			default: iTEMPScheme = 2; break; // UDS самая стабильная схема.
+			case 16: iTEMPScheme = UNEVEN_GAMMA; break; // GAMMA
+			case 17: iTEMPScheme = UNEVEN_COPLA; break; // COPLA
+			case 18: iTEMPScheme = UNEVEN_SECBC; break; // SECBC
+			case 19: iTEMPScheme = UNEVEN_SGSD; break; // SGSD
+			case 20: iTEMPScheme = UNEVEN_WENO5; break; // WENO5
+			default: iTEMPScheme = UDS; break; // UDS самая стабильная схема.
 			}
 
 
@@ -12509,7 +13019,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			matlist = new TPROP[lmatmax];
 			b = new BLOCK[lb];
 			s = new SOURCE[ls];
-			w = new WALL[lw];
+			w = new WALL[lw+1];// +1 это гран условие по умолчанию, заглушка, чтобы избежать неопределенности.
 			integer i = 0; // счётчик цикла for
 
 			for (i = 0; i < ltdp; i++) {
@@ -13230,7 +13740,35 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// считывание твёрдых стенок
 
-
+			// 19.01.2021
+		    // Стенка заглушка с условием прилипания по скорости(нулевой вектор скорости), 
+		    // нулевым тепловым потоком по температуре, 
+		    // свободной free границе в механике без приложенной силы.
+			w[lw].iunion_id = 0; // cabinet
+			w[lw].ifamily = WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY;
+			w[lw].Tamb = 0.0;
+			w[lw].emissivity = 0.0;
+			w[lw].film_coefficient = 0.0;
+			w[lw].ViewFactor = 1.0;
+			w[lw].hf = 0.0;
+			w[lw].bsymmetry = false;
+			w[lw].bpressure = false;
+			w[lw].bopening = false;
+			w[lw].Vx = 0.0;
+			w[lw].Vy = 0.0;
+			w[lw].Vz = 0.0;
+			w[lw].P = 0.0;
+			w[lw].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+			w[lw].xForce = 0.0;
+			w[lw].yForce = 0.0;
+			w[lw].zForce = 0.0;
+			w[lw].iPlane = XY_PLANE;
+			w[lw].g.xS = 0.0;
+			w[lw].g.yS = 0.0;
+			w[lw].g.zS = 0.0;
+			w[lw].g.xE = 0.0;
+			w[lw].g.yE = 0.0;
+			w[lw].g.zE = 0.0;
 
 			for (i = 0; i < lw; i++) {
 
@@ -13489,6 +14027,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						break;
 					case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
 						break;
+					case 6: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_LANGTRY_MENTOR_SST;
+						break;
 					default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
 						break;
 					}
@@ -13725,7 +14265,9 @@ else
 		}
 		fscanf_s(fp, "%f", &fin);
 		const doublereal scale = fin;
+#ifndef NO_OPENGL_GLFW
 		scale_all = (GLfloat) (1.0f / scale);
+#endif
 		fscanf_s(fp, "%lld", &din);
 		lmatmax = din;
 		fscanf_s(fp, "%lld", &din);
@@ -13831,6 +14373,28 @@ else
 			iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
 		}
 
+
+		fscanf_s(fp, "%lld", &din);
+		switch (din) {
+		case 0:  iprefix_Scheme_Flow = CR;
+			break;
+		case 1:  iprefix_Scheme_Flow = UDS;
+			break;
+		case 2:  iprefix_Scheme_Flow = COMB;
+			break;
+		case 3:  iprefix_Scheme_Flow = POLY;
+			break;
+		case 4:  iprefix_Scheme_Flow = EXP;
+			break;
+		case 5:  iprefix_Scheme_Flow = BULG;
+			break;
+		case 6:  iprefix_Scheme_Flow = POW;
+			break;
+		default:
+			iprefix_Scheme_Flow = UDS;
+			break;
+		}
+
 		fscanf_s(fp, "%lld", &din);
 		// выбор схемы для потока жидкости.
 		// Внимание эти определения должны полностью соответствовать 
@@ -13851,7 +14415,12 @@ else
 		case 13: iFLOWScheme = UNEVEN_SUPER_C; break; // SUPER_C
 		case 14: iFLOWScheme = UNEVEN_ISNAS; break; // ISNAS
 		case 15: iFLOWScheme = UNEVEN_CUBISTA; break; // CUBISTA
-		default: iFLOWScheme = 2; break; // UDS самая стабильная схема.
+		case 16: iFLOWScheme = UNEVEN_GAMMA; break; // GAMMA
+		case 17: iFLOWScheme = UNEVEN_COPLA; break; // COPLA
+		case 18: iFLOWScheme = UNEVEN_SECBC; break; // SECBC
+		case 19: iFLOWScheme = UNEVEN_SGSD; break; // SGSD
+		case 20: iFLOWScheme = UNEVEN_WENO5; break; // WENO5
+		default: iFLOWScheme = UDS; break; // UDS самая стабильная схема.
 		}
 
 		fscanf_s(fp, "%lld", &din);
@@ -13874,7 +14443,12 @@ else
 		case 13: iTEMPScheme = UNEVEN_SUPER_C; break; // SUPER_C
 		case 14: iTEMPScheme = UNEVEN_ISNAS; break; // ISNAS
 		case 15: iTEMPScheme = UNEVEN_CUBISTA; break; // CUBISTA
-		default: iTEMPScheme = 2; break; // UDS самая стабильная схема.
+		case 16: iTEMPScheme = UNEVEN_GAMMA; break; // GAMMA
+		case 17: iTEMPScheme = UNEVEN_COPLA; break; // COPLA
+		case 18: iTEMPScheme = UNEVEN_SECBC; break; // SECBC
+		case 19: iTEMPScheme = UNEVEN_SGSD; break; // SGSD
+		case 20: iTEMPScheme = UNEVEN_WENO5; break; // WENO5	
+		default: iTEMPScheme = UDS; break; // UDS самая стабильная схема.
 		}
 
 
@@ -14541,7 +15115,7 @@ else
 		matlist = new TPROP[lmatmax];
 		b = new BLOCK[lb];
 		s = new SOURCE[ls];
-		w = new WALL[lw];
+		w = new WALL[lw+1];// +1 это гран условие по умолчанию, заглушка, чтобы избежать неопределенности.
 		integer i = 0; // счётчик цикла for
 
 		for (i = 0; i < ltdp; i++) {
@@ -15329,7 +15903,35 @@ else
 
 		// считывание твёрдых стенок
 
-
+		// 19.01.2021
+		// Стенка заглушка с условием прилипания по скорости(нулевой вектор скорости), 
+		// нулевым тепловым потоком по температуре, 
+		// свободной free границе в механике без приложенной силы.
+		w[lw].iunion_id = 0; // cabinet
+		w[lw].ifamily = WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY;
+		w[lw].Tamb = 0.0;
+		w[lw].emissivity = 0.0;
+		w[lw].film_coefficient = 0.0;
+		w[lw].ViewFactor = 1.0;
+		w[lw].hf = 0.0;
+		w[lw].bsymmetry = false;
+		w[lw].bpressure = false;
+		w[lw].bopening = false;
+		w[lw].Vx = 0.0;
+		w[lw].Vy = 0.0;
+		w[lw].Vz = 0.0;
+		w[lw].P = 0.0;
+		w[lw].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+		w[lw].xForce = 0.0;
+		w[lw].yForce = 0.0;
+		w[lw].zForce = 0.0;
+		w[lw].iPlane = XY_PLANE;
+		w[lw].g.xS = 0.0;
+		w[lw].g.yS = 0.0;
+		w[lw].g.zS = 0.0;
+		w[lw].g.xE = 0.0;
+		w[lw].g.yE = 0.0;
+		w[lw].g.zE = 0.0;
 
 		for (i = 0; i < lw; i++) {
 
@@ -15666,6 +16268,8 @@ else
 				case 4: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_MENTER_SST;
 					break;
 				case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
+					break;
+				case 6: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_LANGTRY_MENTOR_SST;
 					break;
 				default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
 					break;
@@ -16154,8 +16758,8 @@ void loadFromFile()
 			if (buf != nullptr) {
 				c = fgetc(fp); // читает один символ
 				buf[k++] = c;
-				bool bfound_loc = false;
-				int iret_loc = -1;
+				
+				
 				while (!feof(fp)) {
 					b1 = true;
 					c = fgetc(fp); // читает один символ
@@ -16592,7 +17196,7 @@ bool smakesource(const char* name0_const, char* name)
 	if (buf != nullptr) {
 
 		bool bfound_loc = false;
-		int iret_loc = -1;
+		
 		for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
 			if (!bfound) {
 				// Если не найдена.
@@ -17483,12 +18087,16 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					exit(1);
 				}
 				scale = (doublereal)(fin);
+#ifndef NO_OPENGL_GLFW
 				scale_all = (GLfloat)( 1.0f/scale);
+#endif
 			}
 			else {
 				printf("WARNING!!! mlength not found in file premeshin.txt\n");
 				scale = 1.0e-3; // mm
+#ifndef NO_OPENGL_GLFW
 				scale_all = 1000.0f;
+#endif
 				printf("scale =%e\n", scale);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -17959,6 +18567,35 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 
+			if (imakesource("FlowSchemePrefix", idin)) {
+				switch (idin) {
+				case 0:  iprefix_Scheme_Flow = CR;
+					break;
+				case 1:  iprefix_Scheme_Flow = UDS;
+					break;
+				case 2:  iprefix_Scheme_Flow = COMB;
+					break;
+				case 3:  iprefix_Scheme_Flow = POLY;
+					break;
+				case 4:  iprefix_Scheme_Flow = EXP;
+					break;
+				case 5:  iprefix_Scheme_Flow = BULG;
+					break;
+				case 6:  iprefix_Scheme_Flow = POW;
+					break;
+				default:
+					iprefix_Scheme_Flow = UDS;
+					break;
+				}
+			}
+			else {
+				//printf("WARNING!!! FlowSchemePrefix not found in file premeshin.txt\n");
+				iprefix_Scheme_Flow = UDS; // UDS самая стабильная схема.
+				//printf("iprefix_Scheme_Flow = Upwind\n");
+				//if (bSTOP_Reading) system("pause");
+			}
+
+
 			if (imakesource("FlowScheme", idin)) {
 				// Найдено успешно.
 				// выбор схемы для потока жидкости.
@@ -17980,13 +18617,18 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				case 13: iFLOWScheme = UNEVEN_SUPER_C; break; // SUPER_C
 				case 14: iFLOWScheme = UNEVEN_ISNAS; break; // ISNAS
 				case 15: iFLOWScheme = UNEVEN_CUBISTA; break; // CUBISTA
-				default: iFLOWScheme = 2; break; // UDS самая стабильная схема.
+				case 16: iFLOWScheme = UNEVEN_GAMMA; break; // GAMMA
+				case 17: iFLOWScheme = UNEVEN_COPLA; break; // COPLA
+				case 18: iFLOWScheme = UNEVEN_SECBC; break; // SECBC
+				case 19: iFLOWScheme = UNEVEN_SGSD; break; // SGSD
+				case 20: iFLOWScheme = UNEVEN_WENO5; break; // WENO5	
+				default: iFLOWScheme = UDS; break; // UDS самая стабильная схема.
 				}
 				//printf("iFLOWScheme =%lld\n", iFLOWScheme);
 			}
 			else {
 				printf("WARNING!!! FlowScheme not found in file premeshin.txt\n");
-				iFLOWScheme = 2; // UDS самая стабильная схема.
+				iFLOWScheme = UDS; // UDS самая стабильная схема.
 				printf("iFLOWScheme = Upwind\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -18013,13 +18655,18 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				case 13: iTEMPScheme = UNEVEN_SUPER_C; break; // SUPER_C
 				case 14: iTEMPScheme = UNEVEN_ISNAS; break; // ISNAS
 				case 15: iTEMPScheme = UNEVEN_CUBISTA; break; // CUBISTA
-				default: iTEMPScheme = 2; break; // UDS самая стабильная схема.
+				case 16: iTEMPScheme = UNEVEN_GAMMA; break; // GAMMA
+				case 17: iTEMPScheme = UNEVEN_COPLA; break; // COPLA
+				case 18: iTEMPScheme = UNEVEN_SECBC; break; // SECBC
+				case 19: iTEMPScheme = UNEVEN_SGSD; break; // SGSD
+				case 20: iTEMPScheme = UNEVEN_WENO5; break; // WENO5
+				default: iTEMPScheme = UDS; break; // UDS самая стабильная схема.
 				}
 				//printf("iTEMPScheme  =%lld\n", iTEMPScheme);
 			}
 			else {
 				printf("WARNING!!! SchemeTemperature not found in file premeshin.txt\n");
-				iTEMPScheme = 2; // UDS самая стабильная схема.
+				iTEMPScheme = UDS; // UDS самая стабильная схема.
 				printf("iTEMPScheme = Upwind \n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -20060,11 +20707,11 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				s = new SOURCE[ls];
 			//}
 			//if (w == nullptr) {
-				//w = new WALL[lw];
+				//w = new WALL[lw+1]; // +1 это гран условие по умолчанию, заглушка, чтобы избежать неопределенности.
 			//}
 			//else {
 				delete[] w;
-				w = new WALL[lw];
+				w = new WALL[lw+1];// +1 это гран условие по умолчанию, заглушка, чтобы избежать неопределенности.
 			//}
 			int i = 0; // счётчик цикла for
 
@@ -20622,13 +21269,20 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					matlist[i].n_Poisson_ratio = (integer)(idin);
 					//printf("matlist[i].n_Poisson_ratio =%lld\n",matlist[i].n_Poisson_ratio);
 
-					delete[] matlist[i].arr_Poisson_ratio;
-					delete[] matlist[i].temp_Poisson_ratio;
-
-					matlist[i].arr_Poisson_ratio = nullptr;
-					matlist[i].temp_Poisson_ratio = nullptr;
-					matlist[i].arr_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
-					matlist[i].temp_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+					if (matlist[i].arr_Poisson_ratio != nullptr) {
+						delete[] matlist[i].arr_Poisson_ratio;
+						matlist[i].arr_Poisson_ratio = nullptr;
+					}
+					if (matlist[i].temp_Poisson_ratio != nullptr) {
+						delete[] matlist[i].temp_Poisson_ratio;
+						matlist[i].temp_Poisson_ratio = nullptr;
+					}
+					
+					
+					if (matlist[i].n_Poisson_ratio > 0) {
+						matlist[i].arr_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+						matlist[i].temp_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+					}
 					if (matlist[i].temp_Poisson_ratio == nullptr) {
 						printf("problem memory allocation for temp_Poisson_ratio\n");
 						system("pause");
@@ -20730,11 +21384,15 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					matlist[i].n_YoungModule = (integer)(idin);
 					//printf("matlist[i].n_YoungModule =%lld\n",matlist[i].n_YoungModule);
 
-					delete[] matlist[i].arr_Young_Module;
-					delete[] matlist[i].temp_Young_Module;
-
-					matlist[i].arr_Young_Module = nullptr;
-					matlist[i].temp_Young_Module = nullptr;
+					if (matlist[i].arr_Young_Module != nullptr) {
+						delete[] matlist[i].arr_Young_Module;
+						matlist[i].arr_Young_Module = nullptr;
+					}
+					if (matlist[i].temp_Young_Module != nullptr) {
+						delete[] matlist[i].temp_Young_Module;
+						matlist[i].temp_Young_Module = nullptr;
+					}					
+					
 					matlist[i].arr_Young_Module = new doublereal[matlist[i].n_YoungModule];
 					matlist[i].temp_Young_Module = new doublereal[matlist[i].n_YoungModule];
 					if (matlist[i].temp_Young_Module == nullptr) {
@@ -20840,11 +21498,16 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					matlist[i].n_beta_t_solid = (integer)(idin);
 					//printf("matlist[i].n_beta_t_solid =%lld\n",matlist[i].n_beta_t_solid );
 
-					delete[] matlist[i].arr_beta_t_solid;
-					delete[] matlist[i].temp_beta_t_solid;
-
-					matlist[i].arr_beta_t_solid = nullptr;
-					matlist[i].temp_beta_t_solid = nullptr;
+					if (matlist[i].arr_beta_t_solid != nullptr) {
+						delete[] matlist[i].arr_beta_t_solid;
+						matlist[i].arr_beta_t_solid = nullptr;
+					}
+					if (matlist[i].temp_beta_t_solid != nullptr) {
+						delete[] matlist[i].temp_beta_t_solid;
+						matlist[i].temp_beta_t_solid = nullptr;
+					}
+					
+					
 					matlist[i].arr_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
 					matlist[i].temp_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
 					if (matlist[i].temp_beta_t_solid == nullptr) {
@@ -21700,6 +22363,9 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (b[i].g.itypegeom == CAD_STL) {
 					// CAD_STL
 
+					//printf("i=%d CAD\n", i);
+					//getchar();
+
 					// Считывание бинарного STL файла.
 					b[i].g.ReadSTL_binary(lb, b[0].g);
 
@@ -22375,6 +23041,36 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				}
 				//printf("source %e %lld %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
 			}
+
+			// 19.01.2021
+		// Стенка заглушка с условием прилипания по скорости(нулевой вектор скорости), 
+		// нулевым тепловым потоком по температуре, 
+		// свободной free границе в механике без приложенной силы.
+			w[lw].iunion_id = 0; // cabinet
+			w[lw].ifamily = WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY;
+			w[lw].Tamb = 0.0;
+			w[lw].emissivity = 0.0;
+			w[lw].film_coefficient = 0.0;
+			w[lw].ViewFactor = 1.0;
+			w[lw].hf = 0.0;
+			w[lw].bsymmetry = false;
+			w[lw].bpressure = false;
+			w[lw].bopening = false;
+			w[lw].Vx = 0.0;
+			w[lw].Vy = 0.0;
+			w[lw].Vz = 0.0;
+			w[lw].P = 0.0;
+			w[lw].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+			w[lw].xForce = 0.0;
+			w[lw].yForce = 0.0;
+			w[lw].zForce = 0.0;
+			w[lw].iPlane = XY_PLANE;
+			w[lw].g.xS = 0.0;
+			w[lw].g.yS = 0.0;
+			w[lw].g.zS = 0.0;
+			w[lw].g.xE = 0.0;
+			w[lw].g.yE = 0.0;
+			w[lw].g.zE = 0.0;
 
 			// считывание твёрдых стенок
 			for (i = 0; i < lw; i++) {
@@ -23311,6 +24007,8 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							break;
 						case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
 							break;
+						case 6: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_LANGTRY_MENTOR_SST;
+							break;
 						default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
 							break;
 						}
@@ -23913,7 +24611,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 							doublereal vol = b[i_1].g.volume_CAD_STL();
 							if (vol < 1.0e-36) {
-								printf("ERROR: zero volume in PRISM block number %lld\n", i_1);
+								printf("ERROR: zero volume in CAD_STL block number %lld\n", i_1);
 								system("PAUSE");
 								exit(1);
 							}
@@ -23956,6 +24654,8 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 								doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 								doublereal vol = fabs(b[i_1].g.xE - b[i_1].g.xS)*fabs(b[i_1].g.yE - b[i_1].g.yS)*fabs(b[i_1].g.zE - b[i_1].g.zS);
 								if (vol < 1.0e-36) {
+									printf("xE=%e xS=%e yE=%e yS=%e zE=%e zS=%e\n", b[i_1].g.xE, b[i_1].g.xS, b[i_1].g.yE, b[i_1].g.yS, b[i_1].g.zE, b[i_1].g.zS );
+									std::cout << b[i_1].name << std::endl;
 									printf("ERROR: zero volume in PRISM block number %lld\n", i_1);
 									system("PAUSE");
 									exit(1);

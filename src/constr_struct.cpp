@@ -116,7 +116,8 @@ if (xc47 < avgx[identifikator]) {
 				integer ifound = -1;
 
 #pragma omp for 
-				for (integer i_471 = 0; i_471 < i_22[identifikator][0]; i_471++) {
+				for (integer i_471 = 0; i_471 < i_22[identifikator][0]; i_471++)
+				{
 					if (bfound) continue;
 
 					integer i_47 = oct_load1[identifikator][0][i_471];
@@ -128,13 +129,14 @@ if (xc47 < avgx[identifikator]) {
 						bfound = true;
 						//break;
 					}
-				}
+
 
 #pragma omp critical 
-				{
-					if (bfound) {
-						bfound_gl = true;
-						ifound_gl = ifound;
+					{
+						if (bfound) {
+							bfound_gl = true;
+							ifound_gl = ifound;
+						}
 					}
 				}
 
@@ -151,7 +153,8 @@ if (xc47 < avgx[identifikator]) {
 				integer ifound = -1;
 
 #pragma omp for 
-				for (integer i_471 = 0; i_471 < i_22[identifikator][1]; i_471++) {
+				for (integer i_471 = 0; i_471 < i_22[identifikator][1]; i_471++)
+				{
 					if (bfound) continue;
 
 					integer i_47 = oct_load1[identifikator][1][i_471];
@@ -163,13 +166,14 @@ if (xc47 < avgx[identifikator]) {
 						bfound = true;
 						//break;
 					}
-				}
+
 
 #pragma omp critical 
-				{
-					if (bfound) {
-						bfound_gl = true;
-						ifound_gl = ifound;
+					{
+						if (bfound) {
+							bfound_gl = true;
+							ifound_gl = ifound;
+						}
 					}
 				}
 
@@ -189,7 +193,8 @@ if (xc47 < avgx[identifikator]) {
 				integer ifound = -1;
 
 #pragma omp for 
-				for (integer i_471 = 0; i_471 < i_22[identifikator][2]; i_471++) {
+				for (integer i_471 = 0; i_471 < i_22[identifikator][2]; i_471++)
+				{
 					if (bfound) continue;
 
 					integer i_47 = oct_load1[identifikator][2][i_471];
@@ -201,14 +206,15 @@ if (xc47 < avgx[identifikator]) {
 						bfound = true;
 						//break;
 					}
-				}
+
 
 
 #pragma omp critical 
-				{
-					if (bfound) {
-						bfound_gl = true;
-						ifound_gl = ifound;
+					{
+						if (bfound) {
+							bfound_gl = true;
+							ifound_gl = ifound;
+						}
 					}
 				}
 
@@ -223,7 +229,8 @@ if (xc47 < avgx[identifikator]) {
 				integer ifound = -1;
 
 #pragma omp for 
-				for (integer i_471 = 0; i_471 < i_22[identifikator][3]; i_471++) {
+				for (integer i_471 = 0; i_471 < i_22[identifikator][3]; i_471++)
+				{
 					if (bfound) continue;
 
 					integer i_47 = oct_load1[identifikator][3][i_471];
@@ -235,13 +242,14 @@ if (xc47 < avgx[identifikator]) {
 						bfound = true;
 						//break;
 					}
-				}
+
 
 #pragma omp critical 
-				{
-					if (bfound) {
-						bfound_gl = true;
-						ifound_gl = ifound;
+					{
+						if (bfound) {
+							bfound_gl = true;
+							ifound_gl = ifound;
+						}
 					}
 				}
 
@@ -261,7 +269,8 @@ else {
 				integer ifound = -1;
 
 #pragma omp for 
-				for (integer i_471 = 0; i_471 < i_22[identifikator][4]; i_471++) {
+				for (integer i_471 = 0; i_471 < i_22[identifikator][4]; i_471++)
+				{
 					if (bfound) continue;
 
 					integer i_47 = oct_load1[identifikator][4][i_471];
@@ -273,13 +282,14 @@ else {
 						bfound = true;
 						//break;
 					}
-				}
+
 
 #pragma omp critical 
-				{
-					if (bfound) {
-						bfound_gl = true;
-						ifound_gl = ifound;
+					{
+						if (bfound) {
+							bfound_gl = true;
+							ifound_gl = ifound;
+						}
 					}
 				}
 
@@ -296,7 +306,8 @@ else {
 				integer ifound = -1;
 
 #pragma omp for 
-				for (integer i_471 = 0; i_471 < i_22[identifikator][5]; i_471++) {
+				for (integer i_471 = 0; i_471 < i_22[identifikator][5]; i_471++)
+				{
 					if (bfound) continue;
 
 					integer i_47 = oct_load1[identifikator][5][i_471];
@@ -308,13 +319,14 @@ else {
 						bfound = true;
 						//break;
 					}
-				}
+
 
 #pragma omp critical 
-				{
-					if (bfound) {
-						bfound_gl = true;
-						ifound_gl = ifound;
+					{
+						if (bfound) {
+							bfound_gl = true;
+							ifound_gl = ifound;
+						}
 					}
 				}
 			}
@@ -331,7 +343,8 @@ else {
 				integer ifound = -1;
 
 #pragma omp for 
-				for (integer i_471 = 0; i_471 < i_22[identifikator][6]; i_471++) {
+				for (integer i_471 = 0; i_471 < i_22[identifikator][6]; i_471++)
+				{
 					if (bfound) continue;
 
 					integer i_47 = oct_load1[identifikator][6][i_471];
@@ -343,13 +356,14 @@ else {
 						bfound = true;
 						//break;
 					}
-				}
+
 
 #pragma omp critical 
-				{
-					if (bfound) {
-						bfound_gl = true;
-						ifound_gl = ifound;
+					{
+						if (bfound) {
+							bfound_gl = true;
+							ifound_gl = ifound;
+						}
 					}
 				}
 			}
@@ -363,7 +377,8 @@ else {
 				integer ifound = -1;
 
 #pragma omp for 
-				for (integer i_471 = 0; i_471 < i_22[identifikator][7]; i_471++) {
+				for (integer i_471 = 0; i_471 < i_22[identifikator][7]; i_471++)
+				{
 					if (bfound) continue;
 
 					integer i_47 = oct_load1[identifikator][7][i_471];
@@ -375,13 +390,14 @@ else {
 						bfound = true;
 						//break;
 					}
-				}
 
-#pragma omp critical 
-				{
-					if (bfound) {
-						bfound_gl = true;
-						ifound_gl = ifound;
+
+#pragma omp critical
+					{
+						if (bfound) {
+							bfound_gl = true;
+							ifound_gl = ifound;
+						}
 					}
 				}
 			}
@@ -442,6 +458,9 @@ const unsigned char TURBULENT_KINETIK_ENERGY_SL = 6; // Кинетическая
 const unsigned char TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL = 7; // Удельная скорость диссипации (omega).
 const unsigned char TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL = 8; // Кинетическая энергия турбулентных пульсаций двухслойная модель на основе стандартной k-epsilon модели.
 const unsigned char TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL = 9; // Скорость диссипации кинетической энергии турбулентности.
+// СЛАУ для модели ламинарно турбулентного перехода Лангтрии - Ментера.
+const unsigned char GAMMA_LANGTRY_MENTER_SL = 10;
+const unsigned char RE_THETA_LANGTRY_MENTER_SL = 11;
 const unsigned char VXCOR = 5; // скорости с предыдущей  
 const unsigned char VYCOR = 6; // итерации удовлетворяющие
 const unsigned char VZCOR = 7; // уравнению неразрывности
@@ -498,15 +517,29 @@ const unsigned char GRADZTURBULENT_KINETIK_ENERGY_STD_K_EPS = 45;
 const unsigned char GRADXTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 46;
 const unsigned char GRADYTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 47;
 const unsigned char GRADZTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 48;
+// Модель Лангри Ментера Ламнарно Турбулентного перехода.
+const unsigned char GAMMA_LANGTRY_MENTER = 49;
+const unsigned char RE_THETA_LANGTRY_MENTER = 50;
+// Градиенты ненуждны gamma и Re_Thetta_T ненужны. !!!
+// градиенты перемежаемости Gamma
+//const unsigned char GRADX_GAMMA_LANGTRY_MENTER = 51;
+//const unsigned char GRADY_GAMMA_LANGTRY_MENTER = 52;
+//const unsigned char GRADZ_GAMMA_LANGTRY_MENTER = 53;
+// градиенты ReTHETA
+//const unsigned char GRADX_RE_THETA_LANGTRY_MENTER = 54;
+//const unsigned char GRADY_RE_THETA_LANGTRY_MENTER = 55;
+//const unsigned char GRADZ_RE_THETA_LANGTRY_MENTER = 56;
 
 // Параметры турбулентности с предыдущего временного шага.
 const unsigned char TURBULENT_KINETIK_ENERGY_MENTER_SST_OLD_TIME_STEP = 0;
 const unsigned char TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_OLD_TIME_STEP = 1;
 const unsigned char TURBULENT_NUSHA_OLD_TIME_STEP = 2;
-const unsigned char iNUMBER_FUNCTION_TURBULENT_OLD_TIME_STEP = 3; // Число функций для расчёта турбулентных течений на предыдущем временном шаге.
+const unsigned char GAMMA_LANGTRY_MENTER_OLD_TIME_STEP = 3;
+const unsigned char RE_THETA_LANGTRY_MENTER_OLD_TIME_STEP = 4;
+const unsigned char iNUMBER_FUNCTION_TURBULENT_OLD_TIME_STEP = 5; // Число функций для расчёта турбулентных течений на предыдущем временном шаге.
 
 // Число вектор функции хранимых при расчёте cfd задачи.
-const unsigned int SIZE_FLOW_POTENT_ARRAY = 49;
+const unsigned int SIZE_FLOW_POTENT_ARRAY = 51;
 
 // Static Structural
 // Деформации:
@@ -816,13 +849,191 @@ void free_level2_temp(TEMPER &t) {
 	}
 } // free_level2_temp
 
+// глобальная память для amg1r5
+typedef struct TamgGlobalMemory {
+	doublereal* a;
+	integer* ia;
+	integer* ja;
+	doublereal* u;
+	doublereal* f;
+	integer* ig;
+	integer nda;
+	integer ndia;
+	integer ndja;
+	integer ndu;
+	integer ndf;
+	integer ndig;
+} amgGlobalMemory;
+
+// 17.04.2021
+// Освобождение памяти в функции main_body().
+void free_global_1(TPROP* &matlist, integer lmatmax, doublereal*& x_jacoby_buffer, bool bvery_big_memory, TEMPER& t,
+	amgGlobalMemory &amgGM, doublereal*&xposadd, doublereal*& yposadd, doublereal*& zposadd) {
+
+	// Освобождение оперативной памяти.
+	if (t.xpos_copy != nullptr) {
+		delete[] t.xpos_copy;
+		t.xpos_copy = nullptr;
+	}
+	if (t.ypos_copy != nullptr) {
+		delete[] t.ypos_copy;
+		t.ypos_copy = nullptr;
+	}
+	if (t.zpos_copy != nullptr) {
+		delete[] t.zpos_copy;
+		t.zpos_copy = nullptr;
+	}
+
+	// Освобождение оперативной памяти.
+	if (xposadd != nullptr) {
+		delete[] xposadd;
+		xposadd = nullptr;
+	}
+	if (yposadd != nullptr) {
+		delete[] yposadd;
+		yposadd = nullptr;
+	}
+	if (zposadd != nullptr) {
+		delete[] zposadd;
+		zposadd = nullptr;
+	}
+
+
+	// освобождение памяти из под amg1r5.
+	if (amgGM.a != nullptr) {
+		delete[] amgGM.a;
+		amgGM.a = nullptr;
+	}
+	if (amgGM.ia != nullptr) {
+		delete[] amgGM.ia;
+		amgGM.ia = nullptr;
+	}
+	if (amgGM.ja != nullptr) {
+		delete[] amgGM.ja;
+		amgGM.ja = nullptr;
+	}
+
+	if (amgGM.u != nullptr) {
+		delete[] amgGM.u;
+		amgGM.u = nullptr;
+	}
+	if (amgGM.f != nullptr) {
+		delete[] amgGM.f;
+		amgGM.f = nullptr;
+	}
+	if (amgGM.ig != nullptr) {
+		delete[] amgGM.ig;
+		amgGM.ig = nullptr;
+	}
+
+	amgGM.nda = -1;
+	amgGM.ndf = -1;
+	amgGM.ndia = -1;
+	amgGM.ndig = -1;
+	amgGM.ndja = -1;
+	amgGM.ndu = -1;
+
+	for (integer i_7 = 0; i_7 < lmatmax; i_7++) {
+		if (matlist[i_7].arr_cp != nullptr) {
+			delete[] matlist[i_7].arr_cp;
+			matlist[i_7].arr_cp = nullptr;
+		}
+		if (matlist[i_7].temp_cp != nullptr) {
+			delete[] matlist[i_7].temp_cp;
+			matlist[i_7].temp_cp = nullptr;
+		}
+		if (matlist[i_7].arr_lam != nullptr) {
+			delete[] matlist[i_7].arr_lam;
+			matlist[i_7].arr_lam = nullptr;
+		}
+		if (matlist[i_7].temp_lam != nullptr) {
+			delete[] matlist[i_7].temp_lam;
+			matlist[i_7].temp_lam = nullptr;
+		}
+
+		if (matlist[i_7].arr_Poisson_ratio != nullptr) {
+			delete[] matlist[i_7].arr_Poisson_ratio;
+			matlist[i_7].arr_Poisson_ratio = nullptr;
+		}
+		if (matlist[i_7].temp_Poisson_ratio != nullptr) {
+			delete[] matlist[i_7].temp_Poisson_ratio;
+			matlist[i_7].temp_Poisson_ratio = nullptr;
+		}
+
+		if (matlist[i_7].arr_Young_Module != nullptr) {
+			delete[] matlist[i_7].arr_Young_Module;
+			matlist[i_7].arr_Young_Module = nullptr;
+		}
+		if (matlist[i_7].temp_Young_Module != nullptr) {
+			delete[] matlist[i_7].temp_Young_Module;
+			matlist[i_7].temp_Young_Module = nullptr;
+		}
+
+		if (matlist[i_7].arr_beta_t_solid != nullptr) {
+			delete[] matlist[i_7].arr_beta_t_solid;
+			matlist[i_7].arr_beta_t_solid = nullptr;
+		}
+		if (matlist[i_7].temp_beta_t_solid != nullptr) {
+			delete[] matlist[i_7].temp_beta_t_solid;
+			matlist[i_7].temp_beta_t_solid = nullptr;
+		}
+
+	}
+	delete[] matlist;
+	matlist = nullptr;
+
+	if (x_jacoby_buffer != nullptr) {
+		// 30 октября 2016. 
+		// В seidelsor2 сделан переключатель на метод нижней релаксации К.Г. Якоби.
+		// Освобождение памяти из под Jacobi buffer.
+		delete[] x_jacoby_buffer;
+		x_jacoby_buffer = nullptr;
+	}
+
+	if (bvery_big_memory) {
+		if (t.database.x != nullptr) {
+			free(t.database.x);
+			t.database.x = nullptr;
+		}
+		if (t.database.y != nullptr) {
+			free(t.database.y);
+			t.database.y = nullptr;
+		}
+		if (t.database.z != nullptr) {
+			free(t.database.z);
+			t.database.z = nullptr;
+		}
+		if (t.database.nvtxcell != nullptr) {
+			for (integer i = 0; i <= 7; i++) {
+				delete[] t.database.nvtxcell[i];
+			}
+			delete[] t.database.nvtxcell;
+			t.database.nvtxcell = nullptr;
+		}
+		if (t.database.ptr != nullptr) {
+			if (t.database.ptr[0] != nullptr) {
+				delete[] t.database.ptr[0];
+			}
+			if (t.database.ptr[1] != nullptr) {
+				delete[] t.database.ptr[1];
+			}
+			delete[] t.database.ptr;
+			t.database.ptr = nullptr;
+		}
+	}
+
+	
+
+}// free_global_1
+
 // вычисление центральной точки центрального контрольного объёма
 void center_cord3D_ray_tracing(integer iP, int** nvtx, TOCHKA* pa, TOCHKA& p, integer id) {
 	// 0 1
 	// координаты центра контрольного объёма
-	p.x = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	p.y = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	p.z = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	const integer ilink0 = nvtx[0][iP] - 1;
+	p.x = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[ilink0].x);
+	p.y = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[ilink0].y);
+	p.z = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[ilink0].z);
 }
 
 // вычисление центральной точки центрального контрольного объёма
@@ -969,10 +1180,19 @@ void volume3D(integer iP, int** nvtx, TOCHKA* pa, doublereal &dx, doublereal &dy
 // для трассировки лучей.
 doublereal volume3D_ray_tracing(integer iP, int** nvtx, TOCHKA* pa) {
 	doublereal dx, dy, dz;
-	dx = pa[nvtx[1][iP] - 1].x - pa[nvtx[0][iP] - 1].x;
-	dy = pa[nvtx[2][iP] - 1].y - pa[nvtx[0][iP] - 1].y;
-	dz = pa[nvtx[4][iP] - 1].z - pa[nvtx[0][iP] - 1].z;
+	const integer ilink0 = nvtx[0][iP] - 1;
+	dx = pa[nvtx[1][iP] - 1].x - pa[ilink0].x;
+	dy = pa[nvtx[2][iP] - 1].y - pa[ilink0].y;
+	dz = pa[nvtx[4][iP] - 1].z - pa[ilink0].z;
 	return (dx * dx + dy * dy + dz * dz);
+}
+
+// Сверхбыстрый volume3D 11.04.2021
+void volume3D_q(integer iP, int** nvtx, TOCHKA* pa, doublereal& dx, doublereal& dy, doublereal& dz) {
+	const integer ilink0 = nvtx[0][iP] - 1;
+	dx = pa[nvtx[1][iP] - 1].x - pa[ilink0].x;
+	dy = pa[nvtx[2][iP] - 1].y - pa[ilink0].y;
+	dz = pa[nvtx[4][iP] - 1].z - pa[ilink0].z;
 }
 
 // 1 october 2016
@@ -1016,7 +1236,7 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 #pragma omp parallel for reduction(+ : isum)
 	for (integer i = 0; i < lb; i++) {
 		if (b[i].g.itypegeom != PRISM) {
-			isum++;
+			isum += 1;
 		}
 	}
 	QSBid.lb_non_prism = isum;
@@ -2275,11 +2495,9 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 				   if (bfound) {
 					   // Нашли и сразу завершили проверку в случае успеха.
 					   {
-						   if (!bfound_out) {
-							   k = i;
+						   	   k = i;
 							   bfound_out = true;
 							   continue;
-						   }
 					   }
 				   }
 			   }
@@ -2291,11 +2509,9 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 			   integer k_loc23 = -1;
 			   if (b[i].g.in_CAD_STL_check(p, k_loc23, i)) {
 
-				   if (!bfound_out) {
-					   k = i;
-					   bfound_out = true;
-					   continue;
-				   }
+				   k = i;
+				   bfound_out = true;
+				   continue;
 			   }
 		   }
 		   else if (b[i].g.itypegeom == CYLINDER) {
@@ -2305,30 +2521,16 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 				   if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
 					   if (sqrt((b[i].g.xC - p.x) * (b[i].g.xC - p.x) + (b[i].g.yC - p.y) * (b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
 
-						   if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
+						   
+						   if ((fabs(b[i].g.R_in_cyl) < 1.0e-36) && ((fabs(b[i].g.R_in_cyl) >= 1.0e-36) &&
+							   ((sqrt((b[i].g.xC - p.x) * (b[i].g.xC - p.x) + (b[i].g.yC - p.y) * (b[i].g.yC - p.y)) > b[i].g.R_in_cyl)))) {
 
-							   {
-								   if (!bfound_out) {
-									   k = i;
-									   bfound_out = true;
-									   // Нашли и сразу завершили проверку в случае успеха.
-									   continue;
-								   }
-							   }
-						   }
-						   else {
-							   if (sqrt((b[i].g.xC - p.x) * (b[i].g.xC - p.x) + (b[i].g.yC - p.y) * (b[i].g.yC - p.y)) > b[i].g.R_in_cyl) {
+							   k = i;
+							   bfound_out = true;
+							   // Нашли и сразу завершили проверку в случае успеха.
+							   continue;
 
-								   {
-									   if (!bfound_out) {
-										   k = i;
-										   bfound_out = true;
-										   // Нашли и сразу завершили проверку в случае успеха.
-										   continue;
-									   }
-								   }
-							   }
-						   }
+						    }
 					   }
 				   }
 				   break;
@@ -2337,31 +2539,14 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 					   if (sqrt((b[i].g.xC - p.x) * (b[i].g.xC - p.x) + (b[i].g.zC - p.z) * (b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
 
 
-						   if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
+						  if ((fabs(b[i].g.R_in_cyl) < 1.0e-36)||((fabs(b[i].g.R_in_cyl) >= 1.0e-36)&&
+							   ((sqrt((b[i].g.xC - p.x) * (b[i].g.xC - p.x) + (b[i].g.zC - p.z) * (b[i].g.zC - p.z)) > b[i].g.R_in_cyl)))) {
 
-							   {
-								   if (!bfound_out) {
-									   k = i;
-									   bfound_out = true;
-									   // Нашли и сразу завершили проверку в случае успеха.
-									   continue;
-								   }
-							   }
-
-						   }
-						   else {
-							   if (sqrt((b[i].g.xC - p.x) * (b[i].g.xC - p.x) + (b[i].g.zC - p.z) * (b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
-
-								   {
-									   if (!bfound_out) {
-										   k = i;
-										   bfound_out = true;
-										   // Нашли и сразу завершили проверку в случае успеха.
-										   continue;
-									   }
-								   }
-							   }
-						   }
+						    	k = i;
+							    bfound_out = true;
+								// Нашли и сразу завершили проверку в случае успеха.
+								continue;								
+						  }						   
 					   }
 				   }
 				   break;
@@ -2369,30 +2554,16 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 				   if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
 					   if (sqrt((b[i].g.yC - p.y) * (b[i].g.yC - p.y) + (b[i].g.zC - p.z) * (b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
 
-						   if (fabs(b[i].g.R_in_cyl) < 1.0e-36) {
+						  
+							if ((fabs(b[i].g.R_in_cyl) < 1.0e-36)||((fabs(b[i].g.R_in_cyl) >= 1.0e-36)&&
+							   ((sqrt((b[i].g.yC - p.y) * (b[i].g.yC - p.y) + (b[i].g.zC - p.z) * (b[i].g.zC - p.z)) > b[i].g.R_in_cyl)))) {
 
-							   {
-								   if (!bfound_out) {
-									   k = i;
-									   bfound_out = true;
-									   // Нашли и сразу завершили проверку в случае успеха.
-									   continue;
-								   }
-							   }
-						   }
-						   else {
-							   if (sqrt((b[i].g.yC - p.y) * (b[i].g.yC - p.y) + (b[i].g.zC - p.z) * (b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
-
-								   {
-									   if (!bfound_out) {
-										   k = i;
-										   bfound_out = true;
-										   // Нашли и сразу завершили проверку в случае успеха.
-										   continue;
-									   }
-								   }
-							   }
-						   }
+								  
+								   k = i;
+								   bfound_out = true;
+								   // Нашли и сразу завершили проверку в случае успеха.
+								   continue;	
+							}						  
 					   }
 				   }
 				   break;
@@ -2643,8 +2814,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 
 	integer i = 0, k = 0;
 	bool ret = true;// по умолчанию принадлежит модели
-	integer lb4 = lb / 4; // Это очень плохое деление пригодное только в случае,
-	// если все блоки равноправны: содержат примерно одинаковое число ячеек.
+	
 
 	/*
 	TOCHKA p_test;
@@ -2670,6 +2840,10 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 	const bool bYES_PARALLELISM_ON = false;
 
 #ifdef _OPENMP
+
+	//integer lb4 = lb / 4; // Это очень плохое деление пригодное только в случае,
+	// если все блоки равноправны: содержат примерно одинаковое число ячеек.
+
 	if (bYES_PARALLELISM_ON) {
 		omp_set_num_threads(4);
 		integer k1 = 0, k2 = 0, k3 = 0, k4 = 0;
@@ -4352,7 +4526,8 @@ void enumerate_volume_improved_obobshenie(int* &evt, integer &maxelm, integer if
 				if ((k1 < 0) || (k1 > inz)) {
 					// ERROR
 					printf("ERROR PRISM\n");
-					printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+					//printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+					std::cout << "inx=" << inx << " iny=" << iny << " inz=" << inz << std::endl;
 					printf(" k1=%lld \n",  k1);
 					printf("iP_k1=%lld m8=%lld", iP_k1, m8);
 					printf("kL=%lld kR=%lld\n",  block_indexes[m7].kL, block_indexes[m7].kR);
@@ -4364,7 +4539,8 @@ void enumerate_volume_improved_obobshenie(int* &evt, integer &maxelm, integer if
 					if ((j1 < 0) || (j1 > iny)) {
 						// ERROR
 						printf("ERROR PRISM\n");
-						printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+						//printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+						std::cout << "inx=" << inx << " iny=" << iny << " inz=" << inz << std::endl;
 						printf(" j1=%lld k1=%lld\n", j1, k1);
 						printf("iP_j1=%lld m8=%lld", iP_j1, m8);
 						printf("jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
@@ -4377,7 +4553,8 @@ void enumerate_volume_improved_obobshenie(int* &evt, integer &maxelm, integer if
 						if ((i1 < 0) || (i1 > inx)) {
 							// ERROR
 							printf("ERROR PRISM\n");
-							printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+							//printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+							std::cout << "inx=" << inx << " iny=" << iny << " inz=" << inz << std::endl;
 							printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
 							printf("iP=%lld m8=%lld", iP, m8);
 							printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
@@ -4431,7 +4608,8 @@ void enumerate_volume_improved_obobshenie(int* &evt, integer &maxelm, integer if
 					printf("iplane=%lld", b[m8].g.iPlane);
 					printf("xC=%e yC=%e zC=%e Hcyl=%e\n", b[m8].g.xC, b[m8].g.yC, b[m8].g.zC, b[m8].g.Hcyl);
 					printf("Rin=%e Rout=%e\n", b[m8].g.R_in_cyl, b[m8].g.R_out_cyl);
-					printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+					//printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+					std::cout << "inx=" << inx << " iny=" << iny << " inz=" << inz << std::endl;
 					printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
 					printf("iP=%lld m8=%lld", iP, m8);
 					printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
@@ -4642,7 +4820,8 @@ void enumerate_volume_improved_obobshenie(int* &evt, integer &maxelm, integer if
 				if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
 					// ERROR
 					printf("ERROR POLYGON\n");
-					printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+					//printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+					std::cout << "inx=" << inx << " iny=" << iny << " inz=" << inz << std::endl;
 					printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
 					printf("iP=%lld m8=%lld", iP, m8);
 					printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
@@ -4705,7 +4884,8 @@ void enumerate_volume_improved_obobshenie(int* &evt, integer &maxelm, integer if
 				if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
 					// ERROR
 					printf("ERROR CAD_STL\n");
-					printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+					//printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+					std::cout << "inx=" << inx << " iny=" << iny << " inz=" << inz << std::endl;
 					printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
 					printf("iP=%lld m8=%lld", iP, m8);
 					printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
@@ -5271,7 +5451,7 @@ void init_evt_f_alice_improved(int* &evt, integer iflag,
 	printf("enumerate_volume_improved 80 procent.\n");
 	// нумерация в evt начиная с единицы.
 	// если не принадлежит расчётной области то стоит 0.
-	integer l = 1, ib;
+	integer l = 1;
 	for (integer k = 0; k < inz; k++)
 	{
 		integer iP_k = k * inx * iny;
@@ -5282,9 +5462,10 @@ void init_evt_f_alice_improved(int* &evt, integer iflag,
 			{
 				integer iP = i + iP_j;
 				if (evt[iP] > -1) {
-					ib = evt[iP]; // номер блока был сохранён ранее.
-													 // Это очень нужно для записи репорта.
-													 //whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+					//integer ib = evt[iP]; // номер блока был сохранён ранее.
+					// Это очень нужно для записи репорта.
+					//whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+					
 					evt[iP] = l;
 
 					tck_int_list[l - 1].i = i;
@@ -6345,7 +6526,7 @@ void init_evt_f_alice_improved_obobshenie(int* &evt, integer iflag,
 	// нумерация в evt начиная с единицы.
 	// если не принадлежит расчётной области то стоит 0.
 	//  integer iP_k, iP_j;
-	 integer l = 1, ib;
+	 integer l = 1;
 	for (k = 0; k < inz; k++)
 	{
 		integer  iP_k = k * inx * iny;
@@ -6356,9 +6537,10 @@ void init_evt_f_alice_improved_obobshenie(int* &evt, integer iflag,
 			{
 				integer  iP = i + iP_j;
 				if (evt[iP] > -1) {
-					ib = evt[iP]; // номер блока был сохранён ранее.
-													 // Это очень нужно для записи репорта.
+					//integer ib = evt[iP]; // номер блока был сохранён ранее.
+					// Это очень нужно для записи репорта.
 					//whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+					
 					evt[iP] = l;
 					tck_int_list[l - 1].i = i;
 					tck_int_list[l - 1].j = j;
@@ -6973,7 +7155,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	if (brecursiv_algorithm) {
 		// Рекурсивный алгоритм.
 		// Рекурсия имитируется СТЕКОМ. Там теперь свой стековый алгоритм внутри.
-		// Проблемы на геометрии 1ТТ113 26,03,2019.
+		// Проблемы на геометрии большой блок вум с оребрением и воздушным охлаждением 26,03,2019.
 		// integer iP_k,iP_k_p1,iP_k_m1;
         // integer iP_j, iP;
        
@@ -7599,7 +7781,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	printf("part %d my_fill_Domain constr_ptr_temp_part1 \n", icount_part++); //22
 #endif
 
-	integer iP=0;
+	//integer iP=0;
 
 
 	/*
@@ -7997,7 +8179,7 @@ void constr_ptr_temp_part2(integer &flow_interior,
 		}
 	}
 	// Проход по всем контрольным объёмам
-	integer ipos = -1;
+	//integer ipos = -1;
 
 	for (integer iP = 0; iP < isize; iP++) {
 		// инициализация.
@@ -8148,8 +8330,8 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 	//bool bfind;
 	//bool bfind_shadow;
 	integer l;
-	integer ic = 0; // счётчик по domain_id
-	integer ic_shadow = 0; // счётчик по domain_id_shadow
+	//integer ic = 0; // счётчик по domain_id
+	//integer ic_shadow = 0; // счётчик по domain_id_shadow
 	//flow_interior = 0; // Заполняется в constr_ptr_temp_part1.
 	
 	
@@ -8157,7 +8339,7 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 	 integer i1; // счётчик
 	 	
 	 integer ipos = -1;
-	 integer ipos_shadow = -1;
+	 //integer ipos_shadow = -1;
 
 	// 22 сентября 2016.
 	// До части 13 можно использовать и при АЛИС сетке.
@@ -9410,7 +9592,7 @@ void constr_nvtx(int* evt, integer* ent, int** &nvtx, integer &maxelm,
 			 int i = tck_int_list[iscan].i;
 			 int j = tck_int_list[iscan].j;
 			 int  k = tck_int_list[iscan].k;
-			 integer ic = i + j * inx + k * inx*iny;
+			// integer ic = i + j * inx + k * inx*iny;
 
 			 // контрольный объём принадлежит расчётной области.
 			 integer iP_k=k*(inx + 1)*(iny + 1);
@@ -9476,7 +9658,7 @@ void walk_in_octree_icolor_different_fluid_domain(octree* &oc,
 	int** evt_f2, integer maxelm_flow, 
 	TOCKA_SHORT_INT*& tck_int_list) {
 
-	integer idiagnostic_error_coloc_counter1 = 0, idiagnostic_error_coloc_counter2 = 0;
+	//integer idiagnostic_error_coloc_counter1 = 0, idiagnostic_error_coloc_counter2 = 0;
 	top_ALICE_STACK = 0;
 	if (oc->link0 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -9567,12 +9749,12 @@ void walk_in_octree_icolor_different_fluid_domain(octree* &oc,
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// разбиение на 8.
-				int minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
-				int maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
-				int miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
-				int maxy = my_ALICE_STACK[top_ALICE_STACK - 1].maxy;
-				int minz = my_ALICE_STACK[top_ALICE_STACK - 1].minz;
-				int maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
+				//int minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
+				//int maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
+				//int miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
+				//int maxy = my_ALICE_STACK[top_ALICE_STACK - 1].maxy;
+				//int minz = my_ALICE_STACK[top_ALICE_STACK - 1].minz;
+				//int maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
 
 				// Дробление  вызывается.
 				my_ALICE_STACK[top_ALICE_STACK - 1].link = nullptr;
@@ -9582,10 +9764,10 @@ void walk_in_octree_icolor_different_fluid_domain(octree* &oc,
 				if (octree1->inum_FD > 0) {
 					integer ielm = octree1->inum_FD - 1; // номер nvtx.
 					
-					integer ic = 0;
+					//integer ic = 0;
 					//ic = minx + miny*inx + minz*inx*iny;
 					//12.01.2020
-					ic = tck_int_list[ielm].i + tck_int_list[ielm].j * inx + tck_int_list[ielm].k * inx * iny;
+					//ic = tck_int_list[ielm].i + tck_int_list[ielm].j * inx + tck_int_list[ielm].k * inx * iny;
 					integer id_found = ielm;
 
 					icolor_different_fluid_domain[id_found] = 1; // Гидродинамическая ячейка. Присваиваем единицу.
@@ -9692,7 +9874,8 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer*& i
 	int** nvtx, octree*& oc,
 	TOCKA_SHORT_INT*& tck_int_list, BLOCK* b, integer lb)
 {
-	integer i = 0, j = 0, k = 0; // Счётчики цикла for.
+	integer i = 0;
+	//integer j = 0, k = 0; // Счётчики цикла for.
 
 	//printf("maxelm_flow=%lld maxelm=%lld\n", maxelm_flow, maxelm);// они равны.
 
@@ -10171,7 +10354,11 @@ void constr_prop(int* evt, int* &whot_is_block, integer* ent, float** &prop, int
 							prop[MULT_LAM_Y][l] = matlist[imat_id_loc].orthotropy_multiplyer_y;
 							prop[MULT_LAM_Z][l] = matlist[imat_id_loc].orthotropy_multiplyer_z;
 							
-							if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY) {
+							if ((steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)&&
+								(((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+									(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+									(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+									(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)))) {
 
 								if (matlist[imat_id_loc].n_beta_t_solid == 1) {
 									prop[BETA_T_MECHANICAL][l] = matlist[imat_id_loc].arr_beta_t_solid[0];
@@ -10199,6 +10386,7 @@ void constr_prop(int* evt, int* &whot_is_block, integer* ent, float** &prop, int
 								prop[MULT_YOUNG_MODULE_X][l] = matlist[imat_id_loc].orthotropy_multiplyer_x_Young_Module;
 								prop[MULT_YOUNG_MODULE_Y][l] = matlist[imat_id_loc].orthotropy_multiplyer_y_Young_Module;
 								prop[MULT_YOUNG_MODULE_Z][l] = matlist[imat_id_loc].orthotropy_multiplyer_z_Young_Module;
+								
 								// множитель коэффициента Пуассона.
 								prop[MULT_POISSON_RATIO_YZ][l] = matlist[imat_id_loc].orthotropy_multiplyer_Poisson_ratio_yz;
 								prop[MULT_POISSON_RATIO_XZ][l] = matlist[imat_id_loc].orthotropy_multiplyer_Poisson_ratio_xz;
@@ -12540,6 +12728,8 @@ void allocation_memory_flow(doublereal** &potent,
 				break;
 			case 6: iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
 				break;
+			case 7: iflowregime = VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST;
+				break;
 			default: iflowregime = VISCOSITY_MODEL::LAMINAR;
 				break;
 			}
@@ -12564,6 +12754,8 @@ void allocation_memory_flow(doublereal** &potent,
 			case 5: iflowregime = VISCOSITY_MODEL::RANS_MENTER_SST;
 				break;
 			case 6: iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
+				break;
+			case 7: iflowregime = VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST;
 				break;
 			default: iflowregime = VISCOSITY_MODEL::LAMINAR;
 				break;
@@ -12592,6 +12784,8 @@ void allocation_memory_flow(doublereal** &potent,
 				break;
 			case 6: iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
 				break;
+			case 7: iflowregime = VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST;
+				break;
 			default : iflowregime = VISCOSITY_MODEL::LAMINAR;
 				break;
 			}
@@ -12617,6 +12811,8 @@ void allocation_memory_flow(doublereal** &potent,
 			case 5: iflowregime = VISCOSITY_MODEL::RANS_MENTER_SST;
 				break;
 			case 6: iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
+				break;
+			case 7: iflowregime = VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST;
 				break;
 			default: iflowregime = VISCOSITY_MODEL::LAMINAR;
 				break;
@@ -12917,7 +13113,7 @@ void allocation_memory_flow(doublereal** &potent,
 					system("PAUSE");
 				}
 				for (integer i = 0; i < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) {
-					oct_load[i] = nullptr;
+					//oct_load[i] = nullptr;
 					oct_load[i] = new integer[maxelm47];
 					if (oct_load[i] == nullptr) {
 						printf("ERROR ALLOCATION MEMORY: array oct_load[%lld] is nullptr.", i);
@@ -12988,12 +13184,13 @@ void allocation_memory_flow(doublereal** &potent,
 				// Чтобы ещё ускорить моделирование нужен ещё один уровень octree дерева.
 				
 				oct_load1 = new integer**[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
-				if (oct_load1 == nullptr) {
-					printf("ERROR ALLOCATION MEMORY: array oct_load1 is nullptr.");
-					system("PAUSE");
-				}
+				// Если new не может выделить оперативную память он направляет исключение.
+				//if (oct_load1 == nullptr) {				
+					//printf("ERROR ALLOCATION MEMORY: array oct_load1 is nullptr.");
+					//system("PAUSE");
+				//}
 				for (integer i = 0; i < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) {
-					oct_load1[i] = nullptr;
+					//oct_load1[i] = nullptr;
 					oct_load1[i] = new integer*[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 					if (oct_load1 == nullptr) {
 						printf("ERROR ALLOCATION MEMORY: array oct_load1 is nullptr.");
@@ -13246,7 +13443,8 @@ void allocation_memory_flow(doublereal** &potent,
 
 								if (x47[nvtx47[0][i_47]] >= x47[nvtx47[1][i_47]]) {
 									printf("ERROR logic X !!! if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]])\n");
-									printf("0=%e 1=%e %lld %lld\n", x47[nvtx47[0][i_47]], x47[nvtx47[1][i_47]], nvtx47[0][i_47], nvtx47[1][i_47]);
+									//printf("0=%e 1=%e %lld %lld\n", x47[nvtx47[0][i_47]], x47[nvtx47[1][i_47]], nvtx47[0][i_47], nvtx47[1][i_47]);
+									std::cout << "0=" << x47[nvtx47[0][i_47]] << " 1=" << x47[nvtx47[1][i_47]] << " " << nvtx47[0][i_47] << " " << nvtx47[1][i_47] << std::endl;
 
 									printf("in function allocation memory flow!!! constr_struct.cpp\n");
 									system("PAUSE");
@@ -14167,7 +14365,7 @@ void allocation_memory_flow(doublereal** &potent,
 	//*/
 	 
 	alpha=nullptr;
-	alpha = new doublereal[10];
+	alpha = new doublereal[12];
 	if (alpha==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem: not enough memory on your equipment for alpha constr struct...\n");
@@ -14187,11 +14385,13 @@ void allocation_memory_flow(doublereal** &potent,
 	alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;// 1.0;// 0.7; // удельная скорость её диссипации
 	alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] = 0.8;
 	alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] = 0.8;
+	alpha[GAMMA_LANGTRY_MENTER_SL] = 0.8;
+	alpha[RE_THETA_LANGTRY_MENTER_SL] = 0.8;
 
    // коэффициенты матрицы СЛАУ для внутренних КО.
    sl=nullptr;
    if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY) {
-	   sl = new equation3D*[10];
+	   sl = new equation3D*[12];
 	   if (sl == nullptr) {
 		   // недостаточно памяти на данном оборудовании.
 		   printf("Problem: not enough memory on your equipment for slau flow constr struct...\n");
@@ -14202,12 +14402,12 @@ void allocation_memory_flow(doublereal** &potent,
 	   }
 
 
-	   for (integer i = 0; i < 10; i++) {
+	   for (integer i = 0; i < 12; i++) {
 		   sl[i] = nullptr;
 	   }
 
 #pragma omp parallel for
-	   for (integer i = 0; i < 10; i++) {
+	   for (integer i = 0; i < 12; i++) {
 		   switch (i) {
 		   case VELOCITY_X_COMPONENT: sl[VELOCITY_X_COMPONENT] = new equation3D[maxelm];
 			   if (sl[VELOCITY_X_COMPONENT] == nullptr) {
@@ -14310,6 +14510,28 @@ void allocation_memory_flow(doublereal** &potent,
 				   exit(1);
 			   }
 			   break;
+		   case GAMMA_LANGTRY_MENTER_SL:  // Модель ламинарно турбулентного перехода.
+			   sl[GAMMA_LANGTRY_MENTER_SL] = new equation3D[maxelm];
+			   if (sl[GAMMA_LANGTRY_MENTER_SL] == nullptr) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem: not enough memory on your equipment for slau[GAMMA_LANGTRY_MENTER_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case RE_THETA_LANGTRY_MENTER_SL: // Модель ламинарно турбулентного перехода.
+			   sl[RE_THETA_LANGTRY_MENTER_SL] = new equation3D[maxelm];
+			   if (sl[RE_THETA_LANGTRY_MENTER_SL] == nullptr) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem: not enough memory on your equipment for slau[RE_THETA_LANGTRY_MENTER_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
 		   }
 	   }
    }
@@ -14317,7 +14539,7 @@ void allocation_memory_flow(doublereal** &potent,
    // коэффициенты матрицы СЛАУ для граничных КО
    slb=nullptr;
    if (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY) {
-	   slb = new equation3D_bon*[10];
+	   slb = new equation3D_bon*[12];
 	   if (slb == nullptr) {
 		   // недостаточно памяти на данном оборудовании.
 		   printf("Problem: not enough memory on your equipment for slau boundary constr struct...\n");
@@ -14327,12 +14549,12 @@ void allocation_memory_flow(doublereal** &potent,
 		   exit(1);
 	   }
 
-	   for (integer i = 0; i < 10; i++) {
+	   for (integer i = 0; i < 12; i++) {
 		   slb[i] = nullptr;
 	   }
 
 #pragma omp parallel for
-	   for (int i = 0; i < 10; i++) {
+	   for (int i = 0; i < 12; i++) {
 		   switch (i) {
 		   case VELOCITY_X_COMPONENT: slb[VELOCITY_X_COMPONENT] = new equation3D_bon[maxbound];
 			   if (slb[VELOCITY_X_COMPONENT] == nullptr) {
@@ -14425,6 +14647,28 @@ void allocation_memory_flow(doublereal** &potent,
 			   if (slb[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] == nullptr) {
 				   // недостаточно памяти на данном оборудовании.
 				   printf("Problem: not enough memory on your equipment for slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case GAMMA_LANGTRY_MENTER_SL : // Модель Ламинарно турбулентного перехода.
+			   slb[GAMMA_LANGTRY_MENTER_SL] = new equation3D_bon[maxbound];
+			   if (slb[GAMMA_LANGTRY_MENTER_SL] == nullptr) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem: not enough memory on your equipment for slau_bon[GAMMA_LANGTRY_MENTER_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case RE_THETA_LANGTRY_MENTER_SL :  // Модель Ламинарно турбулентного перехода.
+			   slb[RE_THETA_LANGTRY_MENTER_SL] = new equation3D_bon[maxbound];
+			   if (slb[RE_THETA_LANGTRY_MENTER_SL] == nullptr) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem: not enough memory on your equipment for slau_bon[RE_THETA_LANGTRY_MENTER_SL] constr struct...\n");
 				   printf("Please any key to exit...\n");
 				   //system("PAUSE");
 				   system("pause");
@@ -15400,6 +15644,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 						// Двухслойная модель на основе стандартной K-epsilon модели [2001]
 						f[0].iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
 					}
+					if (eqin.fluidinfo[0].iturbmodel == TURBULENT_MODEL::RANS_LANGTRY_MENTOR_SST) {
+						f[0].iflowregime = VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST; // Модель Ментора Лантгрии.
+					}
 					
 					// заполнение параметров модели Смагоринского.
                        /*
@@ -15465,6 +15712,7 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 				  case VISCOSITY_MODEL::RANS_SPALART_ALLMARES: bdist = true;  break; // Spallart Allmares (RANS).
 				  case VISCOSITY_MODEL::RANS_MENTER_SST: bdist = true; break; // K-Omega SST (RANS)
 				  case VISCOSITY_MODEL::RANS_STANDART_K_EPS: bdist = true; break; // Стандартная KE модель (RANS) на основе двухслойной модели.
+				  case VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST: bdist = true; break; // Модель ламинарно турбулентного перехода Ментора Лантгрии.
 				}
 				f[0].rdistWall=nullptr; // инициализация
 			    if (bdist) {
@@ -15640,6 +15888,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 							// Двухслойная модель на основе стандартной k-epsilon модели [2001].
 							f[i].iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
 						}
+						if (eqin.fluidinfo[i].iturbmodel == TURBULENT_MODEL::RANS_LANGTRY_MENTOR_SST) {
+							f[i].iflowregime = VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST; // модель Ментора Лантгрии.
+						}
 
 						f[i].smaginfo.Cs=eqin.fluidinfo[i].Cs; // постоянная Смагоринского.
 						// Использовать ли динамическую модель Германо для определения
@@ -15695,6 +15946,7 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 					   case VISCOSITY_MODEL::RANS_SPALART_ALLMARES: bdist = true; break; // RANS Спалларт Аллмарес (Spallart Allmares)
 					   case VISCOSITY_MODEL::RANS_MENTER_SST: bdist = true; break; // RANS k-Omega SST Menter [1993].
 					   case VISCOSITY_MODEL::RANS_STANDART_K_EPS: bdist = true; break; // RANS двухслойная модель на основе стандартной KE модели
+					   case VISCOSITY_MODEL::RANS_LANGTRY_MENTOR_SST: bdist = true; break; // Модель ламинарно турбулентного перехода Ментора Лантгрии.
 					}
 					f[i].rdistWall=nullptr; // инициализация
 			        if (bdist) {
@@ -15734,13 +15986,13 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, int* &whot_is_bl
 				integer ib = whot_is_block[iP];
 				if (ib == itek) 
 				{
-					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN = neighbors_for_the_internal_node[N_SIDE][0][iP];
-					iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW = neighbors_for_the_internal_node[W_SIDE][0][iP];
-					iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
-					iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+					//iE = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					//iN = neighbors_for_the_internal_node[N_SIDE][0][iP];
+					//iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					integer iW = neighbors_for_the_internal_node[W_SIDE][0][iP];
+					//iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
+					//iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -15792,13 +16044,13 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, int* &whot_is_bl
 				integer ib = whot_is_block[iP];
 				if (ib == itek)
 				{
-					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
-					iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW = neighbors_for_the_internal_node[W_SIDE][0][iP];
-					iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
-					iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+					integer iE = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					//iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
+					//iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW = neighbors_for_the_internal_node[W_SIDE][0][iP];
+					//iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
+					//iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -15848,13 +16100,13 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, int* &whot_is_bl
 				integer ib = whot_is_block[iP];
 				if (ib == itek)
 				{
-					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN = neighbors_for_the_internal_node[N_SIDE][0][iP];
-					iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; 
-					iS = neighbors_for_the_internal_node[S_SIDE][0][iP];
-					iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+					//iE = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					//iN = neighbors_for_the_internal_node[N_SIDE][0][iP];
+					//iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; 
+					integer iS = neighbors_for_the_internal_node[S_SIDE][0][iP];
+					//iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -15904,13 +16156,13 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, int* &whot_is_bl
 				integer ib = whot_is_block[iP];
 				if (ib == itek)
 				{
-					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; 
-					iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
-					iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW = neighbors_for_the_internal_node[W_SIDE][0][iP];
-					iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
-					iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					// integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+					//iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; 
+					integer iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
+					//iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW = neighbors_for_the_internal_node[W_SIDE][0][iP];
+					//iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
+					//iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -15960,13 +16212,13 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, int* &whot_is_bl
 				integer ib = whot_is_block[iP];
 				if (ib == itek)
 				{
-					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
-					iT = neighbors_for_the_internal_node[T_SIDE][0][iP]; 
-					iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; 
-					iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
-					iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+					//iE = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					//iN = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
+					//iT = neighbors_for_the_internal_node[T_SIDE][0][iP]; 
+					//iW = neighbors_for_the_internal_node[W_SIDE][0][iP]; 
+					//iS = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
+					integer iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -16016,13 +16268,13 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, int* &whot_is_bl
 				integer ib = whot_is_block[iP];
 				if (ib == itek)
 				{
-					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; 
-					iN = neighbors_for_the_internal_node[N_SIDE][0][iP];
-					iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW = neighbors_for_the_internal_node[W_SIDE][0][iP];
-					iS = neighbors_for_the_internal_node[S_SIDE][0][iP];
-					iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+					//iE = neighbors_for_the_internal_node[E_SIDE][0][iP]; 
+					//iN = neighbors_for_the_internal_node[N_SIDE][0][iP];
+					integer iT = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW = neighbors_for_the_internal_node[W_SIDE][0][iP];
+					//iS = neighbors_for_the_internal_node[S_SIDE][0][iP];
+					//iB = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
 
 					// вычисление размеров текущего контрольного объёма:
@@ -16098,42 +16350,42 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 				integer ib = whot_is_block[iP];
 				if (ib == itek)
 				{
-					integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
-					integer iE2, iN2, iT2, iW2, iS2, iB2;
-					integer iE3, iN3, iT3, iW3, iS3, iB3;
-					integer iE4, iN4, iT4, iW4, iS4, iB4;
+					//integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
+					//integer iE2, iN2, iT2, iW2, iS2, iB2;
+					//integer iE3, iN3, iT3, iW3, iS3, iB3;
+					//integer iE4, iN4, iT4, iW4, iS4, iB4;
 
 					// -1 если узел не существует.
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP]; 
-					iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP];
-					iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP]; 
-					iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP]; 
-					iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP];
-					iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP]; 
+					//iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP];
+					//iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP]; 
+					integer iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP]; 
+					//iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP];
+					//iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-					iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP];
-					iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
-					iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
-					iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; 
-					iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP];
-					iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+					//iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP];
+					//iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
+					//iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+					integer iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP]; 
+					//iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP];
+					//iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
-					iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
-					iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
-					iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
-					iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; 
-					iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP];
-					iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+					//iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
+					//iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
+					//iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+					integer iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; 
+					//iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP];
+					//iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
 
-					iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
-					iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
-					iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
-					iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP];
-					iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
-					iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+					//iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
+					//iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
+					//iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+					integer iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP];
+					//iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
+					//iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -16302,42 +16554,42 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 				{
 				
 
-					integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
-					integer iE2, iN2, iT2, iW2, iS2, iB2;
-					integer iE3, iN3, iT3, iW3, iS3, iB3;
-					integer iE4, iN4, iT4, iW4, iS4, iB4;
+					//integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
+					//integer iE2, iN2, iT2, iW2, iS2, iB2;
+					//integer iE3, iN3, iT3, iW3, iS3, iB3;
+					//integer iE4, iN4, iT4, iW4, iS4, iB4;
 
 					// -1 если узел не существует.
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
-					iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP];
-					iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
-					iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					integer iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					//iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
+					//iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP];
+					//iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
+					//iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-					iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; 
-					iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
-					iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
-					iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
-					iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP];
-					iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+					integer iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; 
+					//iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
+					//iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+					//iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
+					//iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP];
+					//iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
-					iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
-					iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; 
-					iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
-					iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP];
-					iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; 
-					iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+					integer iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
+					//iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP]; 
+					//iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+					//iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP];
+					//iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; 
+					//iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
 
-					iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
-					iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; 
-					iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
-					iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; 
-					iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; 
-					iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+					integer iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
+					//iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP]; 
+					//iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+					//iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; 
+					//iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP]; 
+					//iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 
 					bool binc = false;
@@ -16500,42 +16752,42 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 				if (ib == itek)
 				{
 					
-					integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
-					integer iE2, iN2, iT2, iW2, iS2, iB2;
-					integer iE3, iN3, iT3, iW3, iS3, iB3;
-					integer iE4, iN4, iT4, iW4, iS4, iB4;
+					//integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
+					//integer iE2, iN2, iT2, iW2, iS2, iB2;
+					//integer iE3, iN3, iT3, iW3, iS3, iB3;
+					//integer iE4, iN4, iT4, iW4, iS4, iB4;
 
 					// -1 если узел не существует.
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP];
-					iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP]; 
-					iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP];
-					iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					//iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP];
+					//iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP]; 
+					integer iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP];
+					//iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-					iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP];
-					iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
-					iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
-					iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
-					iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP];
-					iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+					//iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP];
+					//iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
+					//iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+					//iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
+					integer iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP];
+					//iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
-					iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
-					iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
-					iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
-					iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP];
-					iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP];
-					iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+					//iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
+					//iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
+					//iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+					//iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP];
+					integer iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP];
+					//iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
 
-					iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
-					iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
-					iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
-					iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP];
-					iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
-					iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+					//iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
+					//iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
+					//iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+					//iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP];
+					integer iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
+					//iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 
 					bool binc = false;
@@ -16696,42 +16948,42 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 				if (ib == itek)
 				{
 					
-					integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
-					integer iE2, iN2, iT2, iW2, iS2, iB2;
-					integer iE3, iN3, iT3, iW3, iS3, iB3;
-					integer iE4, iN4, iT4, iW4, iS4, iB4;
+					//integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
+					//integer iE2, iN2, iT2, iW2, iS2, iB2;
+					//integer iE3, iN3, iT3, iW3, iS3, iB3;
+					//integer iE4, iN4, iT4, iW4, iS4, iB4;
 
 					// -1 если узел не существует.
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
-					iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP];
-					iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
-					iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					integer iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP]; 
+					//iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP];
+					//iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP]; 
+					//iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-					iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; 
-					iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; 
-					iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
-					iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
-					iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; 
-					iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+					//iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; 
+					integer iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP]; 
+					//iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+					//iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
+					//iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; 
+					//iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
-					iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
-					iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
-					iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
-					iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP];
-					iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; 
-					iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+					//iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
+					integer iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
+					//iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+					//iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP];
+					//iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; 
+					//iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
 
-					iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; 
-					iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
-					iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
-					iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP];
-					iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
-					iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+					//iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP]; 
+					integer iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
+					//iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+					//iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP];
+					//iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
+					//iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 
 					bool binc = false;
@@ -16894,42 +17146,42 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 				if (ib == itek)
 				{
 				
-					integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
-					integer iE2, iN2, iT2, iW2, iS2, iB2;
-					integer iE3, iN3, iT3, iW3, iS3, iB3;
-					integer iE4, iN4, iT4, iW4, iS4, iB4;
+					//integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
+					//integer iE2, iN2, iT2, iW2, iS2, iB2;
+					//integer iE3, iN3, iT3, iW3, iS3, iB3;
+					//integer iE4, iN4, iT4, iW4, iS4, iB4;
 
 					// -1 если узел не существует.
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP];
-					iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP];
-					iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP];
-					iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					//iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP];
+					//iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP];
+					//iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP];
+					integer iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-					iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP];
-					iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
-					iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
-					iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
-					iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP];
-					iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+					//iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP];
+					//iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
+					//iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+					//iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
+					//iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP];
+					integer iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
-					iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
-					iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
-					iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
-					iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; 
-					iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP];
-					iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+					//iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
+					//iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
+					//iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+					//iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; 
+					//iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP];
+					integer iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
 
-					iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
-					iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
-					iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
-					iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP];
-					iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
-					iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+					//iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
+					//iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
+					//iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+					//iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP];
+					//iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
+					integer iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 
 					bool binc = false;
@@ -17081,42 +17333,42 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 				if (ib == itek)
 				{
 				
-					integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
-					integer iE2, iN2, iT2, iW2, iS2, iB2;
-					integer iE3, iN3, iT3, iW3, iS3, iB3;
-					integer iE4, iN4, iT4, iW4, iS4, iB4;
+					//integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
+					//integer iE2, iN2, iT2, iW2, iS2, iB2;
+					//integer iE3, iN3, iT3, iW3, iS3, iB3;
+					//integer iE4, iN4, iT4, iW4, iS4, iB4;
 
 					// -1 если узел не существует.
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
-					iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP];
-					iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
-					iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP];
-					iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP];
-					iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
+					//iE1 = neighbors_for_the_internal_node[E_SIDE][0][iP];
+					//iN1 = neighbors_for_the_internal_node[N_SIDE][0][iP];
+					integer iT1 = neighbors_for_the_internal_node[T_SIDE][0][iP];
+					//iW1 = neighbors_for_the_internal_node[W_SIDE][0][iP];
+					//iS1 = neighbors_for_the_internal_node[S_SIDE][0][iP];
+					//iB1 = neighbors_for_the_internal_node[B_SIDE][0][iP];
 
-					iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; 
-					iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
-					iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
-					iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
-					iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; 
-					iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
+					//iE2 = neighbors_for_the_internal_node[E_SIDE][1][iP]; 
+					//iN2 = neighbors_for_the_internal_node[N_SIDE][1][iP];
+					integer iT2 = neighbors_for_the_internal_node[T_SIDE][1][iP];
+					//iW2 = neighbors_for_the_internal_node[W_SIDE][1][iP];
+					//iS2 = neighbors_for_the_internal_node[S_SIDE][1][iP]; 
+					//iB2 = neighbors_for_the_internal_node[B_SIDE][1][iP];
 
-					iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
-					iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
-					iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
-					iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; 
-					iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; 
-					iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
+					//iE3 = neighbors_for_the_internal_node[E_SIDE][2][iP];
+					//iN3 = neighbors_for_the_internal_node[N_SIDE][2][iP];
+					integer iT3 = neighbors_for_the_internal_node[T_SIDE][2][iP];
+					//iW3 = neighbors_for_the_internal_node[W_SIDE][2][iP]; 
+					//iS3 = neighbors_for_the_internal_node[S_SIDE][2][iP]; 
+					//iB3 = neighbors_for_the_internal_node[B_SIDE][2][iP];
 
-					iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
-					iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
-					iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
-					iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; 
-					iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
-					iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
+					//iE4 = neighbors_for_the_internal_node[E_SIDE][3][iP];
+					//iN4 = neighbors_for_the_internal_node[N_SIDE][3][iP];
+					integer iT4 = neighbors_for_the_internal_node[T_SIDE][3][iP];
+					//iW4 = neighbors_for_the_internal_node[W_SIDE][3][iP]; 
+					//iS4 = neighbors_for_the_internal_node[S_SIDE][3][iP];
+					//iB4 = neighbors_for_the_internal_node[B_SIDE][3][iP];
 
 
 					bool binc = false;
@@ -17273,9 +17525,9 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
   // освобождение памяти уровня 1
   // для уравнений гидродинамики.
 void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
-	integer iflow = 0;
+	
 	for (integer iflow = 0; iflow<flow_interior; iflow++) {
-		integer j = 0;
+		
 		if (fglobal != nullptr) {
 
 #if doubleintprecision == 1
@@ -17541,7 +17793,7 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
   // освобождение памяти уровня 2
   // для уравнений гидродинамики.
 void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
-	integer iflow = 0;
+	
 	for (integer iflow = 0; iflow<flow_interior; iflow++) {
 		integer j = 0;
 		if (fglobal != nullptr) {
@@ -17553,7 +17805,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].slau != nullptr) {
-				for (j = 0; j<10; j++) {
+				for (j = 0; j<12; j++) {
 					if (fglobal[iflow].slau[j] != nullptr) {
 						delete[] fglobal[iflow].slau[j];
 						fglobal[iflow].slau[j] = nullptr;
@@ -17570,7 +17822,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].slau_bon != nullptr) {
-				for (j = 0; j<10; j++) {
+				for (j = 0; j<12; j++) {
 					if (fglobal[iflow].slau_bon[j] != nullptr) {
 						delete[] fglobal[iflow].slau_bon[j];
 						fglobal[iflow].slau_bon[j] = nullptr;
@@ -17974,18 +18226,18 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				}
 #pragma omp section
 				{
-					if (!bALICEflag) {
+					//if (!bALICEflag) {
 						constr_link_on_surface_for_radiation_model(t.maxelm, t.whot_is_block, t.neighbors_for_the_internal_node, t.nvtx, t.pa, b, lb);
-					}
+					//}
 				}
 #pragma omp section
 				{
-					if (!bALICEflag) {
+					//if (!bALICEflag) {
 						if (bextendedprint) {
 							printf("extended print. please wait...\n");
 						}
 						constr_nvtxcell(evt_t, t.border_neighbor, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz, tck_int_list);
-					}
+					//}
 				}
 
 
@@ -18014,14 +18266,14 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			//printf("part 11\n");
 		}
 
-		if (!bALICEflag) {
+		//if (!bALICEflag) {
 			constr_link_on_surface_for_radiation_model(t.maxelm, t.whot_is_block, t.neighbors_for_the_internal_node, t.nvtx, t.pa, b, lb);
 		
 			if (bextendedprint) {
 				printf("extended print. please wait...\n");
 			}
 			constr_nvtxcell(evt_t, t.border_neighbor, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz, tck_int_list);
-	    }
+	    //}
 #endif
 	}
 	//printf("part 10\n");
@@ -18558,6 +18810,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		for (i=0; i<flow_interior; i++) {
 			// своё построение для каждой зоны FLUID.
 
+
 			if (bALICEflag) {
 				// Замена частей 19, 20, 21 и 22.
 				// Построение f[i].pa, f[i].maxnod. Замена constr_nodes_flow.
@@ -18994,7 +19247,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 						bool bsimplelinearinterpol = true; // выполняется простая линейная интерполяция скорости на грань.
 
-						integer iflow = 0;
+						
 						return_calc_correct_mass_flux_only_interpolation(i32,
 							f[i].potent,
 							f[i].pa,

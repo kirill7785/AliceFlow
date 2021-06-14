@@ -40,8 +40,14 @@ void test1() {
 
 	res = vEB_delete(tree, 8);
 
-	if (vEB_min(tree, res)) printf("minimum =%d\n", res);
-	if (vEB_max(tree, res)) printf("maximum =%d\n", res);
+	if (vEB_min(tree, res)) {
+		//printf("minimum =%d\n", res);
+		std::cout << "minimum =" << res << std::endl;
+	}
+	if (vEB_max(tree, res)) {
+		//printf("maximum =%d\n", res);
+		std::cout << "maximum =" << res << std::endl;
+	}
 }
 
 int64_t N=64;

@@ -1858,6 +1858,9 @@ void my_interpolation_procedure_number3A(integer &the_number_of_neighbors_that_a
 
 } // my_interpolation_procedure_number3A
 
+
+
+
 // для PMIS интерполяции.
 template <typename doublerealT>
 doublerealT activation_function_for_thrteshold(doublerealT threshold, integer ilevel, bool bmagic)
@@ -1886,7 +1889,12 @@ doublerealT activation_function_for_thrteshold(doublerealT threshold, integer il
 			return (doublerealT)(0.21); // 0.18; 0.21 optimum
 		}
 		else {
-			return (doublerealT)(pow(0.38, pow(min(10, ilevel), 0.55)));//0.52 optimum; 0.54; 0.55; 0.58; 0.61
+			if (10 < ilevel) {
+				return (doublerealT)(pow(0.38, pow(10.0, 0.55)));//0.52 optimum; 0.54; 0.55; 0.58; 0.61
+			}
+			else {
+				return (doublerealT)(pow(0.38, pow(1.0*ilevel, 0.55)));//0.52 optimum; 0.54; 0.55; 0.58; 0.61
+			}
 		}
 	}
 	else {
@@ -1904,7 +1912,12 @@ doublerealT activation_function_for_thrteshold(doublerealT threshold, integer il
 			// Установлено что операторная сложность лучше и скорость счета
 			// лучше если отсекать на 10 уровне.
 			//return pow(0.24, pow(min(10, ilevel), 0.51));
-			return (doublerealT)(pow(0.24, pow(min(10, ilevel), 0.64)));//0.51; 0.64 optimum
+			if (10 < ilevel) {
+				return (doublerealT)(pow(0.24, pow(10.0, 0.64)));//0.51; 0.64 optimum
+			}
+			else {
+				return (doublerealT)(pow(0.24, pow(1.0*ilevel, 0.64)));//0.51; 0.64 optimum
+			}
 			//return pow(threshold, pow(ilevel, 0.5));
 			//return pow(threshold, pow(min(10, ilevel), d_my_optimetric1_6_12_2019));//optimetric
 			//0.51 optimum.
@@ -3539,7 +3552,7 @@ void my_interpolation_procedure_number3A_PMIS(integer& the_number_of_neighbors_t
 											// Модификация 5 декабря 2015.
 											//if (aij_abs > maxelem_threshold*barjer) {
 											//if (aij_abs > maxelem_threshold*theta) {
-											if (aij_abs > maxelem_threshold_theta) {
+											//if (aij_abs > maxelem_threshold_theta) {
 												P[icount1].j = i8;
 												P[icount1].i = C_numerate[Amat.j[is0]];
 												//P[icount1].aij = aij_abs / sumP;
@@ -3558,7 +3571,7 @@ void my_interpolation_procedure_number3A_PMIS(integer& the_number_of_neighbors_t
 													//exit(1);
 													deallocate_prolongation(nsizePR, n, P);
 												}
-											}
+											//}
 
 										}
 									}
@@ -5111,7 +5124,7 @@ void my_interpolation_procedure_number3A_PMIS_parallel8(integer& the_number_of_n
 												// Модификация 5 декабря 2015.
 												//if (aij_abs > maxelem_threshold*barjer) {
 												//if (aij_abs > maxelem_threshold*theta) {
-												if (aij_abs > maxelem_threshold_theta) {
+												//if (aij_abs > maxelem_threshold_theta) {
 													Ak1 Ptmp;
 													Ptmp.j = i8;
 													Ptmp.i = C_numerate[Amat.j[is0]];
@@ -5136,7 +5149,7 @@ void my_interpolation_procedure_number3A_PMIS_parallel8(integer& the_number_of_n
 
 													//icount1++;
 
-												}
+												//}
 
 											}
 										}

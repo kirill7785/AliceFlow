@@ -90,19 +90,24 @@ void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir,
 	// а те задачи которые раньше невозможно было посчитать начинают сходиться.
 	// 13.08.2019
 	doublereal eps = 1.0e-10;// shorter_length_for_simplificationX(g);
-	// Долгое время успешно работало для значения eps=1.0e-10 для всех направлений.
-	switch (iDir) {
-	case XY_PLANE: eps = shorter_length_for_simplificationZ(g, b, lb, w, lw, s, ls);
-		break;
-	case XZ_PLANE: eps = shorter_length_for_simplificationY(g, b, lb, w, lw, s, ls);
-		break;
-	case YZ_PLANE: eps = shorter_length_for_simplificationX(g, b, lb, w, lw, s, ls);
-		break;
-	default:
-		printf("fatal error!!! unknown directional on function addboundary(...) in module uniformsimplemeshgen.cpp\n");
-		system("pause");
-		exit(1);
-		break;
+	if (b_adhesion_Mesh) {
+		// Долгое время успешно работало для значения eps=1.0e-10 для всех направлений.
+		switch (iDir) {
+		case XY_PLANE: eps = shorter_length_for_simplificationZ(g, b, lb, w, lw, s, ls);
+			break;
+		case XZ_PLANE: eps = shorter_length_for_simplificationY(g, b, lb, w, lw, s, ls);
+			break;
+		case YZ_PLANE: eps = shorter_length_for_simplificationX(g, b, lb, w, lw, s, ls);
+			break;
+		default:
+			printf("fatal error!!! unknown directional on function addboundary(...) in module uniformsimplemeshgen.cpp\n");
+			system("pause");
+			exit(1);
+			break;
+		}
+	}
+	else {
+		eps= 1.0e-10;
 	}
 
 	bool bfind=false;
@@ -474,7 +479,7 @@ void timSort(myARRT arr[], integer n)
 {
 	// Sort individual subarrays of size RUN
 	for (integer i = 0; i < n; i += RUN)
-		insertionSortTim(arr, i, min((i + 31), (n - 1)));
+		insertionSortTim(arr, i, min((i + RUN - 1), (n - 1)));
 
 	// start merging from size RUN (or 32). It will merge
 	// to form size 64, then 128, 256 and so on ....
@@ -2873,7 +2878,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 	}
 
 	// доработка АМПЛИТРОН.
-	const doublereal dopusk = 1.0e-20; // Для определения совпадения центров.
+	//const doublereal dopusk = 1.0e-20; // Для определения совпадения центров.
 
 	for (i = 1; i < lb; i++) {
 		if (bactive_cyl[i]) {
@@ -3899,8 +3904,9 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	}
 	*/
 
-	// Быстрый препроцессинг за линейное время.
+	
 	Block_indexes* block_indexes = new Block_indexes[lb];
+	block_indexes = new Block_indexes[lb];
 	//if (block_indexes == nullptr) {
 		//printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
 		//system("pause");
@@ -5377,11 +5383,15 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	doublereal minimum_fluid_gap_y = 1.0e36;
 	doublereal minimum_fluid_gap_z = 1.0e36;
 
+	
+
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
 	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
 		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z, 
 		lb,  ls,  lw,  b, s, w, lu, my_union, iunion_id_p1);
 
+
+	
 
 	bool *source_indexpopadaniqnagranYZ = nullptr;
 	bool *source_indexpopadaniqnagranXY = nullptr;
@@ -5390,13 +5400,15 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// 12.03.2017
 	// реализация snap to
 	// уменьшающает размерность сеточной модели на 33%.
-	snap_to_moving(source_indexpopadaniqnagranYZ,
-		source_indexpopadaniqnagranXY,
-		source_indexpopadaniqnagranXZ,
-		rxboundary, ryboundary, rzboundary,
-		inumboundaryx, inumboundaryy, inumboundaryz,
-		minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
-		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+	if (b_adhesion_Mesh) {
+		snap_to_moving(source_indexpopadaniqnagranYZ,
+			source_indexpopadaniqnagranXY,
+			source_indexpopadaniqnagranXZ,
+			rxboundary, ryboundary, rzboundary,
+			inumboundaryx, inumboundaryy, inumboundaryz,
+			minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
+			lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+	}
 
 	integer i;
 
@@ -6122,155 +6134,157 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	//getchar();
 
 	integer inz_fix = inz;
-	// Корректировка источника XY
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranXY[i]) {
-			doublereal xc = 0.5*(s[i].g.xS + s[i].g.xE);
-			doublereal yc = 0.5*(s[i].g.yS + s[i].g.yE);
-			doublereal zg = s[i].g.zS;
-			// найти позицию +Z на сетке zpos
-			// найти центр кО.
-			// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-			// Адаптацию maxsize ratio 2 не делать.
-			// Если неуспех ищемцентр КО по -Z и смещаем туда.
-			integer i55_found = -2;
-			for (integer i55 = 0; i55 <= inz_fix; i55++) {
-				if (fabs(zpos[i55] - zg) < 1.0e-36) {
-					i55_found = i55;
-					break;
+	if (b_adhesion_Mesh) {
+		// Корректировка источника XY
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranXY[i]) {
+				doublereal xc = 0.5 * (s[i].g.xS + s[i].g.xE);
+				doublereal yc = 0.5 * (s[i].g.yS + s[i].g.yE);
+				doublereal zg = s[i].g.zS;
+				// найти позицию +Z на сетке zpos
+				// найти центр кО.
+				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+				// Адаптацию maxsize ratio 2 не делать.
+				// Если неуспех ищемцентр КО по -Z и смещаем туда.
+				integer i55_found = -2;
+				for (integer i55 = 0; i55 <= inz_fix; i55++) {
+					if (fabs(zpos[i55] - zg) < 1.0e-36) {
+						i55_found = i55;
+						break;
+					}
 				}
-			}
-			if (i55_found >= 0) {
-				if (i55_found < inz_fix) {
-					doublereal zg1 = 0.5*(zg + zpos[i55_found + 1]);
-					//printf("zg1=%e\n", zg1);
-					std::cout << "zg1=" << zg1 << std::endl;
-					integer i56_found = -2;
-					for (integer ib55 = 0; ib55 < lb; ib55++) {
-						if ((xc>b[ib55].g.xS) && (xc<b[ib55].g.xE) && (yc>b[ib55].g.yS) && (yc<b[ib55].g.yE) && (zg1>b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
-						{
-							i56_found = ib55;
-						}
-					}
-					
-					bool bzero_pos = true;
-					doublereal zg2 = zpos[0] - 0.5*fabs(zpos[1] - zpos[0]);
-					if (i55_found>0) {
-						zg2 = 0.5*(zg + zpos[i55_found - 1]);
-						bzero_pos = false;
-					}
-					//printf("zg2=%e\n", zg2);
-					std::cout << "zg2=" << zg2 << std::endl;
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (zg2>b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
-						{
-							if (zg2 > zpos[0]) {
-								i57_found = ib57;
+				if (i55_found >= 0) {
+					if (i55_found < inz_fix) {
+						doublereal zg1 = 0.5 * (zg + zpos[i55_found + 1]);
+						//printf("zg1=%e\n", zg1);
+						std::cout << "zg1=" << zg1 << std::endl;
+						integer i56_found = -2;
+						for (integer ib55 = 0; ib55 < lb; ib55++) {
+							if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (zg1 > b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
+							{
+								i56_found = ib55;
 							}
 						}
-					}
 
-					if (i56_found >= 0) {
-						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-								// Мы помещаем источник тепла в блок с большей теплопроводностью.
-								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-									// в блоке i56 теплопроводность выше.
-									s[i].g.zS = zg1;
-									s[i].g.zE = zg1;
-									addboundary(zpos, inz, zg1,XY_PLANE, b, lb, w, lw, s, ls);
-								}
-								else {
-									// в блоке i57 теплопроводность выше.
-									s[i].g.zS = zg2;
-									s[i].g.zE = zg2;
-									addboundary(zpos, inz, zg2,XY_PLANE, b, lb, w, lw, s, ls);
+						bool bzero_pos = true;
+						doublereal zg2 = zpos[0] - 0.5 * fabs(zpos[1] - zpos[0]);
+						if (i55_found > 0) {
+							zg2 = 0.5 * (zg + zpos[i55_found - 1]);
+							bzero_pos = false;
+						}
+						//printf("zg2=%e\n", zg2);
+						std::cout << "zg2=" << zg2 << std::endl;
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
+							{
+								if (zg2 > zpos[0]) {
+									i57_found = ib57;
 								}
 							}
-							else {
-								
-								// Найден Солид Блок.
-								//printf("zg1==%e\n", zg1);
-								std::cout << "zg1==" << zg1 << std::endl;
-								doublereal zgolg = zpos[1];
-								if (inz == 1) {
-									// Слишком малоразмерная расчётная сетка.
-									zgolg = 0.5*(zpos[0] + zg1);
-									addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-									zgolg = 0.5*(zpos[1] + zg1);
-									addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-									zgolg = 0.5*(zpos[0] + zg1);
-									// Расстояние от края вглубь расчётной области две клетки.
-									s[i].g.zS = zgolg;
-									s[i].g.zE = zgolg;
+						}
+
+						if (i56_found >= 0) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+									// Мы помещаем источник тепла в блок с большей теплопроводностью.
+									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+										// в блоке i56 теплопроводность выше.
+										s[i].g.zS = zg1;
+										s[i].g.zE = zg1;
+										addboundary(zpos, inz, zg1, XY_PLANE, b, lb, w, lw, s, ls);
+									}
+									else {
+										// в блоке i57 теплопроводность выше.
+										s[i].g.zS = zg2;
+										s[i].g.zE = zg2;
+										addboundary(zpos, inz, zg2, XY_PLANE, b, lb, w, lw, s, ls);
+									}
 								}
 								else {
-									if (bzero_pos) {
-										// Источник в позиции 0.0.
-										// Разбиваем поподробнее.
-										zgolg = 0.5*(zpos[0] + zg1);
-										addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-										zgolg = 0.5*(zpos[1] + zg1);
-										addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-										zgolg = 0.5*(zpos[0] + zg1);
+
+									// Найден Солид Блок.
+									//printf("zg1==%e\n", zg1);
+									std::cout << "zg1==" << zg1 << std::endl;
+									doublereal zgolg = zpos[1];
+									if (inz == 1) {
+										// Слишком малоразмерная расчётная сетка.
+										zgolg = 0.5 * (zpos[0] + zg1);
+										addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+										zgolg = 0.5 * (zpos[1] + zg1);
+										addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+										zgolg = 0.5 * (zpos[0] + zg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.zS = zgolg;
 										s[i].g.zE = zgolg;
 									}
 									else {
-										s[i].g.zS = zg1;
-										s[i].g.zE = zg1;
+										if (bzero_pos) {
+											// Источник в позиции 0.0.
+											// Разбиваем поподробнее.
+											zgolg = 0.5 * (zpos[0] + zg1);
+											addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+											zgolg = 0.5 * (zpos[1] + zg1);
+											addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+											zgolg = 0.5 * (zpos[0] + zg1);
+											// Расстояние от края вглубь расчётной области две клетки.
+											s[i].g.zS = zgolg;
+											s[i].g.zE = zgolg;
+										}
+										else {
+											s[i].g.zS = zg1;
+											s[i].g.zE = zg1;
+										}
 									}
-								}
-								addboundary(zpos, inz, zg1,XY_PLANE, b, lb, w, lw, s, ls);
-								
+									addboundary(zpos, inz, zg1, XY_PLANE, b, lb, w, lw, s, ls);
 
-								
-							}
-						}
-						else {
 
-							if (i57_found >= 0) {
-								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-									// Найден Солид Блок.
-									s[i].g.zS = zg2;
-									s[i].g.zE = zg2;
-									addboundary(zpos, inz, zg2,XY_PLANE, b, lb, w, lw, s, ls);
+
 								}
 							}
 							else {
-								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-								system("PAUSE");
-								exit(1);
+
+								if (i57_found >= 0) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+										// Найден Солид Блок.
+										s[i].g.zS = zg2;
+										s[i].g.zE = zg2;
+										addboundary(zpos, inz, zg2, XY_PLANE, b, lb, w, lw, s, ls);
+									}
+								}
+								else {
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+									system("PAUSE");
+									exit(1);
+								}
 							}
 						}
 					}
-				}
-				else {
-					doublereal zg2 = 0.5*(zg + zpos[i55_found - 1]);
-					//printf("zg2=%e\n", zg2);
-					std::cout << "zg2=" << zg2 << std::endl;
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (zg2>b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
-						{
-							i57_found = ib57;
-						}
-					}
-					if (i57_found >= 0) {
-						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							// Найден Солид Блок.
-							s[i].g.zS = zg2;
-							s[i].g.zE = zg2;
-							addboundary(zpos, inz, zg2,XY_PLANE, b, lb, w, lw, s, ls);
-						}
-					}
 					else {
-						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-						system("PAUSE");
-						exit(1);
+						doublereal zg2 = 0.5 * (zg + zpos[i55_found - 1]);
+						//printf("zg2=%e\n", zg2);
+						std::cout << "zg2=" << zg2 << std::endl;
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
+							{
+								i57_found = ib57;
+							}
+						}
+						if (i57_found >= 0) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								// Найден Солид Блок.
+								s[i].g.zS = zg2;
+								s[i].g.zE = zg2;
+								addboundary(zpos, inz, zg2, XY_PLANE, b, lb, w, lw, s, ls);
+							}
+						}
+						else {
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 			}
@@ -6282,154 +6296,156 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	//inz++;
 
 	integer inx_fix = inx;
-	// Корректировка источника YZ
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranYZ[i]) {
-			doublereal zc = 0.5*(s[i].g.zS + s[i].g.zE);
-			doublereal yc = 0.5*(s[i].g.yS + s[i].g.yE);
-			doublereal xg = s[i].g.xS;
-			// найти позицию +Z на сетке zpos
-			// найти центр кО.
-			// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-			// Адаптацию maxsize ratio 2 не делать.
-			// Если неуспех ищемцентр КО по -Z и смещаем туда.
-			integer i55_found = -2;
-			for (integer i55 = 0; i55 <= inx_fix; i55++) {
-				if (fabs(xpos[i55] - xg) < 1.0e-36) {
-					i55_found = i55;
-					break;
+	if (b_adhesion_Mesh) {
+		// Корректировка источника YZ
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranYZ[i]) {
+				doublereal zc = 0.5 * (s[i].g.zS + s[i].g.zE);
+				doublereal yc = 0.5 * (s[i].g.yS + s[i].g.yE);
+				doublereal xg = s[i].g.xS;
+				// найти позицию +Z на сетке zpos
+				// найти центр кО.
+				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+				// Адаптацию maxsize ratio 2 не делать.
+				// Если неуспех ищемцентр КО по -Z и смещаем туда.
+				integer i55_found = -2;
+				for (integer i55 = 0; i55 <= inx_fix; i55++) {
+					if (fabs(xpos[i55] - xg) < 1.0e-36) {
+						i55_found = i55;
+						break;
+					}
 				}
-			}
-			if (i55_found >= 0) {
-				if (i55_found < inx_fix) {
-					doublereal xg1 = 0.5*(xg + xpos[i55_found + 1]);
-					//printf("xg1=%e\n", xg1);
-					std::cout << "xg1=" << xg1 << std::endl;
-					integer i56_found = -2;
-					for (integer ib55 = 0; ib55 < lb; ib55++) {
-						if ((zc>b[ib55].g.zS) && (zc<b[ib55].g.zE) && (yc>b[ib55].g.yS) && (yc<b[ib55].g.yE) && (xg1>b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
-						{
-							i56_found = ib55;
-						}
-					}
-					
-					bool bzero_pos = true;
-					doublereal xg2 = xpos[0] - 0.5*fabs(xpos[1] - xpos[0]);
-					if (i55_found>0) {
-						xg2 = 0.5*(xg + xpos[i55_found - 1]);
-						bzero_pos = false;
-					}
-					
-					//printf("xg2=%e\n", xg2);
-					std::cout << "xg2=" << xg2 << std::endl;
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (xg2>b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
-						{
-							if (xg2 > xpos[0]) {
-								i57_found = ib57;
+				if (i55_found >= 0) {
+					if (i55_found < inx_fix) {
+						doublereal xg1 = 0.5 * (xg + xpos[i55_found + 1]);
+						//printf("xg1=%e\n", xg1);
+						std::cout << "xg1=" << xg1 << std::endl;
+						integer i56_found = -2;
+						for (integer ib55 = 0; ib55 < lb; ib55++) {
+							if ((zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (xg1 > b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
+							{
+								i56_found = ib55;
 							}
 						}
-					}
 
+						bool bzero_pos = true;
+						doublereal xg2 = xpos[0] - 0.5 * fabs(xpos[1] - xpos[0]);
+						if (i55_found > 0) {
+							xg2 = 0.5 * (xg + xpos[i55_found - 1]);
+							bzero_pos = false;
+						}
 
-					if (i56_found >= 0) {
-						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							// TODO 11.07.2016
-							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-								// Мы помещаем источник тепла в блок с большей теплопроводностью.
-								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-									// в блоке i56 теплопроводность выше.
-									s[i].g.xS = xg1;
-									s[i].g.xE = xg1;
-									addboundary(xpos, inz, xg1,YZ_PLANE, b, lb, w, lw, s, ls);
-								}
-								else {
-									// в блоке i57 теплопроводность выше.
-									s[i].g.xS = xg2;
-									s[i].g.xE = xg2;
-									addboundary(xpos, inz, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
+						//printf("xg2=%e\n", xg2);
+						std::cout << "xg2=" << xg2 << std::endl;
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
+							{
+								if (xg2 > xpos[0]) {
+									i57_found = ib57;
 								}
 							}
-							else {
-								// Найден Солид Блок.
-								//printf("xg1==%e\n", xg1);
-								std::cout << "xg1==" << xg1 << std::endl;
-								doublereal xgolg = xpos[1];
-								if (inx == 1) {
-									// Слишком малоразмерная расчётная сетка.
-									xgolg = 0.5*(xpos[0] + xg1);
-									addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-									xgolg = 0.5*(xpos[1] + xg1);
-									addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-									xgolg = 0.5*(xpos[0] + xg1);
-									// Расстояние от края вглубь расчётной области две клетки.
-									s[i].g.xS = xgolg;
-									s[i].g.xE = xgolg;
+						}
+
+
+						if (i56_found >= 0) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								// TODO 11.07.2016
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+									// Мы помещаем источник тепла в блок с большей теплопроводностью.
+									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+										// в блоке i56 теплопроводность выше.
+										s[i].g.xS = xg1;
+										s[i].g.xE = xg1;
+										addboundary(xpos, inz, xg1, YZ_PLANE, b, lb, w, lw, s, ls);
+									}
+									else {
+										// в блоке i57 теплопроводность выше.
+										s[i].g.xS = xg2;
+										s[i].g.xE = xg2;
+										addboundary(xpos, inz, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+									}
 								}
 								else {
-									if (bzero_pos) {
+									// Найден Солид Блок.
+									//printf("xg1==%e\n", xg1);
+									std::cout << "xg1==" << xg1 << std::endl;
+									doublereal xgolg = xpos[1];
+									if (inx == 1) {
 										// Слишком малоразмерная расчётная сетка.
-										xgolg = 0.5*(xpos[0] + xg1);
-										addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-										xgolg = 0.5*(xpos[1] + xg1);
-										addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-										xgolg = 0.5*(xpos[0] + xg1);
+										xgolg = 0.5 * (xpos[0] + xg1);
+										addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+										xgolg = 0.5 * (xpos[1] + xg1);
+										addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+										xgolg = 0.5 * (xpos[0] + xg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.xS = xgolg;
 										s[i].g.xE = xgolg;
 									}
 									else {
-										s[i].g.xS = xg1;
-										s[i].g.xE = xg1;
+										if (bzero_pos) {
+											// Слишком малоразмерная расчётная сетка.
+											xgolg = 0.5 * (xpos[0] + xg1);
+											addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+											xgolg = 0.5 * (xpos[1] + xg1);
+											addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+											xgolg = 0.5 * (xpos[0] + xg1);
+											// Расстояние от края вглубь расчётной области две клетки.
+											s[i].g.xS = xgolg;
+											s[i].g.xE = xgolg;
+										}
+										else {
+											s[i].g.xS = xg1;
+											s[i].g.xE = xg1;
+										}
 									}
-								}
-								addboundary(xpos, inx, xg1,YZ_PLANE, b, lb, w, lw, s, ls);
-								
-							}
-						}
-						else {
-							
-							if (i57_found >= 0) {
-								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-									// Найден Солид Блок.
-									s[i].g.xS = xg2;
-									s[i].g.xE = xg2;
-									addboundary(xpos, inx, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
+									addboundary(xpos, inx, xg1, YZ_PLANE, b, lb, w, lw, s, ls);
+
 								}
 							}
 							else {
-								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-								system("PAUSE");
-								exit(1);
+
+								if (i57_found >= 0) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+										// Найден Солид Блок.
+										s[i].g.xS = xg2;
+										s[i].g.xE = xg2;
+										addboundary(xpos, inx, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+									}
+								}
+								else {
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+									system("PAUSE");
+									exit(1);
+								}
 							}
 						}
 					}
-				}
-				else {
-					doublereal xg2 = 0.5*(xg + xpos[i55_found - 1]);
-					//printf("xg2=%e\n", xg2);
-					std::cout << "xg2=" << xg2 << std::endl;
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (xg2>b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
-						{
-							i57_found = ib57;
-						}
-					}
-					if (i57_found >= 0) {
-						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							// Найден Солид Блок.
-							s[i].g.xS = xg2;
-							s[i].g.xE = xg2;
-							addboundary(xpos, inx, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
-						}
-					}
 					else {
-						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-						system("PAUSE");
-						exit(1);
+						doublereal xg2 = 0.5 * (xg + xpos[i55_found - 1]);
+						//printf("xg2=%e\n", xg2);
+						std::cout << "xg2=" << xg2 << std::endl;
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
+							{
+								i57_found = ib57;
+							}
+						}
+						if (i57_found >= 0) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								// Найден Солид Блок.
+								s[i].g.xS = xg2;
+								s[i].g.xE = xg2;
+								addboundary(xpos, inx, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+							}
+						}
+						else {
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 			}
@@ -6439,117 +6455,119 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	Sort_method<doublereal>(xpos,inx);
 
 	integer iny_fix = iny;
-	// Корректировка источника XZ
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranXZ[i]) {
-			doublereal xc = 0.5*(s[i].g.xS + s[i].g.xE);
-			doublereal zc = 0.5*(s[i].g.zS + s[i].g.zE);
-			doublereal yg = s[i].g.yS;
-			// найти позицию +Z на сетке zpos
-			// найти центр кО.
-			// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-			// Адаптацию maxsize ratio 2 не делать.
-			// Если неуспех ищемцентр КО по -Z и смещаем туда.
-			integer i55_found = -2;
-			for (integer i55 = 0; i55 <= iny_fix; i55++) {
-				if (fabs(ypos[i55] - yg) < 1.0e-36) {
-					i55_found = i55;
-					break;
-				}
-			}
-			if (i55_found >= 0) {
-				if (i55_found < iny_fix) {
-					doublereal yg1 = 0.5*(yg + ypos[i55_found + 1]);
-					//printf("yg1=%e\n", yg1);
-					std::cout << "yg1=" << yg1 << std::endl;
-					integer i56_found = -2;
-					for (integer ib55 = 0; ib55 < lb; ib55++) {
-						if ((xc>b[ib55].g.xS) && (xc<b[ib55].g.xE) && (zc>b[ib55].g.zS) && (zc<b[ib55].g.zE) && (yg1>b[ib55].g.yS) && (yg1 < b[ib55].g.yE))
-						{
-							i56_found = ib55;
-						}
+	if (b_adhesion_Mesh) {
+		// Корректировка источника XZ
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranXZ[i]) {
+				doublereal xc = 0.5 * (s[i].g.xS + s[i].g.xE);
+				doublereal zc = 0.5 * (s[i].g.zS + s[i].g.zE);
+				doublereal yg = s[i].g.yS;
+				// найти позицию +Z на сетке zpos
+				// найти центр кО.
+				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+				// Адаптацию maxsize ratio 2 не делать.
+				// Если неуспех ищемцентр КО по -Z и смещаем туда.
+				integer i55_found = -2;
+				for (integer i55 = 0; i55 <= iny_fix; i55++) {
+					if (fabs(ypos[i55] - yg) < 1.0e-36) {
+						i55_found = i55;
+						break;
 					}
-					doublereal yg2 = 0.5*(yg + ypos[i55_found - 1]);
-					//printf("yg2=%e\n", yg2);
-					std::cout << "yg2=" << yg2 << std::endl;
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yg2>b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
-						{
-							if (yg2 > ypos[0]) {
-								i57_found = ib57;
+				}
+				if (i55_found >= 0) {
+					if (i55_found < iny_fix) {
+						doublereal yg1 = 0.5 * (yg + ypos[i55_found + 1]);
+						//printf("yg1=%e\n", yg1);
+						std::cout << "yg1=" << yg1 << std::endl;
+						integer i56_found = -2;
+						for (integer ib55 = 0; ib55 < lb; ib55++) {
+							if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yg1 > b[ib55].g.yS) && (yg1 < b[ib55].g.yE))
+							{
+								i56_found = ib55;
 							}
 						}
-					}
+						doublereal yg2 = 0.5 * (yg + ypos[i55_found - 1]);
+						//printf("yg2=%e\n", yg2);
+						std::cout << "yg2=" << yg2 << std::endl;
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
+							{
+								if (yg2 > ypos[0]) {
+									i57_found = ib57;
+								}
+							}
+						}
 
 
-					if (i56_found >= 0) {
-						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							
-							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-								// Мы помещаем источник тепла в блок с большей теплопроводностью.
-								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-									// в блоке i56 теплопроводность выше.
-									s[i].g.yS = yg1;
-									s[i].g.yE = yg1;
-									addboundary(ypos, iny, yg1,XZ_PLANE, b, lb, w, lw, s, ls);
+						if (i56_found >= 0) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+									// Мы помещаем источник тепла в блок с большей теплопроводностью.
+									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+										// в блоке i56 теплопроводность выше.
+										s[i].g.yS = yg1;
+										s[i].g.yE = yg1;
+										addboundary(ypos, iny, yg1, XZ_PLANE, b, lb, w, lw, s, ls);
+									}
+									else {
+										// в блоке i57 теплопроводность выше.
+										s[i].g.yS = yg2;
+										s[i].g.yE = yg2;
+										addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+									}
 								}
 								else {
-									// в блоке i57 теплопроводность выше.
-									s[i].g.yS = yg2;
-									s[i].g.yE = yg2;
-									addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
-								}
-							}
-							else {
-								// Найден Солид Блок.
-								s[i].g.yS = yg1;
-								s[i].g.yE = yg1;
-								addboundary(ypos, iny, yg1,XZ_PLANE, b, lb, w, lw, s, ls);
-							}
-						}
-						else {
-							
-							if (i57_found >= 0) {
-								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									// Найден Солид Блок.
-									s[i].g.yS = yg2;
-									s[i].g.yE = yg2;
-									addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
+									s[i].g.yS = yg1;
+									s[i].g.yE = yg1;
+									addboundary(ypos, iny, yg1, XZ_PLANE, b, lb, w, lw, s, ls);
 								}
 							}
 							else {
-								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-								system("PAUSE");
-								exit(1);
+
+								if (i57_found >= 0) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+										// Найден Солид Блок.
+										s[i].g.yS = yg2;
+										s[i].g.yE = yg2;
+										addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+									}
+								}
+								else {
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+									system("PAUSE");
+									exit(1);
+								}
 							}
-						}
-					}
-				}
-				else {
-					doublereal yg2 = 0.5*(yg + ypos[i55_found - 1]);
-					//printf("yg2=%e\n", yg2);
-					std::cout << "yg2=" << yg2 << std::endl;
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yg2>b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
-						{
-							i57_found = ib57;
-						}
-					}
-					if (i57_found >= 0) {
-						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							// Найден Солид Блок.
-							s[i].g.yS = yg2;
-							s[i].g.yE = yg2;
-							addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
 						}
 					}
 					else {
-						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-						system("PAUSE");
-						exit(1);
+						doublereal yg2 = 0.5 * (yg + ypos[i55_found - 1]);
+						//printf("yg2=%e\n", yg2);
+						std::cout << "yg2=" << yg2 << std::endl;
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
+							{
+								i57_found = ib57;
+							}
+						}
+						if (i57_found >= 0) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								// Найден Солид Блок.
+								s[i].g.yS = yg2;
+								s[i].g.yE = yg2;
+								addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+							}
+						}
+						else {
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 			}
@@ -6763,10 +6781,14 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	doublereal minimum_fluid_gap_y = 1.0e36;
 	doublereal minimum_fluid_gap_z = 1.0e36;
 
+	
+
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
-	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
+	calc_minimum_fluid_gap2( inumboundaryx, rxboundary, inumboundaryy, ryboundary,
 		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
 		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+
+	
 
 
 	bool *source_indexpopadaniqnagranYZ = nullptr;
@@ -6776,13 +6798,15 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	// 12.03.2017
 	// реализация snap to
 	// уменьшающает размерность сеточной модели на 33%.
-	snap_to_moving(source_indexpopadaniqnagranYZ,
-		source_indexpopadaniqnagranXY,
-		source_indexpopadaniqnagranXZ,
-		rxboundary, ryboundary, rzboundary,
-		inumboundaryx, inumboundaryy, inumboundaryz,
-		minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
-		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+	if (b_adhesion_Mesh) {
+		snap_to_moving(source_indexpopadaniqnagranYZ,
+			source_indexpopadaniqnagranXY,
+			source_indexpopadaniqnagranXZ,
+			rxboundary, ryboundary, rzboundary,
+			inumboundaryx, inumboundaryy, inumboundaryz,
+			minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
+			lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+	}
 
 	integer i;
 
@@ -7418,146 +7442,148 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	//getchar();
 
 	integer inz_fix = inz;
-	// Корректировка источника XY
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranXY[i]) {
-			doublereal xc = 0.5*(s[i].g.xS + s[i].g.xE);
-			doublereal yc = 0.5*(s[i].g.yS + s[i].g.yE);
-			doublereal zg = s[i].g.zS;
-			// найти позицию +Z на сетке zpos
-			// найти центр кО.
-			// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-			// Адаптацию maxsize ratio 2 не делать.
-			// Если неуспех ищемцентр КО по -Z и смещаем туда.
-			integer i55_found = -2;
-			for (integer i55 = 0; i55 <= inz_fix; i55++) {
-				if (fabs(zpos[i55] - zg) < 1.0e-36) {
-					i55_found = i55;
-					break;
+	if (b_adhesion_Mesh) {
+		// Корректировка источника XY
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranXY[i]) {
+				doublereal xc = 0.5 * (s[i].g.xS + s[i].g.xE);
+				doublereal yc = 0.5 * (s[i].g.yS + s[i].g.yE);
+				doublereal zg = s[i].g.zS;
+				// найти позицию +Z на сетке zpos
+				// найти центр кО.
+				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+				// Адаптацию maxsize ratio 2 не делать.
+				// Если неуспех ищемцентр КО по -Z и смещаем туда.
+				integer i55_found = -2;
+				for (integer i55 = 0; i55 <= inz_fix; i55++) {
+					if (fabs(zpos[i55] - zg) < 1.0e-36) {
+						i55_found = i55;
+						break;
+					}
 				}
-			}
-			if (i55_found >= 0) {
-				if (i55_found < inz_fix) {
-					doublereal zg1 = 0.5*(zg + zpos[i55_found + 1]);
-					printf("zg1=%e\n", zg1);
-					integer i56_found = -2;
-					for (integer ib55 = 0; ib55 < lb; ib55++) {
-						if ((xc>b[ib55].g.xS) && (xc<b[ib55].g.xE) && (yc>b[ib55].g.yS) && (yc<b[ib55].g.yE) && (zg1>b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
-						{
-							i56_found = ib55;
-						}
-					}
-					
-					bool bzero_pos = true;
-					doublereal zg2 = zpos[0] - 0.5*fabs(zpos[1] - zpos[0]);
-					if (i55_found>0) {
-						zg2 = 0.5*(zg + zpos[i55_found - 1]);
-						bzero_pos = false;
-					}
-
-					printf("zg2=%e\n", zg2);
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (zg2>b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
-						{
-							i57_found = ib57;
-						}
-					}
-
-					if (i56_found >= 0) {
-						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-								// Мы помещаем источник тепла в блок с большей теплопроводностью.
-								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-									// в блоке i56 теплопроводность выше.
-									s[i].g.zS = zg1;
-									s[i].g.zE = zg1;
-									addboundary(zpos, inz, zg1,XY_PLANE, b, lb, w, lw, s, ls);
-								}
-								else {
-									// в блоке i57 теплопроводность выше.
-									s[i].g.zS = zg2;
-									s[i].g.zE = zg2;
-									addboundary(zpos, inz, zg2,XY_PLANE, b, lb, w, lw, s, ls);
-								}
+				if (i55_found >= 0) {
+					if (i55_found < inz_fix) {
+						doublereal zg1 = 0.5 * (zg + zpos[i55_found + 1]);
+						printf("zg1=%e\n", zg1);
+						integer i56_found = -2;
+						for (integer ib55 = 0; ib55 < lb; ib55++) {
+							if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (zg1 > b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
+							{
+								i56_found = ib55;
 							}
-							else {
-								// Найден Солид Блок.
-								printf("zg1==%e\n", zg1);
-								doublereal zgolg = zpos[1];
-								if (inz == 1) {
-									// Слишком малоразмерная расчётная сетка.
-									zgolg = 0.5*(zpos[0] + zg1);
-									addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-									zgolg = 0.5*(zpos[1] + zg1);
-									addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-									zgolg = 0.5*(zpos[0] + zg1);
-									// Расстояние от края вглубь расчётной области две клетки.
-									s[i].g.zS = zgolg;
-									s[i].g.zE = zgolg;
+						}
+
+						bool bzero_pos = true;
+						doublereal zg2 = zpos[0] - 0.5 * fabs(zpos[1] - zpos[0]);
+						if (i55_found > 0) {
+							zg2 = 0.5 * (zg + zpos[i55_found - 1]);
+							bzero_pos = false;
+						}
+
+						printf("zg2=%e\n", zg2);
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
+							{
+								i57_found = ib57;
+							}
+						}
+
+						if (i56_found >= 0) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+									// Мы помещаем источник тепла в блок с большей теплопроводностью.
+									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+										// в блоке i56 теплопроводность выше.
+										s[i].g.zS = zg1;
+										s[i].g.zE = zg1;
+										addboundary(zpos, inz, zg1, XY_PLANE, b, lb, w, lw, s, ls);
+									}
+									else {
+										// в блоке i57 теплопроводность выше.
+										s[i].g.zS = zg2;
+										s[i].g.zE = zg2;
+										addboundary(zpos, inz, zg2, XY_PLANE, b, lb, w, lw, s, ls);
+									}
 								}
 								else {
-									if (bzero_pos) {
+									// Найден Солид Блок.
+									printf("zg1==%e\n", zg1);
+									doublereal zgolg = zpos[1];
+									if (inz == 1) {
 										// Слишком малоразмерная расчётная сетка.
-										zgolg = 0.5*(zpos[0] + zg1);
-										addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-										zgolg = 0.5*(zpos[1] + zg1);
-										addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-										zgolg = 0.5*(zpos[0] + zg1);
+										zgolg = 0.5 * (zpos[0] + zg1);
+										addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+										zgolg = 0.5 * (zpos[1] + zg1);
+										addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+										zgolg = 0.5 * (zpos[0] + zg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.zS = zgolg;
 										s[i].g.zE = zgolg;
 									}
 									else {
-										s[i].g.zS = zg1;
-										s[i].g.zE = zg1;
+										if (bzero_pos) {
+											// Слишком малоразмерная расчётная сетка.
+											zgolg = 0.5 * (zpos[0] + zg1);
+											addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+											zgolg = 0.5 * (zpos[1] + zg1);
+											addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+											zgolg = 0.5 * (zpos[0] + zg1);
+											// Расстояние от края вглубь расчётной области две клетки.
+											s[i].g.zS = zgolg;
+											s[i].g.zE = zgolg;
+										}
+										else {
+											s[i].g.zS = zg1;
+											s[i].g.zE = zg1;
+										}
 									}
-								}
-								addboundary(zpos, inz, zg1,XY_PLANE, b, lb, w, lw, s, ls);
-								
-							}
-						}
-						else {
+									addboundary(zpos, inz, zg1, XY_PLANE, b, lb, w, lw, s, ls);
 
-							if (i57_found >= 0) {
-								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-									// Найден Солид Блок.
-									s[i].g.zS = zg2;
-									s[i].g.zE = zg2;
-									addboundary(zpos, inz, zg2,XY_PLANE, b, lb, w, lw, s, ls);
 								}
 							}
 							else {
-								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-								system("PAUSE");
-								exit(1);
+
+								if (i57_found >= 0) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+										// Найден Солид Блок.
+										s[i].g.zS = zg2;
+										s[i].g.zE = zg2;
+										addboundary(zpos, inz, zg2, XY_PLANE, b, lb, w, lw, s, ls);
+									}
+								}
+								else {
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+									system("PAUSE");
+									exit(1);
+								}
 							}
 						}
 					}
-				}
-				else {
-					doublereal zg2 = 0.5*(zg + zpos[i55_found - 1]);
-					printf("zg2=%e\n", zg2);
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (zg2>b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
-						{
-							i57_found = ib57;
-						}
-					}
-					if (i57_found >= 0) {
-						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							// Найден Солид Блок.
-							s[i].g.zS = zg2;
-							s[i].g.zE = zg2;
-							addboundary(zpos, inz, zg2,XY_PLANE, b, lb, w, lw, s, ls);
-						}
-					}
 					else {
-						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-						system("PAUSE");
-						exit(1);
+						doublereal zg2 = 0.5 * (zg + zpos[i55_found - 1]);
+						printf("zg2=%e\n", zg2);
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
+							{
+								i57_found = ib57;
+							}
+						}
+						if (i57_found >= 0) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								// Найден Солид Блок.
+								s[i].g.zS = zg2;
+								s[i].g.zE = zg2;
+								addboundary(zpos, inz, zg2, XY_PLANE, b, lb, w, lw, s, ls);
+							}
+						}
+						else {
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 			}
@@ -7569,150 +7595,152 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	//inz++;
 
 	integer inx_fix = inx;
-	// Корректировка источника YZ
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranYZ[i]) {
-			doublereal zc = 0.5*(s[i].g.zS + s[i].g.zE);
-			doublereal yc = 0.5*(s[i].g.yS + s[i].g.yE);
-			doublereal xg = s[i].g.xS;
-			// найти позицию +Z на сетке zpos
-			// найти центр кО.
-			// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-			// Адаптацию maxsize ratio 2 не делать.
-			// Если неуспех ищемцентр КО по -Z и смещаем туда.
-			integer i55_found = -2;
-			for (integer i55 = 0; i55 <= inx_fix; i55++) {
-				if (fabs(xpos[i55] - xg) < 1.0e-36) {
-					i55_found = i55;
-					break;
+	if (b_adhesion_Mesh) {
+		// Корректировка источника YZ
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranYZ[i]) {
+				doublereal zc = 0.5 * (s[i].g.zS + s[i].g.zE);
+				doublereal yc = 0.5 * (s[i].g.yS + s[i].g.yE);
+				doublereal xg = s[i].g.xS;
+				// найти позицию +Z на сетке zpos
+				// найти центр кО.
+				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+				// Адаптацию maxsize ratio 2 не делать.
+				// Если неуспех ищемцентр КО по -Z и смещаем туда.
+				integer i55_found = -2;
+				for (integer i55 = 0; i55 <= inx_fix; i55++) {
+					if (fabs(xpos[i55] - xg) < 1.0e-36) {
+						i55_found = i55;
+						break;
+					}
 				}
-			}
-			if (i55_found >= 0) {
-				if (i55_found < inx_fix) {
-					doublereal xg1 = 0.5*(xg + xpos[i55_found + 1]);
-					printf("xg1=%e\n", xg1);
-					integer i56_found = -2;
-					for (integer ib55 = 0; ib55 < lb; ib55++) {
-						if ((zc>b[ib55].g.zS) && (zc<b[ib55].g.zE) && (yc>b[ib55].g.yS) && (yc<b[ib55].g.yE) && (xg1>b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
-						{
-							i56_found = ib55;
-						}
-					}
-					
-					bool bzero_pos = true;
-					doublereal xg2 = xpos[0] - 0.5*fabs(xpos[1] - xpos[0]);
-					if (i55_found>0) {
-						xg2 = 0.5*(xg + xpos[i55_found - 1]);
-						bzero_pos = false;
-					}
-
-
-					printf("xg2=%e\n", xg2);
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (xg2>b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
-						{
-							i57_found = ib57;
-						}
-					}
-
-
-					if (i56_found >= 0) {
-						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							// TODO 11.07.2016
-							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-								// Мы помещаем источник тепла в блок с большей теплопроводностью.
-								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-									// в блоке i56 теплопроводность выше.
-									s[i].g.xS = xg1;
-									s[i].g.xE = xg1;
-									addboundary(xpos, inz, xg1,YZ_PLANE, b, lb, w, lw, s, ls);
-								}
-								else {
-									// в блоке i57 теплопроводность выше.
-									s[i].g.xS = xg2;
-									s[i].g.xE = xg2;
-									addboundary(xpos, inz, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
-								}
+				if (i55_found >= 0) {
+					if (i55_found < inx_fix) {
+						doublereal xg1 = 0.5 * (xg + xpos[i55_found + 1]);
+						printf("xg1=%e\n", xg1);
+						integer i56_found = -2;
+						for (integer ib55 = 0; ib55 < lb; ib55++) {
+							if ((zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (xg1 > b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
+							{
+								i56_found = ib55;
 							}
-							else {
-								// Найден Солид Блок.
-								printf("xg1==%e\n", xg1);
-								doublereal xgolg = xpos[1];
-								if (inx == 1) {
-									// Слишком малоразмерная расчётная сетка.
-									xgolg = 0.5*(xpos[0] + xg1);
-									addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-									xgolg = 0.5*(xpos[1] + xg1);
-									addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-									xgolg = 0.5*(xpos[0] + xg1);
-									// Расстояние от края вглубь расчётной области две клетки.
-									s[i].g.xS = xgolg;
-									s[i].g.xE = xgolg;
+						}
+
+						bool bzero_pos = true;
+						doublereal xg2 = xpos[0] - 0.5 * fabs(xpos[1] - xpos[0]);
+						if (i55_found > 0) {
+							xg2 = 0.5 * (xg + xpos[i55_found - 1]);
+							bzero_pos = false;
+						}
+
+
+						printf("xg2=%e\n", xg2);
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
+							{
+								i57_found = ib57;
+							}
+						}
+
+
+						if (i56_found >= 0) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								// TODO 11.07.2016
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+									// Мы помещаем источник тепла в блок с большей теплопроводностью.
+									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+										// в блоке i56 теплопроводность выше.
+										s[i].g.xS = xg1;
+										s[i].g.xE = xg1;
+										addboundary(xpos, inz, xg1, YZ_PLANE, b, lb, w, lw, s, ls);
+									}
+									else {
+										// в блоке i57 теплопроводность выше.
+										s[i].g.xS = xg2;
+										s[i].g.xE = xg2;
+										addboundary(xpos, inz, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+									}
 								}
 								else {
-									if (bzero_pos) {
+									// Найден Солид Блок.
+									printf("xg1==%e\n", xg1);
+									doublereal xgolg = xpos[1];
+									if (inx == 1) {
 										// Слишком малоразмерная расчётная сетка.
-										xgolg = 0.5*(xpos[0] + xg1);
-										addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-										xgolg = 0.5*(xpos[1] + xg1);
-										addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-										xgolg = 0.5*(xpos[0] + xg1);
+										xgolg = 0.5 * (xpos[0] + xg1);
+										addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+										xgolg = 0.5 * (xpos[1] + xg1);
+										addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+										xgolg = 0.5 * (xpos[0] + xg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.xS = xgolg;
 										s[i].g.xE = xgolg;
 									}
 									else {
-										s[i].g.xS = xg1;
-										s[i].g.xE = xg1;
+										if (bzero_pos) {
+											// Слишком малоразмерная расчётная сетка.
+											xgolg = 0.5 * (xpos[0] + xg1);
+											addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+											xgolg = 0.5 * (xpos[1] + xg1);
+											addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+											xgolg = 0.5 * (xpos[0] + xg1);
+											// Расстояние от края вглубь расчётной области две клетки.
+											s[i].g.xS = xgolg;
+											s[i].g.xE = xgolg;
+										}
+										else {
+											s[i].g.xS = xg1;
+											s[i].g.xE = xg1;
+										}
 									}
-								}
-								addboundary(xpos, inx, xg1,YZ_PLANE, b, lb, w, lw, s, ls);
-								
+									addboundary(xpos, inx, xg1, YZ_PLANE, b, lb, w, lw, s, ls);
 
-							}
-						}
-						else {
 
-							if (i57_found >= 0) {
-								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-									// Найден Солид Блок.
-									s[i].g.xS = xg2;
-									s[i].g.xE = xg2;
-									addboundary(xpos, inx, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
 								}
 							}
 							else {
-								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-								system("PAUSE");
-								exit(1);
+
+								if (i57_found >= 0) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+										// Найден Солид Блок.
+										s[i].g.xS = xg2;
+										s[i].g.xE = xg2;
+										addboundary(xpos, inx, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+									}
+								}
+								else {
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+									system("PAUSE");
+									exit(1);
+								}
 							}
 						}
 					}
-				}
-				else {
-					doublereal xg2 = 0.5*(xg + xpos[i55_found - 1]);
-					printf("xg2=%e\n", xg2);
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (xg2>b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
-						{
-							i57_found = ib57;
-						}
-					}
-					if (i57_found >= 0) {
-						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							// Найден Солид Блок.
-							s[i].g.xS = xg2;
-							s[i].g.xE = xg2;
-							addboundary(xpos, inx, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
-						}
-					}
 					else {
-						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-						system("PAUSE");
-						exit(1);
+						doublereal xg2 = 0.5 * (xg + xpos[i55_found - 1]);
+						printf("xg2=%e\n", xg2);
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
+							{
+								i57_found = ib57;
+							}
+						}
+						if (i57_found >= 0) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								// Найден Солид Блок.
+								s[i].g.xS = xg2;
+								s[i].g.xE = xg2;
+								addboundary(xpos, inx, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+							}
+						}
+						else {
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 			}
@@ -7722,112 +7750,114 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	Sort_method<doublereal>(xpos,inx);
 
 	integer iny_fix = iny;
-	// Корректировка источника XZ
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranXZ[i]) {
-			doublereal xc = 0.5*(s[i].g.xS + s[i].g.xE);
-			doublereal zc = 0.5*(s[i].g.zS + s[i].g.zE);
-			doublereal yg = s[i].g.yS;
-			// найти позицию +Z на сетке zpos
-			// найти центр кО.
-			// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-			// Адаптацию maxsize ratio 2 не делать.
-			// Если неуспех ищемцентр КО по -Z и смещаем туда.
-			integer i55_found = -2;
-			for (integer i55 = 0; i55 <= iny_fix; i55++) {
-				if (fabs(ypos[i55] - yg) < 1.0e-36) {
-					i55_found = i55;
-					break;
+	if (b_adhesion_Mesh) {
+		// Корректировка источника XZ
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranXZ[i]) {
+				doublereal xc = 0.5 * (s[i].g.xS + s[i].g.xE);
+				doublereal zc = 0.5 * (s[i].g.zS + s[i].g.zE);
+				doublereal yg = s[i].g.yS;
+				// найти позицию +Z на сетке zpos
+				// найти центр кО.
+				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+				// Адаптацию maxsize ratio 2 не делать.
+				// Если неуспех ищемцентр КО по -Z и смещаем туда.
+				integer i55_found = -2;
+				for (integer i55 = 0; i55 <= iny_fix; i55++) {
+					if (fabs(ypos[i55] - yg) < 1.0e-36) {
+						i55_found = i55;
+						break;
+					}
 				}
-			}
-			if (i55_found >= 0) {
-				if (i55_found < iny_fix) {
-					doublereal yg1 = 0.5*(yg + ypos[i55_found + 1]);
-					printf("yg1=%e\n", yg1);
-					integer i56_found = -2;
-					for (integer ib55 = 0; ib55 < lb; ib55++) {
-						if ((xc>b[ib55].g.xS) && (xc<b[ib55].g.xE) && (zc>b[ib55].g.zS) && (zc<b[ib55].g.zE) && (yg1>b[ib55].g.yS) && (yg1 < b[ib55].g.yE))
-						{
-							i56_found = ib55;
+				if (i55_found >= 0) {
+					if (i55_found < iny_fix) {
+						doublereal yg1 = 0.5 * (yg + ypos[i55_found + 1]);
+						printf("yg1=%e\n", yg1);
+						integer i56_found = -2;
+						for (integer ib55 = 0; ib55 < lb; ib55++) {
+							if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yg1 > b[ib55].g.yS) && (yg1 < b[ib55].g.yE))
+							{
+								i56_found = ib55;
+							}
 						}
-					}
-					doublereal yg2 = 0.5*(yg + ypos[i55_found - 1]);
-					printf("yg2=%e\n", yg2);
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yg2>b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
-						{
-							i57_found = ib57;
+						doublereal yg2 = 0.5 * (yg + ypos[i55_found - 1]);
+						printf("yg2=%e\n", yg2);
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
+							{
+								i57_found = ib57;
+							}
 						}
-					}
 
 
-					if (i56_found >= 0) {
-						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+						if (i56_found >= 0) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 
-							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-								// Мы помещаем источник тепла в блок с большей теплопроводностью.
-								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-									// в блоке i56 теплопроводность выше.
-									s[i].g.yS = yg1;
-									s[i].g.yE = yg1;
-									addboundary(ypos, iny, yg1,XZ_PLANE, b, lb, w, lw, s, ls);
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+									// Мы помещаем источник тепла в блок с большей теплопроводностью.
+									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+										// в блоке i56 теплопроводность выше.
+										s[i].g.yS = yg1;
+										s[i].g.yE = yg1;
+										addboundary(ypos, iny, yg1, XZ_PLANE, b, lb, w, lw, s, ls);
+									}
+									else {
+										// в блоке i57 теплопроводность выше.
+										s[i].g.yS = yg2;
+										s[i].g.yE = yg2;
+										addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+									}
 								}
 								else {
-									// в блоке i57 теплопроводность выше.
-									s[i].g.yS = yg2;
-									s[i].g.yE = yg2;
-									addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
-								}
-							}
-							else {
-								// Найден Солид Блок.
-								s[i].g.yS = yg1;
-								s[i].g.yE = yg1;
-								addboundary(ypos, iny, yg1,XZ_PLANE, b, lb, w, lw, s, ls);
-							}
-						}
-						else {
-
-							if (i57_found >= 0) {
-								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									// Найден Солид Блок.
-									s[i].g.yS = yg2;
-									s[i].g.yE = yg2;
-									addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
+									s[i].g.yS = yg1;
+									s[i].g.yE = yg1;
+									addboundary(ypos, iny, yg1, XZ_PLANE, b, lb, w, lw, s, ls);
 								}
 							}
 							else {
-								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-								system("PAUSE");
-								exit(1);
+
+								if (i57_found >= 0) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+										// Найден Солид Блок.
+										s[i].g.yS = yg2;
+										s[i].g.yE = yg2;
+										addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+									}
+								}
+								else {
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+									system("PAUSE");
+									exit(1);
+								}
 							}
-						}
-					}
-				}
-				else {
-					doublereal yg2 = 0.5*(yg + ypos[i55_found - 1]);
-					printf("yg2=%e\n", yg2);
-					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yg2>b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
-						{
-							i57_found = ib57;
-						}
-					}
-					if (i57_found >= 0) {
-						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-							// Найден Солид Блок.
-							s[i].g.yS = yg2;
-							s[i].g.yE = yg2;
-							addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
 						}
 					}
 					else {
-						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-						system("PAUSE");
-						exit(1);
+						doublereal yg2 = 0.5 * (yg + ypos[i55_found - 1]);
+						printf("yg2=%e\n", yg2);
+						integer i57_found = -2;
+						for (integer ib57 = 0; ib57 < lb; ib57++) {
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
+							{
+								i57_found = ib57;
+							}
+						}
+						if (i57_found >= 0) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								// Найден Солид Блок.
+								s[i].g.yS = yg2;
+								s[i].g.yE = yg2;
+								addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+							}
+						}
+						else {
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 			}
@@ -7937,6 +7967,8 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	doublereal minimum_fluid_gap_y = 1.0e36;
 	doublereal minimum_fluid_gap_z = 1.0e36;
 
+	
+
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
 	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
 		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
@@ -7957,13 +7989,15 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	// реализация snap to
 	// уменьшает размерность сеточной модели на 33%.
 	if ((bsnap_TO_global==1)||(bsnap_TO_global==3)) {
-		snap_to_moving(source_indexpopadaniqnagranYZ,
-			source_indexpopadaniqnagranXY,
-			source_indexpopadaniqnagranXZ,
-			rxboundary, ryboundary, rzboundary,
-			inumboundaryx, inumboundaryy, inumboundaryz,
-			minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
-			lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+		if (b_adhesion_Mesh) {
+			snap_to_moving(source_indexpopadaniqnagranYZ,
+				source_indexpopadaniqnagranXY,
+				source_indexpopadaniqnagranXZ,
+				rxboundary, ryboundary, rzboundary,
+				inumboundaryx, inumboundaryy, inumboundaryz,
+				minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
+				lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+		}
 	}
 	//printf("%d %d %d", inumboundaryx, inumboundaryy, inumboundaryz);
 	//getchar();
@@ -8012,6 +8046,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 
 
 	// 08.04.2018
+	
 	for (i = 0; i < lb; i++) {
 		// инициализация, на случай если блоки не будут распознаны.
 		block_indexes[i].iL = -1;
@@ -8021,7 +8056,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 		block_indexes[i].kL = -1;
 		block_indexes[i].kR = -2;
 	}
-
+	
 /*
 	for (i = 0; i < lb; i++) {
 		doublereal x4 = b[i].g.xS;
@@ -8075,6 +8110,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 		}
 	}
 	*/
+	
 	for (i = 0; i < lb; i++) {
 		//if (b[i].iunion_id == iunion_id_p1) {
 		{
@@ -8156,6 +8192,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 			}
 		}
 	}
+	
 	//printf("ismarker =%d\n", ismarker);
 	//getchar();
 	
@@ -8241,27 +8278,17 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 
 		// Если мы в solide то одна клетка.
 		// Если во Fluide то две клетки.
-		doublereal cpos = 0.5*(rxboundary[i + 1] + rxboundary[i]);
+		doublereal cpos = 0.5 * (rxboundary[i + 1] + rxboundary[i]);
+
 		// В плоскости найден одиночный fluid контрольный объем имющий 
 		// по E и W сторонам только Solid и hollow соседей.
 		bool bfound_onex_fluid_cv = false;
 		// применим нисходящее проектирование сверху вниз.
 		integer ibcur = 0; // номер текущего блока (кабинет по умолчанию).
 		// сканируем плоскость.
-		for (integer iy = 0; iy < (inumboundaryy); iy++) {
-			for (integer iz = 0; iz < (inumboundaryz); iz++) {
-				doublereal qgeom = 10.0;
-				// Вычисляем координаты текущего КО.
-				doublereal cposy = 0.5*(ryboundary[iy + 1] + ryboundary[iy]);
-				doublereal cposz = 0.5*(rzboundary[iz + 1] + rzboundary[iz]);
-				// Определяем номер блока к которому принадлежит данный КО.
-				//for (integer i99 = 0; i99 < lb; i99++) {
-					//if ((cpos>b[i99].g.xS) && (cpos < b[i99].g.xE)&&
-						//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE)&&
-						//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-						//ibcur = i99;
-					//}
-				//}
+		for (integer iy = 0; (bfound_onex_fluid_cv==false)&&(iy < (inumboundaryy)); iy++) {
+			for (integer iz = 0; (bfound_onex_fluid_cv == false)&&(iz < (inumboundaryz)); iz++) {
+				
 
 				integer iP = i + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz;
 
@@ -8283,6 +8310,21 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 
 				//if (b[ibcur].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				if (ib_marker_flag_fluid[iP]) {
+
+					doublereal qgeom = 10.0;
+					// Вычисляем координаты текущего КО.
+					
+					doublereal cposy = 0.5 * (ryboundary[iy + 1] + ryboundary[iy]);
+					doublereal cposz = 0.5 * (rzboundary[iz + 1] + rzboundary[iz]);
+					// Определяем номер блока к которому принадлежит данный КО.
+					//for (integer i99 = 0; i99 < lb; i99++) {
+						//if ((cpos>b[i99].g.xS) && (cpos < b[i99].g.xE)&&
+							//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE)&&
+							//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+							//ibcur = i99;
+						//}
+					//}
+
 					// Делаем проверку: Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
 					// Т.е. если окажутся два FLUID соседа но у них отношение сторон больше 10=qgeom то разбивать всё равно надо большего пополам.
 					if (i < inumboundaryx - 1) {
@@ -8444,8 +8486,9 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 		else {
 			// FLUID
 			bool b2div = false;
-			for (integer i_3 = 0; i_3 < (inumboundaryy); i_3++) {
-				for (integer i_4 = 0; i_4 < (inumboundaryz); i_4++) {
+			for (integer i_3 = 0; (b2div==false)&&(i_3 < (inumboundaryy)); i_3++) {
+				for (integer i_4 = 0; (b2div == false) && (i_4 < (inumboundaryz)); i_4++) {
+
 					doublereal yp_3= 0.5*(ryboundary[i_3 + 1] + ryboundary[i_3]);
 					doublereal zp_3 = 0.5*(rzboundary[i_4 + 1] + rzboundary[i_4]);
 					doublereal xp_1= 0.5*(rxboundary[i + 1] + rxboundary[i]);
@@ -8705,17 +8748,18 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 
 		// Если мы в solide то одна клетка.
 		// Если во Fluide то две клетки.
-		doublereal cpos = 0.5*(ryboundary[i + 1] + ryboundary[i]);
+		doublereal cpos = 0.5 * (ryboundary[i + 1] + ryboundary[i]);
 		// В плоскости найден одиночный fluid контрольный объем имющий 
 		// по E и W сторонам только Solid и hollow соседей.
 		bool bfound_onex_fluid_cv = false;
 		// применим нисходящее проектирование сверху вниз.
 		integer ibcur = 0; // номер текущего блока (кабинет по умолчанию).
 		// сканируем плоскость.
-		for (integer ix = 0; ix < (inumboundaryx); ix++) {
-			for (integer iz = 0; iz < (inumboundaryz); iz++) {
+		for (integer ix = 0; (bfound_onex_fluid_cv == false)&&(ix < (inumboundaryx)); ix++) {
+			for (integer iz = 0;  (bfound_onex_fluid_cv == false) && (iz < (inumboundaryz)); iz++) {
 				doublereal qgeom = 10.0;
 				// Вычисляем координаты текущего КО.
+				
 				doublereal cposx = 0.5*(rxboundary[ix + 1] + rxboundary[ix]);
 				doublereal cposz = 0.5*(rzboundary[iz + 1] + rzboundary[iz]);
 				// Определяем номер блока к которому принадлежит данный КО.
@@ -8906,8 +8950,8 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 
 			// FLUID
 			bool b2div = false;
-			for (integer i_3 = 0; i_3 < (inumboundaryx); i_3++) {
-				for (integer i_4 = 0; i_4 < (inumboundaryz); i_4++) {
+			for (integer i_3 = 0; (b2div == false)&&(i_3 < (inumboundaryx)); i_3++) {
+				for (integer i_4 = 0; (b2div == false) && (i_4 < (inumboundaryz)); i_4++) {
 					doublereal xp_3 = 0.5*(rxboundary[i_3 + 1] + rxboundary[i_3]);
 					doublereal zp_3 = 0.5*(rzboundary[i_4 + 1] + rzboundary[i_4]);
 					doublereal yp_1 = 0.5*(ryboundary[i + 1] + ryboundary[i]);
@@ -9168,8 +9212,8 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 		// применим нисходящее проектирование сверху вниз.
 		integer ibcur = 0; // номер текущего блока (кабинет по умолчанию).
 		// сканируем плоскость.
-		for (integer ix = 0; ix < (inumboundaryx); ix++) {
-			for (integer iy = 0; iy < (inumboundaryy); iy++) {
+		for (integer ix = 0; (bfound_onex_fluid_cv == false)&&( ix < (inumboundaryx)); ix++) {
+			for (integer iy = 0; (bfound_onex_fluid_cv == false) && (iy < (inumboundaryy)); iy++) {
 				doublereal qgeom = 10.0;
 				// Вычисляем координаты текущего КО.
 				doublereal cposx = 0.5*(rxboundary[ix + 1] + rxboundary[ix]);
@@ -9364,8 +9408,8 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 
 			// FLUID
 			bool b2div = false;
-			for (integer i_3 = 0; i_3 < (inumboundaryx); i_3++) {
-				for (integer i_4 = 0; i_4 < (inumboundaryy); i_4++) {
+			for (integer i_3 = 0; (b2div == false)&&(i_3 < (inumboundaryx)); i_3++) {
+				for (integer i_4 = 0; (b2div == false) && (i_4 < (inumboundaryy)); i_4++) {
 					doublereal xp_3 = 0.5*(rxboundary[i_3 + 1] + rxboundary[i_3]);
 					doublereal yp_3 = 0.5*(ryboundary[i_4 + 1] + ryboundary[i_4]);
 					doublereal zp_1 = 0.5*(rzboundary[i + 1] + rzboundary[i]);
@@ -9493,152 +9537,154 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	//getchar();
 
 	integer inz_fix = inz;
-	// Корректировка источника XY
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranXY!=nullptr) {
-			if (source_indexpopadaniqnagranXY[i]) {
-				doublereal xc = 0.5*(s[i].g.xS + s[i].g.xE);
-				doublereal yc = 0.5*(s[i].g.yS + s[i].g.yE);
-				doublereal zg = s[i].g.zS;
-				// найти позицию +Z на сетке zpos
-				// найти центр кО.
-				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-				// Адаптацию maxsize ratio 2 не делать.
-				// Если неуспех ищемцентр КО по -Z и смещаем туда.
-				integer i55_found = -2;
-				for (integer i55 = 0; i55 <= inz_fix; i55++) {
-					if (fabs(zpos[i55] - zg) < 1.0e-36) {
-						i55_found = i55;
-						break;
+	if (b_adhesion_Mesh) {
+		// Корректировка источника XY
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranXY != nullptr) {
+				if (source_indexpopadaniqnagranXY[i]) {
+					doublereal xc = 0.5 * (s[i].g.xS + s[i].g.xE);
+					doublereal yc = 0.5 * (s[i].g.yS + s[i].g.yE);
+					doublereal zg = s[i].g.zS;
+					// найти позицию +Z на сетке zpos
+					// найти центр кО.
+					// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+					// Адаптацию maxsize ratio 2 не делать.
+					// Если неуспех ищемцентр КО по -Z и смещаем туда.
+					integer i55_found = -2;
+					for (integer i55 = 0; i55 <= inz_fix; i55++) {
+						if (fabs(zpos[i55] - zg) < 1.0e-36) {
+							i55_found = i55;
+							break;
+						}
 					}
-				}
-				if (i55_found >= 0) {
-					if (i55_found < inz_fix) {
-						doublereal zg1 = 0.5*(zg + zpos[i55_found + 1]);
-						printf("zg1=%e\n", zg1);
-						integer i56_found = -2;
-						for (integer ib55 = 0; ib55 < lb; ib55++) {
+					if (i55_found >= 0) {
+						if (i55_found < inz_fix) {
+							doublereal zg1 = 0.5 * (zg + zpos[i55_found + 1]);
+							printf("zg1=%e\n", zg1);
+							integer i56_found = -2;
+							for (integer ib55 = 0; ib55 < lb; ib55++) {
 
-							if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (zg1 > b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
-							{
-								i56_found = ib55;
-							}
-						}
-
-						bool bzero_pos = true;
-						doublereal zg2 = zpos[0] - 0.5*fabs(zpos[1] - zpos[0]);
-						if (i55_found > 0) {
-							zg2 = 0.5*(zg + zpos[i55_found - 1]);
-							bzero_pos = false;
-						}
-						printf("zg2=%e\n", zg2);
-						integer i57_found = -2;
-						for (integer ib57 = 0; ib57 < lb; ib57++) {
-
-							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
-							{
-								if (zg2 > zpos[0]) {
-									i57_found = ib57;
+								if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (zg1 > b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
+								{
+									i56_found = ib55;
 								}
 							}
-						}
 
-						if (i56_found >= 0) {
-							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-									// Мы помещаем источник тепла в блок с большей теплопроводностью.
-									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-										// в блоке i56 теплопроводность выше.
-										s[i].g.zS = zg1;
-										s[i].g.zE = zg1;
-										addboundary(zpos, inz, zg1,XY_PLANE, b, lb, w, lw, s, ls);
+							bool bzero_pos = true;
+							doublereal zg2 = zpos[0] - 0.5 * fabs(zpos[1] - zpos[0]);
+							if (i55_found > 0) {
+								zg2 = 0.5 * (zg + zpos[i55_found - 1]);
+								bzero_pos = false;
+							}
+							printf("zg2=%e\n", zg2);
+							integer i57_found = -2;
+							for (integer ib57 = 0; ib57 < lb; ib57++) {
+
+								if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
+								{
+									if (zg2 > zpos[0]) {
+										i57_found = ib57;
+									}
+								}
+							}
+
+							if (i56_found >= 0) {
+								if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+									if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+										// Мы помещаем источник тепла в блок с большей теплопроводностью.
+										// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+										if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+											// в блоке i56 теплопроводность выше.
+											s[i].g.zS = zg1;
+											s[i].g.zE = zg1;
+											addboundary(zpos, inz, zg1, XY_PLANE, b, lb, w, lw, s, ls);
+										}
+										else {
+											// в блоке i57 теплопроводность выше.
+											s[i].g.zS = zg2;
+											s[i].g.zE = zg2;
+											addboundary(zpos, inz, zg2, XY_PLANE, b, lb, w, lw, s, ls);
+										}
 									}
 									else {
-										// в блоке i57 теплопроводность выше.
-										s[i].g.zS = zg2;
-										s[i].g.zE = zg2;
-										addboundary(zpos, inz, zg2,XY_PLANE, b, lb, w, lw, s, ls);
+										// Найден Солид Блок.
+										s[i].g.zS = zg1;
+										s[i].g.zE = zg1;
+										addboundary(zpos, inz, zg1, XY_PLANE, b, lb, w, lw, s, ls);
 									}
 								}
 								else {
-									// Найден Солид Блок.
-									s[i].g.zS = zg1;
-									s[i].g.zE = zg1;
-									addboundary(zpos, inz, zg1,XY_PLANE, b, lb, w, lw, s, ls);
-								}
-							}
-							else {
 
-								if (i57_found >= 0) {
-									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+									if (i57_found >= 0) {
+										if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 
-										// Найден Солид Блок.
-										printf("zg1==%e\n", zg1);
-										doublereal zgolg = zpos[1];
-										if (inz == 1) {
-											// Слишком малоразмерная расчётная сетка.
-											zgolg = 0.5*(zpos[0] + zg1);
-											addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-											zgolg = 0.5*(zpos[1] + zg1);
-											addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-											zgolg = 0.5*(zpos[0] + zg1);
-											// Расстояние от края вглубь расчётной области две клетки.
-											s[i].g.zS = zgolg;
-											s[i].g.zE = zgolg;
-										}
-										else {
-											if (bzero_pos) {
-												// Источник в позиции 0.0 разбиваем поподробнее.
-												zgolg = 0.5*(zpos[0] + zg1);
-												addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-												zgolg = 0.5*(zpos[1] + zg1);
-												addboundary(zpos, inz, zgolg,XY_PLANE, b, lb, w, lw, s, ls);
-												zgolg = 0.5*(zpos[0] + zg1);
+											// Найден Солид Блок.
+											printf("zg1==%e\n", zg1);
+											doublereal zgolg = zpos[1];
+											if (inz == 1) {
+												// Слишком малоразмерная расчётная сетка.
+												zgolg = 0.5 * (zpos[0] + zg1);
+												addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+												zgolg = 0.5 * (zpos[1] + zg1);
+												addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+												zgolg = 0.5 * (zpos[0] + zg1);
 												// Расстояние от края вглубь расчётной области две клетки.
 												s[i].g.zS = zgolg;
 												s[i].g.zE = zgolg;
 											}
 											else {
-												s[i].g.zS = zg1;
-												s[i].g.zE = zg1;
+												if (bzero_pos) {
+													// Источник в позиции 0.0 разбиваем поподробнее.
+													zgolg = 0.5 * (zpos[0] + zg1);
+													addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+													zgolg = 0.5 * (zpos[1] + zg1);
+													addboundary(zpos, inz, zgolg, XY_PLANE, b, lb, w, lw, s, ls);
+													zgolg = 0.5 * (zpos[0] + zg1);
+													// Расстояние от края вглубь расчётной области две клетки.
+													s[i].g.zS = zgolg;
+													s[i].g.zE = zgolg;
+												}
+												else {
+													s[i].g.zS = zg1;
+													s[i].g.zE = zg1;
+												}
 											}
+											addboundary(zpos, inz, zg1, XY_PLANE, b, lb, w, lw, s, ls);
+
+
 										}
-										addboundary(zpos, inz, zg1,XY_PLANE, b, lb, w, lw, s, ls);
-
-
+									}
+									else {
+										printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+										system("PAUSE");
+										exit(1);
 									}
 								}
-								else {
-									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-									system("PAUSE");
-									exit(1);
-								}
-							}
-						}
-					}
-					else {
-						doublereal zg2 = 0.5*(zg + zpos[i55_found - 1]);
-						printf("zg2=%e\n", zg2);
-						integer i57_found = -2;
-						for (integer ib57 = 0; ib57 < lb; ib57++) {
-							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
-							{
-								i57_found = ib57;
-							}
-						}
-						if (i57_found >= 0) {
-							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-								// Найден Солид Блок.
-								s[i].g.zS = zg2;
-								s[i].g.zE = zg2;
-								addboundary(zpos, inz, zg2,XY_PLANE, b, lb, w, lw, s, ls);
 							}
 						}
 						else {
-							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-							system("PAUSE");
-							exit(1);
+							doublereal zg2 = 0.5 * (zg + zpos[i55_found - 1]);
+							printf("zg2=%e\n", zg2);
+							integer i57_found = -2;
+							for (integer ib57 = 0; ib57 < lb; ib57++) {
+								if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
+								{
+									i57_found = ib57;
+								}
+							}
+							if (i57_found >= 0) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+									// Найден Солид Блок.
+									s[i].g.zS = zg2;
+									s[i].g.zE = zg2;
+									addboundary(zpos, inz, zg2, XY_PLANE, b, lb, w, lw, s, ls);
+								}
+							}
+							else {
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+								system("PAUSE");
+								exit(1);
+							}
 						}
 					}
 				}
@@ -9662,155 +9708,157 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	*/
 
 	integer inx_fix = inx;
-	// Корректировка источника YZ
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranYZ!=nullptr) {
-			if (source_indexpopadaniqnagranYZ[i]) {
-				doublereal zc = 0.5*(s[i].g.zS + s[i].g.zE);
-				doublereal yc = 0.5*(s[i].g.yS + s[i].g.yE);
-				doublereal xg = s[i].g.xS;
-				// найти позицию +Z на сетке zpos
-				// найти центр кО.
-				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-				// Адаптацию maxsize ratio 2 не делать.
-				// Если неуспех ищемцентр КО по -Z и смещаем туда.
-				integer i55_found = -2;
-				for (integer i55 = 0; i55 <= inx_fix; i55++) {
-					if (fabs(xpos[i55] - xg) < 1.0e-36) {
-						i55_found = i55;
-						break;
+	if (b_adhesion_Mesh) {
+		// Корректировка источника YZ
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranYZ != nullptr) {
+				if (source_indexpopadaniqnagranYZ[i]) {
+					doublereal zc = 0.5 * (s[i].g.zS + s[i].g.zE);
+					doublereal yc = 0.5 * (s[i].g.yS + s[i].g.yE);
+					doublereal xg = s[i].g.xS;
+					// найти позицию +Z на сетке zpos
+					// найти центр кО.
+					// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+					// Адаптацию maxsize ratio 2 не делать.
+					// Если неуспех ищемцентр КО по -Z и смещаем туда.
+					integer i55_found = -2;
+					for (integer i55 = 0; i55 <= inx_fix; i55++) {
+						if (fabs(xpos[i55] - xg) < 1.0e-36) {
+							i55_found = i55;
+							break;
+						}
 					}
-				}
-				if (i55_found >= 0) {
-					if (i55_found < inx_fix) {
-						doublereal xg1 = 0.5*(xg + xpos[i55_found + 1]);
-						printf("xg1=%e\n", xg1);
-						integer i56_found = -2;
-						for (integer ib55 = 0; ib55 < lb; ib55++) {
+					if (i55_found >= 0) {
+						if (i55_found < inx_fix) {
+							doublereal xg1 = 0.5 * (xg + xpos[i55_found + 1]);
+							printf("xg1=%e\n", xg1);
+							integer i56_found = -2;
+							for (integer ib55 = 0; ib55 < lb; ib55++) {
 
-							if ((zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (xg1 > b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
-							{
-								i56_found = ib55;
-							}
-						}
-						bool bzero_pos = true;
-						doublereal xg2 = xpos[0] - 0.5*fabs(xpos[1] - xpos[0]);
-						if (i55_found > 0) {
-							xg2 = 0.5*(xg + xpos[i55_found - 1]);
-							bzero_pos = false;
-						}
-						printf("xg2=%e\n", xg2);
-						integer i57_found = -2;
-						for (integer ib57 = 0; ib57 < lb; ib57++) {
-							if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
-							{
-								if (xg2 > xpos[0]) {
-									i57_found = ib57;
+								if ((zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (xg1 > b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
+								{
+									i56_found = ib55;
 								}
 							}
-
-						}
-
-
-
-						if (i56_found >= 0) {
-							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-								// TODO 11.07.2016
-								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-									// Мы помещаем источник тепла в блок с большей теплопроводностью.
-									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-										// в блоке i56 теплопроводность выше.
-										s[i].g.xS = xg1;
-										s[i].g.xE = xg1;
-										addboundary(xpos, inz, xg1,YZ_PLANE, b, lb, w, lw, s, ls);
-									}
-									else {
-										// в блоке i57 теплопроводность выше.
-										s[i].g.xS = xg2;
-										s[i].g.xE = xg2;
-										addboundary(xpos, inz, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
+							bool bzero_pos = true;
+							doublereal xg2 = xpos[0] - 0.5 * fabs(xpos[1] - xpos[0]);
+							if (i55_found > 0) {
+								xg2 = 0.5 * (xg + xpos[i55_found - 1]);
+								bzero_pos = false;
+							}
+							printf("xg2=%e\n", xg2);
+							integer i57_found = -2;
+							for (integer ib57 = 0; ib57 < lb; ib57++) {
+								if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
+								{
+									if (xg2 > xpos[0]) {
+										i57_found = ib57;
 									}
 								}
-								else {
-									// Найден Солид Блок.
-									printf("xg1==%e\n", xg1);
-									doublereal xgolg = xpos[1];
-									if (inx == 1) {
-										// Слишком малоразмерная расчётная сетка.
-										xgolg = 0.5*(xpos[0] + xg1);
-										addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-										xgolg = 0.5*(xpos[1] + xg1);
-										addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-										xgolg = 0.5*(xpos[0] + xg1);
-										// Расстояние от края вглубь расчётной области две клетки.
-										s[i].g.xS = xgolg;
-										s[i].g.xE = xgolg;
+
+							}
+
+
+
+							if (i56_found >= 0) {
+								if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+									// TODO 11.07.2016
+									if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+										// Мы помещаем источник тепла в блок с большей теплопроводностью.
+										// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+										if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+											// в блоке i56 теплопроводность выше.
+											s[i].g.xS = xg1;
+											s[i].g.xE = xg1;
+											addboundary(xpos, inz, xg1, YZ_PLANE, b, lb, w, lw, s, ls);
+										}
+										else {
+											// в блоке i57 теплопроводность выше.
+											s[i].g.xS = xg2;
+											s[i].g.xE = xg2;
+											addboundary(xpos, inz, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+										}
 									}
 									else {
-										if (bzero_pos) {
-											// Источник в позиции 0.0.
-											// Разбиваем поподробнее.
-											xgolg = 0.5*(xpos[0] + xg1);
-											addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-											xgolg = 0.5*(xpos[1] + xg1);
-											addboundary(xpos, inx, xgolg,YZ_PLANE, b, lb, w, lw, s, ls);
-											xgolg = 0.5*(xpos[0] + xg1);
+										// Найден Солид Блок.
+										printf("xg1==%e\n", xg1);
+										doublereal xgolg = xpos[1];
+										if (inx == 1) {
+											// Слишком малоразмерная расчётная сетка.
+											xgolg = 0.5 * (xpos[0] + xg1);
+											addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+											xgolg = 0.5 * (xpos[1] + xg1);
+											addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+											xgolg = 0.5 * (xpos[0] + xg1);
 											// Расстояние от края вглубь расчётной области две клетки.
 											s[i].g.xS = xgolg;
 											s[i].g.xE = xgolg;
 										}
 										else {
-											s[i].g.xS = xg1;
-											s[i].g.xE = xg1;
+											if (bzero_pos) {
+												// Источник в позиции 0.0.
+												// Разбиваем поподробнее.
+												xgolg = 0.5 * (xpos[0] + xg1);
+												addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+												xgolg = 0.5 * (xpos[1] + xg1);
+												addboundary(xpos, inx, xgolg, YZ_PLANE, b, lb, w, lw, s, ls);
+												xgolg = 0.5 * (xpos[0] + xg1);
+												// Расстояние от края вглубь расчётной области две клетки.
+												s[i].g.xS = xgolg;
+												s[i].g.xE = xgolg;
+											}
+											else {
+												s[i].g.xS = xg1;
+												s[i].g.xE = xg1;
+											}
 										}
-									}
-									addboundary(xpos, inx, xg1,YZ_PLANE, b, lb, w, lw, s, ls);
+										addboundary(xpos, inx, xg1, YZ_PLANE, b, lb, w, lw, s, ls);
 
 
-									//printf("ok");
-								}
-							}
-							else {
-
-								if (i57_found >= 0) {
-									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-										// Найден Солид Блок.
-										s[i].g.xS = xg2;
-										s[i].g.xE = xg2;
-										addboundary(xpos, inx, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
+										//printf("ok");
 									}
 								}
 								else {
-									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-									system("PAUSE");
-									exit(1);
+
+									if (i57_found >= 0) {
+										if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+											// Найден Солид Блок.
+											s[i].g.xS = xg2;
+											s[i].g.xE = xg2;
+											addboundary(xpos, inx, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+										}
+									}
+									else {
+										printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+										system("PAUSE");
+										exit(1);
+									}
 								}
 							}
 						}
-					}
-					else {
-						doublereal xg2 = 0.5*(xg + xpos[i55_found - 1]);
-						printf("xg2=%e\n", xg2);
-						integer i57_found = -2;
-						for (integer ib57 = 0; ib57 < lb; ib57++) {
-							if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
-							{
-								i57_found = ib57;
-							}
-						}
-						if (i57_found >= 0) {
-							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-								// Найден Солид Блок.
-								s[i].g.xS = xg2;
-								s[i].g.xE = xg2;
-								addboundary(xpos, inx, xg2,YZ_PLANE, b, lb, w, lw, s, ls);
-							}
-						}
 						else {
-							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-							system("PAUSE");
-							exit(1);
+							doublereal xg2 = 0.5 * (xg + xpos[i55_found - 1]);
+							printf("xg2=%e\n", xg2);
+							integer i57_found = -2;
+							for (integer ib57 = 0; ib57 < lb; ib57++) {
+								if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
+								{
+									i57_found = ib57;
+								}
+							}
+							if (i57_found >= 0) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+									// Найден Солид Блок.
+									s[i].g.xS = xg2;
+									s[i].g.xE = xg2;
+									addboundary(xpos, inx, xg2, YZ_PLANE, b, lb, w, lw, s, ls);
+								}
+							}
+							else {
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+								system("PAUSE");
+								exit(1);
+							}
 						}
 					}
 				}
@@ -9830,157 +9878,159 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	*/
 
 	integer iny_fix = iny;
-	// Корректировка источника XZ
-	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranXZ != nullptr) {
-			if (source_indexpopadaniqnagranXZ[i]) {
-				doublereal xc = 0.5*(s[i].g.xS + s[i].g.xE);
-				doublereal zc = 0.5*(s[i].g.zS + s[i].g.zE);
-				doublereal yg = s[i].g.yS;
-				// найти позицию +Z на сетке zpos
-				// найти центр кО.
-				// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
-				// Адаптацию maxsize ratio 2 не делать.
-				// Если неуспех ищемцентр КО по -Z и смещаем туда.
-				integer i55_found = -2;
-				for (integer i55 = 0; i55 <= iny_fix; i55++) {
-					if (fabs(ypos[i55] - yg) < shorter_length_for_simplificationY(yg, b, lb, w, lw, s, ls)) {
-						i55_found = i55;
-						break;
+	if (b_adhesion_Mesh) {
+		// Корректировка источника XZ
+		for (i = 0; i < ls; i++) {
+			if (source_indexpopadaniqnagranXZ != nullptr) {
+				if (source_indexpopadaniqnagranXZ[i]) {
+					doublereal xc = 0.5 * (s[i].g.xS + s[i].g.xE);
+					doublereal zc = 0.5 * (s[i].g.zS + s[i].g.zE);
+					doublereal yg = s[i].g.yS;
+					// найти позицию +Z на сетке zpos
+					// найти центр кО.
+					// Если он принадлежит Solid block то сместить истоник в цент этой клетки.
+					// Адаптацию maxsize ratio 2 не делать.
+					// Если неуспех ищемцентр КО по -Z и смещаем туда.
+					integer i55_found = -2;
+					for (integer i55 = 0; i55 <= iny_fix; i55++) {
+						if (fabs(ypos[i55] - yg) < shorter_length_for_simplificationY(yg, b, lb, w, lw, s, ls)) {
+							i55_found = i55;
+							break;
+						}
 					}
-				}
-				if (i55_found >= 0) {
-					if (i55_found < iny_fix) {
-						doublereal yg1 = 0.5*(yg + ypos[i55_found + 1]);
-						//printf("yg1=%e\n", yg1);
-						std::cout << "yg1=" << yg1 << std::endl;
-						integer i56_found = -2;
-						for (integer ib55 = 0; ib55 < lb; ib55++) {
-							if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yg1 > b[ib55].g.yS) && (yg1 < b[ib55].g.yE))
-							{
-								i56_found = ib55;
-							}
-						}
-
-						bool bzero_pos = true;
-						doublereal yg2 = ypos[0] - 0.5*fabs(ypos[1] - ypos[0]);
-						if (i55_found > 0) {
-							yg2 = 0.5*(yg + ypos[i55_found - 1]);
-							bzero_pos = false;
-						}
-
-						//printf("yg2=%e\n", yg2);
-						std::cout << "yg2=" << yg2 << std::endl;
-						integer i57_found = -2;
-						for (integer ib57 = 0; ib57 < lb; ib57++) {
-							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
-							{
-								if (yg2 > ypos[0]) {
-									i57_found = ib57;
+					if (i55_found >= 0) {
+						if (i55_found < iny_fix) {
+							doublereal yg1 = 0.5 * (yg + ypos[i55_found + 1]);
+							//printf("yg1=%e\n", yg1);
+							std::cout << "yg1=" << yg1 << std::endl;
+							integer i56_found = -2;
+							for (integer ib55 = 0; ib55 < lb; ib55++) {
+								if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yg1 > b[ib55].g.yS) && (yg1 < b[ib55].g.yE))
+								{
+									i56_found = ib55;
 								}
 							}
-						}
 
+							bool bzero_pos = true;
+							doublereal yg2 = ypos[0] - 0.5 * fabs(ypos[1] - ypos[0]);
+							if (i55_found > 0) {
+								yg2 = 0.5 * (yg + ypos[i55_found - 1]);
+								bzero_pos = false;
+							}
 
-						if (i56_found >= 0) {
-							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-
-								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
-									// Мы помещаем источник тепла в блок с большей теплопроводностью.
-									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
-									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
-										// в блоке i56 теплопроводность выше.
-										s[i].g.yS = yg1;
-										s[i].g.yE = yg1;
-										addboundary(ypos, iny, yg1,XZ_PLANE, b, lb, w, lw, s, ls);
-									}
-									else {
-										// в блоке i57 теплопроводность выше.
-										s[i].g.yS = yg2;
-										s[i].g.yE = yg2;
-										addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
+							//printf("yg2=%e\n", yg2);
+							std::cout << "yg2=" << yg2 << std::endl;
+							integer i57_found = -2;
+							for (integer ib57 = 0; ib57 < lb; ib57++) {
+								if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
+								{
+									if (yg2 > ypos[0]) {
+										i57_found = ib57;
 									}
 								}
-								else {
+							}
 
-									// Найден Солид Блок.
-									//printf("yg1==%e\n", yg1);
-									std::cout << "yg1=" << yg1 << std::endl;
-									doublereal ygolg = ypos[1];
-									if (iny == 1) {
-										// Слишком малоразмерная расчётная сетка.
-										ygolg = 0.5*(ypos[0] + yg1);
-										addboundary(ypos, iny, ygolg,XZ_PLANE, b, lb, w, lw, s, ls);
-										ygolg = 0.5*(ypos[1] + yg1);
-										addboundary(ypos, iny, ygolg,XZ_PLANE, b, lb, w, lw, s, ls);
-										ygolg = 0.5*(ypos[0] + yg1);
-										// Расстояние от края вглубь расчётной области две клетки.
-										s[i].g.yS = ygolg;
-										s[i].g.yE = ygolg;
+
+							if (i56_found >= 0) {
+								if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+
+									if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
+										// Мы помещаем источник тепла в блок с большей теплопроводностью.
+										// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
+										if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
+											// в блоке i56 теплопроводность выше.
+											s[i].g.yS = yg1;
+											s[i].g.yE = yg1;
+											addboundary(ypos, iny, yg1, XZ_PLANE, b, lb, w, lw, s, ls);
+										}
+										else {
+											// в блоке i57 теплопроводность выше.
+											s[i].g.yS = yg2;
+											s[i].g.yE = yg2;
+											addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+										}
 									}
 									else {
-										if (bzero_pos) {
-											// Источник в позиции 0.0.
-											// Разбиваем поподробнее.
-											ygolg = 0.5*(ypos[0] + yg1);
-											addboundary(ypos, iny, ygolg,XZ_PLANE, b, lb, w, lw, s, ls);
-											ygolg = 0.5*(ypos[1] + yg1);
-											addboundary(ypos, iny, ygolg,XZ_PLANE, b, lb, w, lw, s, ls);
-											ygolg = 0.5*(ypos[0] + yg1);
+
+										// Найден Солид Блок.
+										//printf("yg1==%e\n", yg1);
+										std::cout << "yg1=" << yg1 << std::endl;
+										doublereal ygolg = ypos[1];
+										if (iny == 1) {
+											// Слишком малоразмерная расчётная сетка.
+											ygolg = 0.5 * (ypos[0] + yg1);
+											addboundary(ypos, iny, ygolg, XZ_PLANE, b, lb, w, lw, s, ls);
+											ygolg = 0.5 * (ypos[1] + yg1);
+											addboundary(ypos, iny, ygolg, XZ_PLANE, b, lb, w, lw, s, ls);
+											ygolg = 0.5 * (ypos[0] + yg1);
+											// Расстояние от края вглубь расчётной области две клетки.
 											s[i].g.yS = ygolg;
 											s[i].g.yE = ygolg;
 										}
 										else {
-											s[i].g.yS = yg1;
-											s[i].g.yE = yg1;
+											if (bzero_pos) {
+												// Источник в позиции 0.0.
+												// Разбиваем поподробнее.
+												ygolg = 0.5 * (ypos[0] + yg1);
+												addboundary(ypos, iny, ygolg, XZ_PLANE, b, lb, w, lw, s, ls);
+												ygolg = 0.5 * (ypos[1] + yg1);
+												addboundary(ypos, iny, ygolg, XZ_PLANE, b, lb, w, lw, s, ls);
+												ygolg = 0.5 * (ypos[0] + yg1);
+												s[i].g.yS = ygolg;
+												s[i].g.yE = ygolg;
+											}
+											else {
+												s[i].g.yS = yg1;
+												s[i].g.yE = yg1;
+											}
 										}
-									}
-									addboundary(ypos, iny, yg1,XZ_PLANE, b, lb, w, lw, s, ls);
+										addboundary(ypos, iny, yg1, XZ_PLANE, b, lb, w, lw, s, ls);
 
 
-								}
-							}
-							else {
-
-								if (i57_found >= 0) {
-									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-										// Найден Солид Блок.
-										s[i].g.yS = yg2;
-										s[i].g.yE = yg2;
-										addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
 									}
 								}
 								else {
-									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-									system("PAUSE");
-									exit(1);
+
+									if (i57_found >= 0) {
+										if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+											// Найден Солид Блок.
+											s[i].g.yS = yg2;
+											s[i].g.yE = yg2;
+											addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+										}
+									}
+									else {
+										printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+										system("PAUSE");
+										exit(1);
+									}
 								}
 							}
 						}
-					}
-					else {
-						doublereal yg2 = 0.5*(yg + ypos[i55_found - 1]);
-						//printf("yg2=%e\n", yg2);
-						std::cout << "yg2=" << yg2 << std::endl;
-						integer i57_found = -2;
-						for (integer ib57 = 0; ib57 < lb; ib57++) {
-							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
-							{
-								i57_found = ib57;
-							}
-						}
-						if (i57_found >= 0) {
-							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
-								// Найден Солид Блок.
-								s[i].g.yS = yg2;
-								s[i].g.yE = yg2;
-								addboundary(ypos, iny, yg2,XZ_PLANE, b, lb, w, lw, s, ls);
-							}
-						}
 						else {
-							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
-							system("PAUSE");
-							exit(1);
+							doublereal yg2 = 0.5 * (yg + ypos[i55_found - 1]);
+							//printf("yg2=%e\n", yg2);
+							std::cout << "yg2=" << yg2 << std::endl;
+							integer i57_found = -2;
+							for (integer ib57 = 0; ib57 < lb; ib57++) {
+								if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
+								{
+									i57_found = ib57;
+								}
+							}
+							if (i57_found >= 0) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+									// Найден Солид Блок.
+									s[i].g.yS = yg2;
+									s[i].g.yE = yg2;
+									addboundary(ypos, iny, yg2, XZ_PLANE, b, lb, w, lw, s, ls);
+								}
+							}
+							else {
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
+								system("PAUSE");
+								exit(1);
+							}
 						}
 					}
 				}

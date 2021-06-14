@@ -2,6 +2,8 @@
 #ifndef _CONSTR_STRUCT_CPP_ALICE_
 #define _CONSTR_STRUCT_CPP_ALICE_ 1
 
+
+
 // Ќе существующий узел. 
 const integer NON_EXISTENT_NODE = - 1;
 // 30.08.2019 ¬место того чтобы разобратьс€ с причиной € просто выключил предупреждени€.
@@ -125,7 +127,7 @@ void calculate_max_elm(octree* &oc, integer &maxelm, integer iflag, BLOCK* b, in
 				p.z = 0.125*(octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
 				integer ib;
 				bool inDomain = false;
-				int ib1;
+				//int ib1;
 
 				switch (iflag) {
 				case TEMPERATURE: 
@@ -287,7 +289,7 @@ void constr_nodes_nvtx_prop_alice(octree*& oc, int inx, int iny, int inz,
 	float**& prop, doublereal*& Sc, POWER_TIME_DEPEND*& ipower_time_depend, TPROP* matlist, integer*& ilevel_alice,
 	bool*& bActiveShearModule) {
 
-	integer maxelm_loc = (inx + 1) * (iny + 1) * (inz + 1);
+	//integer maxelm_loc = (inx + 1) * (iny + 1) * (inz + 1);
 	// ¬ычисление maxelm.
 	calculate_max_elm(oc, maxelm, iflag, b, lb, true);
 #if doubleintprecision == 1
@@ -502,7 +504,7 @@ void constr_nodes_nvtx_prop_alice(octree*& oc, int inx, int iny, int inz,
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
-				integer i0, i1, i2, i3, i4, i5, i6, i7;
+				//integer i0, i1, i2, i3, i4, i5, i6, i7;
 
 				bool bfound = false;
 
@@ -552,103 +554,103 @@ void constr_nodes_nvtx_prop_alice(octree*& oc, int inx, int iny, int inz,
 					bfound = hash_table_export[key_now].flag;
 
 					if (!bfound) {
-						i0 = marker_pa_local;
+						//i0 = marker_pa_local;
 
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
 					}
-					else {
-						i0 = hash_table_export[key_now].inum;
-					}
+					//else {
+						//i0 = hash_table_export[key_now].inum;
+					//}
 					bfound = false;
 					key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p1, epsTolx, epsToly, epsTolz);
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
-						i1 = marker_pa_local;
+						//i1 = marker_pa_local;
 
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
 					}
-					else {
-						i1 = hash_table_export[key_now].inum;
-					}
+					//else {
+						//i1 = hash_table_export[key_now].inum;
+					//}
 					bfound = false;
 					key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p2, epsTolx, epsToly, epsTolz);
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
-						i2 = marker_pa_local;
+						//i2 = marker_pa_local;
 
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
 					}
-					else {
-						i2 = hash_table_export[key_now].inum;
-					}
+					//else {
+						//i2 = hash_table_export[key_now].inum;
+					//}
 					bfound = false;
 					key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p3, epsTolx, epsToly, epsTolz);
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
-						i3 = marker_pa_local;
+						//i3 = marker_pa_local;
 
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
 					}
-					else {
-						i3 = hash_table_export[key_now].inum;
-					}
+					//else {
+						//i3 = hash_table_export[key_now].inum;
+					//}
 					bfound = false;
 					key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p4, epsTolx, epsToly, epsTolz);
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
-						i4 = marker_pa_local;
+						//i4 = marker_pa_local;
 
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
 					}
-					else {
-						i4 = hash_table_export[key_now].inum;
-					}
+					//else {
+						//i4 = hash_table_export[key_now].inum;
+					//}
 					bfound = false;
 					key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p5, epsTolx, epsToly, epsTolz);
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
-						i5 = marker_pa_local;
+						//i5 = marker_pa_local;
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
 					}
-					else {
-						i5 = hash_table_export[key_now].inum;
-					}
+					//else {
+						//i5 = hash_table_export[key_now].inum;
+					//}
 					bfound = false;
 					key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p6, epsTolx, epsToly, epsTolz);
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
-						i6 = marker_pa_local;
+						//i6 = marker_pa_local;
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
 					}
-					else {
-						i6 = hash_table_export[key_now].inum;
-					}
+					//else {
+						//i6 = hash_table_export[key_now].inum;
+					//}
 					bfound = false;
 					key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p7, epsTolx, epsToly, epsTolz);
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
-						i7 = marker_pa_local;
+						//i7 = marker_pa_local;
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
 					}
-					else {
-						i7 = hash_table_export[key_now].inum;
-					}
+					//else {
+						//i7 = hash_table_export[key_now].inum;
+					//}
 
 				}
 
@@ -895,8 +897,7 @@ void constr_nodes_nvtx_prop_alice(octree*& oc, int inx, int iny, int inz,
 				// √асим информацию о посещени€х.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
-				// это лист update pa.
-				integer i0, i1, i2, i3, i4, i5, i6, i7;
+				
 
 				bool bfound = false;
 
@@ -936,6 +937,9 @@ void constr_nodes_nvtx_prop_alice(octree*& oc, int inx, int iny, int inz,
 					inDomain = false;
 				}
 				if (inDomain) {
+
+					// это лист update pa.
+					integer i0, i1, i2, i3, i4, i5, i6, i7;
 
 					// ћы будем оперировать только над точками принадлежащими –ќ.
 					// “.е. точки в HOLLOW блоках мы игнорируем.
@@ -2071,6 +2075,9 @@ void FIRST_ORDER_LINEAR_RECONSTRUCT(FILE* &fp_4,
 	}
 } // FIRST_ORDER_LINEAR_RECONSTRUCT
 
+// ѕр€мой метод решени€ дл€ нахождени€ коэффициентов, реализован позже по коду
+void Direct_for_coef(doublereal**& Xmatr, doublereal*& koefmatr, doublereal*& bmatr, integer nodes);
+
 // 05.04.2019
   //fglobal[0].potent[PAM]
   // —игнатура вызова.
@@ -2081,7 +2088,8 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCT(FILE* &fp_4,
 	doublereal* &vol, doublereal* &temp,
 	doublereal& min_x, doublereal& min_y, doublereal& min_z,
 	doublereal* &potent, TEMPER &t, const doublereal eps_mashine,
-	bool bptr_rule, doublereal* &gradX, doublereal* &gradY, doublereal* &gradZ) {
+	bool bptr_rule, doublereal* &gradX, doublereal* &gradY, doublereal* &gradZ,
+	bool bcalc_only) {
 
 
 
@@ -2511,33 +2519,52 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCT(FILE* &fp_4,
 				koefmatr[7] * (pa[i].x+min_x)* (pa[i].y+min_y) + koefmatr[8] * (pa[i].x+min_x) * (pa[i].z+min_z) + koefmatr[9] * (pa[i].y+min_y)* (pa[i].z+min_z);
 				}
 				*/
-				for (integer j1 = 0; j1 <= 3; j1++) {
+				for (integer j1 = 0; j1 <= 9; j1++) {
 					koefmatr[j1] = 0.0;
 				}
-				for (integer j1 = 0; j1 <= 250; j1++) {
-					doublereal alpha = 0.2;
-					doublereal d_0 = koefmatr[0];
-					doublereal d_1 = koefmatr[1];
-					doublereal d_2 = koefmatr[2];
-					doublereal d_3 = koefmatr[3];
-					doublereal d_4 = koefmatr[4];
-					doublereal d_5 = koefmatr[5];
-					doublereal d_6 = koefmatr[6];
-					doublereal d_7 = koefmatr[7];
-					doublereal d_8 = koefmatr[8];
-					doublereal d_9 = koefmatr[9];
-					koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3] - Xmatr[0][4] * koefmatr[4] - Xmatr[0][5] * koefmatr[5] - Xmatr[0][6] * koefmatr[6] - Xmatr[0][7] * koefmatr[7] - Xmatr[0][8] * koefmatr[8] - Xmatr[0][9] * koefmatr[9]) / Xmatr[0][0]);
-					koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3] - Xmatr[1][4] * koefmatr[4] - Xmatr[1][5] * koefmatr[5] - Xmatr[1][6] * koefmatr[6] - Xmatr[1][7] * koefmatr[7] - Xmatr[1][8] * koefmatr[8] - Xmatr[1][9] * koefmatr[9]) / Xmatr[1][1]);
-					koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3] - Xmatr[2][4] * koefmatr[4] - Xmatr[2][5] * koefmatr[5] - Xmatr[2][6] * koefmatr[6] - Xmatr[2][7] * koefmatr[7] - Xmatr[2][8] * koefmatr[8] - Xmatr[2][9] * koefmatr[9]) / Xmatr[2][2]);
-					koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2] - Xmatr[3][4] * koefmatr[4] - Xmatr[3][5] * koefmatr[5] - Xmatr[3][6] * koefmatr[6] - Xmatr[3][7] * koefmatr[7] - Xmatr[3][8] * koefmatr[8] - Xmatr[3][9] * koefmatr[9]) / Xmatr[3][3]);
-					koefmatr[4] = (1.0 - alpha)*d_4 + alpha * ((bmatr[4] - Xmatr[4][0] * koefmatr[0] - Xmatr[4][1] * koefmatr[1] - Xmatr[4][2] * koefmatr[2] - Xmatr[4][3] * koefmatr[3] - Xmatr[4][5] * koefmatr[5] - Xmatr[4][6] * koefmatr[6] - Xmatr[4][7] * koefmatr[7] - Xmatr[4][8] * koefmatr[8] - Xmatr[4][9] * koefmatr[9]) / Xmatr[4][4]);
-					koefmatr[5] = (1.0 - alpha)*d_5 + alpha * ((bmatr[5] - Xmatr[5][0] * koefmatr[0] - Xmatr[5][1] * koefmatr[1] - Xmatr[5][2] * koefmatr[2] - Xmatr[5][3] * koefmatr[3] - Xmatr[5][4] * koefmatr[4] - Xmatr[5][6] * koefmatr[6] - Xmatr[5][7] * koefmatr[7] - Xmatr[5][8] * koefmatr[8] - Xmatr[5][9] * koefmatr[9]) / Xmatr[5][5]);
-					koefmatr[6] = (1.0 - alpha)*d_6 + alpha * ((bmatr[6] - Xmatr[6][0] * koefmatr[0] - Xmatr[6][1] * koefmatr[1] - Xmatr[6][2] * koefmatr[2] - Xmatr[6][3] * koefmatr[3] - Xmatr[6][4] * koefmatr[4] - Xmatr[6][5] * koefmatr[5] - Xmatr[6][7] * koefmatr[7] - Xmatr[6][8] * koefmatr[8] - Xmatr[6][9] * koefmatr[9]) / Xmatr[6][6]);
-					koefmatr[7] = (1.0 - alpha)*d_7 + alpha * ((bmatr[7] - Xmatr[7][0] * koefmatr[0] - Xmatr[7][1] * koefmatr[1] - Xmatr[7][2] * koefmatr[2] - Xmatr[7][3] * koefmatr[3] - Xmatr[7][4] * koefmatr[4] - Xmatr[7][5] * koefmatr[5] - Xmatr[7][6] * koefmatr[6] - Xmatr[7][8] * koefmatr[8] - Xmatr[7][9] * koefmatr[9]) / Xmatr[7][7]);
-					koefmatr[8] = (1.0 - alpha)*d_8 + alpha * ((bmatr[8] - Xmatr[8][0] * koefmatr[0] - Xmatr[8][1] * koefmatr[1] - Xmatr[8][2] * koefmatr[2] - Xmatr[8][3] * koefmatr[3] - Xmatr[8][4] * koefmatr[4] - Xmatr[8][5] * koefmatr[5] - Xmatr[8][6] * koefmatr[6] - Xmatr[8][7] * koefmatr[7] - Xmatr[8][9] * koefmatr[9]) / Xmatr[8][8]);
-					koefmatr[9] = (1.0 - alpha)*d_9 + alpha * ((bmatr[9] - Xmatr[9][0] * koefmatr[0] - Xmatr[9][1] * koefmatr[1] - Xmatr[9][2] * koefmatr[2] - Xmatr[9][3] * koefmatr[3] - Xmatr[9][4] * koefmatr[4] - Xmatr[9][5] * koefmatr[5] - Xmatr[9][6] * koefmatr[6] - Xmatr[9][7] * koefmatr[7] - Xmatr[9][8] * koefmatr[8]) / Xmatr[9][9]);
-									
-				}
+				
+				//bool bzero = false;
+				//for (integer j1 = 0; j1 <= 9; j1++) {
+					//bool bnonzero = false;
+					//for (integer l1 = 0; l1 < 10; l1++) {
+						//if (fabs(Xmatr[j1][l1]) > 1.0e-30) {
+							//bnonzero = true;
+						//}
+					//}
+					//if (!bnonzero) bzero = true;
+				//}
+				//if (bzero) {
+					for (integer j1 = 0; j1 <= 250; j1++) {
+						doublereal alpha = 0.2;
+						doublereal d_0 = koefmatr[0];
+						doublereal d_1 = koefmatr[1];
+						doublereal d_2 = koefmatr[2];
+						doublereal d_3 = koefmatr[3];
+						doublereal d_4 = koefmatr[4];
+						doublereal d_5 = koefmatr[5];
+						doublereal d_6 = koefmatr[6];
+						doublereal d_7 = koefmatr[7];
+						doublereal d_8 = koefmatr[8];
+						doublereal d_9 = koefmatr[9];
+						koefmatr[0] = (1.0 - alpha) * d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3] - Xmatr[0][4] * koefmatr[4] - Xmatr[0][5] * koefmatr[5] - Xmatr[0][6] * koefmatr[6] - Xmatr[0][7] * koefmatr[7] - Xmatr[0][8] * koefmatr[8] - Xmatr[0][9] * koefmatr[9]) / Xmatr[0][0]);
+						koefmatr[1] = (1.0 - alpha) * d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3] - Xmatr[1][4] * koefmatr[4] - Xmatr[1][5] * koefmatr[5] - Xmatr[1][6] * koefmatr[6] - Xmatr[1][7] * koefmatr[7] - Xmatr[1][8] * koefmatr[8] - Xmatr[1][9] * koefmatr[9]) / Xmatr[1][1]);
+						koefmatr[2] = (1.0 - alpha) * d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3] - Xmatr[2][4] * koefmatr[4] - Xmatr[2][5] * koefmatr[5] - Xmatr[2][6] * koefmatr[6] - Xmatr[2][7] * koefmatr[7] - Xmatr[2][8] * koefmatr[8] - Xmatr[2][9] * koefmatr[9]) / Xmatr[2][2]);
+						koefmatr[3] = (1.0 - alpha) * d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2] - Xmatr[3][4] * koefmatr[4] - Xmatr[3][5] * koefmatr[5] - Xmatr[3][6] * koefmatr[6] - Xmatr[3][7] * koefmatr[7] - Xmatr[3][8] * koefmatr[8] - Xmatr[3][9] * koefmatr[9]) / Xmatr[3][3]);
+						koefmatr[4] = (1.0 - alpha) * d_4 + alpha * ((bmatr[4] - Xmatr[4][0] * koefmatr[0] - Xmatr[4][1] * koefmatr[1] - Xmatr[4][2] * koefmatr[2] - Xmatr[4][3] * koefmatr[3] - Xmatr[4][5] * koefmatr[5] - Xmatr[4][6] * koefmatr[6] - Xmatr[4][7] * koefmatr[7] - Xmatr[4][8] * koefmatr[8] - Xmatr[4][9] * koefmatr[9]) / Xmatr[4][4]);
+						koefmatr[5] = (1.0 - alpha) * d_5 + alpha * ((bmatr[5] - Xmatr[5][0] * koefmatr[0] - Xmatr[5][1] * koefmatr[1] - Xmatr[5][2] * koefmatr[2] - Xmatr[5][3] * koefmatr[3] - Xmatr[5][4] * koefmatr[4] - Xmatr[5][6] * koefmatr[6] - Xmatr[5][7] * koefmatr[7] - Xmatr[5][8] * koefmatr[8] - Xmatr[5][9] * koefmatr[9]) / Xmatr[5][5]);
+						koefmatr[6] = (1.0 - alpha) * d_6 + alpha * ((bmatr[6] - Xmatr[6][0] * koefmatr[0] - Xmatr[6][1] * koefmatr[1] - Xmatr[6][2] * koefmatr[2] - Xmatr[6][3] * koefmatr[3] - Xmatr[6][4] * koefmatr[4] - Xmatr[6][5] * koefmatr[5] - Xmatr[6][7] * koefmatr[7] - Xmatr[6][8] * koefmatr[8] - Xmatr[6][9] * koefmatr[9]) / Xmatr[6][6]);
+						koefmatr[7] = (1.0 - alpha) * d_7 + alpha * ((bmatr[7] - Xmatr[7][0] * koefmatr[0] - Xmatr[7][1] * koefmatr[1] - Xmatr[7][2] * koefmatr[2] - Xmatr[7][3] * koefmatr[3] - Xmatr[7][4] * koefmatr[4] - Xmatr[7][5] * koefmatr[5] - Xmatr[7][6] * koefmatr[6] - Xmatr[7][8] * koefmatr[8] - Xmatr[7][9] * koefmatr[9]) / Xmatr[7][7]);
+						koefmatr[8] = (1.0 - alpha) * d_8 + alpha * ((bmatr[8] - Xmatr[8][0] * koefmatr[0] - Xmatr[8][1] * koefmatr[1] - Xmatr[8][2] * koefmatr[2] - Xmatr[8][3] * koefmatr[3] - Xmatr[8][4] * koefmatr[4] - Xmatr[8][5] * koefmatr[5] - Xmatr[8][6] * koefmatr[6] - Xmatr[8][7] * koefmatr[7] - Xmatr[8][9] * koefmatr[9]) / Xmatr[8][8]);
+						koefmatr[9] = (1.0 - alpha) * d_9 + alpha * ((bmatr[9] - Xmatr[9][0] * koefmatr[0] - Xmatr[9][1] * koefmatr[1] - Xmatr[9][2] * koefmatr[2] - Xmatr[9][3] * koefmatr[3] - Xmatr[9][4] * koefmatr[4] - Xmatr[9][5] * koefmatr[5] - Xmatr[9][6] * koefmatr[6] - Xmatr[9][7] * koefmatr[7] - Xmatr[9][8] * koefmatr[8]) / Xmatr[9][9]);
+
+					}
+
+				//}
+				//else {
+					//Direct_for_coef(Xmatr, koefmatr, bmatr, 10);
+				//}
+
+
 				temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)+
 					koefmatr[4] * (pa[i].x + min_x)* (pa[i].x + min_x) + koefmatr[5] * (pa[i].y + min_y)* (pa[i].y + min_y) + koefmatr[6] * (pa[i].z + min_z)* (pa[i].z + min_z)+
 					koefmatr[7] * (pa[i].x + min_x)* (pa[i].y + min_y) + koefmatr[8] * (pa[i].x + min_x)* (pa[i].z + min_z) + koefmatr[9] * (pa[i].y + min_y)* (pa[i].z + min_z);
@@ -2548,9 +2575,11 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCT(FILE* &fp_4,
 				//heat_flux_X[i] = koefmatr[1]+ koefmatr[4] * (pa[i].x + min_x)*2.0+ koefmatr[7] * (pa[i].y + min_y)+ koefmatr[8] * (pa[i].z + min_z);
 				//heat_flux_Y[i] = koefmatr[2]+ koefmatr[5] * (pa[i].y + min_y)*2.0+ koefmatr[7] * (pa[i].x + min_x)+ koefmatr[9] * (pa[i].z + min_z);
 				//heat_flux_Z[i] = koefmatr[3]+ koefmatr[6] * (pa[i].z + min_z)*2.0+ koefmatr[8] * (pa[i].x + min_x)+ koefmatr[9] * (pa[i].y + min_y);
-				gradX[i] = koefmatr[1] + koefmatr[4] * (pa[i].x + min_x)*2.0+ koefmatr[7] * (pa[i].y + min_y)+ koefmatr[8] * (pa[i].z + min_z);
-				gradY[i] = koefmatr[2] + koefmatr[5] * (pa[i].y + min_y)*2.0+ koefmatr[7] * (pa[i].x + min_x)+ koefmatr[9] * (pa[i].z + min_z);
-				gradZ[i] = koefmatr[3] + koefmatr[6] * (pa[i].z + min_z)*2.0+ koefmatr[8] * (pa[i].x + min_x)+ koefmatr[9] * (pa[i].y + min_y);
+				if (bcalc_only == false) {
+					gradX[i] = koefmatr[1] + koefmatr[4] * (pa[i].x + min_x) * 2.0 + koefmatr[7] * (pa[i].y + min_y) + koefmatr[8] * (pa[i].z + min_z);
+					gradY[i] = koefmatr[2] + koefmatr[5] * (pa[i].y + min_y) * 2.0 + koefmatr[7] * (pa[i].x + min_x) + koefmatr[9] * (pa[i].z + min_z);
+					gradZ[i] = koefmatr[3] + koefmatr[6] * (pa[i].z + min_z) * 2.0 + koefmatr[8] * (pa[i].x + min_x) + koefmatr[9] * (pa[i].y + min_y);
+				}
 				//heat_flux_X[i] = 0.0;
 				//heat_flux_Y[i] = 0.0;
 				//heat_flux_Z[i] = 0.0;
@@ -2633,13 +2662,16 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCT(FILE* &fp_4,
 		delete[] rthdsd_Gauss;
 
 
+		if (bcalc_only == false) {
+			// Ќе только посчитали но и распечатали.
 
-		// запись PAM
-		for (integer i = 0; i < maxnod; i++) {
-			fprintf(fp_4, "%+.16f ", temp[i]);
-			if (i % 10 == 0) fprintf(fp_4, "\n");
+			// запись PAM
+			for (integer i = 0; i < maxnod; i++) {
+				fprintf(fp_4, "%+.16f ", temp[i]);
+				if (i % 10 == 0) fprintf(fp_4, "\n");
+			}
+			fprintf(fp_4, "\n");
 		}
-		fprintf(fp_4, "\n");
 	}
 } // SECOND_ORDER_QUADRATIC_RECONSTRUCT
 
@@ -2653,12 +2685,38 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCTA(
 	doublereal*& vol, doublereal*& temp,
 	doublereal& min_x, doublereal& min_y, doublereal& min_z,
 	doublereal*& potent, TEMPER& t, const doublereal eps_mashine,
-	bool bptr_rule) {
+	bool bptr_rule, doublereal eps_out) {
 
 
 
 	if ((bptr_rule && bSIMPLErun_now_for_temperature) || (!bptr_rule)) {
 		// ƒл€ ускорени€ сканировани€ в методе наименьших квадратов 8.07.2017.
+
+		doublereal minimum_ETALON = 1.0e30;
+		doublereal maximum_ETALON = -1.0e30;
+		doublereal avg_ETALON = 0.0;
+
+		for (integer j = 0; j < maxelm; j++) {
+			if (bptr_rule) {
+				if (potent[t.ptr[ENUMERATECONTVOL][j]] > maximum_ETALON) {
+					maximum_ETALON = potent[t.ptr[ENUMERATECONTVOL][j]];
+				}
+				if (potent[t.ptr[ENUMERATECONTVOL][j]] < minimum_ETALON) {
+					minimum_ETALON = potent[t.ptr[ENUMERATECONTVOL][j]];
+				}
+				avg_ETALON += potent[t.ptr[ENUMERATECONTVOL][j]] / (maxelm * 1.0);
+			}
+			else {
+
+				if (potent[j] > maximum_ETALON) {
+					maximum_ETALON = potent[j];
+				}
+				if (potent[j] < minimum_ETALON) {
+					minimum_ETALON = potent[j];
+				}
+				avg_ETALON += potent[j] / (maxelm * 1.0);
+			}
+		}
 
 
 		doublereal maximum = -1.0e60;
@@ -2868,9 +2926,19 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCTA(
 		q_ic = nullptr;
 		q_hash = nullptr;
 
+		printf("\n");
+
 		//integer jcontrol = 0;
+//#ifdef _OPENMP 
+//		omp_set_num_threads(inumcore); // установка числа потоков
+//#endif
+
+//#pragma omp parallel for
 		for (integer i = 0; i < maxnod; i++) {
-			//if (((10 * i) % maxnod) == 0) printf("complete %lld\n", (100 * i / maxnod));
+
+			// затираем предыдущее, нечего плодить строчки.17.04.2021
+			if ((((i) % 1000) == 0)) printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b complete %d%%", (int)(100.0 * i / (1.0*(maxnod - 10))));
+
 			if (fabs(vol[i]) > eps_mashine) {
 
 
@@ -3043,8 +3111,14 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCTA(
 				for (integer j1 = 0; j1 <= 3; j1++) {
 					koefmatr[j1] = 0.0;
 				}
-				for (integer j1 = 0; j1 <= 250; j1++) {
-					doublereal alpha = 0.2;
+				doublereal residual = 1.0;
+				//for (integer j1 = 0; j1 <= 250; j1++) 
+				integer j1 = 0;
+				while ((j1 < 250)||(residual > eps_out))
+				{
+					j1++;
+					residual = 0.0;
+					doublereal alpha = 1.0;// 1.9;// 0.01;// 0.2;
 					doublereal d_0 = koefmatr[0];
 					doublereal d_1 = koefmatr[1];
 					doublereal d_2 = koefmatr[2];
@@ -3066,6 +3140,20 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCTA(
 					koefmatr[8] = (1.0 - alpha) * d_8 + alpha * ((bmatr[8] - Xmatr[8][0] * koefmatr[0] - Xmatr[8][1] * koefmatr[1] - Xmatr[8][2] * koefmatr[2] - Xmatr[8][3] * koefmatr[3] - Xmatr[8][4] * koefmatr[4] - Xmatr[8][5] * koefmatr[5] - Xmatr[8][6] * koefmatr[6] - Xmatr[8][7] * koefmatr[7] - Xmatr[8][9] * koefmatr[9]) / Xmatr[8][8]);
 					koefmatr[9] = (1.0 - alpha) * d_9 + alpha * ((bmatr[9] - Xmatr[9][0] * koefmatr[0] - Xmatr[9][1] * koefmatr[1] - Xmatr[9][2] * koefmatr[2] - Xmatr[9][3] * koefmatr[3] - Xmatr[9][4] * koefmatr[4] - Xmatr[9][5] * koefmatr[5] - Xmatr[9][6] * koefmatr[6] - Xmatr[9][7] * koefmatr[7] - Xmatr[9][8] * koefmatr[8]) / Xmatr[9][9]);
 
+					for (integer l = 0; l < 10; l++) {
+						doublereal tmp = ((bmatr[l] - Xmatr[l][0] * koefmatr[0] - Xmatr[l][1] * koefmatr[1] - Xmatr[l][2] * koefmatr[2] - Xmatr[l][3] * koefmatr[3] - Xmatr[l][4] * koefmatr[4] - Xmatr[l][5] * koefmatr[5] - Xmatr[l][6] * koefmatr[6] - Xmatr[l][7] * koefmatr[7] - Xmatr[l][8] * koefmatr[8] - Xmatr[l][9] * koefmatr[9]));
+						residual += tmp * tmp;
+					}
+					residual = sqrt(residual) * 0.1;
+
+					if (j1 > 1000000) break;
+
+				}
+				if (j1 > 1250) {
+					//printf("limit 1250 prevjshen. number iter= ");
+					//std::cout << j1 << std::endl;
+					
+					//getchar();
 				}
 				temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z) +
 					koefmatr[4] * (pa[i].x + min_x) * (pa[i].x + min_x) + koefmatr[5] * (pa[i].y + min_y) * (pa[i].y + min_y) + koefmatr[6] * (pa[i].z + min_z) * (pa[i].z + min_z) +
@@ -3129,12 +3217,36 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCTA(
 
 		}
 
+		// “ак более менее правдоподобно.
 		// ѕри преобразовании сохран€ем модуль величины неизменным.
+		printf("\nmaximum = %e maximum1=%e mult=%e\n", maximum, maximum1, (maximum / maximum1));
+		//getchar();
 		if (fabs(maximum1) > 1.0e-20) {
 			for (integer i = 0; i < maxnod; i++) {
 				temp[i] *= (maximum / maximum1);
 			}
 		}
+
+
+		// ѕо среднему неверно, т.к. имеетс€ всплеск во врем€ остывани€.
+		//doublereal avg_TRANSFORM = 0.0;
+		///for (integer i = 0; i < maxnod; i++) {
+			//avg_TRANSFORM += temp[i] /(1.0* maxnod);
+		//}
+
+		// ¬ыравниваем среднее значение, а концы отсекаем.
+
+		//if (fabs(avg_TRANSFORM) > 1.0e-30) {
+			//for (integer i = 0; i < maxnod; i++) {
+				//temp[i] *= (avg_ETALON / avg_TRANSFORM);
+				//if (temp[i] > maximum_ETALON) {
+					//temp[i] = maximum_ETALON;
+				//}
+				//if (temp[i] < minimum_ETALON) {
+					//temp[i] = minimum_ETALON;
+				//}
+			//}
+		//}
 
 		delete[] inum_now;
 		for (integer i = 0; i < maxnod; i++) {
@@ -3357,9 +3469,9 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					}
 				}
 
-				doublereal min_x1 = min_x;
-				doublereal min_y1 = min_y;
-				doublereal min_z1 = min_z;
+				//doublereal min_x1 = min_x;
+				//doublereal min_y1 = min_y;
+				//doublereal min_z1 = min_z;
 				//min_x *= 1.2;
 				//min_y *= 1.2;
 				//min_z *= 1.2;
@@ -3399,7 +3511,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 				// Refactoring 04.04.2019
 			    bool bptr_rule_namespace_of_hydrodynamic_variables = false; // potent относитс€ к гидродинамике (true) или теплопередаче(false).
 				//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, potent, t, eps_mashine, false, heat_flux_X, heat_flux_Y, heat_flux_Z);
-				SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, my_F_1, min_x, min_y, min_z, myF, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables, heat_flux_X, heat_flux_Y, heat_flux_Z);
+				SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, my_F_1, min_x, min_y, min_z, myF, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables, heat_flux_X, heat_flux_Y, heat_flux_Z,false);
 				//SECOND_ORDER_QUADRATIC_RECONSTRUCTA(maxnod, maxelm, pa, nvtx, vol, my_F_1, min_x, min_y, min_z, myF, t, eps_mashine, false);
 
 				// запись светового потока
@@ -4118,9 +4230,9 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					}
 				}
 
-				doublereal min_x1 = min_x;
-				doublereal min_y1 = min_y;
-				doublereal min_z1 = min_z;
+				//doublereal min_x1 = min_x;
+				//doublereal min_y1 = min_y;
+				//doublereal min_z1 = min_z;
 				//min_x *= 1.2;
 				//min_y *= 1.2;
 				//min_z *= 1.2;
@@ -4160,9 +4272,10 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 				// Refactoring 04.04.2019
 				bool bptr_rule_namespace_of_hydrodynamic_variables = false; // potent относитс€ к гидродинамике (true) или теплопередаче(false).
 				//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, potent, t, eps_mashine, false, heat_flux_X, heat_flux_Y, heat_flux_Z);
-				SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, potent, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables, heat_flux_X, heat_flux_Y, heat_flux_Z);
+				SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, potent, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 
 				{
+#ifndef NO_OPENGL_GLFW
 					pa_opengl = new TOCHKA[maxnod];
 					pa_render = new TOCHKA[maxnod];
 					n_render = maxnod;
@@ -4390,6 +4503,8 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 						delete[] nvtx_2[i_42];
 					}
 					delete[] nvtx_2;
+
+#endif
 				}
 
 				doublereal *Tx = nullptr;
@@ -4440,20 +4555,20 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					Tzq[i_9] = 0.0;
 				}
 
-
+				// gradient temperature calculation
 #pragma omp sections 
 				{
 #pragma omp section
 					{
-						SECOND_ORDER_QUADRATIC_RECONSTRUCTA(maxnod, maxelm, pa, nvtx, vol, Txq, min_x, min_y, min_z, Tx, t, eps_mashine, false);
+						SECOND_ORDER_QUADRATIC_RECONSTRUCTA(maxnod, maxelm, pa, nvtx, vol, Txq, min_x, min_y, min_z, Tx, t, eps_mashine, false, 9.8e2);
 					}
 #pragma omp section
 					{
-						SECOND_ORDER_QUADRATIC_RECONSTRUCTA(maxnod, maxelm, pa, nvtx, vol, Tyq, min_x, min_y, min_z, Ty, t, eps_mashine, false);
+						SECOND_ORDER_QUADRATIC_RECONSTRUCTA(maxnod, maxelm, pa, nvtx, vol, Tyq, min_x, min_y, min_z, Ty, t, eps_mashine, false, 9.8e2);
 					}
 #pragma omp section
 					{
-						SECOND_ORDER_QUADRATIC_RECONSTRUCTA(maxnod, maxelm, pa, nvtx, vol, Tzq, min_x, min_y, min_z, Tz, t, eps_mashine, false);
+						SECOND_ORDER_QUADRATIC_RECONSTRUCTA(maxnod, maxelm, pa, nvtx, vol, Tzq, min_x, min_y, min_z, Tz, t, eps_mashine, false, 9.8e2);
 					}
 				}
 
@@ -4579,20 +4694,20 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					// Refactoring 04.04.2019
 					bool bptr_rule_namespace_of_hydrodynamic_variables_loc = true; // potent относитс€ к гидродинамике (true) или теплопередаче(false).
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PAM], t, eps_mashine,true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PAM], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PAM], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PRESS], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PRESS], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PRESS], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 				}
 				doublereal* tmp_speed = nullptr;
 				if (bSIMPLErun_now_for_temperature)
 				{
 					bool bptr_rule_namespace_of_hydrodynamic_variables_loc = true; // potent относитс€ к гидродинамике (true) или теплопередаче(false).
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VX], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VELOCITY_X_COMPONENT], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VELOCITY_X_COMPONENT], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VY], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VELOCITY_Y_COMPONENT], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VELOCITY_Y_COMPONENT], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VZ], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VELOCITY_Z_COMPONENT], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VELOCITY_Z_COMPONENT], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					tmp_speed = new doublereal[fglobal[0].maxelm + fglobal[0].maxbound];
 					if (bSIMPLErun_now_for_temperature) {
 						for (integer i_1 = 0; i_1 < fglobal[0].maxelm + fglobal[0].maxbound; i_1++) {
@@ -4600,7 +4715,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 						}
 					}
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, tmp_speed, t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, tmp_speed, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, tmp_speed, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 				}
 				//else {
 					//TODO
@@ -4618,12 +4733,12 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					}
 					bool bptr_rule_namespace_of_hydrodynamic_variables_loc = true; // potent относитс€ к гидродинамике (true) или теплопередаче(false).
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, tmp_speed, t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, tmp_speed, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, tmp_speed, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 
 					if (fglobal[0].rdistWall != nullptr) {
 						// rdistWall
 						//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].rdistWall, t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-						SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].rdistWall, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+						SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].rdistWall, t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					}
 					else {
 						// ¬ ламинарном режиме рассто€ние до стенки не рассчитываетс€.
@@ -4634,32 +4749,32 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 						fprintf(fp_4, "\n");
 					}
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[CURL], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[CURL], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[CURL], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVX], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVX], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVX], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVX], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVX], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVX], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVX], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVX], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVX], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVY], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVY], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVY], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVZ], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVZ], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADXVZ], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVZ], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVZ], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVZ], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVZ], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVZ], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVZ], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 					
 					if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
 
 						//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_KINETIK_ENERGY], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-						SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_KINETIK_ENERGY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+						SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_KINETIK_ENERGY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 						//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
-						SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+						SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z, false);
 
 					}
 					//**************END WRITE CFD DATA************************************
@@ -4929,14 +5044,38 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 						}
 
 						fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
-						if (nvtx[0][i] < 1) printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
-						if (nvtx[1][i] < 1) printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
-						if (nvtx[2][i] < 1) printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
-						if (nvtx[3][i] < 1) printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
-						if (nvtx[4][i] < 1) printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
-						if (nvtx[5][i] < 1) printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
-						if (nvtx[6][i] < 1) printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
-						if (nvtx[7][i] < 1) printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
+						if (nvtx[0][i] < 1) {
+							//printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
+							std::cout << "bad nvtx[0][" << i << "]=" << nvtx[0][i];
+						}
+						if (nvtx[1][i] < 1) {
+							//printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
+							std::cout << "bad nvtx[1][" << i << "]=" << nvtx[1][i];
+						}
+						if (nvtx[2][i] < 1) {
+							//printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
+							std::cout << "bad nvtx[2][" << i << "]=" << nvtx[2][i];
+						}
+						if (nvtx[3][i] < 1) {
+							//printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
+							std::cout << "bad nvtx[3][" << i << "]=" << nvtx[3][i];
+						}
+						if (nvtx[4][i] < 1) {
+							//printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
+							std::cout << "bad nvtx[4][" << i << "]=" << nvtx[4][i];
+						}
+						if (nvtx[5][i] < 1) {
+							//printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
+							std::cout << "bad nvtx[5][" << i << "]=" << nvtx[5][i];
+						}
+						if (nvtx[6][i] < 1) {
+							//printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
+							std::cout << "bad nvtx[6][" << i << "]=" << nvtx[6][i];
+						}
+						if (nvtx[7][i] < 1) {
+							//printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
+							std::cout << "bad nvtx[7][" << i << "]=" << nvtx[7][i];
+						}
 					}
 				}
 				else {
@@ -4950,11 +5089,12 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 						// ”читываем только те €чейки которые видимы, 
 						// а именно user указал дл€ них в интерфейсе 
 						// bvisible  .
-						fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", 
+						fprintf(fp_4, "%d %d %d %d %d %d %d %d \n", 
 							//nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i],
 							//nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
 						      nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i],
 							  nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+
 					}
 				}
 
@@ -5213,7 +5353,8 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 		rthdsd_Gauss[i_47] = new doublereal[8];
 	}
 
-	integer istart_i47 = maxelm47 - 1, ic76 = 0, ih64=0;
+	integer istart_i47 = maxelm47 - 1;
+	//integer ic76 = 0, ih64 = 0; 
 
 	for (integer i = 0; i < maxelm; i++) {
 		doublereal xc47, yc47, zc47;
@@ -6306,9 +6447,9 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 				}
 			}
 
-			doublereal min_x1 = min_x;
-			doublereal min_y1 = min_y;
-			doublereal min_z1 = min_z;
+			//doublereal min_x1 = min_x;
+			//doublereal min_y1 = min_y;
+			//doublereal min_z1 = min_z;
 			//min_x *= 1.2;
 			//min_y *= 1.2;
 			//min_z *= 1.2;
@@ -6991,14 +7132,38 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 				nvtx_buf[7][i] = invtx[7];
 				*/
 
-				if (nvtx[0][i] < 1) printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
-				if (nvtx[1][i] < 1) printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
-				if (nvtx[2][i] < 1) printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
-				if (nvtx[3][i] < 1) printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
-				if (nvtx[4][i] < 1) printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
-				if (nvtx[5][i] < 1) printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
-				if (nvtx[6][i] < 1) printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
-				if (nvtx[7][i] < 1) printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
+				if (nvtx[0][i] < 1) {
+					//printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
+					std::cout << "bad nvtx[0][" << i << "]=" << nvtx[0][i];
+				}
+				if (nvtx[1][i] < 1) {
+					//printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
+					std::cout << "bad nvtx[1][" << i << "]=" << nvtx[1][i];
+				}
+				if (nvtx[2][i] < 1) {
+					//printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
+					std::cout << "bad nvtx[2][" << i << "]=" << nvtx[2][i];
+				}
+				if (nvtx[3][i] < 1) {
+					//printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
+					std::cout << "bad nvtx[3][" << i << "]=" << nvtx[3][i];
+				}
+				if (nvtx[4][i] < 1) {
+					//printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
+					std::cout << "bad nvtx[4][" << i << "]=" << nvtx[4][i];
+				}
+				if (nvtx[5][i] < 1) {
+					//printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
+					std::cout << "bad nvtx[5][" << i << "]=" << nvtx[5][i];
+				}
+				if (nvtx[6][i] < 1) {
+					//printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
+					std::cout << "bad nvtx[6][" << i << "]=" << nvtx[6][i];
+				}
+				if (nvtx[7][i] < 1) {
+					//printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
+					std::cout << "bad nvtx[7][" << i << "]=" << nvtx[7][i];
+				}
 			}
 			else {
 				//fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
@@ -7322,25 +7487,40 @@ void ANES_ALICE_CORRECT(integer maxnod, TOCHKA* pa,
 		delete[] vol;
 
 		for (integer i = 0; i <= maxelm - 1; i++) {
-#if doubleintprecision == 1
-			if (nvtx[0][i] < 1) printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
-			if (nvtx[1][i] < 1) printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
-			if (nvtx[2][i] < 1) printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
-			if (nvtx[3][i] < 1) printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
-			if (nvtx[4][i] < 1) printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
-			if (nvtx[5][i] < 1) printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
-			if (nvtx[6][i] < 1) printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
-			if (nvtx[7][i] < 1) printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
-#else
-			if (nvtx[0][i] < 1) printf("bad nvtx[0][%d]=%d", i, nvtx[0][i]);
-			if (nvtx[1][i] < 1) printf("bad nvtx[1][%d]=%d", i, nvtx[1][i]);
-			if (nvtx[2][i] < 1) printf("bad nvtx[2][%d]=%d", i, nvtx[2][i]);
-			if (nvtx[3][i] < 1) printf("bad nvtx[3][%d]=%d", i, nvtx[3][i]);
-			if (nvtx[4][i] < 1) printf("bad nvtx[4][%d]=%d", i, nvtx[4][i]);
-			if (nvtx[5][i] < 1) printf("bad nvtx[5][%d]=%d", i, nvtx[5][i]);
-			if (nvtx[6][i] < 1) printf("bad nvtx[6][%d]=%d", i, nvtx[6][i]);
-			if (nvtx[7][i] < 1) printf("bad nvtx[7][%d]=%d", i, nvtx[7][i]);
-#endif
+
+			if (nvtx[0][i] < 1) {
+				//printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
+				std::cout << "bad nvtx[0][" << i << "]=" << nvtx[0][i];
+			}
+			if (nvtx[1][i] < 1) {
+				//printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
+				std::cout << "bad nvtx[1][" << i << "]=" << nvtx[1][i];
+			}
+			if (nvtx[2][i] < 1) {
+				//printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
+				std::cout << "bad nvtx[2][" << i << "]=" << nvtx[2][i];
+			}
+			if (nvtx[3][i] < 1) {
+				//printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
+				std::cout << "bad nvtx[3][" << i << "]=" << nvtx[3][i];
+			}
+			if (nvtx[4][i] < 1) {
+				//printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
+				std::cout << "bad nvtx[4][" << i << "]=" << nvtx[4][i];
+			}
+			if (nvtx[5][i] < 1) {
+				//printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
+				std::cout << "bad nvtx[5][" << i << "]=" << nvtx[5][i];
+			}
+			if (nvtx[6][i] < 1) {
+				//printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
+				std::cout << "bad nvtx[6][" << i << "]=" << nvtx[6][i];
+			}
+			if (nvtx[7][i] < 1) {
+				//printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
+				std::cout << "bad nvtx[7][" << i << "]=" << nvtx[7][i];
+			}
+
 			
 		}
 		
@@ -7355,7 +7535,7 @@ void constr_nodes_nvtx_prop_flow_alice(octree* &oc, int inx, int iny, int inz,
 	float** &prop, TPROP* matlist, int* &ptr, int* &whot_is_block,
 	int** &ptr_temp, integer maxelm_temp, bool* &bActiveShearModule) {
 
-	integer maxelm_loc = (inx + 1)*(iny + 1)*(inz + 1);
+	//integer maxelm_loc = (inx + 1)*(iny + 1)*(inz + 1);
 	// ¬ычисление maxelm. (maxelm_flow).
 	calculate_max_elm(oc, maxelm, iflag, b, lb, false);
 #if doubleintprecision == 1

@@ -269,11 +269,12 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 			}
 			else if (lfil==1) {
 				// 2.4 +; 2.2 -; 2.3 + opt; 
-				doublereal m_1 = 2.3;
+				doublereal m_1 = 4.3;
 				if (ilevel_loc == 10) m_1 = 4.0;
 				if (ilevel_loc >= 11) m_1 = 5.0;
 				if (ilevel_loc >= 15) m_1 = 8.0;
 				milu2.iwk = (integer)((m_1 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
+				//std::cout << "m_1=" <<  m_1 << std::endl;
 			}
 			else if (lfil == 2) {
 				// milu2.iwk = (40 * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
@@ -727,11 +728,12 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 			}
 			else if (lfil == 1) {
 				// 2.4 +; 2.2 -; 2.3 + opt; 
-				doublereal m_1 = 2.3;
+				doublereal m_1 = 4.3;
 				if (ilevel_loc == 10) m_1 = 4.0;
 				if (ilevel_loc >= 11) m_1 = 5.0;
 				if (ilevel_loc >= 15) m_1 = 8.0;
 				milu2.iwk = (integer)((m_1 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
+				//std::cout << "m_1=" << m_1 << std::endl; // Механика на основе amg1r5.
 			}
 			else if (lfil == 2) {
 				// milu2.iwk = (40 * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
@@ -1051,7 +1053,7 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 
 		calculation_main_end_time = clock(); // момент окончания счёта.
 		if (!(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)) {
-			printf("%6d \n", calculation_main_end_time - calculation_main_start_time);
+			printf("%6u \n", calculation_main_end_time - calculation_main_start_time);
 		}
     }
 
@@ -5693,7 +5695,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 template <typename doublerealT>
 void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b,
 	integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, bool*& F_false_C_true,
-	integer idirect, doublerealT* &diag_minus_one)
+	integer idirect, doublerealT* &diag_minus_one, integer ibsp_length)
 {
 	// F_false_C_true - нумерация начинается с 1.
 	// idirect==0 douwn
@@ -5749,735 +5751,1477 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 		}
 		// copy
 
+		if (ibsp_length == 0)
+		{
+			if (idirect == 1) {
+				// Восходящая ветвь.
 
+				// Сначала F потом C.
 
-		if (idirect == 1) {
-			// Восходящая ветвь.
-
-			// Сначала F потом C.
-
-			//#pragma loop(hint_parallel(8))
+				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
-			for (integer ii = startpos; ii <= endpos; ii++) {
-				integer istr = ii - iadd;
-				x_jacoby_buffer[istr] = x[istr];
-			}
-
-			//#pragma loop(hint_parallel(8))
-#pragma omp parallel for
-			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii]) { // F nodes
-
+				for (integer ii = startpos; ii <= endpos; ii++) {
 					integer istr = ii - iadd;
-					doublerealT rold = x_jacoby_buffer[istr];
-
-					// 13.07.2016
-					doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-
-					x[istr] = diag_minus_one[istr]*b[istr];
-
-					doublerealT rsum = 0.0;
-					integer is1 = row_ptr_start[ii] + 1;
-					integer is2 = row_ptr_end[ii];
-					// Распараллеливание почемуто тормозит очень сильно.
-					//#pragma omp parallel for reduction(+:rsum)
-					for (integer ii1 = is1; ii1 <= is2; ii1++)
-					{
-						//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
-						integer ipos = Amat.j[ii1];
-						// 13.07.2016
-						// игнорирование positive connections.
-						//if ((Amat.aij[ii1] < 0.0)) {
-						rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
-						//}
-						//else {
-						// не рабтает.
-						//	ap_now += Amat.aij[ii1];
-						//}
-					}
-					x[istr] += rsum;
-					//x[istr] *= Amat.aij[row_ptr_start[ii]];
-					// 13.07.2016
-					x[istr] /= ap_now;
-
-					// Запускается только после первого раза сразу запускать нельзя
-					// т.к. начальное значение не является адекватным.
-					//if (is1 <= is2) {
-						// Только если это не условие Дирихле применяем релаксацию.
-					x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-				//}
+					x_jacoby_buffer[istr] = x[istr];
 				}
-			}
 
-			// update.
-			//#pragma loop(hint_parallel(8))
+				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
-			for (integer ii = startpos; ii <= endpos; ii++) {
-				integer istr = ii - iadd;
-				x_jacoby_buffer[istr] = x[istr];
-			}
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					if (F_false_C_true[ii]) { // F nodes
 
-			//#pragma loop(hint_parallel(8))
+						integer istr = ii - iadd;
+						doublerealT rold = x_jacoby_buffer[istr];
+
+						// 13.07.2016
+						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+						// ibsp_length==0
+						x[istr] = b[istr];
+
+						doublerealT rsum = 0.0;
+						integer is1 = row_ptr_start[ii] + 1;
+						integer is2 = row_ptr_end[ii];
+						// Распараллеливание почемуто тормозит очень сильно.
+						//#pragma omp parallel for reduction(+:rsum)
+						for (integer ii1 = is1; ii1 <= is2; ii1++)
+						{
+							//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
+							integer ipos = Amat.j[ii1];
+							// 13.07.2016
+							// игнорирование positive connections.
+							//if ((Amat.aij[ii1] < 0.0)) {
+							rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
+							//}
+							//else {
+							// не рабтает.
+							//	ap_now += Amat.aij[ii1];
+							//}
+						}
+						x[istr] += rsum;
+						//x[istr] *= Amat.aij[row_ptr_start[ii]];
+						// 13.07.2016
+						x[istr] /= ap_now;
+
+						// Запускается только после первого раза сразу запускать нельзя
+						// т.к. начальное значение не является адекватным.
+						//if (is1 <= is2) {
+							// Только если это не условие Дирихле применяем релаксацию.
+						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+					//}
+					}
+				}
+
+				// update.
+				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
-			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii]  ) { // C nodes
-
+				for (integer ii = startpos; ii <= endpos; ii++) {
 					integer istr = ii - iadd;
-					doublerealT rold = x_jacoby_buffer[istr];
-
-					// 13.07.2016
-					doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-
-					x[istr] = diag_minus_one[istr]*b[istr];
-
-					doublerealT rsum = 0.0;
-					integer is1 = row_ptr_start[ii] + 1;
-					integer is2 = row_ptr_end[ii];
-					// Распараллеливание почемуто тормозит очень сильно.
-					//#pragma omp parallel for reduction(+:rsum)
-					for (integer ii1 = is1; ii1 <= is2; ii1++)
-					{
-						//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
-						integer ipos = Amat.j[ii1];
-						// 13.07.2016
-						// игнорирование positive connections.
-						//if ((Amat.aij[ii1] < 0.0)) {
-						rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
-						//}
-						//else {
-						// не рабтает.
-						//	ap_now += Amat.aij[ii1];
-						//}
-					}
-					x[istr] += rsum;
-					//x[istr] *= Amat.aij[row_ptr_start[ii]];
-					// 13.07.2016
-					x[istr] /= ap_now;
-
-					// Запускается только после первого раза сразу запускать нельзя
-					// т.к. начальное значение не является адекватным.
-					//if (is1 <= is2) {
-						// Только если это не условие Дирихле применяем релаксацию.
-					x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-				//}
+					x_jacoby_buffer[istr] = x[istr];
 				}
+
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					if (F_false_C_true[ii]) { // C nodes
+
+						integer istr = ii - iadd;
+						doublerealT rold = x_jacoby_buffer[istr];
+
+						// 13.07.2016
+						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+						// ibsp_length==0
+						x[istr] = b[istr];
+
+						doublerealT rsum = 0.0;
+						integer is1 = row_ptr_start[ii] + 1;
+						integer is2 = row_ptr_end[ii];
+						// Распараллеливание почемуто тормозит очень сильно.
+						//#pragma omp parallel for reduction(+:rsum)
+						for (integer ii1 = is1; ii1 <= is2; ii1++)
+						{
+							//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
+							integer ipos = Amat.j[ii1];
+							// 13.07.2016
+							// игнорирование positive connections.
+							//if ((Amat.aij[ii1] < 0.0)) {
+							rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
+							//}
+							//else {
+							// не рабтает.
+							//	ap_now += Amat.aij[ii1];
+							//}
+						}
+						x[istr] += rsum;
+						//x[istr] *= Amat.aij[row_ptr_start[ii]];
+						// 13.07.2016
+						x[istr] /= ap_now;
+
+						// Запускается только после первого раза сразу запускать нельзя
+						// т.к. начальное значение не является адекватным.
+						//if (is1 <= is2) {
+							// Только если это не условие Дирихле применяем релаксацию.
+						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+					//}
+					}
+				}
+
+
+
 			}
+			else {
+				// idirect==0
+				// Сначала С потом F.
+
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					integer istr = ii - iadd;
+					x_jacoby_buffer[istr] = x[istr];
+				}
+
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					if (F_false_C_true[ii]) { // C nodes
+
+						integer istr = ii - iadd;
+						doublerealT rold = x_jacoby_buffer[istr];
+
+						// 13.07.2016
+						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+						// ibsp_length==0
+						x[istr] = b[istr];
+
+						doublerealT rsum = 0.0;
+						integer is1 = row_ptr_start[ii] + 1;
+						integer is2 = row_ptr_end[ii];
+						// Распараллеливание почемуто тормозит очень сильно.
+						//#pragma omp parallel for reduction(+:rsum)
+						for (integer ii1 = is1; ii1 <= is2; ii1++)
+						{
+							//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
+							integer ipos = Amat.j[ii1];
+							// 13.07.2016
+							// игнорирование positive connections.
+							//if ((Amat.aij[ii1] < 0.0)) {
+							rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
+							//}
+							//else {
+							// не рабтает.
+							//	ap_now += Amat.aij[ii1];
+							//}
+						}
+						x[istr] += rsum;
+						//x[istr] *= Amat.aij[row_ptr_start[ii]];
+						// 13.07.2016
+						x[istr] /= ap_now;
+
+						// Запускается только после первого раза сразу запускать нельзя
+						// т.к. начальное значение не является адекватным.
+						//if (is1 <= is2) {
+							// Только если это не условие Дирихле применяем релаксацию.
+						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+					//}
+					}
+				}
 
 
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					integer istr = ii - iadd;
+					x_jacoby_buffer[istr] = x[istr];
+				}
 
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					if (F_false_C_true[ii] == false) { // F nodes
+
+						integer istr = ii - iadd;
+						doublerealT rold = x_jacoby_buffer[istr];
+
+						// 13.07.2016
+						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+						// ibsp_length==0
+						x[istr] =  b[istr];
+
+						doublerealT rsum = 0.0;
+						integer is1 = row_ptr_start[ii] + 1;
+						integer is2 = row_ptr_end[ii];
+						// Распараллеливание почемуто тормозит очень сильно.
+						//#pragma omp parallel for reduction(+:rsum)
+						for (integer ii1 = is1; ii1 <= is2; ii1++)
+						{
+							//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
+							integer ipos = Amat.j[ii1];
+							// 13.07.2016
+							// игнорирование positive connections.
+							//if ((Amat.aij[ii1] < 0.0)) {
+							rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
+							//}
+							//else {
+							// не рабтает.
+							//	ap_now += Amat.aij[ii1];
+							//}
+						}
+						x[istr] += rsum;
+						//x[istr] *= Amat.aij[row_ptr_start[ii]];
+						// 13.07.2016
+						x[istr] /= ap_now;
+
+						// Запускается только после первого раза сразу запускать нельзя
+						// т.к. начальное значение не является адекватным.
+						//if (is1 <= is2) {
+							// Только если это не условие Дирихле применяем релаксацию.
+						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+					//}
+					}
+				}
+
+			}
 		}
 		else {
-			// idirect==0
-			// Сначала С потом F.
 
-			//#pragma loop(hint_parallel(8))
+			if (idirect == 1) {
+				// Восходящая ветвь.
+
+				// Сначала F потом C.
+
+				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
-			for (integer ii = startpos; ii <= endpos; ii++) {
-				integer istr = ii - iadd;
-				x_jacoby_buffer[istr] = x[istr];
-			}
-
-			//#pragma loop(hint_parallel(8))
-#pragma omp parallel for
-			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii]  ) { // C nodes
-
+				for (integer ii = startpos; ii <= endpos; ii++) {
 					integer istr = ii - iadd;
-					doublerealT rold = x_jacoby_buffer[istr];
-
-					// 13.07.2016
-					doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-
-					x[istr] = diag_minus_one[istr]*b[istr];
-
-					doublerealT rsum = 0.0;
-					integer is1 = row_ptr_start[ii] + 1;
-					integer is2 = row_ptr_end[ii];
-					// Распараллеливание почемуто тормозит очень сильно.
-					//#pragma omp parallel for reduction(+:rsum)
-					for (integer ii1 = is1; ii1 <= is2; ii1++)
-					{
-						//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
-						integer ipos = Amat.j[ii1];
-						// 13.07.2016
-						// игнорирование positive connections.
-						//if ((Amat.aij[ii1] < 0.0)) {
-						rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
-						//}
-						//else {
-						// не рабтает.
-						//	ap_now += Amat.aij[ii1];
-						//}
-					}
-					x[istr] += rsum;
-					//x[istr] *= Amat.aij[row_ptr_start[ii]];
-					// 13.07.2016
-					x[istr] /= ap_now;
-
-					// Запускается только после первого раза сразу запускать нельзя
-					// т.к. начальное значение не является адекватным.
-					//if (is1 <= is2) {
-						// Только если это не условие Дирихле применяем релаксацию.
-					x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-				//}
+					x_jacoby_buffer[istr] = x[istr];
 				}
-			}
 
-
-			//#pragma loop(hint_parallel(8))
+				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
-			for (integer ii = startpos; ii <= endpos; ii++) {
-				integer istr = ii - iadd;
-				x_jacoby_buffer[istr] = x[istr];
-			}
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					if (F_false_C_true[ii]) { // F nodes
 
-			//#pragma loop(hint_parallel(8))
+						integer istr = ii - iadd;
+						doublerealT rold = x_jacoby_buffer[istr];
+
+						// 13.07.2016
+						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+						x[istr] = diag_minus_one[istr] * b[istr];
+
+						doublerealT rsum = 0.0;
+						integer is1 = row_ptr_start[ii] + 1;
+						integer is2 = row_ptr_end[ii];
+						// Распараллеливание почемуто тормозит очень сильно.
+						//#pragma omp parallel for reduction(+:rsum)
+						for (integer ii1 = is1; ii1 <= is2; ii1++)
+						{
+							//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
+							integer ipos = Amat.j[ii1];
+							// 13.07.2016
+							// игнорирование positive connections.
+							//if ((Amat.aij[ii1] < 0.0)) {
+							rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
+							//}
+							//else {
+							// не рабтает.
+							//	ap_now += Amat.aij[ii1];
+							//}
+						}
+						x[istr] += rsum;
+						//x[istr] *= Amat.aij[row_ptr_start[ii]];
+						// 13.07.2016
+						x[istr] /= ap_now;
+
+						// Запускается только после первого раза сразу запускать нельзя
+						// т.к. начальное значение не является адекватным.
+						//if (is1 <= is2) {
+							// Только если это не условие Дирихле применяем релаксацию.
+						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+					//}
+					}
+				}
+
+				// update.
+				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
-			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii] == false) { // F nodes
-
+				for (integer ii = startpos; ii <= endpos; ii++) {
 					integer istr = ii - iadd;
-					doublerealT rold = x_jacoby_buffer[istr];
-
-					// 13.07.2016
-					doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-
-					x[istr] = diag_minus_one[istr]*b[istr];
-
-					doublerealT rsum = 0.0;
-					integer is1 = row_ptr_start[ii] + 1;
-					integer is2 = row_ptr_end[ii];
-					// Распараллеливание почемуто тормозит очень сильно.
-					//#pragma omp parallel for reduction(+:rsum)
-					for (integer ii1 = is1; ii1 <= is2; ii1++)
-					{
-						//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
-						integer ipos = Amat.j[ii1];
-						// 13.07.2016
-						// игнорирование positive connections.
-						//if ((Amat.aij[ii1] < 0.0)) {
-						rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
-						//}
-						//else {
-						// не рабтает.
-						//	ap_now += Amat.aij[ii1];
-						//}
-					}
-					x[istr] += rsum;
-					//x[istr] *= Amat.aij[row_ptr_start[ii]];
-					// 13.07.2016
-					x[istr] /= ap_now;
-
-					// Запускается только после первого раза сразу запускать нельзя
-					// т.к. начальное значение не является адекватным.
-					//if (is1 <= is2) {
-						// Только если это не условие Дирихле применяем релаксацию.
-					x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-				//}
+					x_jacoby_buffer[istr] = x[istr];
 				}
+
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					if (F_false_C_true[ii]) { // C nodes
+
+						integer istr = ii - iadd;
+						doublerealT rold = x_jacoby_buffer[istr];
+
+						// 13.07.2016
+						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+						x[istr] = diag_minus_one[istr] * b[istr];
+
+						doublerealT rsum = 0.0;
+						integer is1 = row_ptr_start[ii] + 1;
+						integer is2 = row_ptr_end[ii];
+						// Распараллеливание почемуто тормозит очень сильно.
+						//#pragma omp parallel for reduction(+:rsum)
+						for (integer ii1 = is1; ii1 <= is2; ii1++)
+						{
+							//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
+							integer ipos = Amat.j[ii1];
+							// 13.07.2016
+							// игнорирование positive connections.
+							//if ((Amat.aij[ii1] < 0.0)) {
+							rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
+							//}
+							//else {
+							// не рабтает.
+							//	ap_now += Amat.aij[ii1];
+							//}
+						}
+						x[istr] += rsum;
+						//x[istr] *= Amat.aij[row_ptr_start[ii]];
+						// 13.07.2016
+						x[istr] /= ap_now;
+
+						// Запускается только после первого раза сразу запускать нельзя
+						// т.к. начальное значение не является адекватным.
+						//if (is1 <= is2) {
+							// Только если это не условие Дирихле применяем релаксацию.
+						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+					//}
+					}
+				}
+
+
+
+			}
+			else {
+				// idirect==0
+				// Сначала С потом F.
+
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					integer istr = ii - iadd;
+					x_jacoby_buffer[istr] = x[istr];
+				}
+
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					if (F_false_C_true[ii]) { // C nodes
+
+						integer istr = ii - iadd;
+						doublerealT rold = x_jacoby_buffer[istr];
+
+						// 13.07.2016
+						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+						x[istr] = diag_minus_one[istr] * b[istr];
+
+						doublerealT rsum = 0.0;
+						integer is1 = row_ptr_start[ii] + 1;
+						integer is2 = row_ptr_end[ii];
+						// Распараллеливание почемуто тормозит очень сильно.
+						//#pragma omp parallel for reduction(+:rsum)
+						for (integer ii1 = is1; ii1 <= is2; ii1++)
+						{
+							//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
+							integer ipos = Amat.j[ii1];
+							// 13.07.2016
+							// игнорирование positive connections.
+							//if ((Amat.aij[ii1] < 0.0)) {
+							rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
+							//}
+							//else {
+							// не рабтает.
+							//	ap_now += Amat.aij[ii1];
+							//}
+						}
+						x[istr] += rsum;
+						//x[istr] *= Amat.aij[row_ptr_start[ii]];
+						// 13.07.2016
+						x[istr] /= ap_now;
+
+						// Запускается только после первого раза сразу запускать нельзя
+						// т.к. начальное значение не является адекватным.
+						//if (is1 <= is2) {
+							// Только если это не условие Дирихле применяем релаксацию.
+						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+					//}
+					}
+				}
+
+
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					integer istr = ii - iadd;
+					x_jacoby_buffer[istr] = x[istr];
+				}
+
+				//#pragma loop(hint_parallel(8))
+#pragma omp parallel for
+				for (integer ii = startpos; ii <= endpos; ii++) {
+					if (F_false_C_true[ii] == false) { // F nodes
+
+						integer istr = ii - iadd;
+						doublerealT rold = x_jacoby_buffer[istr];
+
+						// 13.07.2016
+						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+						x[istr] = diag_minus_one[istr] * b[istr];
+
+						doublerealT rsum = 0.0;
+						integer is1 = row_ptr_start[ii] + 1;
+						integer is2 = row_ptr_end[ii];
+						// Распараллеливание почемуто тормозит очень сильно.
+						//#pragma omp parallel for reduction(+:rsum)
+						for (integer ii1 = is1; ii1 <= is2; ii1++)
+						{
+							//x[istr] += -Amat.aij[ii1]*x_jacoby_buffer[Amat.j[ii1]];
+							integer ipos = Amat.j[ii1];
+							// 13.07.2016
+							// игнорирование positive connections.
+							//if ((Amat.aij[ii1] < 0.0)) {
+							rsum += -Amat.aij[ii1] * x_jacoby_buffer[ipos];
+							//}
+							//else {
+							// не рабтает.
+							//	ap_now += Amat.aij[ii1];
+							//}
+						}
+						x[istr] += rsum;
+						//x[istr] *= Amat.aij[row_ptr_start[ii]];
+						// 13.07.2016
+						x[istr] /= ap_now;
+
+						// Запускается только после первого раза сразу запускать нельзя
+						// т.к. начальное значение не является адекватным.
+						//if (is1 <= is2) {
+							// Только если это не условие Дирихле применяем релаксацию.
+						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+					//}
+					}
+				}
+
 			}
 
 		}
-
-
 	}
 	else {
 
-		// 3 ноября 2016. Симметричный метод Гаусса-Зейделя.
-		if (isimmetricGS_switch == 0) {
-			// 3 ноября 2016 было экспериментально доказано на BSKDmitrii что симметричный метод Гаусса - Зейделя РАСХОДИТСЯ.
-			// НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ СИММЕТРИЧНЫЙ МЕТОД ГАУССА -ЗЕЙДЕЛЯ. ИСПОЛЬЗУЙТЕ ОБЫЧНЫЙ МЕТОД ЗЕЙДЕЛЯ.
+		if (ibsp_length == 0) {
+			// 3 ноября 2016. Симметричный метод Гаусса-Зейделя.
+			if (isimmetricGS_switch == 0) {
+				// 3 ноября 2016 было экспериментально доказано на BSKDmitrii что симметричный метод Гаусса - Зейделя РАСХОДИТСЯ.
+				// НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ СИММЕТРИЧНЫЙ МЕТОД ГАУССА -ЗЕЙДЕЛЯ. ИСПОЛЬЗУЙТЕ ОБЫЧНЫЙ МЕТОД ЗЕЙДЕЛЯ.
 
-			if (idirect == 1) {
-				// Восходящая ветвь.
+				if (idirect == 1) {
+					// Восходящая ветвь.
 
 
 
-				// Сначала F потом C.
+					// Сначала F потом C.
 
-//----->#pragma omp parallel for
-				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == false) { // F nodes
+	//----->#pragma omp parallel for
+					for (integer ii = startpos; ii <= endpos; ii++) {
+						if (F_false_C_true[ii] == false) { // F nodes
 
-						integer istr = ii - iadd;
-						doublerealT rold = x[istr];
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
 
-						// 13.07.2016
-						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-						// 28.01.2017
-						//ap_now = 0.0;
-
-						x[istr] = diag_minus_one[istr]*b[istr];
-
-						doublerealT rsum = 0.0;
-						integer is1 = row_ptr_start[ii] + 1;
-						integer is2 = row_ptr_end[ii];
-						// Распараллеливание почемуто тормозит очень сильно.
-						//#pragma omp parallel for reduction(+:rsum)
-						for (integer ii1 = is1; ii1 <= is2; ii1++)
-						{
-							//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
-							integer ipos = Amat.j[ii1];
 							// 13.07.2016
-							if (1) {
-								// игнорирование positive connections.
-								//if ((Amat.aij[ii1] < 0.0)) {
-								// Здесь всё в каше и позитив и негатив коннектионшс.
-								rsum += -Amat.aij[ii1] * x[ipos];
-								//}
-								//else {
-								// не работает.
-								//	ap_now += Amat.aij[ii1];
-								//}
-							}
-							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+							// 28.01.2017
+							//ap_now = 0.0;
 
-								// игнорирование positive connections.
-								if ((Amat.aij[ii1] < 0.0)) {
+							// ibsp_length==0
+							x[istr] =  b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								if (1) {
+									// игнорирование positive connections.
+									//if ((Amat.aij[ii1] < 0.0)) {
+									// Здесь всё в каше и позитив и негатив коннектионшс.
 									rsum += -Amat.aij[ii1] * x[ipos];
-									//ap_now += fabs(Amat.aij[ii1]);
+									//}
+									//else {
+									// не работает.
+									//	ap_now += Amat.aij[ii1];
+									//}
 								}
 								else {
-									// не работает.
-									// Вероятно из-за того что так нарушен баланс.
-									//ap_now += fabs(Amat.aij[ii1]);
-									if (fabs(x[ipos]) > fabs(x[istr])) {
-										ap_now += fabs(Amat.aij[ii1]);
+									// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+
+									// игнорирование positive connections.
+									if ((Amat.aij[ii1] < 0.0)) {
+										rsum += -Amat.aij[ii1] * x[ipos];
+										//ap_now += fabs(Amat.aij[ii1]);
 									}
-									else rsum += -Amat.aij[ii1] * x[ipos];
+									else {
+										// не работает.
+										// Вероятно из-за того что так нарушен баланс.
+										//ap_now += fabs(Amat.aij[ii1]);
+										if (fabs(x[ipos]) > fabs(x[istr])) {
+											ap_now += fabs(Amat.aij[ii1]);
+										}
+										else rsum += -Amat.aij[ii1] * x[ipos];
+									}
 								}
 							}
-						}
-						x[istr] += rsum;
-						//x[istr] *= Amat.aij[row_ptr_start[ii]];
-						// 13.07.2016
-						x[istr] /= ap_now;
-
-						// Запускается только после первого раза сразу запускать нельзя
-						// т.к. начальное значение не является адекватным.
-						//if (is1 <= is2) {
-							// Только если это не условие Дирихле применяем релаксацию.
-						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-					//}
-					}
-				}
-
-				//---->#pragma omp parallel for
-				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii]  ) { // C nodes
-
-						integer istr = ii - iadd;
-						doublerealT rold = x[istr];
-
-						// 13.07.2016
-						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-						// 28.01.2017
-						//ap_now = 0.0;
-
-						x[istr] = diag_minus_one[istr] * b[istr];
-
-						doublerealT rsum = 0.0;
-						integer is1 = row_ptr_start[ii] + 1;
-						integer is2 = row_ptr_end[ii];
-						// Распараллеливание почемуто тормозит очень сильно.
-						//#pragma omp parallel for reduction(+:rsum)
-						for (integer ii1 = is1; ii1 <= is2; ii1++)
-						{
-							//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
-							integer ipos = Amat.j[ii1];
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
 							// 13.07.2016
-							if (1) {
-								// игнорирование positive connections.
-								//if ((Amat.aij[ii1] < 0.0)) {
-								// Здесь всё в каше и позитив и негатив коннектионшс.
-								rsum += -Amat.aij[ii1] * x[ipos];
-								//}
-								//else {
-								// не работает.
-								//	ap_now += Amat.aij[ii1];
-								//}
-							}
-							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+							x[istr] /= ap_now;
 
-								// игнорирование positive connections.
-								if ((Amat.aij[ii1] < 0.0)) {
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+					//---->#pragma omp parallel for
+					for (integer ii = startpos; ii <= endpos; ii++) {
+						if (F_false_C_true[ii]) { // C nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+							// 28.01.2017
+							//ap_now = 0.0;
+
+							// ibsp_length==0
+							x[istr] = b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								if (1) {
+									// игнорирование positive connections.
+									//if ((Amat.aij[ii1] < 0.0)) {
+									// Здесь всё в каше и позитив и негатив коннектионшс.
 									rsum += -Amat.aij[ii1] * x[ipos];
-									//ap_now += fabs(Amat.aij[ii1]);
+									//}
+									//else {
+									// не работает.
+									//	ap_now += Amat.aij[ii1];
+									//}
 								}
 								else {
-									// не работает.
-									// Вероятно из-за того что так нарушен баланс.
-									//ap_now += fabs(Amat.aij[ii1]);
-									if (fabs(x[ipos]) > fabs(x[istr])) {
-										ap_now += fabs(Amat.aij[ii1]);
+									// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+
+									// игнорирование positive connections.
+									if ((Amat.aij[ii1] < 0.0)) {
+										rsum += -Amat.aij[ii1] * x[ipos];
+										//ap_now += fabs(Amat.aij[ii1]);
 									}
-									else rsum += -Amat.aij[ii1] * x[ipos];
+									else {
+										// не работает.
+										// Вероятно из-за того что так нарушен баланс.
+										//ap_now += fabs(Amat.aij[ii1]);
+										if (fabs(x[ipos]) > fabs(x[istr])) {
+											ap_now += fabs(Amat.aij[ii1]);
+										}
+										else rsum += -Amat.aij[ii1] * x[ipos];
+									}
 								}
 							}
-						}
-						x[istr] += rsum;
-						//x[istr] *= Amat.aij[row_ptr_start[ii]];
-						// 13.07.2016
-						x[istr] /= ap_now;
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
 
-						// Запускается только после первого раза сразу запускать нельзя
-						// т.к. начальное значение не является адекватным.
-						//if (is1 <= is2) {
-							// Только если это не условие Дирихле применяем релаксацию.
-						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-					//}
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
 					}
+
 				}
+				else {
+
+					// idirect==0
+					// Сначала С потом F.
+
+	//---->#pragma omp parallel for
+					for (integer ii = startpos; ii <= endpos; ii++) {
+						if (F_false_C_true[ii]) { // C nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+							// 28.01.2017
+							//ap_now = 0.0;
+
+							// ibsp_length==0
+							x[istr] =  b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								if (1) {
+									// игнорирование positive connections.
+									//if ((Amat.aij[ii1] < 0.0)) {
+									// Здесь всё в каше и позитив и негатив коннектионшс.
+									rsum += -Amat.aij[ii1] * x[ipos];
+									//}
+									//else {
+									// не работает.
+									//	ap_now += Amat.aij[ii1];
+									//}
+								}
+								else {
+									// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+
+									// игнорирование positive connections.
+									if ((Amat.aij[ii1] < 0.0)) {
+										rsum += -Amat.aij[ii1] * x[ipos];
+										//ap_now += fabs(Amat.aij[ii1]);
+									}
+									else {
+										// не работает.
+										// Вероятно из-за того что так нарушен баланс.
+										//ap_now += fabs(Amat.aij[ii1]);
+										if (fabs(x[ipos]) > fabs(x[istr])) {
+											ap_now += fabs(Amat.aij[ii1]);
+										}
+										else rsum += -Amat.aij[ii1] * x[ipos];
+									}
+								}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+					//---->#pragma omp parallel for
+					for (integer ii = startpos; ii <= endpos; ii++) {
+						if (F_false_C_true[ii] == false) { // F nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+							// 28.01.2017
+							//ap_now = 0.0;
+
+							// ibsp_length==0
+							x[istr] =  b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								if (1) {
+									// игнорирование positive connections.
+									//if ((Amat.aij[ii1] < 0.0)) {
+									// Здесь всё в каше и позитив и негатив коннектионшс.
+									rsum += -Amat.aij[ii1] * x[ipos];
+									//}
+									//else {
+									// не работает.
+									//	ap_now += Amat.aij[ii1];
+									//}
+								}
+								else {
+									// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+
+									// игнорирование positive connections.
+									if ((Amat.aij[ii1] < 0.0)) {
+										rsum += -Amat.aij[ii1] * x[ipos];
+										//ap_now += fabs(Amat.aij[ii1]);
+									}
+									else {
+										// не работает.
+										// Вероятно из-за того что так нарушен баланс.
+										//ap_now += fabs(Amat.aij[ii1]);
+										if (fabs(x[ipos]) > fabs(x[istr])) {
+											ap_now += fabs(Amat.aij[ii1]);
+										}
+										else rsum += -Amat.aij[ii1] * x[ipos];
+									}
+								}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+				}
+
+				// Ни в коем случае не переключать. 3 ноября 2016.
+				//isimmetricGS_switch = 1;
 
 			}
 			else {
 
-				// idirect==0
-				// Сначала С потом F.
+				if (idirect == 1) {
+					// Восходящая ветвь.
 
-//---->#pragma omp parallel for
-				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii]  ) { // C nodes
+					// Сначала F потом C.
 
-						integer istr = ii - iadd;
-						doublerealT rold = x[istr];
+	//---->#pragma omp parallel for
+					for (integer ii = endpos; ii >= startpos; ii--) {
+						if (F_false_C_true[ii] == false) { // F nodes
 
-						// 13.07.2016
-						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-						// 28.01.2017
-						//ap_now = 0.0;
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
 
-						x[istr] = diag_minus_one[istr] * b[istr];
-
-						doublerealT rsum = 0.0;
-						integer is1 = row_ptr_start[ii] + 1;
-						integer is2 = row_ptr_end[ii];
-						// Распараллеливание почемуто тормозит очень сильно.
-						//#pragma omp parallel for reduction(+:rsum)
-						for (integer ii1 = is1; ii1 <= is2; ii1++)
-						{
-							//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
-							integer ipos = Amat.j[ii1];
 							// 13.07.2016
-							if (1) {
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+							// ibsp_length==0
+							x[istr] = b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
 								// игнорирование positive connections.
 								//if ((Amat.aij[ii1] < 0.0)) {
-								// Здесь всё в каше и позитив и негатив коннектионшс.
 								rsum += -Amat.aij[ii1] * x[ipos];
 								//}
 								//else {
-								// не работает.
+								// не рабтает.
 								//	ap_now += Amat.aij[ii1];
 								//}
 							}
-							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
-
-								// игнорирование positive connections.
-								if ((Amat.aij[ii1] < 0.0)) {
-									rsum += -Amat.aij[ii1] * x[ipos];
-									//ap_now += fabs(Amat.aij[ii1]);
-								}
-								else {
-									// не работает.
-									// Вероятно из-за того что так нарушен баланс.
-									//ap_now += fabs(Amat.aij[ii1]);
-									if (fabs(x[ipos]) > fabs(x[istr])) {
-										ap_now += fabs(Amat.aij[ii1]);
-									}
-									else rsum += -Amat.aij[ii1] * x[ipos];
-								}
-							}
-						}
-						x[istr] += rsum;
-						//x[istr] *= Amat.aij[row_ptr_start[ii]];
-						// 13.07.2016
-						x[istr] /= ap_now;
-
-						// Запускается только после первого раза сразу запускать нельзя
-						// т.к. начальное значение не является адекватным.
-						//if (is1 <= is2) {
-							// Только если это не условие Дирихле применяем релаксацию.
-						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-					//}
-					}
-				}
-
-				//---->#pragma omp parallel for
-				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == false) { // F nodes
-
-						integer istr = ii - iadd;
-						doublerealT rold = x[istr];
-
-						// 13.07.2016
-						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-						// 28.01.2017
-						//ap_now = 0.0;
-
-						x[istr] = diag_minus_one[istr] * b[istr];
-
-						doublerealT rsum = 0.0;
-						integer is1 = row_ptr_start[ii] + 1;
-						integer is2 = row_ptr_end[ii];
-						// Распараллеливание почемуто тормозит очень сильно.
-						//#pragma omp parallel for reduction(+:rsum)
-						for (integer ii1 = is1; ii1 <= is2; ii1++)
-						{
-							//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
-							integer ipos = Amat.j[ii1];
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
 							// 13.07.2016
-							if (1) {
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+
+					//----->#pragma omp parallel for
+					for (integer ii = endpos; ii >= startpos; ii--) {
+						if (F_false_C_true[ii]) { // C nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+							// ibsp_length==0
+							x[istr] = b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
 								// игнорирование positive connections.
 								//if ((Amat.aij[ii1] < 0.0)) {
-								// Здесь всё в каше и позитив и негатив коннектионшс.
 								rsum += -Amat.aij[ii1] * x[ipos];
 								//}
 								//else {
-								// не работает.
+								// не рабтает.
 								//	ap_now += Amat.aij[ii1];
 								//}
 							}
-							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
 
-								// игнорирование positive connections.
-								if ((Amat.aij[ii1] < 0.0)) {
-									rsum += -Amat.aij[ii1] * x[ipos];
-									//ap_now += fabs(Amat.aij[ii1]);
-								}
-								else {
-									// не работает.
-									// Вероятно из-за того что так нарушен баланс.
-									//ap_now += fabs(Amat.aij[ii1]);
-									if (fabs(x[ipos]) > fabs(x[istr])) {
-										ap_now += fabs(Amat.aij[ii1]);
-									}
-									else rsum += -Amat.aij[ii1] * x[ipos];
-								}
-							}
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
 						}
-						x[istr] += rsum;
-						//x[istr] *= Amat.aij[row_ptr_start[ii]];
-						// 13.07.2016
-						x[istr] /= ap_now;
-
-						// Запускается только после первого раза сразу запускать нельзя
-						// т.к. начальное значение не является адекватным.
-						//if (is1 <= is2) {
-							// Только если это не условие Дирихле применяем релаксацию.
-						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-					//}
 					}
+
+
+
+				}
+				else {
+					// idirect==0
+					// Сначала С потом F.
+
+	//--->#pragma omp parallel for
+					for (integer ii = endpos; ii >= startpos; ii--) {
+						if (F_false_C_true[ii]) { // C nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+							// ibsp_length==0
+							x[istr] = b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								// игнорирование positive connections.
+								//if ((Amat.aij[ii1] < 0.0)) {
+								rsum += -Amat.aij[ii1] * x[ipos];
+								//}
+								//else {
+								// не рабтает.
+								//	ap_now += Amat.aij[ii1];
+								//}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+
+					//--->#pragma omp parallel for
+					for (integer ii = endpos; ii >= startpos; ii--) {
+						if (F_false_C_true[ii] == false) { // F nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+							// ibsp_length==0
+							x[istr] =  b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								// игнорирование positive connections.
+								//if ((Amat.aij[ii1] < 0.0)) {
+								rsum += -Amat.aij[ii1] * x[ipos];
+								//}
+								//else {
+								// не рабтает.
+								//	ap_now += Amat.aij[ii1];
+								//}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
 				}
 
+				//isimmetricGS_switch = 0;  // смена направления.
 			}
-
-			// Ни в коем случае не переключать. 3 ноября 2016.
-			//isimmetricGS_switch = 1;
-
 		}
 		else {
+			// 3 ноября 2016. Симметричный метод Гаусса-Зейделя.
+			if (isimmetricGS_switch == 0) {
+				// 3 ноября 2016 было экспериментально доказано на BSKDmitrii что симметричный метод Гаусса - Зейделя РАСХОДИТСЯ.
+				// НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ СИММЕТРИЧНЫЙ МЕТОД ГАУССА -ЗЕЙДЕЛЯ. ИСПОЛЬЗУЙТЕ ОБЫЧНЫЙ МЕТОД ЗЕЙДЕЛЯ.
 
-			if (idirect == 1) {
-				// Восходящая ветвь.
+				if (idirect == 1) {
+					// Восходящая ветвь.
 
-				// Сначала F потом C.
 
-//---->#pragma omp parallel for
-				for (integer ii = endpos; ii >= startpos; ii--) {
-					if (F_false_C_true[ii] == false) { // F nodes
 
-						integer istr = ii - iadd;
-						doublerealT rold = x[istr];
+					// Сначала F потом C.
 
-						// 13.07.2016
-						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+	//----->#pragma omp parallel for
+					for (integer ii = startpos; ii <= endpos; ii++) {
+						if (F_false_C_true[ii] == false) { // F nodes
 
-						x[istr] = diag_minus_one[istr] * b[istr];
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
 
-						doublerealT rsum = 0.0;
-						integer is1 = row_ptr_start[ii] + 1;
-						integer is2 = row_ptr_end[ii];
-						// Распараллеливание почемуто тормозит очень сильно.
-						//#pragma omp parallel for reduction(+:rsum)
-						for (integer ii1 = is1; ii1 <= is2; ii1++)
-						{
-							//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
-							integer ipos = Amat.j[ii1];
 							// 13.07.2016
-							// игнорирование positive connections.
-							//if ((Amat.aij[ii1] < 0.0)) {
-							rsum += -Amat.aij[ii1] * x[ipos];
-							//}
-							//else {
-							// не рабтает.
-							//	ap_now += Amat.aij[ii1];
-							//}
-						}
-						x[istr] += rsum;
-						//x[istr] *= Amat.aij[row_ptr_start[ii]];
-						// 13.07.2016
-						x[istr] /= ap_now;
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+							// 28.01.2017
+							//ap_now = 0.0;
 
-						// Запускается только после первого раза сразу запускать нельзя
-						// т.к. начальное значение не является адекватным.
-						//if (is1 <= is2) {
-							// Только если это не условие Дирихле применяем релаксацию.
-						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-					//}
+							x[istr] = diag_minus_one[istr] * b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								if (1) {
+									// игнорирование positive connections.
+									//if ((Amat.aij[ii1] < 0.0)) {
+									// Здесь всё в каше и позитив и негатив коннектионшс.
+									rsum += -Amat.aij[ii1] * x[ipos];
+									//}
+									//else {
+									// не работает.
+									//	ap_now += Amat.aij[ii1];
+									//}
+								}
+								else {
+									// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+
+									// игнорирование positive connections.
+									if ((Amat.aij[ii1] < 0.0)) {
+										rsum += -Amat.aij[ii1] * x[ipos];
+										//ap_now += fabs(Amat.aij[ii1]);
+									}
+									else {
+										// не работает.
+										// Вероятно из-за того что так нарушен баланс.
+										//ap_now += fabs(Amat.aij[ii1]);
+										if (fabs(x[ipos]) > fabs(x[istr])) {
+											ap_now += fabs(Amat.aij[ii1]);
+										}
+										else rsum += -Amat.aij[ii1] * x[ipos];
+									}
+								}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
 					}
+
+					//---->#pragma omp parallel for
+					for (integer ii = startpos; ii <= endpos; ii++) {
+						if (F_false_C_true[ii]) { // C nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+							// 28.01.2017
+							//ap_now = 0.0;
+
+							x[istr] = diag_minus_one[istr] * b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								if (1) {
+									// игнорирование positive connections.
+									//if ((Amat.aij[ii1] < 0.0)) {
+									// Здесь всё в каше и позитив и негатив коннектионшс.
+									rsum += -Amat.aij[ii1] * x[ipos];
+									//}
+									//else {
+									// не работает.
+									//	ap_now += Amat.aij[ii1];
+									//}
+								}
+								else {
+									// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+
+									// игнорирование positive connections.
+									if ((Amat.aij[ii1] < 0.0)) {
+										rsum += -Amat.aij[ii1] * x[ipos];
+										//ap_now += fabs(Amat.aij[ii1]);
+									}
+									else {
+										// не работает.
+										// Вероятно из-за того что так нарушен баланс.
+										//ap_now += fabs(Amat.aij[ii1]);
+										if (fabs(x[ipos]) > fabs(x[istr])) {
+											ap_now += fabs(Amat.aij[ii1]);
+										}
+										else rsum += -Amat.aij[ii1] * x[ipos];
+									}
+								}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+				}
+				else {
+
+					// idirect==0
+					// Сначала С потом F.
+
+	//---->#pragma omp parallel for
+					for (integer ii = startpos; ii <= endpos; ii++) {
+						if (F_false_C_true[ii]) { // C nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+							// 28.01.2017
+							//ap_now = 0.0;
+
+							x[istr] = diag_minus_one[istr] * b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								if (1) {
+									// игнорирование positive connections.
+									//if ((Amat.aij[ii1] < 0.0)) {
+									// Здесь всё в каше и позитив и негатив коннектионшс.
+									rsum += -Amat.aij[ii1] * x[ipos];
+									//}
+									//else {
+									// не работает.
+									//	ap_now += Amat.aij[ii1];
+									//}
+								}
+								else {
+									// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+
+									// игнорирование positive connections.
+									if ((Amat.aij[ii1] < 0.0)) {
+										rsum += -Amat.aij[ii1] * x[ipos];
+										//ap_now += fabs(Amat.aij[ii1]);
+									}
+									else {
+										// не работает.
+										// Вероятно из-за того что так нарушен баланс.
+										//ap_now += fabs(Amat.aij[ii1]);
+										if (fabs(x[ipos]) > fabs(x[istr])) {
+											ap_now += fabs(Amat.aij[ii1]);
+										}
+										else rsum += -Amat.aij[ii1] * x[ipos];
+									}
+								}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+					//---->#pragma omp parallel for
+					for (integer ii = startpos; ii <= endpos; ii++) {
+						if (F_false_C_true[ii] == false) { // F nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+							// 28.01.2017
+							//ap_now = 0.0;
+
+							x[istr] = diag_minus_one[istr] * b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								if (1) {
+									// игнорирование positive connections.
+									//if ((Amat.aij[ii1] < 0.0)) {
+									// Здесь всё в каше и позитив и негатив коннектионшс.
+									rsum += -Amat.aij[ii1] * x[ipos];
+									//}
+									//else {
+									// не работает.
+									//	ap_now += Amat.aij[ii1];
+									//}
+								}
+								else {
+									// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
+
+									// игнорирование positive connections.
+									if ((Amat.aij[ii1] < 0.0)) {
+										rsum += -Amat.aij[ii1] * x[ipos];
+										//ap_now += fabs(Amat.aij[ii1]);
+									}
+									else {
+										// не работает.
+										// Вероятно из-за того что так нарушен баланс.
+										//ap_now += fabs(Amat.aij[ii1]);
+										if (fabs(x[ipos]) > fabs(x[istr])) {
+											ap_now += fabs(Amat.aij[ii1]);
+										}
+										else rsum += -Amat.aij[ii1] * x[ipos];
+									}
+								}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
 				}
 
-
-				//----->#pragma omp parallel for
-				for (integer ii = endpos; ii >= startpos; ii--) {
-					if (F_false_C_true[ii]  ) { // C nodes
-
-						integer istr = ii - iadd;
-						doublerealT rold = x[istr];
-
-						// 13.07.2016
-						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-
-						x[istr] = diag_minus_one[istr] * b[istr];
-
-						doublerealT rsum = 0.0;
-						integer is1 = row_ptr_start[ii] + 1;
-						integer is2 = row_ptr_end[ii];
-						// Распараллеливание почемуто тормозит очень сильно.
-						//#pragma omp parallel for reduction(+:rsum)
-						for (integer ii1 = is1; ii1 <= is2; ii1++)
-						{
-							//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
-							integer ipos = Amat.j[ii1];
-							// 13.07.2016
-							// игнорирование positive connections.
-							//if ((Amat.aij[ii1] < 0.0)) {
-							rsum += -Amat.aij[ii1] * x[ipos];
-							//}
-							//else {
-							// не рабтает.
-							//	ap_now += Amat.aij[ii1];
-							//}
-						}
-						x[istr] += rsum;
-						//x[istr] *= Amat.aij[row_ptr_start[ii]];
-						// 13.07.2016
-						x[istr] /= ap_now;
-
-						// Запускается только после первого раза сразу запускать нельзя
-						// т.к. начальное значение не является адекватным.
-						//if (is1 <= is2) {
-							// Только если это не условие Дирихле применяем релаксацию.
-						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-					//}
-					}
-				}
-
-
+				// Ни в коем случае не переключать. 3 ноября 2016.
+				//isimmetricGS_switch = 1;
 
 			}
 			else {
-				// idirect==0
-				// Сначала С потом F.
 
-//--->#pragma omp parallel for
-				for (integer ii = endpos; ii >= startpos; ii--) {
-					if (F_false_C_true[ii]  ) { // C nodes
+				if (idirect == 1) {
+					// Восходящая ветвь.
 
-						integer istr = ii - iadd;
-						doublerealT rold = x[istr];
+					// Сначала F потом C.
 
-						// 13.07.2016
-						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+	//---->#pragma omp parallel for
+					for (integer ii = endpos; ii >= startpos; ii--) {
+						if (F_false_C_true[ii] == false) { // F nodes
 
-						x[istr] = diag_minus_one[istr] * b[istr];
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
 
-						doublerealT rsum = 0.0;
-						integer is1 = row_ptr_start[ii] + 1;
-						integer is2 = row_ptr_end[ii];
-						// Распараллеливание почемуто тормозит очень сильно.
-						//#pragma omp parallel for reduction(+:rsum)
-						for (integer ii1 = is1; ii1 <= is2; ii1++)
-						{
-							//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
-							integer ipos = Amat.j[ii1];
 							// 13.07.2016
-							// игнорирование positive connections.
-							//if ((Amat.aij[ii1] < 0.0)) {
-							rsum += -Amat.aij[ii1] * x[ipos];
-							//}
-							//else {
-							// не рабтает.
-							//	ap_now += Amat.aij[ii1];
-							//}
-						}
-						x[istr] += rsum;
-						//x[istr] *= Amat.aij[row_ptr_start[ii]];
-						// 13.07.2016
-						x[istr] /= ap_now;
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
 
-						// Запускается только после первого раза сразу запускать нельзя
-						// т.к. начальное значение не является адекватным.
-						//if (is1 <= is2) {
-							// Только если это не условие Дирихле применяем релаксацию.
-						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-					//}
+							x[istr] = diag_minus_one[istr] * b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								// игнорирование positive connections.
+								//if ((Amat.aij[ii1] < 0.0)) {
+								rsum += -Amat.aij[ii1] * x[ipos];
+								//}
+								//else {
+								// не рабтает.
+								//	ap_now += Amat.aij[ii1];
+								//}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
 					}
+
+
+					//----->#pragma omp parallel for
+					for (integer ii = endpos; ii >= startpos; ii--) {
+						if (F_false_C_true[ii]) { // C nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+							x[istr] = diag_minus_one[istr] * b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								// игнорирование positive connections.
+								//if ((Amat.aij[ii1] < 0.0)) {
+								rsum += -Amat.aij[ii1] * x[ipos];
+								//}
+								//else {
+								// не рабтает.
+								//	ap_now += Amat.aij[ii1];
+								//}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+
+
+				}
+				else {
+					// idirect==0
+					// Сначала С потом F.
+
+	//--->#pragma omp parallel for
+					for (integer ii = endpos; ii >= startpos; ii--) {
+						if (F_false_C_true[ii]) { // C nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+							x[istr] = diag_minus_one[istr] * b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								// игнорирование positive connections.
+								//if ((Amat.aij[ii1] < 0.0)) {
+								rsum += -Amat.aij[ii1] * x[ipos];
+								//}
+								//else {
+								// не рабтает.
+								//	ap_now += Amat.aij[ii1];
+								//}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
+
+					//--->#pragma omp parallel for
+					for (integer ii = endpos; ii >= startpos; ii--) {
+						if (F_false_C_true[ii] == false) { // F nodes
+
+							integer istr = ii - iadd;
+							doublerealT rold = x[istr];
+
+							// 13.07.2016
+							doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
+
+							x[istr] = diag_minus_one[istr] * b[istr];
+
+							doublerealT rsum = 0.0;
+							integer is1 = row_ptr_start[ii] + 1;
+							integer is2 = row_ptr_end[ii];
+							// Распараллеливание почемуто тормозит очень сильно.
+							//#pragma omp parallel for reduction(+:rsum)
+							for (integer ii1 = is1; ii1 <= is2; ii1++)
+							{
+								//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
+								integer ipos = Amat.j[ii1];
+								// 13.07.2016
+								// игнорирование positive connections.
+								//if ((Amat.aij[ii1] < 0.0)) {
+								rsum += -Amat.aij[ii1] * x[ipos];
+								//}
+								//else {
+								// не рабтает.
+								//	ap_now += Amat.aij[ii1];
+								//}
+							}
+							x[istr] += rsum;
+							//x[istr] *= Amat.aij[row_ptr_start[ii]];
+							// 13.07.2016
+							x[istr] /= ap_now;
+
+							// Запускается только после первого раза сразу запускать нельзя
+							// т.к. начальное значение не является адекватным.
+							//if (is1 <= is2) {
+								// Только если это не условие Дирихле применяем релаксацию.
+							x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
+						//}
+						}
+					}
+
 				}
 
-
-				//--->#pragma omp parallel for
-				for (integer ii = endpos; ii >= startpos; ii--) {
-					if (F_false_C_true[ii] == false) { // F nodes
-
-						integer istr = ii - iadd;
-						doublerealT rold = x[istr];
-
-						// 13.07.2016
-						doublerealT ap_now = 1.0 / Amat.aij[row_ptr_start[ii]];
-
-						x[istr] = diag_minus_one[istr] * b[istr];
-
-						doublerealT rsum = 0.0;
-						integer is1 = row_ptr_start[ii] + 1;
-						integer is2 = row_ptr_end[ii];
-						// Распараллеливание почемуто тормозит очень сильно.
-						//#pragma omp parallel for reduction(+:rsum)
-						for (integer ii1 = is1; ii1 <= is2; ii1++)
-						{
-							//x[istr] += -Amat.aij[ii1]*x[Amat.j[ii1]];
-							integer ipos = Amat.j[ii1];
-							// 13.07.2016
-							// игнорирование positive connections.
-							//if ((Amat.aij[ii1] < 0.0)) {
-							rsum += -Amat.aij[ii1] * x[ipos];
-							//}
-							//else {
-							// не рабтает.
-							//	ap_now += Amat.aij[ii1];
-							//}
-						}
-						x[istr] += rsum;
-						//x[istr] *= Amat.aij[row_ptr_start[ii]];
-						// 13.07.2016
-						x[istr] /= ap_now;
-
-						// Запускается только после первого раза сразу запускать нельзя
-						// т.к. начальное значение не является адекватным.
-						//if (is1 <= is2) {
-							// Только если это не условие Дирихле применяем релаксацию.
-						x[istr] = omega * x[istr] + (1.0 - omega) * rold; // this is SOR
-					//}
-					}
-				}
-
+				//isimmetricGS_switch = 0;  // смена направления.
 			}
-
-			//isimmetricGS_switch = 0;  // смена направления.
 		}
 	}
 
@@ -6544,14 +7288,14 @@ void seidelq(Ak2& Amat, integer istartq, integer iendq,
 	doublerealT*& x, doublerealT*& b,
 	integer*& row_ptr_start, integer*& row_ptr_end, 
 	integer iadd, bool*& F_false_C_true, integer idirect,
-	doublerealT* &diag_minus_one, integer ilevel)
+	doublerealT* &diag_minus_one, integer ilevel, integer ibsp_length)
 {
 	if (my_amg_manager.b_spai0) {
 		spai0_smoother<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, diag_minus_one);
 	}
 	else if (my_amg_manager.b_gmres) {
 		if (my_amg_manager.bCFJacoby  ) {
-			seidelqsor2<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, F_false_C_true, idirect, diag_minus_one);
+			seidelqsor2<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, F_false_C_true, idirect, diag_minus_one, ibsp_length);
 		}
 		else {
 			seidelqsor2<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, diag_minus_one);
@@ -6569,7 +7313,7 @@ void seidelq(Ak2& Amat, integer istartq, integer iendq,
 			}
 			else {
 
-				seidelqsor2<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, F_false_C_true, idirect, diag_minus_one);
+				seidelqsor2<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, F_false_C_true, idirect, diag_minus_one, ibsp_length);
 			}
 		}
 		else {
@@ -7562,7 +8306,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 	integer* nnz_aRP, doublereal**& residual_coarse, integer igam, integer* nnz_a,
 	doublereal**& error_approx_coarse, doublerealT dapply_ilu_max_pattern_size,
 	doublerealT process_flow_alpha, doublereal**& error_approx_fine,
-	integer nFinestSweeps) {
+	integer nFinestSweeps, integer ibsp_length) {
 
 	// Один V - цикл алгебраического многосеточного метода.
 	// A*z76=s76;
@@ -7588,7 +8332,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 			for (iter = 0; iter < nu1; iter++) {
 				//quick seidel
 				if (bonly_serial) {
-					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0],0);
+					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0],0, ibsp_length);
 				}
 				else {
 					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0]);
@@ -7618,7 +8362,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 				if (bonly_serial) {
 					if (bILU2smoother == 1) {
 						// ILU0
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0],0);
+						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0],0, ibsp_length);
 						residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 #pragma omp parallel for
 						for (integer i43 = 0; i43 < n_a[0]; i43++) {
@@ -7631,7 +8375,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 						}
 					}
 					else if ((bILU2smoother == 2) || (my_amg_manager.iFinnest_ilu == 1)) {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0],0);
+						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0],0, ibsp_length);
 						residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 #pragma omp parallel for
 						for (integer i43 = 0; i43 < n_a[0]; i43++) {
@@ -7644,7 +8388,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 						}
 					}
 					else {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0],0);
+						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, diag_minus_one[0],0, ibsp_length);
 					}
 				}
 				else {
@@ -7714,7 +8458,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 					for (iter = 0; iter < nu1; iter++) {
 						//quick seidel
 						if (bonly_serial) {
-							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1],1);
+							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1],1, ibsp_length);
 						}
 						else {
 							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1]);
@@ -7746,7 +8490,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 						//seidel(Amat, 1 + 2 * nnz_a[0], 2 * nnz_a[0] + nnz_a[1], error_approx_coarse, residual_coarse, flag, n_a[1]);
 						if (bonly_serial) {
 							if (bILU2smoother == 1) {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1],1);
+								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1],1, ibsp_length);
 								residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1], diag_minus_one[1]);
 #pragma omp parallel for
 								for (integer i43 = 0; i43 < n_a[1]; i43++) {
@@ -7761,7 +8505,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 
 							}
 							else if (1 && bILU2smoother == 2) {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1],1);
+								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1],1, ibsp_length);
 								residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1], diag_minus_one[1]);
 #pragma omp parallel for
 								for (integer i43 = 0; i43 < n_a[1]; i43++) {
@@ -7776,7 +8520,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 
 							}
 							else {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1],1);
+								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, diag_minus_one[1],1, ibsp_length);
 							}
 						}
 						else {
@@ -7979,7 +8723,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 									for (iter = 0; iter < nu1_count; iter++) {
 										//quick seidel
 										if (bonly_serial) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local], i_id_level_local);
+											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local], i_id_level_local, ibsp_length);
 										}
 										else {
 											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local]);
@@ -8039,7 +8783,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 										}
 
 										if (bILU2smoother == 1) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local], i_id_level_local);
+											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local], i_id_level_local, ibsp_length);
 											residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local], diag_minus_one[i_id_level_local]);
 #pragma omp parallel for
 											for (integer i43 = 0; i43 < n_a[i_id_level_local]; i43++) {
@@ -8053,7 +8797,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 
 										}
 										else if (1 && ((bILU2smoother == 2) || bflag56)) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local], i_id_level_local);
+											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local], i_id_level_local, ibsp_length);
 											residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local], diag_minus_one[i_id_level_local]);
 #pragma omp parallel for
 											for (integer i43 = 0; i43 < n_a[i_id_level_local]; i43++) {
@@ -8067,7 +8811,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 
 										}
 										else {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local], i_id_level_local);
+											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, diag_minus_one[i_id_level_local], i_id_level_local, ibsp_length);
 										}
 									}
 									else {
@@ -8129,7 +8873,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 									for (iter = 0; iter < nu2_count; iter++) {
 										//quick seidel
 										if (bonly_serial) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local], i_id_level_local);
+											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local], i_id_level_local, ibsp_length);
 										}
 										else {
 											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local]);
@@ -8182,7 +8926,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 										}
 
 										if (bILU2smoother == 1) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local], i_id_level_local);
+											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local], i_id_level_local, ibsp_length);
 											residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local], diag_minus_one[i_id_level_local]);
 #pragma omp parallel for
 											for (integer i43 = 0; i43 < n_a[i_id_level_local]; i43++) {
@@ -8195,7 +8939,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 											}
 										}
 										else if (1 && ((bILU2smoother == 2) || bflag56)) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local], i_id_level_local);
+											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local], i_id_level_local, ibsp_length);
 											residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local], diag_minus_one[i_id_level_local]);
 #pragma omp parallel for
 											for (integer i43 = 0; i43 < n_a[i_id_level_local]; i43++) {
@@ -8208,7 +8952,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 											}
 										}
 										else {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local], i_id_level_local);
+											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1, diag_minus_one[i_id_level_local], i_id_level_local, ibsp_length);
 										}
 									}
 									else {
@@ -8265,7 +9009,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 					for (iter = 0; iter < nu2; iter++) {
 						//quick seidel
 						if (bonly_serial) {
-							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1],1);
+							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1],1, ibsp_length);
 						}
 						else {
 							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1]);
@@ -8295,7 +9039,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 					for (integer iter = 0; iter < nu2; iter++) {
 						if (bonly_serial) {
 							if (bILU2smoother == 1) {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1],1);
+								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1],1, ibsp_length);
 								residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1], diag_minus_one[1]);
 #pragma omp parallel for
 								for (integer i43 = 0; i43 < n_a[1]; i43++) {
@@ -8308,7 +9052,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 								}
 							}
 							else if (1 && bILU2smoother == 2) {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1],1);
+								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1],1, ibsp_length);
 								residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1], diag_minus_one[1]);
 #pragma omp parallel for
 								for (integer i43 = 0; i43 < n_a[1]; i43++) {
@@ -8321,7 +9065,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 								}
 							}
 							else {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1],1);
+								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1, diag_minus_one[1],1, ibsp_length);
 							}
 						}
 						else {
@@ -8384,7 +9128,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 			for (iter = 0; iter < nFinestSweeps; iter++) {
 				//quick seidel
 				if (bonly_serial) {
-					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0],0);
+					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0],0, ibsp_length);
 				}
 				else {
 					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0]);
@@ -8414,7 +9158,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 				//quick seidel
 				if (bonly_serial) {
 					if (bILU2smoother == 1) {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0],0);
+						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0],0, ibsp_length);
 						residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 #pragma omp parallel for
 						for (integer i43 = 0; i43 < n_a[0]; i43++) {
@@ -8427,7 +9171,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 						}
 					}
 					else if ((bILU2smoother == 2) || (my_amg_manager.iFinnest_ilu == 1)) {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0],0);
+						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0],0, ibsp_length);
 						residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 #pragma omp parallel for
 						for (integer i43 = 0; i43 < n_a[0]; i43++) {
@@ -8440,7 +9184,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 						}
 					}
 					else {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0],0);
+						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1, diag_minus_one[0],0, ibsp_length);
 					}
 				}
 				else {

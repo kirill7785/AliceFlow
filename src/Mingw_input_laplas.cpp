@@ -634,6 +634,35 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
+
+			if (imakesource("FlowSchemePrefix", idin)) {
+				switch (idin) {
+				case 0:  iprefix_Scheme_Flow = CR;
+					break;
+				case 1:  iprefix_Scheme_Flow = UDS;
+					break;
+				case 2:  iprefix_Scheme_Flow = COMB;
+					break;
+				case 3:  iprefix_Scheme_Flow = POLY;
+					break;
+				case 4:  iprefix_Scheme_Flow = EXP;
+					break;
+				case 5:  iprefix_Scheme_Flow = BULG;
+					break;
+				case 6:  iprefix_Scheme_Flow = POW;
+					break;
+				default:
+					iprefix_Scheme_Flow = UDS;
+					break;
+				}
+			}
+			else {
+				//printf("WARNING!!! FlowSchemePrefix not found in file premeshin.txt\n");
+				iprefix_Scheme_Flow = UDS; // UDS сама€ стабильна€ схема.
+				//printf("iprefix_Scheme_Flow = Upwind\n");
+				//if (bSTOP_Reading) system("pause");
+			}
+
 			if (imakesource("FlowScheme", idin)) {
 				// Ќайдено успешно.
 				// выбор схемы дл€ потока жидкости.
@@ -1125,7 +1154,8 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			else {
 				printf("WARNING!!! amg_manager_sorting_alg not found in file premeshin.txt\n");
 				my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT; // Counting Sort ’.√. —ьювард 1954г..
-				printf("my_amg_manager.imySortAlgorithm =%lld\n", my_amg_manager.imySortAlgorithm);
+				//printf("my_amg_manager.imySortAlgorithm =%lld\n", my_amg_manager.imySortAlgorithm);
+				std::cout << "my_amg_manager.imySortAlgorithm =" << my_amg_manager.imySortAlgorithm << std::endl;
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -2467,7 +2497,8 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			else {
 				printf("WARNING!!! amgcl_iterator not found in file premeshin.txt\n");
 				my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab; // 0 - BiCGStab; 1 - FGMRes.
-				printf("my_amg_manager.amgcl_iterator =%lld\n", my_amg_manager.amgcl_iterator);
+				//printf("my_amg_manager.amgcl_iterator =%lld\n", my_amg_manager.amgcl_iterator);
+				std::cout << "my_amg_manager.amgcl_iterator =" << my_amg_manager.amgcl_iterator << std::endl;
 				printf("0 - BiCGStab; 1 - FGMRes.\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -2537,7 +2568,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			matlist = new TPROP[lmatmax];
 			b = new BLOCK[lb];
 			s = new SOURCE[ls];
-			w = new WALL[lw];
+			w = new WALL[lw+1];// +1 это гран условие по умолчанию, заглушка, чтобы избежать неопределенности.
 			int i = 0; // счЄтчик цикла for
 
 			
@@ -4794,6 +4825,36 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 			// считывание твЄрдых стенок
 			
+			// 19.01.2021
+		    // —тенка заглушка с условием прилипани€ по скорости(нулевой вектор скорости), 
+		    // нулевым тепловым потоком по температуре, 
+		    // свободной free границе в механике без приложенной силы.
+		 	w[lw].iunion_id = 0; // cabinet
+			w[lw].ifamily = WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY;
+			w[lw].Tamb = 0.0;
+			w[lw].emissivity = 0.0;
+			w[lw].film_coefficient = 0.0;
+			w[lw].ViewFactor = 1.0;
+			w[lw].hf = 0.0;
+			w[lw].bsymmetry = false;
+			w[lw].bpressure = false;
+			w[lw].bopening = false;
+			w[lw].Vx = 0.0;
+			w[lw].Vy = 0.0;
+			w[lw].Vz = 0.0;
+			w[lw].P = 0.0;
+			w[lw].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+			w[lw].xForce = 0.0;
+			w[lw].yForce = 0.0;
+			w[lw].zForce = 0.0;
+			w[lw].iPlane = XY_PLANE;
+			w[lw].g.xS = 0.0;
+			w[lw].g.yS = 0.0;
+			w[lw].g.zS = 0.0;
+			w[lw].g.xE = 0.0;
+			w[lw].g.yE = 0.0;
+			w[lw].g.zE = 0.0;
+
 			for (i = 0; i < lw; i++) {
 
 				char name0[1000] = "wall";
@@ -5739,6 +5800,8 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 							break;
 						case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
 							break;
+						case 6: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_LANGTRY_MENTOR_SST;
+							break;
 						default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
 							break;
 						}
@@ -6321,6 +6384,28 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			else {
 				// SIMPLE algorithm 1972.
 				iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
+			}
+
+			fscanf(fp, "%d", &din);
+
+			switch (din) {
+			case 0:  iprefix_Scheme_Flow = CR;
+				break;
+			case 1:  iprefix_Scheme_Flow = UDS;
+				break;
+			case 2:  iprefix_Scheme_Flow = COMB;
+				break;
+			case 3:  iprefix_Scheme_Flow = POLY;
+				break;
+			case 4:  iprefix_Scheme_Flow = EXP;
+				break;
+			case 5:  iprefix_Scheme_Flow = BULG;
+				break;
+			case 6:  iprefix_Scheme_Flow = POW;
+				break;
+			default:
+				iprefix_Scheme_Flow = UDS;
+				break;
 			}
 
 			fscanf(fp, "%d", &din);
@@ -7028,7 +7113,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			matlist = new TPROP[lmatmax];
 			b = new BLOCK[lb];
 			s = new SOURCE[ls];
-			w = new WALL[lw];
+			w = new WALL[lw+1]; // +1 это гран условие по умолчанию, заглушка, чтобы избежать неопределенности.
 			integer i = 0; // счЄтчик цикла for
 
 			for (i = 0; i < ltdp; i++) {
@@ -7732,7 +7817,35 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 			// считывание твЄрдых стенок
 
-
+			// 19.01.2021
+		// —тенка заглушка с условием прилипани€ по скорости(нулевой вектор скорости), 
+		// нулевым тепловым потоком по температуре, 
+		// свободной free границе в механике без приложенной силы.
+			w[lw].iunion_id = 0; // cabinet
+			w[lw].ifamily = WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY;
+			w[lw].Tamb = 0.0;
+			w[lw].emissivity = 0.0;
+			w[lw].film_coefficient = 0.0;
+			w[lw].ViewFactor = 1.0;
+			w[lw].hf = 0.0;
+			w[lw].bsymmetry = false;
+			w[lw].bpressure = false;
+			w[lw].bopening = false;
+			w[lw].Vx = 0.0;
+			w[lw].Vy = 0.0;
+			w[lw].Vz = 0.0;
+			w[lw].P = 0.0;
+			w[lw].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+			w[lw].xForce = 0.0;
+			w[lw].yForce = 0.0;
+			w[lw].zForce = 0.0;
+			w[lw].iPlane = XY_PLANE;
+			w[lw].g.xS = 0.0;
+			w[lw].g.yS = 0.0;
+			w[lw].g.zS = 0.0;
+			w[lw].g.xE = 0.0;
+			w[lw].g.yE = 0.0;
+			w[lw].g.zE = 0.0;
 
 			for (i = 0; i < lw; i++) {
 
@@ -7991,6 +8104,8 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					case 4: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_MENTER_SST;
 						break;
 					case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
+						break;
+					case 6: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_LANGTRY_MENTOR_SST;
 						break;
 					default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
 						break;

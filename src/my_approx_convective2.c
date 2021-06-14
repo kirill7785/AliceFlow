@@ -1256,11 +1256,18 @@ doublereal workKN_VOLKOV(doublereal xA, doublereal xB, doublereal xC, doublereal
 		printf("denominator = %e\n", denominator);
 		getchar();
 	}
-	if (r > 5000) {
 
-		std::cout << " r="<< r <<" FA=" << FA << " FB=" << FB << " FC=" << FC << " FD=" << FD << " Ff=" << Ff << " FB -FD=" << FB-FD << " FC -FA=" << FC - FA << std::endl;
-		getchar();
-	}
+	// 21.01.2021
+	// Для задачи АМПЛИТРОН было выяснено что для температуры получаются
+	// значения r гораздо большие 5000.0  и уравнение тепопередачи сильно расходится.
+	// Здесь мы искуственно ограничиваем значения r.
+	//r = fmin(r, 5000.0); Это не помогает сойтись температуре.
+	//if (r > 25000) {
+
+		//std::cout << "convection HO scheme divergence detected\n" << std::endl;
+		//std::cout << " r="<< r <<" FA=" << FA << " FB=" << FB << " FC=" << FC << " FD=" << FD << " Ff=" << Ff << " FB -FD=" << FB-FD << " FC -FA=" << FC - FA << std::endl;
+		//getchar();
+	//}
 	return (r);
 } // workKN_VOLKOV
 
