@@ -177,5 +177,14 @@ nvidia CUSP 0.5.1 smoothed aggregation amg memory usage comparison:
 # собственный визуализатор на fwgl OpenGL (render)
 
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201218-WA0000.jpeg)
+# математическое решение задач поиска напряжённо деформированного состояния в программе AliceFlow v.0.48
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Деформация%20в%20задаче%20Фламана.png)
+Деформации в задаче Фламана
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Напряжение%20по%20Мизесу%20в%20задаче%20Фламана.png)
+Напряжения по фон Мизесу в задаче Фламана
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Стальная%20балка%20малая%20деформация.png)
+деформация стальной балки
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Стальная%20балка%20напряжение%20по%20Мизесу.png)
+напряжение по Мизесу в стальной балке протяженностью 0.5м
 
 Кирилл Андреевич Иванов kirill7785@mail.ru МАИ/2009
