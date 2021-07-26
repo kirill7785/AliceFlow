@@ -170,5 +170,12 @@ nvidia CUSP 0.5.1 smoothed aggregation amg memory usage comparison:
 # custom visualizer (render)
 
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201218-WA0000.jpeg)
+# AliceFlow v.0.48 Mechanical Static Structural solver
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Деформация%20в%20задаче%20Фламана.png)
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Напряжение%20по%20Мизесу%20в%20задаче%20Фламана.png)
+Flaman 
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Стальная%20балка%20малая%20деформация.png)
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Стальная%20балка%20напряжение%20по%20Мизесу.png)
+Steel bulk
 
 Kirill Andreevich Ivanov kirill7785@mail.ru MAI/2009
