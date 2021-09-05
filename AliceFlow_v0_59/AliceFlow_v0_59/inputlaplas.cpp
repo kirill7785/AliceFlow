@@ -19476,6 +19476,10 @@ void premeshin_new(const char *fname, integer &lmatmax, int &lb, int &ls, int &l
 				din = (integer)(idin);
 				if (din >= 0) {
 					glTSL.n_string_PiecewiseConst = din;
+
+					if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::MESHER_ONLY)) {
+						glTSL.n_string_PiecewiseConst = 0;// Нету никакого PiecewiseConst, мы просто запускаем мешер.
+					}
 				}
 				else {
 					printf("error input parametr timestep law PiecewiseConst\n");

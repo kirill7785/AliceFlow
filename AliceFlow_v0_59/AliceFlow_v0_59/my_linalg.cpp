@@ -24,7 +24,7 @@
 // закомментировать #include "my_vienna_alg.cpp"  если она не используется.
 // Задать GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0; Если viennacl 1.7.1 lib не используется.
 const integer GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0;
-//---->#define AMGCL_INCLUDE_IN_MY_PROJECT 1
+#define AMGCL_INCLUDE_IN_MY_PROJECT 1
 //#define VIENNA_CL_INCLUDE_IN_MY_PRJ 1
 
 #ifdef VIENNA_CL_INCLUDE_IN_MY_PRJ

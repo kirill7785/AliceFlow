@@ -1026,24 +1026,42 @@ bool solution_phase(Ak2& Amat, // Матрица СЛАУ в CRS формате.
 		// 05.06.2017
 		integer i_17_prev = i_17 - 1;
 
-		if (ilevel + 1 > i_17) {
+		if (ilevel + 2 > i_17) {
 			//std::cout << "i_17_prev=" << i_17_prev << std::endl;
 
 			// residual
 			residual_fine[i_17_prev] = new doublereal[n_a[i_17_prev] + 1];
+			for (integer i_s1 = 0; i_s1 <= n_a[i_17_prev]; ++i_s1) {
+				residual_fine[i_17_prev][i_s1] = 0.0;
+			}
 			//residual_fine[i_17_prev] = (doublereal*)malloc((n_a[i_17_prev] + 1) * sizeof(doublereal));
 			//handle_error<doublereal>(residual_fine[i_17_prev], "residual_fine[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17_prev] + 1));
 
+			if (ilevel + 1 > i_17) {
+				residual_coarse[i_17_prev] = new doublereal[n_a[i_17] + 1];
+				for (integer i_s1 = 0; i_s1 <= n_a[i_17]; ++i_s1) {
+					residual_coarse[i_17_prev][i_s1] = 0.0;
+				}
+				//residual_coarse[i_17_prev] = (doublereal*)malloc((n_a[i_17] + 1) * sizeof(doublereal));
+				//handle_error<doublereal>(residual_coarse[i_17_prev], "residual_coarse[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17] + 1));
 
-			residual_coarse[i_17_prev] = new doublereal[n_a[i_17] + 1];
-			//residual_coarse[i_17_prev] = (doublereal*)malloc((n_a[i_17] + 1) * sizeof(doublereal));
-			//handle_error<doublereal>(residual_coarse[i_17_prev], "residual_coarse[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17] + 1));
+				error_approx_coarse[i_17_prev] = new doublereal[n_a[i_17] + 1];
+				for (integer i_s1 = 0; i_s1 <= n_a[i_17]; ++i_s1) {
+					error_approx_coarse[i_17_prev][i_s1] = 0.0;
+				}
+				//error_approx_coarse[i_17_prev] = (doublereal*)malloc((n_a[i_17] + 1) * sizeof(doublereal));
+				//handle_error<doublereal>(error_approx_coarse[i_17_prev], "error_approx_coarse[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17] + 1));
+			}
+			else {
+				residual_coarse[i_17_prev] = nullptr;
+				error_approx_coarse[i_17_prev] = nullptr;
+			}
 
-			error_approx_coarse[i_17_prev] = new doublereal[n_a[i_17] + 1];
-			//error_approx_coarse[i_17_prev] = (doublereal*)malloc((n_a[i_17] + 1) * sizeof(doublereal));
-			//handle_error<doublereal>(error_approx_coarse[i_17_prev], "error_approx_coarse[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17] + 1));
 
 			error_approx_fine[i_17_prev] = new doublereal[n_a[i_17_prev] + 1];
+			for (integer i_s1 = 0; i_s1 <= n_a[i_17_prev]; ++i_s1) {
+				error_approx_fine[i_17_prev][i_s1] = 0.0;
+			}
 			//error_approx_fine[i_17_prev] = (doublereal*)malloc((n_a[i_17_prev] + 1) * sizeof(doublereal));
 			//handle_error<doublereal>(error_approx_fine[i_17_prev], "error_approx_fine[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17_prev] + 1));
 		}
@@ -4850,41 +4868,44 @@ FULL_DIVERGENCE_DETECTED:
 	for (integer i_scan_levels = 0; i_scan_levels <= maxlevel - 1; i_scan_levels++) {
 		if (ilevel + 1 > i_scan_levels) {
 			// free			
-				if (diag[i_scan_levels] != nullptr) {
-					free(diag[i_scan_levels]);
-					diag[i_scan_levels] = nullptr;
-				}
-				if (diag_minus_one[i_scan_levels] != nullptr) {
-					free(diag_minus_one[i_scan_levels]);
-					diag_minus_one[i_scan_levels] = nullptr;
-				}
-				if (nested_desection[i_scan_levels] != nullptr) {
-					free(nested_desection[i_scan_levels]);
-					nested_desection[i_scan_levels] = nullptr;
-				}
+			if (diag[i_scan_levels] != nullptr) {
+				free(diag[i_scan_levels]);
+				diag[i_scan_levels] = nullptr;
+			}
+			if (diag_minus_one[i_scan_levels] != nullptr) {
+				free(diag_minus_one[i_scan_levels]);
+				diag_minus_one[i_scan_levels] = nullptr;
+			}
+			if (nested_desection[i_scan_levels] != nullptr) {
+				free(nested_desection[i_scan_levels]);
+				nested_desection[i_scan_levels] = nullptr;
+			}
+		}
+		if (ilevel + 2 > i_scan_levels) {
 				integer i_scan_levels_prev = i_scan_levels - 1;
 				if (i_scan_levels_prev >= 0) {
 					if (error_approx_fine[i_scan_levels_prev] != nullptr) {
 						delete[] error_approx_fine[i_scan_levels_prev];
 						//free(error_approx_fine[i_scan_levels_prev]);
-						//error_approx_fine[i_scan_levels_prev] = nullptr;
+						error_approx_fine[i_scan_levels_prev] = nullptr;
 					}
 					if (error_approx_coarse[i_scan_levels_prev] != nullptr) {
 						delete[] error_approx_coarse[i_scan_levels_prev];
 						//free(error_approx_coarse[i_scan_levels_prev]);
-						//error_approx_coarse[i_scan_levels_prev] = nullptr;
+						error_approx_coarse[i_scan_levels_prev] = nullptr;
 					}
 					if (residual_coarse[i_scan_levels_prev] != nullptr) {
 						delete[] residual_coarse[i_scan_levels_prev];
 						//free(residual_coarse[i_scan_levels_prev]);
-						//residual_coarse[i_scan_levels_prev] = nullptr;
+						residual_coarse[i_scan_levels_prev] = nullptr;
+					}
+					if (residual_fine[i_scan_levels_prev] != nullptr) {
+						delete[] residual_fine[i_scan_levels_prev];
+						//free(residual_fine[i_scan_levels]);
+						residual_fine[i_scan_levels_prev] = nullptr;
 					}
 				}
-				if (residual_fine[i_scan_levels] != nullptr) {
-					delete[] residual_fine[i_scan_levels];
-					//free(residual_fine[i_scan_levels]);
-					//residual_fine[i_scan_levels] = nullptr;
-				}
+				
 			
 		}
 	}
@@ -4928,11 +4949,12 @@ FULL_DIVERGENCE_DETECTED:
 	milu_gl_buffer.ju_copy = nullptr;
 
 
-	if (residual_fine[0] != nullptr) {
-		delete[] residual_fine[0];
+	//if (residual_fine[0] != nullptr) {
+		//delete[] residual_fine[0];
+		//residual_fine[0] = nullptr;
 		//free(residual_fine[0]);
 		//residual_fine[0] = nullptr;
-	}
+	//}
 
 
 	if (residual_fine != nullptr) {

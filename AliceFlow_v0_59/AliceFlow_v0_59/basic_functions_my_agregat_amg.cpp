@@ -9827,7 +9827,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 
 						for (integer ii = 1; ii <= n_a[i_id_level_local]; ii++) {
 							if (residual_coarse[i_id_level_local - 1][ii] != residual_coarse[i_id_level_local - 1][ii]) {
-								std::cout << "residual_coarse apriory = " << residual_coarse[i_id_level_local - 1][ii] << " ii=" << ii << std::endl;
+								std::cout << "residual_coarse apriory = " << residual_coarse[i_id_level_local - 1][ii] << " ii=" << ii << "i_id_level_local = " << i_id_level_local << std::endl;
 								getchar();
 							}
 							if (residual_fine[i_id_level_local - 1][ii] != residual_fine[i_id_level_local - 1][ii]) {

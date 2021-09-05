@@ -25137,10 +25137,10 @@ void my_elmatr_quad_T3D(int iP, equation3D* &sl, equation3D_bon* &slb,
 		//std::cout << "b="<<sl[iP].b << std::endl;
 		//getchar();
 	//}
-	if (fabs(apzero1 - dSp * dx * dy * dz) > 1.0e-30) {
-		std::cout << "apzero1="<<apzero1 - dSp * dx * dy * dz << std::endl;
-		getchar();
-	}
+	//if (fabs(apzero1 - dSp * dx * dy * dz) > 1.0e-30) {
+		//std::cout << "apzero1="<<apzero1 - dSp * dx * dy * dz << std::endl;
+		//getchar();
+	//}
 	
 
 	// Усиление диагонального преобладания в случае невыполнения уравнения неразрывности,

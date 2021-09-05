@@ -6615,187 +6615,194 @@ void print_tetrahedron(FILE* &fp, bool b1bvisible, bool b2bvisible, bool b3bvisi
 void exportAliceFlow2D(integer maxelm, integer ncell, FLOW*& f, TEMPER& t,
 	integer flow_interior_count, doublereal* &zpos, int inz, int ls, int lw, WALL* &w)
 {
-	FILE* fp = NULL;
-	errno_t err;
-	err = fopen_s(&fp, "meshin.txt", "w");
-	if ((err) != 0) {
-		printf("Create File meshin.txt Error in function exportAliceFlow2D in my_export_tecplot3.cpp\n");
-		system("pause");
-	}
-	else {
-		// секция №1:
-		for (int i = 0; i < t.maxnod; ++i) fprintf(fp,"%d %e %e\n",i+1,t.pa[i].x,t.pa[i].y);
-		fprintf(fp, "\n");
-		// Секция №2:
-		int nv = 0;
-		int iz0 = inz / 2;
-		doublereal dz = 0.6*(zpos[iz0 + 1] - zpos[iz0] < zpos[iz0] - zpos[iz0 - 1] ? zpos[iz0 + 1] - zpos[iz0] : zpos[iz0] - zpos[iz0 - 1]);
-		int* inum_cv = new int[t.maxelm];
-		for (int iP = 0; iP < t.maxelm; ++iP) {
-			inum_cv[iP] = -1;
-			doublereal ziP = 0.5 * (t.pa[t.nvtx[0][iP]-1].z+ t.pa[t.nvtx[4][iP]-1].z);
-			if (fabs(ziP - zpos[iz0]) < dz) {
-				inum_cv[iP] = nv;// Новая нумерация узлов.
-				++nv;
-			}
-		}
-		
-		for (int iP = 0; iP < t.maxelm; ++iP) {
-			if (inum_cv[iP] > -1) {
-				fprintf(fp,"%d %d %d %d %d %d %d %d %d %d %d %d %d %e %e %e %e %e\n",
-					inum_cv[iP]+1, t.nvtx[0][iP], t.nvtx[1][iP], t.nvtx[2][iP], t.nvtx[3][iP],
-					(((t.neighbors_for_the_internal_node[E_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[E_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[E_SIDE][0][iP]] + 1),
-					(((t.neighbors_for_the_internal_node[N_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[N_SIDE][0][iP]] + 1),
-					(((t.neighbors_for_the_internal_node[W_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[W_SIDE][0][iP]] + 1),
-					(((t.neighbors_for_the_internal_node[S_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[S_SIDE][0][iP]] + 1),
-					/*(((t.neighbors_for_the_internal_node[EE_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[EE_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[EE_SIDE][0][iP]] + 1),
-					(((t.neighbors_for_the_internal_node[NN_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[NN_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[NN_SIDE][0][iP]] + 1),
-					(((t.neighbors_for_the_internal_node[WW_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[WW_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[WW_SIDE][0][iP]] + 1),
-					(((t.neighbors_for_the_internal_node[SS_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[SS_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[SS_SIDE][0][iP]] + 1),*/
-					(((t.neighbors_for_the_internal_node[E_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[E_SIDE][0][iP] >= t.maxelm)) ? 0 : 
-						((t.neighbors_for_the_internal_node[E_SIDE][0][t.neighbors_for_the_internal_node[E_SIDE][0][iP]] < 0) || (t.neighbors_for_the_internal_node[E_SIDE][0][t.neighbors_for_the_internal_node[E_SIDE][0][iP]] >= t.maxelm)) ? 0 :
-					inum_cv[t.neighbors_for_the_internal_node[E_SIDE][0][t.neighbors_for_the_internal_node[E_SIDE][0][iP]]] + 1),
-					(((t.neighbors_for_the_internal_node[N_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm)) ? 0 :
-						((t.neighbors_for_the_internal_node[N_SIDE][0][t.neighbors_for_the_internal_node[N_SIDE][0][iP]] < 0) || (t.neighbors_for_the_internal_node[N_SIDE][0][t.neighbors_for_the_internal_node[N_SIDE][0][iP]] >= t.maxelm)) ? 0 :
-					inum_cv[t.neighbors_for_the_internal_node[N_SIDE][0][t.neighbors_for_the_internal_node[N_SIDE][0][iP]]] + 1),
+	if (t.ptr != nullptr) {
 
-					(((t.neighbors_for_the_internal_node[W_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm)) ? 0 :
-						((t.neighbors_for_the_internal_node[W_SIDE][0][t.neighbors_for_the_internal_node[W_SIDE][0][iP]] < 0) || (t.neighbors_for_the_internal_node[W_SIDE][0][t.neighbors_for_the_internal_node[W_SIDE][0][iP]] >= t.maxelm)) ? 0 :
-					inum_cv[t.neighbors_for_the_internal_node[W_SIDE][0][t.neighbors_for_the_internal_node[W_SIDE][0][iP]]] + 1),
-					(((t.neighbors_for_the_internal_node[S_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm)) ? 0 :
-						((t.neighbors_for_the_internal_node[S_SIDE][0][t.neighbors_for_the_internal_node[S_SIDE][0][iP]] < 0) || (t.neighbors_for_the_internal_node[S_SIDE][0][t.neighbors_for_the_internal_node[S_SIDE][0][iP]] >= t.maxelm)) ? 0 :
-					inum_cv[t.neighbors_for_the_internal_node[S_SIDE][0][t.neighbors_for_the_internal_node[S_SIDE][0][iP]]] + 1),
-					t.prop[RHO][iP], t.prop[HEAT_CAPACITY][iP], t.prop[LAM][iP],
-					f[t.ptr[1][iP]].prop[MU_DYNAMIC_VISCOSITY][t.ptr[0][iP]], f[t.ptr[1][iP]].prop[BETA_T][t.ptr[0][iP]]);
-			}
+		FILE* fp = NULL;
+		errno_t err;
+		err = fopen_s(&fp, "meshin.txt", "w");
+		if ((err) != 0) {
+			printf("Create File meshin.txt Error in function exportAliceFlow2D in my_export_tecplot3.cpp\n");
+			system("pause");
 		}
-		fprintf(fp, "\n");	
+		else {
+			// секция №1:
+			for (int i = 0; i < t.maxnod; ++i) fprintf(fp, "%d %e %e\n", i + 1, t.pa[i].x, t.pa[i].y);
+			fprintf(fp, "\n");
+			// Секция №2:
+			int nv = 0;
+			int iz0 = inz / 2;
+			doublereal dz = 0.6 * (zpos[iz0 + 1] - zpos[iz0] < zpos[iz0] - zpos[iz0 - 1] ? zpos[iz0 + 1] - zpos[iz0] : zpos[iz0] - zpos[iz0 - 1]);
+			int* inum_cv = new int[t.maxelm];
+			for (int iP = 0; iP < t.maxelm; ++iP) {
+				inum_cv[iP] = -1;
+				doublereal ziP = 0.5 * (t.pa[t.nvtx[0][iP] - 1].z + t.pa[t.nvtx[4][iP] - 1].z);
+				if (fabs(ziP - zpos[iz0]) < dz) {
+					inum_cv[iP] = nv;// Новая нумерация узлов.
+					++nv;
+				}
+			}
 
-		// Секция №3:
-		for (int iP = 0; iP < t.maxelm; ++iP) {
-			if (inum_cv[iP] > -1) {
-				if ((t.neighbors_for_the_internal_node[E_SIDE][0][iP] >= t.maxelm) ||
-					(t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm) ||
-					(t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm) ||
-					(t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm))
-				{
-					int ibon = -1;// Номер граничного узла.
-					int ibon2 = -1;
-					// внешние нормали
-					// E 1 // (east) восток
-                    // N 2 // север
-                    // W 3 // запад
-                    // S 4 // юг
-					int iG1 = 0;
-					int iG2 = 0;
-					// inflow 0.253 3
-					//outflow 2
-					if (t.neighbors_for_the_internal_node[E_SIDE][0][iP] >= t.maxelm) {
-						ibon = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
-						iG1 = 1; // W внешняя нормаль
-					}
-					if (ibon == -1) {
-						if (t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm) {
-							ibon = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
-							iG1 = 3; // E внешняя нормаль
+			for (int iP = 0; iP < t.maxelm; ++iP) {
+				if (inum_cv[iP] > -1) {
+
+					//std::cout << t.ptr[1][iP] << "  " << t.ptr[0][iP] << std::endl;
+					//getchar();
+
+					fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %e %e %e %e %e\n",
+						inum_cv[iP] + 1, t.nvtx[0][iP], t.nvtx[1][iP], t.nvtx[2][iP], t.nvtx[3][iP],
+						(((t.neighbors_for_the_internal_node[E_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[E_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[E_SIDE][0][iP]] + 1),
+						(((t.neighbors_for_the_internal_node[N_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[N_SIDE][0][iP]] + 1),
+						(((t.neighbors_for_the_internal_node[W_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[W_SIDE][0][iP]] + 1),
+						(((t.neighbors_for_the_internal_node[S_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[S_SIDE][0][iP]] + 1),
+						/*(((t.neighbors_for_the_internal_node[EE_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[EE_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[EE_SIDE][0][iP]] + 1),
+						(((t.neighbors_for_the_internal_node[NN_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[NN_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[NN_SIDE][0][iP]] + 1),
+						(((t.neighbors_for_the_internal_node[WW_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[WW_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[WW_SIDE][0][iP]] + 1),
+						(((t.neighbors_for_the_internal_node[SS_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[SS_SIDE][0][iP] >= t.maxelm)) ? 0 : inum_cv[t.neighbors_for_the_internal_node[SS_SIDE][0][iP]] + 1),*/
+						(((t.neighbors_for_the_internal_node[E_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[E_SIDE][0][iP] >= t.maxelm)) ? 0 :
+							((t.neighbors_for_the_internal_node[E_SIDE][0][t.neighbors_for_the_internal_node[E_SIDE][0][iP]] < 0) || (t.neighbors_for_the_internal_node[E_SIDE][0][t.neighbors_for_the_internal_node[E_SIDE][0][iP]] >= t.maxelm)) ? 0 :
+							inum_cv[t.neighbors_for_the_internal_node[E_SIDE][0][t.neighbors_for_the_internal_node[E_SIDE][0][iP]]] + 1),
+						(((t.neighbors_for_the_internal_node[N_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm)) ? 0 :
+							((t.neighbors_for_the_internal_node[N_SIDE][0][t.neighbors_for_the_internal_node[N_SIDE][0][iP]] < 0) || (t.neighbors_for_the_internal_node[N_SIDE][0][t.neighbors_for_the_internal_node[N_SIDE][0][iP]] >= t.maxelm)) ? 0 :
+							inum_cv[t.neighbors_for_the_internal_node[N_SIDE][0][t.neighbors_for_the_internal_node[N_SIDE][0][iP]]] + 1),
+
+						(((t.neighbors_for_the_internal_node[W_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm)) ? 0 :
+							((t.neighbors_for_the_internal_node[W_SIDE][0][t.neighbors_for_the_internal_node[W_SIDE][0][iP]] < 0) || (t.neighbors_for_the_internal_node[W_SIDE][0][t.neighbors_for_the_internal_node[W_SIDE][0][iP]] >= t.maxelm)) ? 0 :
+							inum_cv[t.neighbors_for_the_internal_node[W_SIDE][0][t.neighbors_for_the_internal_node[W_SIDE][0][iP]]] + 1),
+						(((t.neighbors_for_the_internal_node[S_SIDE][0][iP] < 0) || (t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm)) ? 0 :
+							((t.neighbors_for_the_internal_node[S_SIDE][0][t.neighbors_for_the_internal_node[S_SIDE][0][iP]] < 0) || (t.neighbors_for_the_internal_node[S_SIDE][0][t.neighbors_for_the_internal_node[S_SIDE][0][iP]] >= t.maxelm)) ? 0 :
+							inum_cv[t.neighbors_for_the_internal_node[S_SIDE][0][t.neighbors_for_the_internal_node[S_SIDE][0][iP]]] + 1),
+						t.prop[RHO][iP], t.prop[HEAT_CAPACITY][iP], t.prop[LAM][iP],
+						f[t.ptr[1][iP]].prop[MU_DYNAMIC_VISCOSITY][t.ptr[0][iP]], f[t.ptr[1][iP]].prop[BETA_T][t.ptr[0][iP]]);
+				}
+			}
+			fprintf(fp, "\n");
+
+			// Секция №3:
+			for (int iP = 0; iP < t.maxelm; ++iP) {
+				if (inum_cv[iP] > -1) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][0][iP] >= t.maxelm) ||
+						(t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm) ||
+						(t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm) ||
+						(t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm))
+					{
+						int ibon = -1;// Номер граничного узла.
+						int ibon2 = -1;
+						// внешние нормали
+						// E 1 // (east) восток
+						// N 2 // север
+						// W 3 // запад
+						// S 4 // юг
+						int iG1 = 0;
+						int iG2 = 0;
+						// inflow 0.253 3
+						//outflow 2
+						if (t.neighbors_for_the_internal_node[E_SIDE][0][iP] >= t.maxelm) {
+							ibon = t.neighbors_for_the_internal_node[E_SIDE][0][iP];
+							iG1 = 1; // W внешняя нормаль
 						}
-					}
-					else {
-						if (ibon2 == -1) {
+						if (ibon == -1) {
 							if (t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm) {
-								ibon2 = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
-								iG2 = 3; // E внешняя нормаль
-							}
-						}
-					}
-					if (ibon == -1) {
-						if (t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm) {
-							ibon = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
-							iG1 = 2; // S внешняя нормаль
-						}
-					}
-					else {
-						if (ibon2 == -1) {
-							if (t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm) {
-								ibon2 = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
-								iG2 = 2; // S внешняя нормаль
-							}
-						}
-					}
-					if (ibon == -1) {
-						if (t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm) {
-							ibon = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
-							iG1 = 4; // N внешняя нормаль
-						}
-					}
-					else {
-						if (ibon2 == -1) {
-							if (t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm) {
-								ibon2 = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
-								iG2 = 4; // N внешняя нормаль
-							}
-						}
-					}
-
-					
-					//if (iG2 == -1) iG2 = iG1;
-
-					int inumber = ibon - t.maxelm;
-					if (t.border_neighbor[inumber].MCB == (ls + lw)) {
-						// граница по умолчанию.
-						// Прилипание по скорости и однородное условие Неймана для Давления и Температуры.
-						fprintf(fp, "%d 1 0 1 0 0 0 0 0 %d %d\n", inum_cv[iP] + 1, iG1, iG2);
-					}
-					else if ((t.border_neighbor[inumber].MCB < (ls + lw)) && (t.border_neighbor[inumber].MCB >= ls)) {
-						// Заданная стенка.
-						if ((w[t.border_neighbor[inumber].MCB - ls].bpressure) || ((w[t.border_neighbor[inumber].MCB - ls].bopening))) {
-							// Выходная граница потока.
-							// Для компонент скорости и температуры однородные условия Неймана,
-							// Нулевое давление на выходе.
-							fprintf(fp, "%d 0 0 0 0 1 0 0 0 %d %d\n", inum_cv[iP] + 1, iG1, iG2);
-						}
-						else if (w[t.border_neighbor[inumber].MCB - ls].bsymmetry)
-						{
-							// Граница симметрии
-							if ((iG1 == 1) || (iG1 == 3)) {
-								// Вертикальная граница.
-								fprintf(fp, "%d 1 0 0 0 0 0 0 0 %d %d\n", inum_cv[iP] + 1, iG1, iG2);
-							}
-							else {																
-								// Горизонтальная граница.
-								fprintf(fp, "%d 0 0 1 0 0 0 0 0 %d %d\n", inum_cv[iP] + 1, iG1, iG2);
+								ibon = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
+								iG1 = 3; // E внешняя нормаль
 							}
 						}
 						else {
-							// Входная граница потока.
-							// Заданы компоненты скорости и температура для Давления однородное условие Неймана.
-							fprintf(fp, "%d 1 %e 1 %e 0 0.0 1 %e %d %d\n", inum_cv[iP] + 1, w[t.border_neighbor[inumber].MCB - ls].Vx,
-								w[t.border_neighbor[inumber].MCB - ls].Vy, w[t.border_neighbor[inumber].MCB - ls].Tamb, iG1, iG2);
+							if (ibon2 == -1) {
+								if (t.neighbors_for_the_internal_node[W_SIDE][0][iP] >= t.maxelm) {
+									ibon2 = t.neighbors_for_the_internal_node[W_SIDE][0][iP];
+									iG2 = 3; // E внешняя нормаль
+								}
+							}
+						}
+						if (ibon == -1) {
+							if (t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm) {
+								ibon = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
+								iG1 = 2; // S внешняя нормаль
+							}
+						}
+						else {
+							if (ibon2 == -1) {
+								if (t.neighbors_for_the_internal_node[N_SIDE][0][iP] >= t.maxelm) {
+									ibon2 = t.neighbors_for_the_internal_node[N_SIDE][0][iP];
+									iG2 = 2; // S внешняя нормаль
+								}
+							}
+						}
+						if (ibon == -1) {
+							if (t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm) {
+								ibon = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
+								iG1 = 4; // N внешняя нормаль
+							}
+						}
+						else {
+							if (ibon2 == -1) {
+								if (t.neighbors_for_the_internal_node[S_SIDE][0][iP] >= t.maxelm) {
+									ibon2 = t.neighbors_for_the_internal_node[S_SIDE][0][iP];
+									iG2 = 4; // N внешняя нормаль
+								}
+							}
 						}
 
+
+						//if (iG2 == -1) iG2 = iG1;
+
+						int inumber = ibon - t.maxelm;
+						if (t.border_neighbor[inumber].MCB == (ls + lw)) {
+							// граница по умолчанию.
+							// Прилипание по скорости и однородное условие Неймана для Давления и Температуры.
+							fprintf(fp, "%d 1 0 1 0 0 0 0 0 %d %d\n", inum_cv[iP] + 1, iG1, iG2);
+						}
+						else if ((t.border_neighbor[inumber].MCB < (ls + lw)) && (t.border_neighbor[inumber].MCB >= ls)) {
+							// Заданная стенка.
+							if ((w[t.border_neighbor[inumber].MCB - ls].bpressure) || ((w[t.border_neighbor[inumber].MCB - ls].bopening))) {
+								// Выходная граница потока.
+								// Для компонент скорости и температуры однородные условия Неймана,
+								// Нулевое давление на выходе.
+								fprintf(fp, "%d 0 0 0 0 1 0 0 0 %d %d\n", inum_cv[iP] + 1, iG1, iG2);
+							}
+							else if (w[t.border_neighbor[inumber].MCB - ls].bsymmetry)
+							{
+								// Граница симметрии
+								if ((iG1 == 1) || (iG1 == 3)) {
+									// Вертикальная граница.
+									fprintf(fp, "%d 1 0 0 0 0 0 0 0 %d %d\n", inum_cv[iP] + 1, iG1, iG2);
+								}
+								else {
+									// Горизонтальная граница.
+									fprintf(fp, "%d 0 0 1 0 0 0 0 0 %d %d\n", inum_cv[iP] + 1, iG1, iG2);
+								}
+							}
+							else {
+								// Входная граница потока.
+								// Заданы компоненты скорости и температура для Давления однородное условие Неймана.
+								fprintf(fp, "%d 1 %e 1 %e 0 0.0 1 %e %d %d\n", inum_cv[iP] + 1, w[t.border_neighbor[inumber].MCB - ls].Vx,
+									w[t.border_neighbor[inumber].MCB - ls].Vy, w[t.border_neighbor[inumber].MCB - ls].Tamb, iG1, iG2);
+							}
+
+						}
 					}
 				}
 			}
-		}
-		fprintf(fp, "\n");
-		// Секция №4:
-		for (int i = 0; i < ncell; i++) {
+			fprintf(fp, "\n");
+			// Секция №4:
+			for (int i = 0; i < ncell; i++) {
 
-			integer inode1, inode2, inode3, inode4;
-			inode1 = t.database.nvtxcell[0][i] - 1;
-			inode2 = t.database.nvtxcell[1][i] - 1;
-			inode3 = t.database.nvtxcell[2][i] - 1;
-			inode4 = t.database.nvtxcell[3][i] - 1;
+				integer inode1, inode2, inode3, inode4;
+				inode1 = t.database.nvtxcell[0][i] - 1;
+				inode2 = t.database.nvtxcell[1][i] - 1;
+				inode3 = t.database.nvtxcell[2][i] - 1;
+				inode4 = t.database.nvtxcell[3][i] - 1;
 
-			if ((inum_cv[inode1] > -1) && (inum_cv[inode2] > -1) && (inum_cv[inode3] > -1) && (inum_cv[inode4] > -1)) {
-				fprintf(fp, "%d %d %d %d\n", inum_cv[inode1]+1, inum_cv[inode2]+1, inum_cv[inode3]+1, inum_cv[inode4]+1);
+				if ((inum_cv[inode1] > -1) && (inum_cv[inode2] > -1) && (inum_cv[inode3] > -1) && (inum_cv[inode4] > -1)) {
+					fprintf(fp, "%d %d %d %d\n", inum_cv[inode1] + 1, inum_cv[inode2] + 1, inum_cv[inode3] + 1, inum_cv[inode4] + 1);
+				}
+
 			}
+			fprintf(fp, "\n");
+			delete[] inum_cv;
 
+			fclose(fp);
 		}
-		fprintf(fp, "\n");
-		delete[] inum_cv;
-
-		fclose(fp);
 	}
 }
 
