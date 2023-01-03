@@ -1,25 +1,32 @@
-open_label=1082020 : 
-mashtab=100 :gravity_x=0 :gravity_y=-9.81 :gravity_z=0 :inx=23 :iny=23 :inz=23 :operating_temperature=20 :etalon_max_size_ratio=10 :etalon_max_size_ratio2=3000000 :snap_to_grid=0 :solver_setting=5 :film_coefficient=0 :adiabatic_vs_heat_transfer_coeff=0 :time_step_id_law=0 :time_step_factor_a_for_linear=0.4 :tau=0.1 :iQ_duty_cycle=5 :m1=0.3333 :tau1=180 :tau2=240 :tau_pause=5040 :number_vitkov=6 :Time_period=86400 :on_time_double_linear=0.3 :
+open_label=1082020 :
+mashtab=100 :gravity_x=0 :gravity_y=-9.81 :gravity_z=0 :inx=23 :iny=23 :inz=23 :operating_temperature=20 :etalon_max_size_ratio=10 :etalon_max_size_ratio2=3000000 :snap_to_grid=0 :solver_setting=11 :film_coefficient=0 :adiabatic_vs_heat_transfer_coeff=0 :time_step_id_law=0 :time_step_factor_a_for_linear=0.4 :tau=0.1 :iQ_duty_cycle=5 :m1=0.3333 :tau1=180 :tau2=240 :tau_pause=5040 :off_multiplyer=0 :number_vitkov=6 :Time_period=86400 :on_time_double_linear=0.3 :
 length=1
+minimum_gap_x=1 :
+minimum_gap_y=1 :
+minimum_gap_z=1 :
+move_STL_position_x=0 :
+move_STL_position_y=0 :
+move_STL_position_z=0 :
+orientation_pcb=0 :
 ltdp=0
 lu=0
 ivarmax=2
 var0name=$emiss :var0value=0.8 :
 var1name=$alpha :var1value=0.3 :
 lmatmax=2
-matherial0name=air :matherial0density=1.1614 :matherial0nCp=1 :matherial0Temp_Cp0=20 :matherial0Arr_Cp_val0=1005 :matherial0n_lambda=1 :matherial0Temp_Lam0=20 :matherial0Arr_Lam_val0=0.0261 :matherial0mult_lam_x=1 :matherial0mult_lam_y=1 :matherial0mult_lam_z=1 :matherial0Poisson_ratio=0.49 :matherial0Young_Module=0.000142 :matherial0Linear_expansion_coefficient=3331 :matherial0mu=1.7894E-5 :matherial0beta_t=0.003331 :matherial0blibmat=0 :matherial0ilibident=0 :matherial0bBoussinesq=1 :matherial0ilawmu=0 :matherial0mumin=1.7894E-5 :matherial0mumax=1.7894E-5 :matherial0Amu=1 :matherial0Bmu=1 :matherial0Cmu=1 :matherial0degreennmu=1 :
-matherial1name=Al-Duralumin :matherial1density=2800 :matherial1nCp=1 :matherial1Temp_Cp0=20 :matherial1Arr_Cp_val0=921 :matherial1n_lambda=1 :matherial1Temp_Lam0=20 :matherial1Arr_Lam_val0=164 :matherial1mult_lam_x=1 :matherial1mult_lam_y=1 :matherial1mult_lam_z=1 :matherial1Poisson_ratio=0.334 :matherial1Young_Module=69 :matherial1Linear_expansion_coefficient=23 :matherial1mu=1.7894E-5 :matherial1beta_t=0.003331 :matherial1blibmat=0 :matherial1ilibident=100 :matherial1bBoussinesq=0 :matherial1ilawmu=0 :matherial1mumin=1.7894E-5 :matherial1mumax=1.7894E-5 :matherial1Amu=1 :matherial1Bmu=1 :matherial1Cmu=1 :matherial1degreennmu=1 :
-cabinet=body0igeometry_type=0 :body0sxS=-60 :body0syS=-60 :body0szS=-60 :body0sxE=60 :body0syE=60 :body0szE=60 :body0iPlane=1 :body0sxC=0.0 :body0syC=0.0 :body0szC=-0.5 :body0sHcyl=1.0 :body0sR_out_cyl=0.5 :body0sR_in_cyl=0.0 :body0bCylinder2Prism=1 :body0sR_out_cyl2=-1.0 :body0sR_in_cyl2=-1.0 :body0sangle_start=0.0 :body0sangle_end=0.0 :body0iPlane_obj2=3 :body0nsizei=3 :body0hi0=0.2 :body0xi0=-0.1 :body0yi0=-0.141421 :body0zi0=-0.141421 :body0hi1=0.2 :body0xi1=-0.1 :body0yi1=0.141421 :body0zi1=-0.141421 :body0hi2=0.2 :body0xi2=-0.1 :body0yi2=-0.141421 :body0zi2=0.141421 :body0semissW=0.001 :body0semissE=0.001 :body0semissS=0.001 :body0semissN=0.001 :body0semissB=0.001 :body0semissT=0.001 :body0binternalRadiation=0 :body0imatid=0 :body0CylinderFixed=0 :body0n_power=1 :body0Temp_Power0=20 :body0Arr_Power0=0.0 :body0ipower_time_depend=0 :body0itype=3 :body0iunion=0 :body0redcolor=0.501999974250793 :body0greencolor=0.501999974250793 :body0bluecolor=0.501999974250793 :body0transparency=1 :body0dcol=8421504 :body0lineWidth=1 :
+matherial0name=air :matherial0density=1.1614 :matherial0nCp=1 :matherial0Temp_Cp0=20 :matherial0Arr_Cp_val0=1005 :matherial0n_lambda=1 :matherial0Temp_Lam0=20 :matherial0Arr_Lam_val0=0.0261 :matherial0mult_lam_x=1 :matherial0mult_lam_y=1 :matherial0mult_lam_z=1 :matherial0lambda_is_file=0 :matherial0mult_Linear_expansion_coefficient_x=1 :matherial0mult_Linear_expansion_coefficient_y=1 :matherial0mult_Linear_expansion_coefficient_z=1 :matherial0mult_Young_Module_x=1 :matherial0mult_Young_Module_y=1 :matherial0mult_Young_Module_z=1 :matherial0mult_Poisson_ratio_xy=1 :matherial0mult_Poisson_ratio_xz=1 :matherial0mult_Poisson_ratio_yz=1 :matherial0mult_Poisson_ratio_yx=1 :matherial0mult_Poisson_ratio_zx=1 :matherial0mult_Poisson_ratio_zy=1 :matherial0bShearModuleActive=0 :matherial0ShearModuleGxy=4.76510067114094E-5 :matherial0ShearModuleGyz=4.76510067114094E-5 :matherial0ShearModuleGxz=4.76510067114094E-5 :matherial0n_Poisson_ratio=1 :matherial0temp_Poisson_ratio0=20 :matherial0arr_Poisson_ratio0=0.49 :matherial0n_Young_Module=1 :matherial0temp_Young_Module0=20 :matherial0arr_Young_Module0=0.000142 :matherial0n_Linear_expansion_coefficient=1 :matherial0temp_Linear_expansion_coefficient0=20 :matherial0arr_Linear_expansion_coefficient_val0=3331 :matherial0mu=1.7894E-5 :matherial0beta_t=0.003331 :matherial0blibmat=0 :matherial0ilibident=0 :matherial0bBoussinesq=1 :matherial0ilawmu=0 :matherial0mumin=1.7894E-5 :matherial0mumax=1.7894E-5 :matherial0Amu=1 :matherial0Bmu=1 :matherial0Cmu=1 :matherial0degreennmu=1 :
+matherial1name=Al-Duralumin :matherial1density=2800 :matherial1nCp=1 :matherial1Temp_Cp0=20 :matherial1Arr_Cp_val0=921 :matherial1n_lambda=1 :matherial1Temp_Lam0=20 :matherial1Arr_Lam_val0=164 :matherial1mult_lam_x=1 :matherial1mult_lam_y=1 :matherial1mult_lam_z=1 :matherial1lambda_is_file=0 :matherial1mult_Linear_expansion_coefficient_x=1 :matherial1mult_Linear_expansion_coefficient_y=1 :matherial1mult_Linear_expansion_coefficient_z=1 :matherial1mult_Young_Module_x=1 :matherial1mult_Young_Module_y=1 :matherial1mult_Young_Module_z=1 :matherial1mult_Poisson_ratio_xy=1 :matherial1mult_Poisson_ratio_xz=1 :matherial1mult_Poisson_ratio_yz=1 :matherial1mult_Poisson_ratio_yx=1 :matherial1mult_Poisson_ratio_zx=1 :matherial1mult_Poisson_ratio_zy=1 :matherial1bShearModuleActive=0 :matherial1ShearModuleGxy=25.8620689655172 :matherial1ShearModuleGyz=25.8620689655172 :matherial1ShearModuleGxz=25.8620689655172 :matherial1n_Poisson_ratio=1 :matherial1temp_Poisson_ratio0=20 :matherial1arr_Poisson_ratio0=0.334 :matherial1n_Young_Module=1 :matherial1temp_Young_Module0=20 :matherial1arr_Young_Module0=69 :matherial1n_Linear_expansion_coefficient=1 :matherial1temp_Linear_expansion_coefficient0=20 :matherial1arr_Linear_expansion_coefficient_val0=23 :matherial1mu=1.7894E-5 :matherial1beta_t=0.003331 :matherial1blibmat=0 :matherial1ilibident=100 :matherial1bBoussinesq=0 :matherial1ilawmu=0 :matherial1mumin=1.7894E-5 :matherial1mumax=1.7894E-5 :matherial1Amu=1 :matherial1Bmu=1 :matherial1Cmu=1 :matherial1degreennmu=1 :
+cabinet=body0igeometry_type=0 :body0iOperation=0 :body0iLeftExpression=0 :body0sLeftOperation=1 :body0sRightOperation=1 :body0sxS=-60 :body0syS=-60 :body0szS=-60 :body0sxE=60 :body0syE=60 :body0szE=60 :body0iPlane=1 :body0sxC=0.0 :body0syC=0.0 :body0szC=-0.5 :body0sHcyl=1.0 :body0sR_out_cyl=0.5 :body0sR_in_cyl=0.0 :body0bCylinder2Prism=1 :body0sR_out_cyl2=-1.0 :body0sR_in_cyl2=-1.0 :body0sangle_start=0.0 :body0sangle_end=0.0 :body0iPlane_obj2=3 :body0nsizei=3 :body0hi0=0.2 :body0xi0=-0.1 :body0yi0=-0.141421 :body0zi0=-0.141421 :body0hi1=0.2 :body0xi1=-0.1 :body0yi1=0.141421 :body0zi1=-0.141421 :body0hi2=0.2 :body0xi2=-0.1 :body0yi2=-0.141421 :body0zi2=0.141421 :body0semissW=0.001 :body0semissE=0.001 :body0semissS=0.001 :body0semissN=0.001 :body0semissB=0.001 :body0semissT=0.001 :body0binternalRadiation=0 :body0imatid=0 :body0CylinderFixed=0 :body0inx=1 :body0iny=1 :body0inz=1 :body0n_power=1 :body0Temp_Power0=20 :body0Arr_Power0=0.0 :body0ipower_time_depend=0 :body0itype=3 :body0iunion=0 :body0redcolor=0.501999974250793 :body0greencolor=0.501999974250793 :body0bluecolor=0.501999974250793 :body0transparency=1 :body0dcol=8421504 :body0lineWidth=1 :
 lb=2 :icb=1 :
-body1name=block1 :body1igeometry_type=0 :body1sxS=-12.000 :body1syS=-12.000 :body1szS=-12.000 :body1sxE=12.000 :body1syE=12.000 :body1szE=12.000 :body1iPlane=1 :body1sxC=0.000 :body1syC=0.000 :body1szC=-12.000 :body1sHcyl=24.000 :body1sR_out_cyl=12.000 :body1sR_in_cyl=0.000 :body1bCylinder2Prism=1 :body1sR_out_cyl2=-1.000 :body1sR_in_cyl2=-1.000 :body1sangle_start=0.000 :body1sangle_end=0.000 :body1iPlane_obj2=3 :body1nsizei=3 :body1hi0=24 :body1xi0=-12 :body1yi0=-16.97052 :body1zi0=-16.97052 :body1hi1=24 :body1xi1=-12 :body1yi1=16.97052 :body1zi1=-16.97052 :body1hi2=24 :body1xi2=-12 :body1yi2=-16.97052 :body1zi2=16.97052 :body1semissW=$emiss :body1semissE=$emiss :body1semissS=$emiss :body1semissN=$emiss :body1semissB=$emiss :body1semissT=$emiss :body1binternalRadiation=0 :body1imatid=1 :body1CylinderFixed=0 :body1n_power=1 :body1Temp_power0=20 :body1Arr_power0=0.5 :body1ipower_time_depend=0 :body1itype=1 :body1iunion=0 :body1redcolor=0.501999974250793 :body1greencolor=0.501999974250793 :body1bluecolor=0.501999974250793 :body1transparency=1 :body1dcol=8421504 :body1lineWidth=1 :
+body1name=block1 :body1igeometry_type=0 :body1iOperation=0 :body1iLeftExpression=0 :body1sLeftOperation=1 :body1sRightOperation=1 :body1sxS=-12.000 :body1syS=-12.000 :body1szS=-12.000 :body1sxE=12.000 :body1syE=12.000 :body1szE=12.000 :body1iPlane=1 :body1sxC=0.000 :body1syC=0.000 :body1szC=-12.000 :body1sHcyl=24.000 :body1sR_out_cyl=12.000 :body1sR_in_cyl=0.000 :body1bCylinder2Prism=1 :body1sR_out_cyl2=-1.000 :body1sR_in_cyl2=-1.000 :body1sangle_start=0.000 :body1sangle_end=0.000 :body1iPlane_obj2=3 :body1nsizei=3 :body1hi0=24 :body1xi0=-12 :body1yi0=-16.97052 :body1zi0=-16.97052 :body1hi1=24 :body1xi1=-12 :body1yi1=16.97052 :body1zi1=-16.97052 :body1hi2=24 :body1xi2=-12 :body1yi2=-16.97052 :body1zi2=16.97052 :body1semissW=$emiss :body1semissE=$emiss :body1semissS=$emiss :body1semissN=$emiss :body1semissB=$emiss :body1semissT=$emiss :body1binternalRadiation=0 :body1imatid=1 :body1CylinderFixed=0 :body1inx=1 :body1iny=1 :body1inz=1 :body1n_power=1 :body1Temp_power0=20 :body1Arr_power0=0.5 :body1ipower_time_depend=0 :body1itype=1 :body1iunion=0 :body1redcolor=0.501999974250793 :body1greencolor=0.501999974250793 :body1bluecolor=0.501999974250793 :body1transparency=1 :body1dcol=8421504 :body1lineWidth=1 :
 ls=0 :ics=0 :
 lw=6 :icw=6 :
-wall0name=cabinet_minX :wall0family=2 :wall0Tamb=0 :wall0semissivity=0 :wall0ViewFactor=1 :wall0HF=0 :wall0bsymmetry=0 :wall0bpressure=0 :wall0bopening=1 :wall0Vx=0 :wall0Vy=0 :wall0Vz=0 :wall0Pressure=0 :wall0ithermal_stress_boundary_condition=0 :wall0xForce=0 :wall0yForce=0 :wall0zForce=0 :wall0iPlane=3 :wall0sxS=-60 :wall0syS=-60 :wall0szS=-60 :wall0sxE=-60 :wall0syE=60 :wall0szE=60 :wall0iunion=0 :wall0cabinet_depend=1 :
-wall1name=cabinet_maxX :wall1family=2 :wall1Tamb=0 :wall1semissivity=0 :wall1ViewFactor=1 :wall1HF=0 :wall1bsymmetry=0 :wall1bpressure=0 :wall1bopening=1 :wall1Vx=0 :wall1Vy=0 :wall1Vz=0 :wall1Pressure=0 :wall1ithermal_stress_boundary_condition=0 :wall1xForce=0 :wall1yForce=0 :wall1zForce=0 :wall1iPlane=3 :wall1sxS=60 :wall1syS=-60 :wall1szS=-60 :wall1sxE=60 :wall1syE=60 :wall1szE=60 :wall1iunion=0 :wall1cabinet_depend=2 :
-wall2name=cabinet_minY :wall2family=2 :wall2Tamb=0 :wall2semissivity=0 :wall2ViewFactor=1 :wall2HF=0 :wall2bsymmetry=0 :wall2bpressure=0 :wall2bopening=1 :wall2Vx=0 :wall2Vy=0 :wall2Vz=0 :wall2Pressure=0 :wall2ithermal_stress_boundary_condition=0 :wall2xForce=0 :wall2yForce=0 :wall2zForce=0 :wall2iPlane=2 :wall2sxS=-60 :wall2syS=-60 :wall2szS=-60 :wall2sxE=60 :wall2syE=-60 :wall2szE=60 :wall2iunion=0 :wall2cabinet_depend=3 :
-wall3name=cabinet_maxY :wall3family=2 :wall3Tamb=0 :wall3semissivity=0 :wall3ViewFactor=1 :wall3HF=0 :wall3bsymmetry=0 :wall3bpressure=0 :wall3bopening=1 :wall3Vx=0 :wall3Vy=0 :wall3Vz=0 :wall3Pressure=0 :wall3ithermal_stress_boundary_condition=0 :wall3xForce=0 :wall3yForce=0 :wall3zForce=0 :wall3iPlane=2 :wall3sxS=-60 :wall3syS=60 :wall3szS=-60 :wall3sxE=60 :wall3syE=60 :wall3szE=60 :wall3iunion=0 :wall3cabinet_depend=4 :
-wall4name=cabinet_minZ :wall4family=2 :wall4Tamb=0 :wall4semissivity=0 :wall4ViewFactor=1 :wall4HF=0 :wall4bsymmetry=0 :wall4bpressure=0 :wall4bopening=1 :wall4Vx=0 :wall4Vy=0 :wall4Vz=0 :wall4Pressure=0 :wall4ithermal_stress_boundary_condition=0 :wall4xForce=0 :wall4yForce=0 :wall4zForce=0 :wall4iPlane=1 :wall4sxS=-60 :wall4syS=-60 :wall4szS=-60 :wall4sxE=60 :wall4syE=60 :wall4szE=-60 :wall4iunion=0 :wall4cabinet_depend=5 :
-wall5name=cabinet_maxZ :wall5family=2 :wall5Tamb=0 :wall5semissivity=0 :wall5ViewFactor=1 :wall5HF=0 :wall5bsymmetry=0 :wall5bpressure=0 :wall5bopening=1 :wall5Vx=0 :wall5Vy=0 :wall5Vz=0 :wall5Pressure=0 :wall5ithermal_stress_boundary_condition=0 :wall5xForce=0 :wall5yForce=0 :wall5zForce=0 :wall5iPlane=1 :wall5sxS=-60 :wall5syS=-60 :wall5szS=60 :wall5sxE=60 :wall5syE=60 :wall5szE=60 :wall5iunion=0 :wall5cabinet_depend=6 :
+wall0name=cabinet_minX :wall0iOperation=0 :wall0iLeftExpression=0 :wall0sLeftOperation=1 :wall0sRightOperation=1 :wall0family=2 :wall0Tamb=20 :wall0semissivity=0 :wall0ViewFactor=1 :wall0HF=0 :wall0bsymmetry=0 :wall0bpressure=0 :wall0bopening=1 :wall0Vx=0 :wall0Vy=0 :wall0Vz=0 :wall0Pressure=0 :wall0ithermal_stress_boundary_condition=0 :wall0xForce=0 :wall0yForce=0 :wall0zForce=0 :wall0inx=1 :wall0iny=1 :wall0inz=1 :wall0iPlane=3 :wall0sxS=-60 :wall0syS=-60 :wall0szS=-60 :wall0sxE=-60 :wall0syE=60 :wall0szE=60 :wall0iunion=0 :wall0cabinet_depend=1 :
+wall1name=cabinet_maxX :wall1iOperation=0 :wall1iLeftExpression=0 :wall1sLeftOperation=1 :wall1sRightOperation=1 :wall1family=2 :wall1Tamb=20 :wall1semissivity=0 :wall1ViewFactor=1 :wall1HF=0 :wall1bsymmetry=0 :wall1bpressure=0 :wall1bopening=1 :wall1Vx=0 :wall1Vy=0 :wall1Vz=0 :wall1Pressure=0 :wall1ithermal_stress_boundary_condition=0 :wall1xForce=0 :wall1yForce=0 :wall1zForce=0 :wall1inx=1 :wall1iny=1 :wall1inz=1 :wall1iPlane=3 :wall1sxS=60 :wall1syS=-60 :wall1szS=-60 :wall1sxE=60 :wall1syE=60 :wall1szE=60 :wall1iunion=0 :wall1cabinet_depend=2 :
+wall2name=cabinet_minY :wall2iOperation=0 :wall2iLeftExpression=0 :wall2sLeftOperation=1 :wall2sRightOperation=1 :wall2family=2 :wall2Tamb=20 :wall2semissivity=0 :wall2ViewFactor=1 :wall2HF=0 :wall2bsymmetry=0 :wall2bpressure=0 :wall2bopening=1 :wall2Vx=0 :wall2Vy=0 :wall2Vz=0 :wall2Pressure=0 :wall2ithermal_stress_boundary_condition=0 :wall2xForce=0 :wall2yForce=0 :wall2zForce=0 :wall2inx=1 :wall2iny=1 :wall2inz=1 :wall2iPlane=2 :wall2sxS=-60 :wall2syS=-60 :wall2szS=-60 :wall2sxE=60 :wall2syE=-60 :wall2szE=60 :wall2iunion=0 :wall2cabinet_depend=3 :
+wall3name=cabinet_maxY :wall3iOperation=0 :wall3iLeftExpression=0 :wall3sLeftOperation=1 :wall3sRightOperation=1 :wall3family=2 :wall3Tamb=20 :wall3semissivity=0 :wall3ViewFactor=1 :wall3HF=0 :wall3bsymmetry=0 :wall3bpressure=0 :wall3bopening=1 :wall3Vx=0 :wall3Vy=0 :wall3Vz=0 :wall3Pressure=0 :wall3ithermal_stress_boundary_condition=0 :wall3xForce=0 :wall3yForce=0 :wall3zForce=0 :wall3inx=1 :wall3iny=1 :wall3inz=1 :wall3iPlane=2 :wall3sxS=-60 :wall3syS=60 :wall3szS=-60 :wall3sxE=60 :wall3syE=60 :wall3szE=60 :wall3iunion=0 :wall3cabinet_depend=4 :
+wall4name=cabinet_minZ :wall4iOperation=0 :wall4iLeftExpression=0 :wall4sLeftOperation=1 :wall4sRightOperation=1 :wall4family=2 :wall4Tamb=20 :wall4semissivity=0 :wall4ViewFactor=1 :wall4HF=0 :wall4bsymmetry=0 :wall4bpressure=0 :wall4bopening=1 :wall4Vx=0 :wall4Vy=0 :wall4Vz=0 :wall4Pressure=0 :wall4ithermal_stress_boundary_condition=0 :wall4xForce=0 :wall4yForce=0 :wall4zForce=0 :wall4inx=1 :wall4iny=1 :wall4inz=1 :wall4iPlane=1 :wall4sxS=-60 :wall4syS=-60 :wall4szS=-60 :wall4sxE=60 :wall4syE=60 :wall4szE=-60 :wall4iunion=0 :wall4cabinet_depend=5 :
+wall5name=cabinet_maxZ :wall5iOperation=0 :wall5iLeftExpression=0 :wall5sLeftOperation=1 :wall5sRightOperation=1 :wall5family=2 :wall5Tamb=20 :wall5semissivity=0 :wall5ViewFactor=1 :wall5HF=0 :wall5bsymmetry=0 :wall5bpressure=0 :wall5bopening=1 :wall5Vx=0 :wall5Vy=0 :wall5Vz=0 :wall5Pressure=0 :wall5ithermal_stress_boundary_condition=0 :wall5xForce=0 :wall5yForce=0 :wall5zForce=0 :wall5inx=1 :wall5iny=1 :wall5inz=1 :wall5iPlane=1 :wall5sxS=-60 :wall5syS=-60 :wall5szS=60 :wall5sxE=60 :wall5syE=60 :wall5szE=60 :wall5iunion=0 :wall5cabinet_depend=6 :
 solver_itemper=1 :solver_StaticStructural=0 :solver_imaxflD=1 :
 myflmod0xc=0 :myflmod0yc=0 :myflmod0zc=0 :myflmod0iflow=1 :myflmod0iflowregime=0 :myflmod0iturbmodel=0 :myflmod0SmagConst=0.151 :myflmod0iDynamicStressGermano=0 :myflmod0iLimitersCs=0 :myflmod0minCs=-1E20 :myflmod0maxCs=1E23 :myflmod0itypeFiltrGermano=2 :myflmod0roughness=10 :myflmod0rRimult=1 :myflmod0rSelectiveAngle=15 :myflmod0ipowerroughness=2 :myflmod0itypefiltr=2 :myflmod0bfdelta=1 :myflmod0bSmagorinsky_Lilly=1 :myflmod0bsurface_roughness=0 :myflmod0bSwirlamendment=1 :myflmod0bSelectiveSmagorinsky=0 :
 light_remis=0 :light_rspec=0 :light_matdiff=0.800000011920929 :
@@ -45,3 +52,95 @@ line_directional=0 :
 AMGCL_ddemidov_smoother=0 :
 AMGCL_ddemidov_AMG_Coarseng=1 :
 AMGCL_ddemidov_Krjlov_iterator=0 :
+inumber_processors=0 :
+gpu_id=0 :
+amg1r5_Stailization=2 :
+amg1r5_number_presmoothers=0 :
+amg1r5_number_postsmoothers=0 :
+amg1r5_type_algorithm_presmoother=0 :
+amg1r5_type_algorithm_postsmoother=0 :
+amg1r5_Strong_threshold=0.25 :
+amg1r5_F_to_F=0.35 :
+amg1r5_amg1r6_version_aggregator=0 :
+PressureVelocityCoupling=0 :
+FlowConvectionSchemePrefix_id=1 :
+FlowConvectionScheme_id=6 :
+TemperatureConvectionScheme_id=6 :
+TurbulentConvectionScheme_id=0 :
+ILUK_lfil_number=0 :
+FGMRes_mrestart_number=4 :
+Maximum_reduced_levels_Temperature=0 :
+Maximum_reduced_levels_Speed=0 :
+Maximum_reduced_levels_Pressure=0 :
+Maximum_reduced_levels_Stress=0 :
+Rumba_nFinnest=1 :
+Rumba_nFinnestSpeed=1 :
+Rumba_nFinnestPressure=1 :
+Rumba_nFinnestStress=1 :
+Rumba_number_presmoothers=1 :
+Rumba_number_presmoothersSpeed=1 :
+Rumba_number_presmoothersPressure=1 :
+Rumba_number_presmoothersStress=1 :
+Rumba_number_postsmoothers=2 :
+Rumba_number_postsmoothersSpeed=2 :
+Rumba_number_postsmoothersPressure=2 :
+Rumba_number_postsmoothersStress=2 :
+Rumba_memory_size=7 :
+Rumba_memory_sizeSpeed=7 :
+Rumba_memory_sizePressure=7 :
+Rumba_memory_sizeStress=7 :
+Rumba_interpolation_id=3 :
+Rumba_interpolation_id_Speed=3 :
+Rumba_interpolation_id_Pressure=3 :
+Rumba_interpolation_id_Stress=3 :
+Rumba_sort_algo=0 :
+Rumba_Relaxation_Temperature=0 :
+Rumba_Relaxation_Speed=0 :
+Rumba_Relaxation_Pressure=0 :
+Rumba_Relaxation_Stress=0 :
+Rumba_amg_splitting_coarsening=2 :
+Rumba_amg_splitting_coarseningSpeed=2 :
+Rumba_amg_splitting_coarseningPressure=2 :
+Rumba_amg_splitting_coarseningStress=2 :
+Rumba_Stabilization=0 :
+Rumba_StabilizationSpeed=0 :
+Rumba_StabilizationPressure=0 :
+Rumba_StabilizationStress=0 :
+C_F_decomposition_algorithms_and_data_structure=2 :
+C_F_decomposition_algorithms_and_data_structureSpeed=2 :
+C_F_decomposition_algorithms_and_data_structurePressure=2 :
+C_F_decomposition_algorithms_and_data_structureStress=2 :
+Rumba_threshold_Temperature=0.24 :
+Rumba_threshold_Speed=0.24 :
+Rumba_threshold_Pressure=0.24 :
+Rumba_threshold_Stress=0.24 :
+Rumba_truncation_interpolation_Temp=0.2 :
+Rumba_truncation_interpolation_Speed=0.2 :
+Rumba_truncation_interpolation_Pressure=0.2 :
+Rumba_truncation_interpolation_Stress=0.2 :
+Rumba_F2F_Temperature=0.4 :
+Rumba_F2F_Speed=0.4 :
+Rumba_F2F_Pressure=0.4 :
+Rumba_F2F_Stress=0.4 :
+Rumba_Diagonal_dominant=1 :
+Rumba_truncationT=1 :
+Rumba_truncationSpeed=1 :
+Rumba_truncationPressure=1 :
+Rumba_truncationStress=1 :
+Rumba_StrongTranspose=1 :
+Rumba_PrintLogTemperature=1 :
+Rumba_PrintLogSpeed=1 :
+Rumba_PrintLogPressure=1 :
+Rumba_PrintLogStress=1 :
+bthreshold_Temperature_auto=1 :
+bthreshold_Speed_auto=1 :
+bthreshold_Pressure_auto=1 :
+bthreshold_Stress_auto=1 :
+bcf_reorder_Temperature=1 :
+bcf_reorder_Speed=1 :
+bcf_reorder_Pressure=1 :
+bcf_reorder_Stress=1 :
+Rumba_TemperatureMatrixPortrait=0 :
+Rumba_SpeedMatrixPortrait=0 :
+Rumba_PressureMatrixPortrait=0 :
+Rumba_StressMatrixPortrait=0 :
