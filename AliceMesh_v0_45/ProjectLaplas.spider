@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<spider version="1.0">
+	<application_name>C:\Users\Kirill\Desktop\CFD\AliceMeshv0_45\ProjectLaplas.exe</application_name>
+	<project_source>C:\Users\Kirill\Desktop\CFD\AliceMeshv0_45</project_source>
+	<delphi_source>C:\Program Files (x86)\Embarcadero\Studio\20.0\source</delphi_source>
+</spider>
