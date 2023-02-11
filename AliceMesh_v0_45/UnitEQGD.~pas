@@ -1,0 +1,343 @@
+unit UnitEQGD;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ExtCtrls, StdCtrls;
+
+type
+  TEGDForm = class(TForm)
+    PanelGlobal: TPanel;
+    GroupBoxFluidDomain: TGroupBox;
+    CBMaxFluidDomain: TComboBox;
+    BmaxFluidDomain: TButton;
+    GBCFlZ: TGroupBox;
+    GBIofTheCFZ: TGroupBox;
+    CBIdCurFLzone: TComboBox;
+    GBOperationPoint: TGroupBox;
+    LabelXC: TLabel;
+    LabelYC: TLabel;
+    LabelZC: TLabel;
+    EditXC: TEdit;
+    EditYC: TEdit;
+    EditZC: TEdit;
+    CBFlow: TCheckBox;
+    RadioGroupFlowRegime: TRadioGroup;
+    GroupBoxTurbulentModel: TGroupBox;
+    ComboBoxturbulentmodel: TComboBox;
+    ButtonidFlow: TButton;
+    GBtempeq: TGroupBox;
+    ButtonTemp: TButton;
+    CheckBoxTemperature: TCheckBox;
+    BEditTurb: TButton;
+    procedure ButtonTempClick(Sender: TObject);
+    procedure BmaxFluidDomainClick(Sender: TObject);
+    procedure RadioGroupFlowRegimeClick(Sender: TObject);
+    procedure CBFlowClick(Sender: TObject);
+    procedure ButtonidFlowClick(Sender: TObject);
+    procedure CBIdCurFLzoneClick(Sender: TObject);
+    procedure ComboBoxturbulentmodelChange(Sender: TObject);
+    procedure BEditTurbClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  EGDForm: TEGDForm;
+
+implementation
+uses
+     VisualUnit, UnitSmagorinsky;
+
+{$R *.dfm}
+
+// Считывание информации о том нужно ли решать уравнение теплопроводности.
+procedure TEGDForm.ButtonTempClick(Sender: TObject);
+begin
+   if (CheckBoxTemperature.Checked) then
+   begin
+      Laplas.egddata.itemper:=1;
+   end
+    else
+   begin
+      Laplas.egddata.itemper:=0;
+   end;
+end;
+
+procedure TEGDForm.BmaxFluidDomainClick(Sender: TObject);
+var
+   i : Integer;
+begin
+   // считываем количество максимальное FLUID зон
+   Laplas.egddata.imaxflD:=CBMaxFluidDomain.ItemIndex;
+   // Выдиление или уничтожение оперативной памяти из-за изменения размеров
+   // динамического массива.
+   SetLength(Laplas.egddata.myflmod,CBMaxFluidDomain.ItemIndex);
+
+   // инициализация нулём
+   for i:=0 to Laplas.egddata.imaxflD-1 do
+   begin
+      Laplas.egddata.myflmod[i].xc:=0.0;
+      Laplas.egddata.myflmod[i].yc:=0.0;
+      Laplas.egddata.myflmod[i].zc:=0.0;
+      Laplas.egddata.myflmod[i].iflow:=0; // не считаем течение
+      Laplas.egddata.myflmod[i].iflowregime:=0; // laminar
+      Laplas.egddata.myflmod[i].iturbmodel:=0; // 0-ZEM, 1-Smagorinsky
+      // модель Смагоринского
+      BEditTurb.Visible:=false; // делаем кнопку редатирования свойств модели Смагоринского невидимой, т.к. активна ZEM
+      Laplas.egddata.myflmod[i].SmagConst:=0.151; // при Ck==1.8   (Ck соответствующая константа Колмогорова).
+      Laplas.egddata.myflmod[i].bSmagorinsky_Lilly:=true; // модель Смагоринского-Лиллу.
+      Laplas.egddata.myflmod[i].bfdelta:=true; // учёт неравномерности сетки
+      Laplas.egddata.myflmod[i].bsurface_roughness:=false; // не учитывать шероховатость стенки.
+      Laplas.egddata.myflmod[i].ipowerroughness:=2; // показатель степени в модели.
+      Laplas.egddata.myflmod[i].roughness:=10.0; // micron (шероховатость стенки в мкм).
+   end;
+   Application.MessageBox('information on the hydrodynamic DOMAIN cleared','Attantion!');
+
+   if (CBMaxFluidDomain.ItemIndex=0) then
+   begin
+      GBCFlZ.Visible:=false;
+   end
+    else
+   begin
+      GBCFlZ.Visible:=true;
+
+      CBIdCurFLzone.Clear;
+      for i:=0 to Laplas.egddata.imaxflD-1 do
+      begin
+         CBIdCurFLzone.Items.Append(IntToStr(i+1));
+      end;
+      CBIdCurFLzone.ItemIndex:=0; // устанавливаем первую FLUID зону
+
+      // заполнение координат опорной точки
+      EditXC.Text:= FloatToStr(Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].xc);
+      EditYC.Text:= FloatToStr(Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].yc);
+      EditZC.Text:= FloatToStr(Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].zc);
+
+      // расчитывать или не расчитывать уравнения гидродинамики
+      if (Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iflow=1) then
+      begin
+         CBFlow.Checked:=true;
+      end
+       else
+      begin
+         CBFlow.Checked:=false;
+      end;
+
+      // режим течения
+      RadioGroupFlowRegime.ItemIndex:=Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iflowregime;
+      // модель турбулентности
+      ComboBoxturbulentmodel.ItemIndex:=Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iturbmodel;
+
+   end;
+end;
+
+procedure TEGDForm.RadioGroupFlowRegimeClick(Sender: TObject);
+begin
+   // смена режима течения:
+   // ламинарный или турбулентный.
+   if (RadioGroupFlowRegime.ItemIndex=0) then
+   begin
+      // LAMINAR
+      GroupBoxTurbulentModel.Visible:=false;
+   end
+    else
+   begin
+      // Turbulent
+      GroupBoxTurbulentModel.Visible:=true;
+   end;
+end;
+
+procedure TEGDForm.CBFlowClick(Sender: TObject);
+begin
+   // решать или не решать уравнения гидродинамики
+   if (CBFlow.Checked) then
+   begin
+      // уравнения гидродинамики решаются.
+      RadioGroupFlowRegime.Visible:=true;
+      // ламинарный или турбулентный.
+      if (RadioGroupFlowRegime.ItemIndex=0) then
+      begin
+         // LAMINAR
+         GroupBoxTurbulentModel.Visible:=false;
+      end
+       else
+      begin
+         // Turbulent
+         GroupBoxTurbulentModel.Visible:=true;
+      end;
+   end
+    else
+   begin
+      // уравнения гидродинамики не решаются.
+      RadioGroupFlowRegime.Visible:=false;
+      GroupBoxTurbulentModel.Visible:=false;
+   end;
+end;
+
+procedure TEGDForm.ButtonidFlowClick(Sender: TObject);
+begin
+   // считывание информации о текущей FLUID зоне
+
+   // Координаты опорной точки
+   Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].xc:=StrToFloat(EditXC.Text);
+   Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].yc:=StrToFloat(EditYC.Text);
+   Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].zc:=StrToFloat(EditZC.Text);
+
+   // информация о том рассчитывать уравнения гидродинамики или нет.
+   if (CBFlow.Checked) then
+   begin
+      Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iflow:=1;
+   end
+    else
+   begin
+      Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iflow:=0;
+   end;
+
+   // режим течения 0-Ламинарный или 1-турбулентный
+   if (RadioGroupFlowRegime.ItemIndex=0) then
+   begin
+      Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iflowregime:=0;
+   end
+    else
+   begin
+      Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iflowregime:=1;
+   end;
+
+   // считывание информации о модели турбулентности.
+   Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iturbmodel:=ComboBoxturbulentmodel.ItemIndex;
+
+end;
+
+procedure TEGDForm.CBIdCurFLzoneClick(Sender: TObject);
+begin
+   // смена текущей FLUID зоны
+
+   // заполнение координат опорной точки
+   EditXC.Text:= FloatToStr(Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].xc);
+   EditYC.Text:= FloatToStr(Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].yc);
+   EditZC.Text:= FloatToStr(Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].zc);
+
+   // расчитывать или не расчитывать уравнения гидродинамики
+   if (Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iflow=1) then
+   begin
+      CBFlow.Checked:=true;
+   end
+    else
+   begin
+      CBFlow.Checked:=false;
+   end;
+
+   // режим течения
+   RadioGroupFlowRegime.ItemIndex:=Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iflowregime;
+   // модель турбулентности
+   ComboBoxturbulentmodel.ItemIndex:=Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iturbmodel;
+end;
+
+// Делает видимой или невидимой кнопку редактирования
+// Свойств модели Смагоринского.
+procedure TEGDForm.ComboBoxturbulentmodelChange(Sender: TObject);
+begin
+   // Смена модели турбулентности
+   case ComboBoxturbulentmodel.ItemIndex of
+     0 : begin
+            // ZEM
+            BEditTurb.Visible:=false;
+         end;
+     1 : begin
+            // Smagorinsky
+            BEditTurb.Visible:=true;
+         end;
+     2 : begin
+            // RNG LES
+            BEditTurb.Visible:=false;
+         end;
+   end;
+end;
+
+procedure TEGDForm.BEditTurbClick(Sender: TObject);
+begin
+   // Нажатие по кнопке редактирования модели Смагоринского.
+   if (ComboBoxturbulentmodel.ItemIndex=1) then
+   begin
+      if (Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].iDynamicStressGermano=1) then
+      begin
+         // модель Германо включена.
+         FormSmagorinsky.PanelCs.Visible:=false;
+         FormSmagorinsky.PanelLimitersCs.Visible:=true;
+         FormSmagorinsky.CBDynamicStress.Checked:=true;
+         if (Laplas.egddata.myflmod[EGDForm.CBIdCurFLzone.ItemIndex].iLimitersCs=0) then
+         begin
+            FormSmagorinsky.CBLimitersCS.Checked:=false;
+            FormSmagorinsky.Panel_user_limiters.Visible:=false;
+         end
+          else
+         begin
+            FormSmagorinsky.CBLimitersCS.Checked:=true;
+            // пределы Cs включены
+            FormSmagorinsky.Panel_user_limiters.Visible:=true;
+            FormSmagorinsky.EminCs.Text:=FloatToStr(Laplas.egddata.myflmod[EGDForm.CBIdCurFLzone.ItemIndex].minCs);
+            FormSmagorinsky.EmaxCs.Text:=FloatToStr(Laplas.egddata.myflmod[EGDForm.CBIdCurFLzone.ItemIndex].maxCs);
+         end;
+      end
+       else
+      begin
+         // модель Германо выключена.
+         FormSmagorinsky.PanelCs.Visible:=true;
+         FormSmagorinsky.Esmagconst.Text:=FloatToStr(Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].SmagConst);
+         FormSmagorinsky.PanelLimitersCs.Visible:=false;
+         FormSmagorinsky.CBDynamicStress.Checked:=false;
+      end;
+
+      FormSmagorinsky.CBcorrectnonuniformgrid.Checked:=Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].bfdelta;
+      FormSmagorinsky.CBSmagLilly.Checked:=Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].bSmagorinsky_Lilly;
+      FormSmagorinsky.CBsurfaceroughness.Checked:=Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].bsurface_roughness;
+      if (FormSmagorinsky.CBsurfaceroughness.Checked) then
+      begin
+         // нужно активировать форму для задания шероховатости стенки.
+         FormSmagorinsky.Panrougness.Visible:=true;
+         FormSmagorinsky.Eroughnessmicron.Text:=FloatToStr(Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].roughness);
+         case Laplas.egddata.myflmod[CBIdCurFLzone.ItemIndex].ipowerroughness of
+           1 : begin
+                  FormSmagorinsky.CBpowermodel.ItemIndex:=0;
+               end;
+           2 : begin
+                  FormSmagorinsky.CBpowermodel.ItemIndex:=1;
+               end;
+         end;
+      end
+      else
+      begin
+         FormSmagorinsky.Panrougness.Visible:=false;
+      end;
+      // поправка для течений с кривизной линий тока.
+      FormSmagorinsky.CBSwirlAmendment.Checked:=Laplas.egddata.myflmod[EGDForm.CBIdCurFLzone.ItemIndex].bSwirlamendment;
+      if (FormSmagorinsky.CBSwirlAmendment.Checked) then
+      begin
+         FormSmagorinsky.PanRichardson.Visible:=true;
+         FormSmagorinsky.ERimult.Text:=FloatToStr(Laplas.egddata.myflmod[EGDForm.CBIdCurFLzone.ItemIndex].rRimult);
+      end
+        else
+      begin
+         FormSmagorinsky.PanRichardson.Visible:=false;
+      end;
+      // Установка модели Selective Smagorinsky
+      FormSmagorinsky.CBSelectiveSmagorinsky.Checked:=Laplas.egddata.myflmod[EGDForm.CBIdCurFLzone.ItemIndex].bSelectiveSmagorinsky;
+      if (FormSmagorinsky.CBSelectiveSmagorinsky.Checked) then
+      begin
+         FormSmagorinsky.PSelectiveSmag.Visible:=true;
+         FormSmagorinsky.RGtypefiltr.ItemIndex:=Laplas.egddata.myflmod[EGDForm.CBIdCurFLzone.ItemIndex].itypefiltr;
+         FormSmagorinsky.Eangle.Text:=FloatToStr(Laplas.egddata.myflmod[EGDForm.CBIdCurFLzone.ItemIndex].rSelectiveAngle);
+      end
+       else
+      begin
+         FormSmagorinsky.PSelectiveSmag.Visible:=false;
+      end;
+      FormSmagorinsky.ShowModal;
+   end;
+end;
+
+end.

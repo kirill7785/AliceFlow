@@ -1,0 +1,258 @@
+unit AddSourceUnit;
+// изменение свойств источника тепла
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ExtCtrls, StdCtrls;
+
+type
+  TAddSourceForm = class(TForm)
+    Panel1: TPanel;
+    Lname: TLabel;
+    Ename: TEdit;
+    GroupBox1: TGroupBox;
+    LxS: TLabel;
+    LyS: TLabel;
+    LzS: TLabel;
+    ExS: TEdit;
+    EyS: TEdit;
+    EzS: TEdit;
+    Bapply: TButton;
+    RadioGroupPlane: TRadioGroup;
+    LxE: TLabel;
+    LyE: TLabel;
+    LzE: TLabel;
+    ExE: TEdit;
+    EyE: TEdit;
+    EzE: TEdit;
+    GBpowerdef: TGroupBox;
+    RGpowertype: TRadioGroup;
+    Ptempdefloc: TPanel;
+    Label2: TLabel;
+    CBtableid: TComboBox;
+    Label3: TLabel;
+    EOperoffsetdrain: TEdit;
+    Label1: TLabel;
+    Epower: TEdit;
+    LW: TLabel;
+    procedure BapplyClick(Sender: TObject);
+    procedure RadioGroupPlaneClick(Sender: TObject);
+    procedure RGpowertypeClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  AddSourceForm: TAddSourceForm;
+
+implementation
+uses
+     VisualUnit, UnitVariables;
+{$R *.dfm}
+
+procedure TAddSourceForm.BapplyClick(Sender: TObject);
+var
+   k : Integer;
+   // вспомогательные переменные для обработки исключительной ситуации
+   bOk : Boolean;
+   s1, s2, s3, s4, s5, s6, spow : String;
+   r1, r2, r3, r4, r5, r6, rpow : Real;
+
+begin
+   // инициализация :
+   r1:=0.0;
+   r2:=0.0;
+   r3:=0.0;
+   r4:=0.0;
+   r5:=0.0;
+   r6:=0.0;
+
+   // ввод данных об источнике
+   k:=Laplas.itek;
+   with (Laplas.source[k]) do
+   begin
+      bOk:=true; // признак правельности ввода
+      iPlane:=RadioGroupPlane.ItemIndex+1;
+      spow:=Epower.Text;
+      if bOk then rpow:=FormVariables.my_real_convert(spow,bOk);
+      // тип задания мощности : 0 - константа, 1 - таблично.
+      itempdep:=RGpowertype.ItemIndex;
+      if (itempdep=1) then
+      begin
+         soperatingoffsetdrain:=EOperoffsetdrain.Text;
+         if bOk then operatingoffsetdrain:=FormVariables.my_real_convert(soperatingoffsetdrain,bOk);
+         id_table:=CBtableid.ItemIndex; // уникальный номер таблицы
+      end;
+
+      name:=Ename.Text; // имя элемента
+      // корректировка имени объекта чтобы избежать совпадающих имён.
+      Laplas.correctobjname('s',name,k);
+      Ename.Text:=name;
+
+
+      case iPlane of
+        1 : // XY
+            begin
+               s1:=ExS.Text;  // параметризованные
+               s2:=EyS.Text;  // геометрические
+               s3:=ExE.Text;  // размеры
+               s4:=EyE.Text;  // заданные
+               s5:=EzS.Text;  // пользователем
+               s6:=s5;
+
+               if bOk then r1:=FormVariables.my_real_convert(s1,bOk);  // числовые размеры
+               if bOk then r2:=FormVariables.my_real_convert(s2,bOk);  // заданные пользователем
+               if bOk then r3:=FormVariables.my_real_convert(s3,bOk);  // с учётом подстановки
+               if bOk then r4:=FormVariables.my_real_convert(s4,bOk);  // значений переменных.
+               if bOk then r5:=FormVariables.my_real_convert(s5,bOk);
+               if bOk then r6:=r5;
+            end;
+        2 : // XZ
+            begin
+               s1:=ExS.Text; // параметризованные
+               s2:=EyS.Text; // геометрические
+               s3:=ExE.Text; // размеры
+               s4:=s2;      // заданные
+               s5:=EzS.Text; // пользователем
+               s6:=EzE.Text;
+
+               if bOk then r1:=FormVariables.my_real_convert(s1,bOk);  // числовые размеры
+               if bOk then r2:=FormVariables.my_real_convert(s2,bOk);  // заданные пользователем
+               if bOk then r3:=FormVariables.my_real_convert(s3,bOk);  // с учётом подстановки
+               if bOk then r4:=r2;  // значений переменных.
+               if bOk then r5:=FormVariables.my_real_convert(s5,bOk);
+               if bOk then r6:=FormVariables.my_real_convert(s6,bOk);
+            end;
+        3 : // YZ
+            begin
+               s1:=ExS.Text; // параметризованные
+               s2:=EyS.Text; // геометрические
+               s3:=s1;  // размеры
+               s4:=EyE.Text; // заданные
+               s5:=EzS.Text; // пользователем
+               s6:=EzE.Text;
+
+               if bOk then r1:=FormVariables.my_real_convert(s1,bOk);  // числовые размеры
+               if bOk then r2:=FormVariables.my_real_convert(s2,bOk);  // заданные пользователем
+               if bOk then r3:=r1; // с учётом подстановки
+               if bOk then r4:=FormVariables.my_real_convert(s4,bOk);  // значений переменных.
+               if bOk then r5:=FormVariables.my_real_convert(s5,bOk);
+               if bOk then r6:=FormVariables.my_real_convert(s6,bOk);
+            end;
+      end; // case
+
+      if (bOk) then
+      begin
+         sxS:=s1;  // параметризованные
+         syS:=s2;  // геометрические
+         sxE:=s3;  // размеры
+         syE:=s4;  // заданные
+         szS:=s5;  // пользователем
+         szE:=s6;
+         spower:=spow;
+
+         xS:=r1;  // числовые размеры
+         yS:=r2;  // заданные пользователем
+         xE:=r3;  // с учётом подстановки
+         yE:=r4;  // значений переменных.
+         zS:=r5;
+         zE:=r6;
+         Power:=rpow;
+      end;
+
+   end;
+   with Laplas do
+   begin
+      LoadVertexPlane(source[k]); // задаёт координаты вершин
+      MainPaintBoxPaint(Sender);
+   end;
+end;
+
+procedure TAddSourceForm.RadioGroupPlaneClick(Sender: TObject);
+begin
+   // смена плоскости в которой лежит источник тепла
+   case (RadioGroupPlane.ItemIndex+1) of
+     1 : // XY
+         begin
+            ExE.Visible:=true;
+            LxE.Visible:=true;
+            EyE.Visible:=true;
+            LyE.Visible:=true;
+            EzE.Visible:=false;
+            LzE.Visible:=false;
+         end;
+     2 : // XZ
+         begin
+            ExE.Visible:=true;
+            LxE.Visible:=true;
+            EyE.Visible:=false;
+            LyE.Visible:=false;
+            EzE.Visible:=true;
+            LzE.Visible:=true;
+         end;
+     3 : // YZ
+         begin
+            ExE.Visible:=false;
+            LxE.Visible:=false;
+            EyE.Visible:=true;
+            LyE.Visible:=true;
+            EzE.Visible:=true;
+            LzE.Visible:=true;
+         end;
+   end;
+end;
+
+procedure TAddSourceForm.RGpowertypeClick(Sender: TObject);
+var
+    i : Integer;
+begin
+    // смена способа задания мощности :
+    // мощность может задаваться либо постоянной (константа)
+    // либо в виде таблицы как зависимость от температуры и смещения стока.
+    case RGpowertype.ItemIndex of
+       0 : // const
+           begin
+              Ptempdefloc.Visible:=false;
+              Label1.Caption:='power';
+              LW.Caption:='W';
+           end;
+       1 : // power define
+           begin
+              if (Laplas.iltdp=0) then
+              begin
+                  Application.MessageBox('Plese Define -> Power Table create','Please define',MB_OK);
+                  Laplas.MainMemo.Lines.Add('Plese Define -> Power Table create');
+                  RGpowertype.ItemIndex:=0; // постоянная мощность.
+                  Ptempdefloc.Visible:=false;
+                  Label1.Caption:='power';
+                  LW.Caption:='W';
+              end
+               else
+              begin
+                 // обновление списка доступных таблиц.
+                 CBtableid.Clear;
+                 for i:=0 to Laplas.iltdp-1 do
+                 begin
+                    CBtableid.AddItem(IntToStr(i),Sender);
+                 end;
+                 CBtableid.ItemIndex:=Laplas.source[Laplas.itek].id_table;  // уникальный номер таблично заданной мощности.
+                 EOperoffsetdrain.Text:=Laplas.source[Laplas.itek].soperatingoffsetdrain; // напряжение на стоке
+                 Ptempdefloc.Visible:=true;
+                 // mult power - это множитель
+                 // на который домножается реальная мощность.
+                 // Это удобно если считается только половина реального источника
+                 // в симметричной постановке, тогда мощность надо разделить пополам
+                 // что соответствует mult power равным 0.5.
+                 Label1.Caption:='mult power';
+                 LW.Caption:='';
+              end;
+           end;
+    end;
+end;
+
+end.
+

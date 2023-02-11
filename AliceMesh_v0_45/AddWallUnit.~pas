@@ -1,0 +1,294 @@
+unit AddWallUnit;
+// в этом модуле добавляется элемент стенка
+// стенка может лежать только на границе кабинета.
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, ExtCtrls;
+
+type
+  TAddWallForm = class(TForm)
+    Panel1: TPanel;
+    Lname: TLabel;
+    Ename: TEdit;
+    RadioGroupPlane: TRadioGroup;
+    GroupBoxSize: TGroupBox;
+    LxS: TLabel;
+    LyS: TLabel;
+    LzS: TLabel;
+    ExS: TEdit;
+    EyS: TEdit;
+    EzS: TEdit;
+    Bapply: TButton;
+    LxE: TLabel;
+    LyE: TLabel;
+    LzE: TLabel;
+    ExE: TEdit;
+    EyE: TEdit;
+    EzE: TEdit;
+    GroupBoxtemper: TGroupBox;
+    RadioGroupBonConTemp: TRadioGroup;
+    PaneltemperatureBC: TPanel;
+    LTemp: TLabel;
+    Etemp: TEdit;
+    GroupBoxFLOW: TGroupBox;
+    RadioGroupflowtype: TRadioGroup;
+    GroupBoxvelcomp: TGroupBox;
+    LabelVx: TLabel;
+    LabelVy: TLabel;
+    LabelVz: TLabel;
+    EditVx: TEdit;
+    EditVy: TEdit;
+    EditVz: TEdit;
+    GroupBoxpressure: TGroupBox;
+    Labelpressure: TLabel;
+    Editpress: TEdit;
+    procedure BapplyClick(Sender: TObject);
+    procedure RadioGroupPlaneClick(Sender: TObject);
+    procedure RadioGroupflowtypeClick(Sender: TObject);
+    procedure RadioGroupBonConTempClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  AddWallForm: TAddWallForm;
+
+implementation
+
+uses VisualUnit, UnitVariables;
+
+{$R *.dfm}
+
+// редактирование свойств стенки
+procedure TAddWallForm.BapplyClick(Sender: TObject);
+var
+    k : Integer;
+    // вспомогательные переменные для обработки исключительной ситуации
+    bOk : Boolean;
+    s1, s2, s3, s4, s5, s6 : String;
+    r1, r2, r3, r4, r5, r6 : Real;
+
+begin
+   // инициализация :
+   r1:=0.0;
+   r2:=0.0;
+   r3:=0.0;
+   r4:=0.0;
+   r5:=0.0;
+   r6:=0.0;
+
+    // ввод данных о стенке
+   k:=Laplas.itek;
+   with (Laplas.wall[k]) do
+   begin
+      iPlane:=RadioGroupPlane.ItemIndex+1; // плоскость в которой лежит стенка
+      family:=RadioGroupBonConTemp.ItemIndex+1; // род граничных условий
+      if (family=1) then Tamb:=StrToFloat(Etemp.Text)  // постоянная  температура
+      else Tamb:=0.0;
+      HF:=0.0; // только нулевой тепловой поток
+      name:=Ename.Text; // имя элемента
+      bOk:=true;
+
+      case iPlane of
+        1 : // XY
+            begin
+               s1:=ExS.Text;  // параметризованные
+               s2:=EyS.Text;  // геометрические
+               s3:=ExE.Text;  // размеры
+               s4:=EyE.Text;  // заданные
+               s5:=EzS.Text;  // пользователем
+               s6:=s5;
+
+               if bOk then r1:=FormVariables.my_real_convert(s1,bOk);  // числовые размеры
+               if bOk then r2:=FormVariables.my_real_convert(s2,bOk);  // заданные пользователем
+               if bOk then r3:=FormVariables.my_real_convert(s3,bOk);  // с учётом подстановки
+               if bOk then r4:=FormVariables.my_real_convert(s4,bOk);  // значений переменных.
+               if bOk then r5:=FormVariables.my_real_convert(s5,bOk);
+               if bOk then r6:=r5;
+            end;
+        2 : // XZ
+            begin
+               s1:=ExS.Text; // параметризованные
+               s2:=EyS.Text; // геометрические
+               s3:=ExE.Text; // размеры
+               s4:=s2;      // заданные
+               s5:=EzS.Text; // пользователем
+               s6:=EzE.Text;
+
+               if bOk then r1:=FormVariables.my_real_convert(s1,bOk);  // числовые размеры
+               if bOk then r2:=FormVariables.my_real_convert(s2,bOk);  // заданные пользователем
+               if bOk then r3:=FormVariables.my_real_convert(s3,bOk);  // с учётом подстановки
+               if bOk then r4:=r2;  // значений переменных.
+               if bOk then r5:=FormVariables.my_real_convert(s5,bOk);
+               if bOk then r6:=FormVariables.my_real_convert(s6,bOk);
+            end;
+        3 : // YZ
+            begin
+               s1:=ExS.Text; // параметризованные
+               s2:=EyS.Text; // геометрические
+               s3:=s1;  // размеры
+               s4:=EyE.Text; // заданные
+               s5:=EzS.Text; // пользователем
+               s6:=EzE.Text;
+
+               if bOk then r1:=FormVariables.my_real_convert(s1,bOk);  // числовые размеры
+               if bOk then r2:=FormVariables.my_real_convert(s2,bOk);  // заданные пользователем
+               if bOk then r3:=r1; // с учётом подстановки
+               if bOk then r4:=FormVariables.my_real_convert(s4,bOk);  // значений переменных.
+               if bOk then r5:=FormVariables.my_real_convert(s5,bOk);
+               if bOk then r6:=FormVariables.my_real_convert(s6,bOk);
+            end;
+      end; // case
+
+
+      if (bOk) then
+      begin
+         sxS:=s1;  // параметризованные
+         syS:=s2;  // геометрические
+         sxE:=s3;  // размеры
+         syE:=s4;  // заданные
+         szS:=s5;  // пользователем
+         szE:=s6;
+
+         xS:=r1;  // числовые размеры
+         yS:=r2;  // заданные пользователем
+         xE:=r3;  // с учётом подстановки
+         yE:=r4;  // значений переменных.
+         zS:=r5;
+         zE:=r6;
+      end;
+
+      // задание гидродинамических условий:
+      case RadioGroupflowtype.ItemIndex of
+        0 : begin
+               //velocity
+               Vx:=StrToFloat(EditVx.Text);
+               Vy:=StrToFloat(EditVy.Text);
+               Vz:=StrToFloat(EditVz.Text);
+               P:=0.0;
+               bsymmetry:=false;
+               bpressure:=false;
+            end;
+        1 : begin
+               // pressure
+               Vx:=0.0; Vy:=0.0; Vz:=0.0;
+               P:=StrToFloat(Editpress.Text);
+               bsymmetry:=false;
+               bpressure:=true;
+            end;
+        2 : begin
+               // symmetry
+               Vx:=0.0; Vy:=0.0; Vz:=0.0;
+               P:=0.0;
+               bsymmetry:=true;
+               bpressure:=false;
+            end;
+       end;
+
+   end;
+   with Laplas do
+   begin
+      LoadVertexPlane(wall[k]); // задаёт координаты вершин
+      MainPaintBoxPaint(Sender);
+   end;
+end;
+
+procedure TAddWallForm.RadioGroupPlaneClick(Sender: TObject);
+begin
+   // смена плоскости в которой лежит твёрдая стенка
+   case (RadioGroupPlane.ItemIndex+1) of
+     1 : // XY
+         begin
+            ExE.Visible:=true;
+            LxE.Visible:=true;
+            EyE.Visible:=true;
+            LyE.Visible:=true;
+            EzE.Visible:=false;
+            LzE.Visible:=false;
+         end;
+     2 : // XZ
+         begin
+            ExE.Visible:=true;
+            LxE.Visible:=true;
+            EyE.Visible:=false;
+            LyE.Visible:=false;
+            EzE.Visible:=true;
+            LzE.Visible:=true;
+         end;
+     3 : // YZ
+         begin
+            ExE.Visible:=false;
+            LxE.Visible:=false;
+            EyE.Visible:=true;
+            LyE.Visible:=true;
+            EzE.Visible:=true;
+            LzE.Visible:=true;
+         end;
+   end;
+end;
+
+procedure TAddWallForm.RadioGroupflowtypeClick(Sender: TObject);
+var
+    k : Integer;
+begin
+   k:=Laplas.itek;
+   // реакция интерфейса на смену
+   // граничного условия по скорости
+   case RadioGroupflowtype.ItemIndex of
+     0 : begin
+            //velocity
+            GroupBoxpressure.Visible:=false;
+            GroupBoxvelcomp.Visible:=true;
+         end;
+     1 : begin
+            // pressure
+            GroupBoxpressure.Visible:=true;
+            GroupBoxvelcomp.Visible:=false;
+         end;
+     2 : begin
+            // symmetry
+            GroupBoxpressure.Visible:=false;
+            GroupBoxvelcomp.Visible:=false;
+         end;
+   end;
+
+   with (Laplas.wall[k]) do
+   begin
+      EditVx.Text:=FloatToStr(Vx);
+      EditVy.Text:=FloatToStr(Vy);
+      EditVz.Text:=FloatToStr(Vz);
+      Editpress.Text:=FloatToStr(P);
+   end;
+end;
+
+procedure TAddWallForm.RadioGroupBonConTempClick(Sender: TObject);
+var
+    k : Integer;
+begin
+   k:=Laplas.itek;
+   // смена типа граничного условия по температуре
+   case  RadioGroupBonConTemp.ItemIndex of
+     0 : begin
+            // задана температура
+            PaneltemperatureBC.Visible:=true;
+            Etemp.Text:=FloatToStr(Laplas.wall[k].Tamb);
+         end;
+     1 : begin
+            // однородное условие Неймана
+            PaneltemperatureBC.Visible:=false;
+         end;
+     2 : begin
+            // условие третьего рода Ньютона-Рихмана
+            RadioGroupBonConTemp.ItemIndex:=1;
+            PaneltemperatureBC.Visible:=false;
+            ShowMessage('warning: out_of_date');
+         end;
+   end;
+end;
+
+end.
