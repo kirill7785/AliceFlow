@@ -147,6 +147,15 @@ AliceMesh_v0_45.exe не требовательна к ресурсам ПК т.
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/speed.jpg)
 
+Определение теплового сопротивления на среду
+
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Temperature.png)
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Speed.png)
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Pressure.png)
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/HeatFlux.png)
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Корпус%20модуля%20вид-1.png)
+
+
 ## Адаптивная Локально Измельченная Сетка (АЛИС)
 
 Начиная с лета 2016 года в данной программе запрограммированы Адаптивные Локально Измельченные  Сетки (АЛИС). 
