@@ -151,7 +151,7 @@ AliceMesh_v0_45.exe не требовательна к ресурсам ПК т.
 
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Temperature.png)
 
-Расчётная тепловая мощность 8Вт. Габаритные размеры  184 мм * 32 мм * 110 мм. 
+Расчётная тепловая мощность 8Вт. Габаритные размеры  184 мм * 32 мм * 110 мм. Радиатор 11 шьырей * 19 штырей. Высота штыря 12 мм. Шаг между штырями 9 мм.
 
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Speed.png)
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Pressure.png)
