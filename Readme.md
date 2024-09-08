@@ -84,36 +84,6 @@ https://github.com/kirill7785/AliceFlow/tree/master/Alice%20EXE
 https://www.tecplot.com/products/tecplot-360/ 
  или 
 https://www.paraview.org/download/
-  
-## Быстрая инструкция по сборке проекта из исходных текстов
-
-Описание устарело. Проект собирается в Microsoft Visual Studio 2019. Библиотека GLFW OpenGL должна быть прописана в зависимостях.
-
-### Windows
-
-1. Вы работаете на компьютере под управлением ОС Windows 10 от Microsoft. Далее рассматривается использование только
-свободных (opensource) программных средств.
-2. Установите компилятор MinGW GNU g++. Для этого нужно подключение к сети интернет на вашем компьютере.
-Как установить компилятор MinGW (GCC/G++) Compiller in Windows 10
-https://www.youtube.com/watch?v=sXW2VLrQ3Bs
-3. Скачайте с GitHub https://github.com/kirill7785/AliceFlow 
-папку src и скопируйте её на диск С. Перейдите в папку C:\src.
-4. Запустите Windows PowerShell. Перейдите в папку с исходным кодом cd C:\src.
-5. Введите терминале g++ -o AliceFlow_v0_48.exe AliceFlow_v0_48.cpp 2> gcc_log.txt В результате появится файл AliceFlow_v0_48.exe.
-6. Создайте на рабочем столе папку Alice_EXE. Поместите в папку Alice_EXE программу интерфейс AliceMesh_v0_45.exe написанную на Delphi 
-(скачивается с GitHub https://github.com/kirill7785/AliceFlow).
-Внутри папки Alice_EXE создайте иерархию папок test_pattern\solver\x64. В папку Alice_EXE\test_pattern\solver\x64 положите исполняемый 
-файл AliceFlow_v0_48.exe. 
-7. На сайте GitHub в папке AliceEXE лежат примеры для программы AliceMesh_v0_45.exe. Поместите их в папку AliceEXE на рабочем столе.
-8. Можно пользоваться. Запустите AliceMesh_v0_45.exe прочитайте один из примеров File->Read. Запустите пример Solve->Run.
-Программа интерфейс AliceMesh_v0_45.exe автоматически вызовет программу решатель AliceFlow_v0_48.exe.
-9. Установите программу tecplot360 или бесплатный аналог - программу ParaView. Откройте в tecplot360(или ParaView) файл с расширением *.PLT
-который был записан на диск после окончания работы программы AliceFlow_v0_48.exe. Вставьте картинки в отчёт в программе MS Word.
-10. Для тех кто хочет использовать параллельную версию программы запустите в терминале mingw-get (Для этого нужно подключение к сети интернет
-на вашем компьютере) и выберите в нём пакеты  mingw32-pthreads-w32.
-11. После установки находясь в папке C:\src выполните g++ -o AliceFlow_v0_48.exe AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt для создания 
-параллельной версии программы AliceFlow_v0_48.exe.
-
 
   
 ## Рассмотрим примеры решения задач в данной программе:
