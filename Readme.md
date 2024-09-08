@@ -20,7 +20,6 @@
 Ссылка на realese:
 https://github.com/kirill7785/AliceFlow/tree/master/Alice%20EXE
 Запускать нужно exe файл графического интерфейса пользователя ProjectLaplas.exe. Сам солвер AliceFlow_v0_48.exe должен при этом находится в папке ./test_pattern/solver/x64/AliceFlow_v0_48.exe
-Я привёл все модели поставляемые с программой AliceFlow в актуальное состояние. Каждая модель была запущена заново на моём оборудовании. Рекомендую начинать знакомство с простых моделей, например, с модели диода EvdokimovaDiod2D715.txt. Далее можно посмотреть модель CMPA, сначала её гидродинамическую часть CMPA_onlyCFD.txt а затем и тепловую CMPA.txt. Далее остальные модели по вкусу. Модели Obduv_Module_90mm_geom.txt, Obduv_Module_90mm_geom_x8.txt, Modul_orebrenie.txt относятся к большим моделям напоминающим реальные. Выкладывая большие модели я стремился более полно раскрыть возможности программы. Права на большие модели принадлежат не мне, выкладывается только для демонстрации. Надеюсь ничьи права не ущемлены тем более что ничего конкретного в этих моделях нет.
   
 ## Реализованные алгоритмы
  
@@ -57,33 +56,10 @@ https://github.com/kirill7785/AliceFlow/tree/master/Alice%20EXE
 * Графический визуализатор на GLFW OpenGL на языке с++, встроенный в код программы. Визуализация результатов расчёта в 3D, анимация результатов нестационарного CFD расчёта. 
   
   # Системные требования для компиляции програмы из исходных текстов: 
- 1. Вариант а).
-* 1.1. OС Windows x64
-* 1.2. компилятор: Visual Studio 2015 community
-* 1.3. nvidia cuda toolkit 8.0
-* 1.4. nvidia cusp library 0.5.1
-* 1.5. компилировать с опцией /bigobj
-* 1.6. openmp выключить. 
-* 1.7. библиотека GLFW OpenGL
- 2. Вариант б). 
-* 2.1. OС Windows x64
-* 2.2. компилятор: Visual Studio 2017(or 2019) community
-* 2.3. c++ boost 1.7.0 библиотека
-* 2.4. c++ amgcl 10.01.2021 библиотека
-* 2.5. компилировать с опцией /bigobj
-* 2.6. openmp выключить или включить 
-* 2.7. библиотека GLFW OpenGL
- 3. Вариант в). 
-* 3.1. Программа собирается компилятором GNU g++ (g++ 9.1). C:\AliceFlow_v0_48>g++ AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt 
-* 3.2. 04.08.2019 с подключенной библиотекой amgcl Дениса Демидова.
-* 3.3. библиотека GLFW OpenGL
-   
-4. Для работоспособности exe программы консольного солвера на компьютерах под управлением ОС Windows без установленной Visual Studio необходимо скачать и установить 64 битную версию -microsoft redistributable package x64 VC_redist.x64.exe
-   
-5. Для визуализации результатов вычисления необходимо установить
+ 1. OС Windows 10 x64
+ 2. компилятор c++, например, clang++.
+ 3. Для визуализации результатов вычисления необходимо установить
 https://www.tecplot.com/products/tecplot-360/ 
- или 
-https://www.paraview.org/download/
 
   
 ## Рассмотрим примеры решения задач в данной программе:
@@ -154,9 +130,7 @@ https://github.com/kirill7785/algebraic-multigrid-v.0.14/blob/main/README.ru.md
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picPaper.png)
 
-# собственный визуализатор на fwgl OpenGL (render)
 
-![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/IMG-20201218-WA0000.jpeg)
 # математическое решение задач поиска напряжённо деформированного состояния в программе AliceFlow v.0.48
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Деформация%20в%20задаче%20Фламана.png)
 Деформации в задаче Фламана
