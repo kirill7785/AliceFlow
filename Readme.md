@@ -59,7 +59,8 @@ https://github.com/kirill7785/AliceFlow/tree/master/Alice%20EXE
  1. OС Windows 10 x64
  2. компилятор c++, например, clang++.
  3. Для визуализации результатов вычисления необходимо установить
-https://www.tecplot.com/products/tecplot-360/ 
+https://www.tecplot.com/products/tecplot-360/
+4. Если карточки nvidia нет то можно собрать программу и использовать программу без карточки nvidia.
 
   
 ## Рассмотрим примеры решения задач в данной программе:
