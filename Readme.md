@@ -222,3 +222,8 @@ https://github.com/kirill7785/algebraic-multigrid-v.0.14/blob/main/README.ru.md
 Стержневая конструкция под лействием давящей силы в центре сверху. Смещения.
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/MOST_FERMA%20напряжения%20по%20Мизесу.png)
 Стержневая конструкция под лействием давящей силы в центре сверху. Напряжения по Мизесу.
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/MostFerma2.png)
+Стержневая конструкция под лействием давящей силы в центре сверху. Смещения.
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/MOST_FERMA%202%20напряжения%20по%20Мизесу.png)
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/MOST_FERMA%202a%20напряжения%20по%20Мизесу.png)
+Стержневая конструкция под лействием давящей силы в центре сверху. Напряжения по Мизесу.
