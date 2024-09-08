@@ -218,4 +218,7 @@ https://github.com/kirill7785/algebraic-multigrid-v.0.14/blob/main/README.ru.md
 деформация стальной балки
 ![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/Стальная%20балка%20напряжение%20по%20Мизесу.png)
 напряжение по Мизесу в стальной балке протяженностью 0.5м
-
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/MOST_FERMA.png)
+Стержневая конструкция под лействием давящей силы в центре сверху. Смещения.
+![alt text](https://github.com/kirill7785/AliceFlow/blob/master/picture/MOST_FERMA%20напряжения%20по%20Мизесу.png)
+Стержневая конструкция под лействием давящей силы в центре сверху. Напряжения по Мизесу.
